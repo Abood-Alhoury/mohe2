@@ -1,0 +1,214 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap');
+
+:root {
+    --mohe-primary: #0f392b;
+    --mohe-primary-dark: #0a261d;
+    --mohe-primary-light: #18523f;
+    --mohe-gold: #c5a059;
+    --mohe-gold-light: #dfc17b;
+    --mohe-gold-dark: #a37f39;
+    --mohe-bg: #f4f6f8;
+    --mohe-card-bg: #ffffff;
+    --mohe-border: #e2e8f0;
+    --mohe-text: #1f2937;
+    --mohe-text-muted: #6b7280;
+}
+
+body {
+    font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+    background-color: var(--mohe-bg);
+    color: var(--mohe-text);
+    direction: rtl;
+    text-align: right;
+    min-height: 100vh;
+}
+
+/* Header & Navigation Bar */
+.mohe-header {
+    background: linear-gradient(135deg, var(--mohe-primary-dark) 0%, var(--mohe-primary) 100%);
+    color: white;
+    border-bottom: 4px solid var(--mohe-gold);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.mohe-header .brand-title {
+    font-weight: 800;
+    font-size: 1.35rem;
+    color: #ffffff;
+    letter-spacing: 0.5px;
+}
+
+.mohe-header .brand-subtitle {
+    font-size: 0.85rem;
+    color: var(--mohe-gold-light);
+}
+
+.mohe-nav {
+    background-color: var(--mohe-primary-dark);
+    border-top: 1px solid rgba(197, 160, 89, 0.3);
+}
+
+.mohe-nav .nav-link {
+    color: #e5e7eb;
+    font-weight: 600;
+    padding: 0.75rem 1.25rem;
+    border-radius: 0;
+    transition: all 0.2s ease-in-out;
+}
+
+.mohe-nav .nav-link:hover, .mohe-nav .nav-link.active {
+    color: #ffffff;
+    background-color: var(--mohe-primary-light);
+    border-bottom: 3px solid var(--mohe-gold);
+}
+
+/* Top Tab Bar matching ASPX Legacy Design Tabs */
+.legacy-tab-bar {
+    background-color: #2b3e50;
+    border-radius: 6px;
+    padding: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.legacy-tab-btn {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 8px 18px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: background-color 0.2s;
+}
+
+.legacy-tab-btn:hover, .legacy-tab-btn.active {
+    background-color: #1d6fa5;
+    color: #ffffff;
+}
+
+/* Cards & Widgets */
+.mohe-card {
+    background: var(--mohe-card-bg);
+    border: 1px solid var(--mohe-border);
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    margin-bottom: 1.5rem;
+}
+
+.mohe-card-header {
+    background-color: #ffffff;
+    border-bottom: 2px solid var(--mohe-gold);
+    padding: 1rem 1.25rem;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.mohe-card-title {
+    font-weight: 700;
+    color: var(--mohe-primary);
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+/* Custom Table Styles */
+.mohe-table {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.mohe-table th {
+    background-color: var(--mohe-primary);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 0.85rem;
+    border: 1px solid #164e3b;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.mohe-table td {
+    padding: 0.75rem;
+    font-size: 0.9rem;
+    border: 1px solid #e2e8f0;
+    vertical-align: middle;
+    text-align: center;
+}
+
+.mohe-table tbody tr:nth-of-type(even) {
+    background-color: #f9fafb;
+}
+
+.mohe-table tbody tr:hover {
+    background-color: #f0fdf4;
+}
+
+/* Buttons */
+.btn-mohe-primary {
+    background-color: var(--mohe-primary);
+    color: white;
+    font-weight: 600;
+    border: none;
+}
+.btn-mohe-primary:hover {
+    background-color: var(--mohe-primary-light);
+    color: white;
+}
+
+.btn-mohe-gold {
+    background-color: var(--mohe-gold);
+    color: #ffffff;
+    font-weight: 700;
+    border: none;
+}
+.btn-mohe-gold:hover {
+    background-color: var(--mohe-gold-dark);
+    color: #ffffff;
+}
+
+/* Status Badges */
+.badge-status {
+    padding: 0.4em 0.8em;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 6px;
+}
+
+.badge-study { background-color: #3b82f6; color: white; } /* قيد الدراسة */
+.badge-approved { background-color: #10b981; color: white; } /* موافقة / تم الصدور */
+.badge-rejected { background-color: #ef4444; color: white; } /* مرفوض */
+.badge-suspended { background-color: #f59e0b; color: white; } /* معلق */
+.badge-paper { background-color: #8b5cf6; color: white; } /* استكمال أوراق */
+
+/* Custom "مذكرة العرض" PDF style preview container */
+.mozhakkara-container {
+    background: #ffffff;
+    padding: 2.5rem;
+    border: 1px solid #d1d5db;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    margin: 0 auto 2rem auto;
+    max-width: 900px;
+    color: #000;
+}
+
+.mozhakkara-header {
+    text-align: center;
+    border-bottom: 2px solid var(--mohe-gold);
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.mozhakkara-title {
+    color: var(--mohe-primary);
+    font-weight: 800;
+    font-size: 1.6rem;
+    margin-top: 0.5rem;
+}
