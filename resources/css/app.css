@@ -7,81 +7,68 @@
 @source '../**/*.js';
 
 @theme {
-    --font-sans: 'IBM Plex Sans Arabic', system-ui, -apple-system, sans-serif;
-    --color-imperial-navy: #1A2A44;
-    --color-imperial-navy-dark: #04152E;
-    --color-heritage-gold: #C5A059;
-    --color-heritage-gold-light: #FED488;
-    --color-surface-bg: #F9F9FF;
-    --color-surface-card: #FFFFFF;
+  --font-sans: 'IBM Plex Sans Arabic', system-ui, -apple-system, sans-serif;
+  --color-imperial-navy: #04152E;
+  --color-imperial-navy-container: #1A2A44;
+  --color-heritage-gold: #C5A059;
+  --color-heritage-gold-dark: #775A19;
+  --color-heritage-gold-light: #FED488;
+  --color-surface-bg: #F9F9FF;
+  --color-surface-card: #FFFFFF;
 }
 
-/* Design System Custom Utilities */
+/* Academic Excellence Portal Tokens */
 :root {
-    --navy-primary: #1A2A44;
-    --navy-dark: #04152E;
-    --gold-heritage: #C5A059;
-    --gold-light: #FED488;
-    --gold-hover: #b38e46;
-    --surface-bg: #F9F9FF;
-    --surface-card: #FFFFFF;
-    --outline-gray: #C5C6CE;
+  --primary: #04152e;
+  --primary-container: #1a2a44;
+  --secondary: #775a19;
+  --secondary-container: #fed488;
+  --heritage-gold: #C5A059;
+  --heritage-gold-dark: #775a19;
+  --background: #f9f9ff;
+  --surface-container-lowest: #ffffff;
+  --outline-variant: #c5c6ce;
+  --on-surface: #111c2c;
+  --on-surface-variant: #44474d;
 }
 
 body {
-    font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif;
-    background-color: var(--surface-bg);
-    color: #111C2C;
+  font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  background-color: var(--background);
+  color: var(--on-surface);
 }
 
-/* Custom Input Focus Glow */
 .academic-input {
-    border: 1px solid #C5C6CE;
-    border-radius: 4px;
-    transition: all 0.2s ease-in-out;
+  border: 1px solid var(--outline-variant);
+  border-radius: 4px;
+  transition: all 0.2s ease-in-out;
 }
 
 .academic-input:focus {
-    border-color: #1A2A44 !important;
-    box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.3) !important;
-    outline: none !important;
+  border-color: var(--primary-container) !important;
+  box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.3) !important;
+  outline: none !important;
 }
 
-/* Gold CTA Button */
 .btn-gold-cta {
-    background-color: #C5A059;
-    color: #1A2A44;
-    font-weight: 700;
-    border-radius: 4px;
-    transition: all 0.2s ease;
-    border: none;
+  background-color: var(--heritage-gold);
+  color: var(--primary);
+  font-weight: 700;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  border: none;
 }
 
 .btn-gold-cta:hover {
-    background-color: #b38e46;
-    color: #04152E;
-    box-shadow: 0 4px 12px rgba(197, 160, 89, 0.35);
+  background-color: var(--heritage-gold-dark);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(197, 160, 89, 0.35);
 }
 
-.btn-gold-cta:active {
-    transform: scale(0.99);
-}
-
-/* Gold Circular Ring Emblem Container */
-.gold-ring-emblem {
-    border-radius: 50%;
-    border: 2px solid #C5A059;
-    padding: 3px;
-    background-color: #ffffff;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-}
-
-/* Level 1 Elevation Shadow */
 .shadow-academic-level1 {
-    box-shadow: 0px 4px 20px rgba(26, 42, 68, 0.05), 0px 1px 3px rgba(26, 42, 68, 0.03);
+  box-shadow: 0px 4px 20px rgba(26, 42, 68, 0.05), 0px 1px 3px rgba(26, 42, 68, 0.03);
 }
 
 .shadow-academic-elevated {
-    box-shadow: 0px 10px 30px rgba(26, 42, 68, 0.08);
+  box-shadow: 0px 10px 30px rgba(26, 42, 68, 0.08);
 }
-

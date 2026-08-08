@@ -147,10 +147,13 @@ class ApplicationWizardController extends Controller
         $uniId = Auth::user()->university_id;
         $appNo = 'MA-SY-' . rand(100000, 999999); // Generate a unique application number
 
+        $frequency = $request->input('equivalence_frequency', 'تعادل للمرة الأولى');
+        $requestType = $frequency . ' - ماجستير سوري';
+
         $application = Application::create([
             'candidate_id' => $profile->id,
             'application_no' => $appNo,
-            'request_type' => 'ماجستير سوري',
+            'request_type' => $requestType,
             'work_university_id' => $uniId,
             'work_faculty' => $request->ma_faculty,
             'work_department' => $request->ma_department,
@@ -246,39 +249,27 @@ class ApplicationWizardController extends Controller
             }
         };
 
-        // Seeded Attachment Types IDs:
-        // 1: الهوية الشخصية/جواز السفر, 2: مصدقة الإجازة, 3: مصدقة الماجستير, 4: إيصال الدفع, 5: ICDL, 6: اللغة, 7: كشف العلامات, 8: صفحات جواز السفر
-        
-        // High School Attachments (linked to edHS)
+        // High School Attachments
         $uploadAndAttach('file_hs_cert', $edHS->id, 1, 'شهادة الدراسة الثانوية');
         if ($request->hasFile('hs_decision_file')) {
             $uploadAndAttach('hs_decision_file', $edHS->id, 1, 'قرار معادلة الشهادة الثانوية');
         }
 
-        // Bachelor's Attachments (linked to edBA)
+        // Bachelor's Attachments
         $uploadAndAttach('file_ba_cert', $edBA->id, 2, 'مصدقة الإجازة الجامعية الأولى');
         if ($request->hasFile('ba_decision_file')) {
             $uploadAndAttach('ba_decision_file', $edBA->id, 2, 'قرار معادلة الشهادة الجامعية الأولى');
         }
 
-        // Master's Attachments (linked to edMA)
+        // Master's Attachments
         $uploadAndAttach('file_ma_cert', $edMA->id, 3, 'نسخة مصدقة عن شهادة الماجستير');
         $uploadAndAttach('file_ma_dates', $edMA->id, 3, 'وثيقة تواريخ التسجيل والمناقشة والمنح');
         $uploadAndAttach('file_thesis_summary', $edMA->id, 3, 'ملخص رسالة الماجستير باللغة العربية');
-        
-        // Language & ICDL (linked to edMA)
         $uploadAndAttach('file_lang_icdl', $edMA->id, 6, 'شهادة اللغة الإنكليزية + شهادة ICDL');
-        
-        // CV (linked to edMA)
         $uploadAndAttach('file_cv', $edMA->id, 3, 'السيرة الذاتية للمرشح');
-        
-        // Payment Receipt (linked to edMA)
         $uploadAndAttach('file_payment', $edMA->id, 4, 'إيصال تسديد رسم تعادل 100,000 ل.س');
-
-        // Uni Request (linked to edMA)
         $uploadAndAttach('file_uni_request', $edMA->id, 3, 'كتاب الجامعة رقم ' . $request->req_no . ' تاريخ ' . $request->req_date);
 
-        // Experience Attachments (linked to edMA)
         if ($request->hasFile('file_exp_cert')) {
             $uploadAndAttach('file_exp_cert', $edMA->id, 3, 'شهادة خبرة تدريسية لا تقل عن سنتين');
         }
@@ -286,7 +277,103 @@ class ApplicationWizardController extends Controller
             $uploadAndAttach('file_contracts', $edMA->id, 3, 'العقود وإيصالات الرواتب المصدقة');
         }
 
-        return redirect()->route('university.dashboard')->with('success', 'تم تقديم معاملة تعادل الماجستير السورية بنجاح للطلب رقم: ' . $appNo);
+        return redirect()->route('university.dashboard')
+            ->with('success', 'تم تقديم معاملة (' . $requestType . ') بنجاح للطلب رقم: ' . $appNo)
+            ->with('submitted_app_id', $application->id)
+            ->with('submitted_app_no', $appNo);
+    }
+
+    public function lookupCandidate(Request $request)
+    {
+        $nationalId = trim($request->query('national_id', $request->query('search', '')));
+        
+        if (empty($nationalId)) {
+            return response()->json(['success' => false, 'message' => 'يرجى إدخال الرقم الوطني للمرشح.']);
+        }
+
+        $candidate = EquivalenceProfile::where('national_id', $nationalId)
+            ->with([
+                'nationality',
+                'applications.educations.level',
+                'applications.educations.country',
+                'applications.educations.university'
+            ])
+            ->first();
+
+        if (!$candidate) {
+            $candidate = EquivalenceProfile::where('national_id', 'like', "%{$nationalId}%")
+                ->with([
+                    'nationality',
+                    'applications.educations.level',
+                    'applications.educations.country',
+                    'applications.educations.university'
+                ])
+                ->first();
+        }
+
+        if (!$candidate) {
+            return response()->json(['success' => false, 'message' => 'لم يتم العثور على أي مرشح مسجل سابقاً بهذا الرقم الوطني (' . $nationalId . '). يمكنك إدخال البيانات يدوياً.']);
+        }
+
+        // Extract latest education records across candidate's applications
+        $allEducations = $candidate->applications->pluck('educations')->flatten();
+
+        $hsEd = $allEducations->filter(function($e) {
+            return $e->level && str_contains($e->level->name, 'ثانوية');
+        })->last();
+
+        $baEd = $allEducations->filter(function($e) {
+            return $e->level && str_contains($e->level->name, 'إجازة');
+        })->last();
+
+        $maEd = $allEducations->filter(function($e) {
+            return $e->level && str_contains($e->level->name, 'ماجستير');
+        })->last();
+
+        return response()->json([
+            'success' => true,
+            'candidate' => [
+                'full_name' => $candidate->full_name,
+                'national_id' => $candidate->national_id,
+                'dob' => $candidate->dob,
+                'job_title' => $candidate->job_title,
+                'gender' => $candidate->gender,
+                'email' => $candidate->email,
+                'mobile' => $candidate->mobile,
+                'phone' => $candidate->phone,
+                'address' => $candidate->address,
+                'nationality_id' => $candidate->nationality_id,
+                'is_syrian' => $candidate->is_syrian,
+            ],
+            'high_school' => $hsEd ? [
+                'country_id' => $hsEd->country_id,
+                'type' => $hsEd->section_name,
+                'grant_date' => $hsEd->grant_date,
+                'decision_no' => preg_replace('/[^0-9]/', '', $hsEd->notes ?? ''),
+            ] : null,
+            'bachelor' => $baEd ? [
+                'country_id' => $baEd->country_id,
+                'university_id' => $baEd->university_id,
+                'university_other' => $baEd->section_name,
+                'faculty' => $baEd->general_specialization,
+                'department' => $baEd->exact_specialization,
+                'registration_date' => $baEd->registration_date,
+                'grant_date' => $baEd->grant_date,
+                'rank' => $baEd->rank,
+                'decision_no' => preg_replace('/[^0-9]/', '', $baEd->notes ?? ''),
+            ] : null,
+            'master' => $maEd ? [
+                'university_id' => $maEd->university_id,
+                'faculty' => $maEd->general_specialization,
+                'department' => $maEd->exact_specialization,
+                'registration_date' => $maEd->registration_date,
+                'defense_date' => $maEd->defense_date,
+                'grant_date' => $maEd->grant_date,
+                'rank' => $maEd->rank,
+                'supervisor' => $maEd->supervisor_name,
+                'thesis_title' => $maEd->thesis_title,
+            ] : null,
+        ]);
     }
 
     protected function getUnreadNotifications()

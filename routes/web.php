@@ -87,6 +87,7 @@ Route::prefix('university')->middleware(['auth', 'role:university'])->group(func
     // Notifications & Messages
     Route::get('/messages', [UniDashboardController::class, 'messages'])->name('university.messages');
     Route::post('/applications/{appId}/reply', [UniDashboardController::class, 'replyMessage'])->name('university.applications.reply');
+    Route::post('/applications/{appId}/nudge', [UniDashboardController::class, 'nudgeApplication'])->name('university.applications.nudge');
 
     // Wizard: Choose Equivalence Type
     Route::get('/apply/options', [ApplicationWizardController::class, 'showOptions'])->name('university.apply.options');
@@ -94,4 +95,11 @@ Route::prefix('university')->middleware(['auth', 'role:university'])->group(func
     // Wizard: Syrian Master's step-by-step
     Route::get('/apply/syrian-masters', [ApplicationWizardController::class, 'showSyrianMastersWizard'])->name('university.apply.syrian_masters');
     Route::post('/apply/syrian-masters', [ApplicationWizardController::class, 'submitSyrianMastersWizard'])->name('university.apply.syrian_masters.submit');
+    
+    // Candidate Lookup API (for second-time equivalence auto-fill)
+    Route::get('/candidate/lookup', [ApplicationWizardController::class, 'lookupCandidate'])->name('university.candidate.lookup');
+
+    // Official Application Report & Mozhakkara PDF Download
+    Route::get('/applications/{appId}/mozhakkara', [UniDashboardController::class, 'showMozhakkara'])->name('university.applications.mozhakkara');
+    Route::get('/applications/{appId}/download-pdf', [UniDashboardController::class, 'downloadPdf'])->name('university.applications.download_pdf');
 });

@@ -4,23 +4,26 @@
 
 @section('content')
 
+<!-- BREADCRUMBS & PAGE HEADER -->
 <div class="row mb-4">
     <div class="col-12">
         <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ route('university.dashboard') }}">الرئيسية</a></li>
-                <li class="breadcrumb-item"><a href="{{ route('university.apply.options') }}">خيارات التعادل</a></li>
-                <li class="breadcrumb-item active" aria-current="page">ماجستير سوري</li>
+            <ol class="breadcrumb mb-2">
+                <li class="breadcrumb-item"><a href="{{ route('university.dashboard') }}" style="color: var(--primary-container); text-decoration: none;">الرئيسية</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('university.apply.options') }}" style="color: var(--primary-container); text-decoration: none;">خيارات التعادل</a></li>
+                <li class="breadcrumb-item active text-muted" aria-current="page">ماجستير سوري</li>
             </ol>
         </nav>
-        <h3 class="fw-bold text-primary mb-1"><i class="fa-solid fa-file-invoice-dollar me-1"></i> معاملة تعادل درجة ماجستير سورية</h3>
-        <p class="text-muted">الرجاء إدخال البيانات المطلوبة بدقة والتنقل بين الخطوات لرفع المستندات وإرسال الطلب.</p>
+        <h3 class="headline-md text-prestigious mb-1" style="font-size: 1.5rem;">
+            <i class="fa-solid fa-file-invoice-dollar me-2" style="color: var(--heritage-gold);"></i> معاملة تعادل درجة ماجستير سورية
+        </h3>
+        <p class="body-md text-muted mb-0">الرجاء إدخال البيانات المطلوبة بدقة والتنقل بين الخطوات لرفع المستندات وإرسال الطلب لمجلس التعليم العالي.</p>
     </div>
 </div>
 
-<!-- Wizard Form Wrapper (Vanilla JS Implementation for maximum offline reliability) -->
-<div class="card border-0 shadow-sm" style="border-radius: 15px;">
-    <div class="card-body p-4">
+<!-- WIZARD MAIN CONTAINER -->
+<div class="card border-0 shadow-sm" style="border-radius: 8px; border-top: 3px solid var(--heritage-gold) !important; border: 1px solid var(--outline-variant) !important; background-color: #ffffff;">
+    <div class="card-body p-4 p-md-5">
         
         <!-- Multi-Step Progress Indicators -->
         <div class="wizard-steps" id="wizard-steps-container">
@@ -62,25 +65,65 @@
 
             <!-- ================= STEP 1: PERSONAL INFO ================= -->
             <div class="form-section active" id="step-1">
-                <h5 class="fw-bold border-bottom pb-2 mb-4 text-primary"><i class="fa-solid fa-user me-1"></i> الخطوة 1: المعلومات الشخصية للمرشح</h5>
+                <h5 class="fw-bold border-bottom pb-2 mb-4 d-flex align-items-center gap-2" style="color: var(--primary-container); border-bottom-color: var(--outline-variant) !important;">
+                    <i class="fa-solid fa-user fs-5" style="color: var(--heritage-gold);"></i> الخطوة 1: المعلومات الشخصية للمرشح وتكرار الطلب
+                </h5>
                 
+                <!-- EQUIVALENCE FREQUENCY CHOICE & CANDIDATE LOOKUP -->
+                <div class="card mb-4 border p-3.5" style="background-color: var(--surface-container-low); border-right: 4px solid var(--heritage-gold) !important; border-radius: 4px;">
+                    <label class="form-label fw-bold mb-2" style="color: var(--primary-container); font-size: 0.98rem;">
+                        <i class="fa-solid fa-repeat me-1.5" style="color: var(--heritage-gold);"></i> تكرار تقديم طلب التعادل لهذا المرشح : <span class="text-danger">*</span>
+                    </label>
+                    <div class="d-flex flex-wrap gap-4 align-items-center mb-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="equivalence_frequency" id="freq_first" value="تعادل للمرة الأولى" checked onchange="toggleCandidateLookup(false)">
+                            <label class="form-check-label fw-bold" for="freq_first" style="color: var(--primary-container); cursor: pointer;">
+                                📌 تعادل للمرة الأولى (أول تقديم لطلب تعادل بالوزارة لهذا المرشح)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="equivalence_frequency" id="freq_second" value="تعادل للمرة الثانية" onchange="toggleCandidateLookup(true)">
+                            <label class="form-check-label fw-bold" for="freq_second" style="color: var(--primary-container); cursor: pointer;">
+                                🔄 تعادل للمرة الثانية أو أكثر (سبق للمرشح تقديم طلب تعادل سابق بالوزارة)
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Candidate Lookup Container (Visible when "تعادل للمرة الثانية" is checked) -->
+                    <div id="candidate_lookup_box" class="mt-3 p-3 bg-white rounded border d-none">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="fw-bold fs-7" style="color: var(--primary-container);">
+                                <i class="fa-solid fa-magnifying-glass me-1" style="color: var(--heritage-gold);"></i> استعلام وجلب بيانات المرشح ومؤهلاته السابقة بالرقم الوطني:
+                            </span>
+                            <span class="badge bg-light text-muted border fs-8">الرقم الوطني للمرشح (المكون من 11 خانة)</span>
+                        </div>
+                        <div class="input-group input-group-sm">
+                            <input type="text" id="candidate_search_input" class="form-control academic-input" placeholder="ادخل الرقم الوطني للمرشح لاسترجاع كافة البيانات والمؤهلات...">
+                            <button type="button" class="btn btn-primary fw-bold px-3" onclick="performCandidateLookup()">
+                                <i class="fa-solid fa-search me-1"></i> استعلام بالرقم الوطني وجلب البيانات
+                            </button>
+                        </div>
+                        <div id="lookup_results_area" class="mt-2"></div>
+                    </div>
+                </div>
+
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label fw-bold text-dark">اسم المرشح الكامل *</label>
-                        <input type="text" name="full_name" id="input-fullName" class="form-control" placeholder="الاسم والنسبة" required>
+                        <label class="form-label label-md fw-medium text-dark">اسم المرشح الكامل *</label>
+                        <input type="text" name="full_name" id="input-fullName" class="form-control academic-input" placeholder="الاسم والنسبة" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label fw-bold text-dark">اسم الأب *</label>
-                        <input type="text" name="father_name" id="input-fatherName" class="form-control" placeholder="اسم الأب" required>
+                        <label class="form-label label-md fw-medium text-dark">اسم الأب *</label>
+                        <input type="text" name="father_name" id="input-fatherName" class="form-control academic-input" placeholder="اسم الأب" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label fw-bold text-dark">اسم الأم ونسبتها *</label>
-                        <input type="text" name="mother_name" id="input-motherName" class="form-control" placeholder="اسم ونسبة الأم" required>
+                        <label class="form-label label-md fw-medium text-dark">اسم الأم ونسبتها *</label>
+                        <input type="text" name="mother_name" id="input-motherName" class="form-control academic-input" placeholder="اسم ونسبة الأم" required>
                     </div>
 
                     <div class="col-md-4">
-                        <label class="form-label fw-bold text-dark">الجنسية *</label>
-                        <select name="nationality_id" id="input-nationality" class="form-select" onchange="updateSyrianStatus(this)" required>
+                        <label class="form-label label-md fw-medium text-dark">الجنسية *</label>
+                        <select name="nationality_id" id="input-nationality" class="form-select academic-input" onchange="updateSyrianStatus(this)" required>
                             @foreach($countries as $c)
                                 <option value="{{ $c->id }}" {{ $c->name === 'سوريا' ? 'selected' : '' }}>{{ $c->name }}</option>
                             @endforeach
@@ -88,62 +131,64 @@
                         <input type="hidden" name="is_syrian" id="input-isSyrian" value="1">
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label fw-bold text-dark">الرقم الوطني / رقم جواز السفر *</label>
-                        <input type="text" name="national_id" id="input-nationalId" class="form-control" placeholder="الرقم الوطني المكون من 11 خانة" required>
+                        <label class="form-label label-md fw-medium text-dark">الرقم الوطني / رقم جواز السفر *</label>
+                        <input type="text" name="national_id" id="input-nationalId" class="form-control academic-input" placeholder="الرقم الوطني المكون من 11 خانة" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label fw-bold text-dark">تاريخ الميلاد *</label>
-                        <input type="date" name="dob" id="input-dob" class="form-control" required>
+                        <label class="form-label label-md fw-medium text-dark">تاريخ الميلاد *</label>
+                        <input type="date" name="dob" id="input-dob" class="form-control academic-input" required>
                     </div>
 
                     <div class="col-md-4">
-                        <label class="form-label fw-bold text-dark">الوظيفة الحالية للمرشح *</label>
-                        <input type="text" name="job_title" id="input-jobTitle" class="form-control" placeholder="مثال: مهندس، موظف، معيد" required>
+                        <label class="form-label label-md fw-medium text-dark">الوظيفة الحالية للمرشح *</label>
+                        <input type="text" name="job_title" id="input-jobTitle" class="form-control academic-input" placeholder="مثال: مهندس، موظف، معيد" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label fw-bold text-dark">الجنس *</label>
-                        <select name="gender" id="input-gender" class="form-select" required>
+                        <label class="form-label label-md fw-medium text-dark">الجنس *</label>
+                        <select name="gender" id="input-gender" class="form-select academic-input" required>
                             <option value="ذكر">ذكر</option>
                             <option value="أنثى">أنثى</option>
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label fw-bold text-dark">البريد الإلكتروني *</label>
-                        <input type="email" name="email" id="input-email" class="form-control" placeholder="name@example.com" required>
+                        <label class="form-label label-md fw-medium text-dark">البريد الإلكتروني *</label>
+                        <input type="email" name="email" id="input-email" class="form-control academic-input" placeholder="name@example.com" required>
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">الهاتف المحمول *</label>
-                        <input type="text" name="mobile" id="input-mobile" class="form-control" placeholder="09xxxxxxxx" required>
+                        <label class="form-label label-md fw-medium text-dark">الهاتف المحمول *</label>
+                        <input type="text" name="mobile" id="input-mobile" class="form-control academic-input" placeholder="09xxxxxxxx" required>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">الهاتف الأرضي</label>
-                        <input type="text" name="phone" id="input-phone" class="form-control" placeholder="011xxxxxxx">
+                        <label class="form-label label-md fw-medium text-dark">الهاتف الأرضي</label>
+                        <input type="text" name="phone" id="input-phone" class="form-control academic-input" placeholder="011xxxxxxx">
                     </div>
 
                     <div class="col-12">
-                        <label class="form-label fw-bold text-dark">عنوان الإقامة الحالي بالتفصيل *</label>
-                        <textarea name="address" id="input-address" class="form-control" rows="2" placeholder="المحافظة - المدينة - الشارع - البناء" required></textarea>
+                        <label class="form-label label-md fw-medium text-dark">عنوان الإقامة الحالي بالتفصيل *</label>
+                        <textarea name="address" id="input-address" class="form-control academic-input" rows="2" placeholder="المحافظة - المدينة - الشارع - البناء" required></textarea>
                     </div>
                 </div>
             </div>
 
             <!-- ================= STEP 2: HIGH SCHOOL INFO ================= -->
             <div class="form-section" id="step-2" style="display: none;">
-                <h5 class="fw-bold border-bottom pb-2 mb-4 text-primary"><i class="fa-solid fa-graduation-cap me-1"></i> الخطوة 2: بيانات الشهادة الثانوية للمرشح</h5>
+                <h5 class="fw-bold border-bottom pb-2 mb-4 d-flex align-items-center gap-2" style="color: var(--primary-container); border-bottom-color: var(--outline-variant) !important;">
+                    <i class="fa-solid fa-graduation-cap fs-5" style="color: var(--heritage-gold);"></i> الخطوة 2: بيانات الشهادة الثانوية للمرشح
+                </h5>
                 
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label fw-bold text-dark">الدولة المانحة للثانوية *</label>
-                        <select name="hs_country_id" id="input-hsCountry" class="form-select" onchange="toggleHsCountrySection(this)" required>
+                        <label class="form-label label-md fw-medium text-dark">الدولة المانحة للثانوية *</label>
+                        <select name="hs_country_id" id="input-hsCountry" class="form-select academic-input" onchange="toggleHsCountrySection(this)" required>
                             @foreach($countries as $c)
                                 <option value="{{ $c->id }}" {{ $c->name === 'سوريا' ? 'selected' : '' }}>{{ $c->name }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label fw-bold text-dark">نوع البكالوريا *</label>
-                        <select name="hs_type" id="input-hsType" class="form-select" required>
+                        <label class="form-label label-md fw-medium text-dark">نوع البكالوريا *</label>
+                        <select name="hs_type" id="input-hsType" class="form-select academic-input" required>
                             <option value="علمي">علمي</option>
                             <option value="أدبي">أدبي</option>
                             <option value="تجاري">تجاري</option>
@@ -151,19 +196,19 @@
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label fw-bold text-dark">تاريخ الحصول على الشهادة *</label>
-                        <input type="date" name="hs_grant_date" id="input-hsDate" class="form-control" required>
+                        <label class="form-label label-md fw-medium text-dark">تاريخ الحصول على الشهادة *</label>
+                        <input type="date" name="hs_grant_date" id="input-hsDate" class="form-control academic-input" required>
                     </div>
 
                     <!-- Conditional high school equivalence if country is not Syria -->
                     <div class="col-12 mt-4" id="hs-equivalence-section" style="display: none;">
-                        <div class="card bg-light border-warning p-3">
-                            <h6 class="fw-bold text-warning mb-2"><i class="fa-solid fa-triangle-exclamation"></i> إدخال قرار معادلة الشهادة الثانوية</h6>
-                            <p class="small text-muted mb-3">بما أن الشهادة الثانوية غير صادرة عن الجمهورية العربية السورية، يرجى إدخال رقم قرار المعادلة من وزارة التربية السورية ورفع صورة قرار المعادلة في خطوة المرفقات النهائية.</p>
+                        <div class="card p-3 shadow-sm border-0" style="background-color: var(--warning-container); border-right: 4px solid var(--heritage-gold) !important; border-radius: 4px;">
+                            <h6 class="fw-bold mb-2" style="color: var(--warning);"><i class="fa-solid fa-triangle-exclamation me-1"></i> إدخال قرار معادلة الشهادة الثانوية</h6>
+                            <p class="label-sm text-muted mb-3">بما أن الشهادة الثانوية غير صادرة عن الجمهورية العربية السورية، يرجى إدخال رقم قرار المعادلة من وزارة التربية السورية ورفع صورة قرار المعادلة في خطوة المرفقات النهائية.</p>
                             <div class="row">
                                 <div class="col-md-6">
-                                    <label class="form-label fw-bold text-dark">رقم قرار معادلة الشهادة الثانوية *</label>
-                                    <input type="text" name="hs_decision_no" id="input-hsDecisionNo" class="form-control" placeholder="أدخل رقم القرار الرسمي">
+                                    <label class="form-label label-md fw-medium text-dark">رقم قرار معادلة الشهادة الثانوية *</label>
+                                    <input type="text" name="hs_decision_no" id="input-hsDecisionNo" class="form-control academic-input" placeholder="أدخل رقم القرار الرسمي">
                                 </div>
                             </div>
                         </div>
@@ -173,12 +218,14 @@
 
             <!-- ================= STEP 3: UNIVERSITY DEGREE ================= -->
             <div class="form-section" id="step-3" style="display: none;">
-                <h5 class="fw-bold border-bottom pb-2 mb-4 text-primary"><i class="fa-solid fa-building-columns me-1"></i> الخطوة 3: بيانات الإجازة الجامعية الأولى (البكالوريوس)</h5>
+                <h5 class="fw-bold border-bottom pb-2 mb-4 d-flex align-items-center gap-2" style="color: var(--primary-container); border-bottom-color: var(--outline-variant) !important;">
+                    <i class="fa-solid fa-building-columns fs-5" style="color: var(--heritage-gold);"></i> الخطوة 3: بيانات الإجازة الجامعية الأولى (البكالوريوس)
+                </h5>
                 
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label fw-bold text-dark">الدولة المانحة للإجازة *</label>
-                        <select name="ba_country_id" id="input-baCountry" class="form-select" onchange="toggleBaCountrySection(this)" required>
+                        <label class="form-label label-md fw-medium text-dark">الدولة المانحة للإجازة *</label>
+                        <select name="ba_country_id" id="input-baCountry" class="form-select academic-input" onchange="toggleBaCountrySection(this)" required>
                             @foreach($countries as $c)
                                 <option value="{{ $c->id }}" {{ $c->name === 'سوريا' ? 'selected' : '' }}>{{ $c->name }}</option>
                             @endforeach
@@ -186,8 +233,8 @@
                     </div>
                     
                     <div class="col-md-4" id="ba-uni-select-container">
-                        <label class="form-label fw-bold text-dark">الجامعة المانحة *</label>
-                        <select name="ba_university_id" id="input-baUniId" class="form-select">
+                        <label class="form-label label-md fw-medium text-dark">الجامعة المانحة *</label>
+                        <select name="ba_university_id" id="input-baUniId" class="form-select academic-input">
                             <option value="">-- اختر الجامعة --</option>
                             @foreach($universities as $uni)
                                 @if($uni->country && $uni->country->name === 'سوريا')
@@ -198,13 +245,13 @@
                     </div>
 
                     <div class="col-md-4" id="ba-uni-text-container" style="display: none;">
-                        <label class="form-label fw-bold text-dark">اسم الجامعة الأجنبية / الجهة المانحة *</label>
-                        <input type="text" name="ba_university_other" id="input-baUniOther" class="form-control" placeholder="اسم الجامعة الكامل">
+                        <label class="form-label label-md fw-medium text-dark">اسم الجامعة الأجنبية / الجهة المانحة *</label>
+                        <input type="text" name="ba_university_other" id="input-baUniOther" class="form-control academic-input" placeholder="اسم الجامعة الكامل">
                     </div>
 
                     <div class="col-md-4">
-                        <label class="form-label fw-bold text-dark">التقدير / المرتبة *</label>
-                        <select name="ba_rank" id="input-baRank" class="form-select" required>
+                        <label class="form-label label-md fw-medium text-dark">التقدير / المرتبة *</label>
+                        <select name="ba_rank" id="input-baRank" class="form-select academic-input" required>
                             <option value="امتياز">امتياز</option>
                             <option value="جيد جداً">جيد جداً</option>
                             <option value="جيد">جيد</option>
@@ -213,32 +260,32 @@
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">الكلية والفرع (التخصص العام) *</label>
-                        <input type="text" name="ba_faculty" id="input-baFaculty" class="form-control" placeholder="مثال: هندسة المعلوماتية" required>
+                        <label class="form-label label-md fw-medium text-dark">الكلية والفرع (التخصص العام) *</label>
+                        <input type="text" name="ba_faculty" id="input-baFaculty" class="form-control academic-input" placeholder="مثال: هندسة المعلوماتية" required>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">القسم (التخصص الدقيق) *</label>
-                        <input type="text" name="ba_department" id="input-baDept" class="form-control" placeholder="مثال: هندسة البرمجيات ونظم المعلومات" required>
+                        <label class="form-label label-md fw-medium text-dark">القسم (التخصص الدقيق) *</label>
+                        <input type="text" name="ba_department" id="input-baDept" class="form-control academic-input" placeholder="مثال: هندسة البرمجيات ونظم المعلومات" required>
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">تاريخ التسجيل بالإجازة *</label>
-                        <input type="date" name="ba_registration_date" id="input-baRegDate" class="form-control" required>
+                        <label class="form-label label-md fw-medium text-dark">تاريخ التسجيل بالإجازة *</label>
+                        <input type="date" name="ba_registration_date" id="input-baRegDate" class="form-control academic-input" required>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">تاريخ التخرج / الحصول عليها *</label>
-                        <input type="date" name="ba_grant_date" id="input-baGrantDate" class="form-control" required>
+                        <label class="form-label label-md fw-medium text-dark">تاريخ التخرج / الحصول عليها *</label>
+                        <input type="date" name="ba_grant_date" id="input-baGrantDate" class="form-control academic-input" required>
                     </div>
 
                     <!-- Conditional bachelor's equivalence if country is not Syria -->
                     <div class="col-12 mt-4" id="ba-equivalence-section" style="display: none;">
-                        <div class="card bg-light border-warning p-3">
-                            <h6 class="fw-bold text-warning mb-2"><i class="fa-solid fa-triangle-exclamation"></i> إدخال قرار معادلة الإجازة الجامعية الأولى</h6>
-                            <p class="small text-muted mb-3">بما أن الإجازة الجامعية الأولى غير صادرة عن الجمهورية العربية السورية، يرجى إدخال رقم قرار المعادلة الصادر عن وزارة التعليم العالي والبحث العلمي السورية ورفع صورة قرار المعادلة في خطوة المرفقات النهائية.</p>
+                        <div class="card p-3 shadow-sm border-0" style="background-color: var(--warning-container); border-right: 4px solid var(--heritage-gold) !important; border-radius: 4px;">
+                            <h6 class="fw-bold mb-2" style="color: var(--warning);"><i class="fa-solid fa-triangle-exclamation me-1"></i> إدخال قرار معادلة الإجازة الجامعية الأولى</h6>
+                            <p class="label-sm text-muted mb-3">بما أن الإجازة الجامعية الأولى غير صادرة عن الجمهورية العربية السورية، يرجى إدخال رقم قرار المعادلة الصادر عن وزارة التعليم العالي والبحث العلمي السورية ورفع صورة قرار المعادلة في خطوة المرفقات النهائية.</p>
                             <div class="row">
                                 <div class="col-md-6">
-                                    <label class="form-label fw-bold text-dark">رقم قرار تعادل الإجازة الجامعية *</label>
-                                    <input type="text" name="ba_decision_no" id="input-baDecisionNo" class="form-control" placeholder="أدخل رقم قرار التعادل الرسمي">
+                                    <label class="form-label label-md fw-medium text-dark">رقم قرار تعادل الإجازة الجامعية *</label>
+                                    <input type="text" name="ba_decision_no" id="input-baDecisionNo" class="form-control academic-input" placeholder="أدخل رقم قرار التعادل الرسمي">
                                 </div>
                             </div>
                         </div>
@@ -248,12 +295,14 @@
 
             <!-- ================= STEP 4: SYRIAN MASTER'S INFO ================= -->
             <div class="form-section" id="step-4" style="display: none;">
-                <h5 class="fw-bold border-bottom pb-2 mb-4 text-primary"><i class="fa-solid fa-graduation-cap me-1"></i> الخطوة 4: بيانات درجة الماجستير السورية والخبرة</h5>
+                <h5 class="fw-bold border-bottom pb-2 mb-4 d-flex align-items-center gap-2" style="color: var(--primary-container); border-bottom-color: var(--outline-variant) !important;">
+                    <i class="fa-solid fa-graduation-cap fs-5" style="color: var(--heritage-gold);"></i> الخطوة 4: بيانات درجة الماجستير السورية والخبرة
+                </h5>
                 
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label fw-bold text-dark">الجامعة المانحة للماجستير *</label>
-                        <select name="ma_university_id" id="input-maUniId" class="form-select" required>
+                        <label class="form-label label-md fw-medium text-dark">الجامعة المانحة للماجستير *</label>
+                        <select name="ma_university_id" id="input-maUniId" class="form-select academic-input" required>
                             <option value="">-- اختر الجامعة السورية --</option>
                             @foreach($universities as $uni)
                                 @if($uni->country && $uni->country->name === 'سوريا')
@@ -263,64 +312,64 @@
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label fw-bold text-dark">التقدير / المرتبة *</label>
-                        <select name="ma_rank" id="input-maRank" class="form-select" required>
+                        <label class="form-label label-md fw-medium text-dark">التقدير / المرتبة *</label>
+                        <select name="ma_rank" id="input-maRank" class="form-select academic-input" required>
                             <option value="امتياز">امتياز</option>
                             <option value="جيد جداً">جيد جداً</option>
                             <option value="جيد">جيد</option>
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label fw-bold text-dark">اسم الأستاذ المشرف *</label>
-                        <input type="text" name="ma_supervisor" id="input-maSupervisor" class="form-control" placeholder="الاسم الثنائي للمشرف مع اللقب العلمي" required>
+                        <label class="form-label label-md fw-medium text-dark">اسم الأستاذ المشرف *</label>
+                        <input type="text" name="ma_supervisor" id="input-maSupervisor" class="form-control academic-input" placeholder="الاسم الثنائي للمشرف مع اللقب العلمي" required>
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">الكلية والفرع (التخصص العام للماجستير) *</label>
-                        <input type="text" name="ma_faculty" id="input-maFaculty" class="form-control" placeholder="كلية الهندسة المدنية" required>
+                        <label class="form-label label-md fw-medium text-dark">الكلية والفرع (التخصص العام للماجستير) *</label>
+                        <input type="text" name="ma_faculty" id="input-maFaculty" class="form-control academic-input" placeholder="كلية الهندسة المدنية" required>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">القسم (التخصص الدقيق للماجستير) *</label>
-                        <input type="text" name="ma_department" id="input-maDept" class="form-control" placeholder="إدارة المشاريع" required>
+                        <label class="form-label label-md fw-medium text-dark">القسم (التخصص الدقيق للماجستير) *</label>
+                        <input type="text" name="ma_department" id="input-maDept" class="form-control academic-input" placeholder="إدارة المشاريع" required>
                     </div>
 
                     <div class="col-md-4">
-                        <label class="form-label fw-bold text-dark">تاريخ التسجيل بالدرجة *</label>
-                        <input type="date" name="ma_registration_date" id="input-maRegDate" class="form-control" required>
+                        <label class="form-label label-md fw-medium text-dark">تاريخ التسجيل بالدرجة *</label>
+                        <input type="date" name="ma_registration_date" id="input-maRegDate" class="form-control academic-input" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label fw-bold text-dark">تاريخ المناقشة *</label>
-                        <input type="date" name="ma_defense_date" id="input-maDefDate" class="form-control" required>
+                        <label class="form-label label-md fw-medium text-dark">تاريخ المناقشة *</label>
+                        <input type="date" name="ma_defense_date" id="input-maDefDate" class="form-control academic-input" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label fw-bold text-dark">تاريخ منح الدرجة (الحصول على الشهادة) *</label>
-                        <input type="date" name="ma_grant_date" id="input-maGrantDate" class="form-control" required>
+                        <label class="form-label label-md fw-medium text-dark">تاريخ منح الدرجة (الحصول على الشهادة) *</label>
+                        <input type="date" name="ma_grant_date" id="input-maGrantDate" class="form-control academic-input" required>
                     </div>
 
                     <div class="col-12">
-                        <label class="form-label fw-bold text-dark">عنوان رسالة الماجستير (الأطروحة) بالتفصيل *</label>
-                        <textarea name="ma_thesis_title" id="input-maThesisTitle" class="form-control" rows="2" placeholder="أدخل عنوان رسالة الماجستير كما هو مذكور في مصدقة التخرج" required></textarea>
+                        <label class="form-label label-md fw-medium text-dark">عنوان رسالة الماجستير (الأطروحة) بالتفصيل *</label>
+                        <textarea name="ma_thesis_title" id="input-maThesisTitle" class="form-control academic-input" rows="2" placeholder="أدخل عنوان رسالة الماجستير كما هو مذكور في مصدقة التخرج" required></textarea>
                     </div>
 
                     <!-- Experience details toggle (> 2 years) -->
                     <div class="col-12 mt-4">
-                        <div class="card border-0 shadow-sm bg-light p-3">
+                        <div class="card border-0 shadow-sm p-3" style="background-color: var(--surface-container-low); border: 1px solid var(--outline-variant) !important; border-radius: 4px;">
                             <div class="form-check form-switch mb-3">
                                 <input class="form-check-input" type="checkbox" id="input-hasExperience" name="has_experience" value="1" onchange="toggleExperienceSection(this)">
-                                <label class="form-check-label fw-bold text-dark ms-2" for="input-hasExperience">هل يمتلك المرشح خبرة تدريسية تفوق سنتين؟</label>
+                                <label class="form-check-label fw-bold text-dark ms-2 label-md" for="input-hasExperience">هل يمتلك المرشح خبرة تدريسية تفوق سنتين؟</label>
                             </div>
                             <div class="row g-3" id="experience-details-section" style="display: none;">
                                 <div class="col-md-6">
-                                    <label class="form-label fw-bold text-dark">مكان الخبرة التدريسية (الجهة/الجامعة) *</label>
-                                    <input type="text" name="exp_place" id="input-expPlace" class="form-control" placeholder="اسم الكلية أو الجامعة والمعهد">
+                                    <label class="form-label label-md fw-medium text-dark">مكان الخبرة التدريسية (الجهة/الجامعة) *</label>
+                                    <input type="text" name="exp_place" id="input-expPlace" class="form-control academic-input" placeholder="اسم الكلية أو الجامعة والمعهد">
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label fw-bold text-dark">من عام *</label>
-                                    <input type="number" name="exp_from_year" id="input-expFrom" class="form-control" placeholder="2021">
+                                    <label class="form-label label-md fw-medium text-dark">من عام *</label>
+                                    <input type="number" name="exp_from_year" id="input-expFrom" class="form-control academic-input" placeholder="2021">
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label fw-bold text-dark">إلى عام *</label>
-                                    <input type="number" name="exp_to_year" id="input-expTo" class="form-control" placeholder="2023">
+                                    <label class="form-label label-md fw-medium text-dark">إلى عام *</label>
+                                    <input type="number" name="exp_to_year" id="input-expTo" class="form-control academic-input" placeholder="2023">
                                 </div>
                             </div>
                         </div>
@@ -331,50 +380,52 @@
 
             <!-- ================= STEP 5: UNIVERSITY REQUEST & COURSES ================= -->
             <div class="form-section" id="step-5" style="display: none;">
-                <h5 class="fw-bold border-bottom pb-2 mb-4 text-primary"><i class="fa-solid fa-list-check me-1"></i> الخطوة 5: بيانات طلب الجامعة والمقررات المرشح لتدريسها</h5>
+                <h5 class="fw-bold border-bottom pb-2 mb-4 d-flex align-items-center gap-2" style="color: var(--primary-container); border-bottom-color: var(--outline-variant) !important;">
+                    <i class="fa-solid fa-list-check fs-5" style="color: var(--heritage-gold);"></i> الخطوة 5: بيانات طلب الجامعة والمقررات المرشح لتدريسها
+                </h5>
                 
                 <div class="row g-3 mb-4">
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">رقم كتاب طلب التقويم الصادر عن الجامعة *</label>
-                        <input type="text" name="req_no" id="input-reqNo" class="form-control" placeholder="رقم الكتاب الرسمي" required>
+                        <label class="form-label label-md fw-medium text-dark">رقم كتاب طلب التقويم الصادر عن الجامعة *</label>
+                        <input type="text" name="req_no" id="input-reqNo" class="form-control academic-input" placeholder="رقم الكتاب الرسمي" required>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">تاريخ كتاب طلب التقويم *</label>
-                        <input type="date" name="req_date" id="input-reqDate" class="form-control" required>
+                        <label class="form-label label-md fw-medium text-dark">تاريخ كتاب طلب التقويم *</label>
+                        <input type="date" name="req_date" id="input-reqDate" class="form-control academic-input" required>
                     </div>
                 </div>
 
                 <!-- Proposed Courses to teach Table -->
-                <div class="card border border-primary p-3 bg-white">
-                    <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
-                        <h6 class="fw-bold text-primary mb-0"><i class="fa-solid fa-book me-1"></i> المقررات التي سيدرسها المرشح في الجامعة</h6>
-                        <button type="button" class="btn btn-sm btn-mohe-primary" onclick="addCourseRow()">
+                <div class="card p-3 shadow-sm border-0" style="border-top: 3px solid var(--heritage-gold) !important; border-radius: 4px; border: 1px solid var(--outline-variant) !important; background-color: #ffffff;">
+                    <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2" style="border-bottom-color: var(--outline-variant) !important;">
+                        <h6 class="fw-bold mb-0" style="color: var(--primary-container);"><i class="fa-solid fa-book me-1" style="color: var(--heritage-gold);"></i> المقررات التي سيدرسها المرشح في الجامعة</h6>
+                        <button type="button" class="btn btn-sm btn-action" onclick="addCourseRow()">
                             <i class="fa-solid fa-plus me-1"></i> إضافة مقرر
                         </button>
                     </div>
                     
                     <div class="table-responsive">
-                        <table class="table align-middle">
+                        <table class="table mohe-table align-middle">
                             <thead>
                                 <tr>
                                     <th>اسم المقرر الدراسي *</th>
                                     <th>الكلية *</th>
                                     <th>القسم *</th>
-                                    <th style="width: 80px;">حذف</th>
+                                    <th style="width: 80px;" class="text-center">حذف</th>
                                 </tr>
                             </thead>
                             <tbody id="courses-tbody">
                                 <tr>
                                     <td>
-                                        <input type="text" name="courses[0][name]" class="form-control form-control-sm course-name-input" placeholder="مثال: معمارية الحاسب" required>
+                                        <input type="text" name="courses[0][name]" class="form-control form-control-sm academic-input course-name-input" placeholder="مثال: معمارية الحاسب" required>
                                     </td>
                                     <td>
-                                        <input type="text" name="courses[0][faculty]" class="form-control form-control-sm course-faculty-input" placeholder="مثال: هندسة المعلوماتية" required>
+                                        <input type="text" name="courses[0][faculty]" class="form-control form-control-sm academic-input course-faculty-input" placeholder="مثال: هندسة المعلوماتية" required>
                                     </td>
                                     <td>
-                                        <input type="text" name="courses[0][department]" class="form-control form-control-sm course-dept-input" placeholder="مثال: قسم البرمجيات" required>
+                                        <input type="text" name="courses[0][department]" class="form-control form-control-sm academic-input course-dept-input" placeholder="مثال: قسم البرمجيات" required>
                                     </td>
-                                    <td>
+                                    <td class="text-center">
                                         <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeCourseRow(this)">
                                             <i class="fa-solid fa-trash"></i>
                                         </button>
@@ -388,110 +439,114 @@
 
             <!-- ================= STEP 6: ATTACHMENTS ================= -->
             <div class="form-section" id="step-6" style="display: none;">
-                <h5 class="fw-bold border-bottom pb-2 mb-4 text-primary"><i class="fa-solid fa-paperclip me-1"></i> الخطوة 6: رفع المرفقات والمستندات الثبوتية المطلوبة (بصيغة PDF فقط)</h5>
+                <h5 class="fw-bold border-bottom pb-2 mb-4 d-flex align-items-center gap-2" style="color: var(--primary-container); border-bottom-color: var(--outline-variant) !important;">
+                    <i class="fa-solid fa-paperclip fs-5" style="color: var(--heritage-gold);"></i> الخطوة 6: رفع المرفقات والمستندات الثبوتية المطلوبة (بصيغة PDF فقط)
+                </h5>
                 
-                <div class="alert alert-info border-0 shadow-sm mb-4">
-                    <i class="fa-solid fa-info-circle me-1"></i> يرجى التأكد من رفع ملفات PDF واضحة ومصدقة أصولاً لعدم تعليق المعاملة من قبل لجنة التعادل.
+                <div class="alert border-0 shadow-sm mb-4" style="background-color: var(--surface-container-low); border-right: 4px solid var(--primary-container) !important; color: var(--primary-container); border-radius: 4px;">
+                    <i class="fa-solid fa-info-circle me-1" style="color: var(--heritage-gold);"></i> يرجى التأكد من رفع ملفات PDF واضحة ومصدقة أصولاً لعدم تعليق المعاملة من قبل لجنة التعادل.
                 </div>
 
                 <div class="row g-4">
                     <!-- High School Cert -->
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">نسخة مصدقة أصولاً عن شهادة الدراسة الثانوية *</label>
-                        <input type="file" name="file_hs_cert" class="form-control" accept=".pdf" required>
+                        <label class="form-label label-md fw-medium text-dark">نسخة مصدقة أصولاً عن شهادة الدراسة الثانوية *</label>
+                        <input type="file" name="file_hs_cert" class="form-control academic-input" accept=".pdf" required>
                     </div>
 
                     <!-- HS Equivalence Decision File (Conditional) -->
                     <div class="col-md-6" id="hs-decision-file-container" style="display: none;">
-                        <label class="form-label fw-bold text-dark">صورة عن قرار معادلة الشهادة الثانوية (وزارة التربية) *</label>
-                        <input type="file" name="hs_decision_file" id="input-hsDecisionFile" class="form-control" accept=".pdf">
+                        <label class="form-label label-md fw-medium text-dark">صورة عن قرار معادلة الشهادة الثانوية (وزارة التربية) *</label>
+                        <input type="file" name="hs_decision_file" id="input-hsDecisionFile" class="form-control academic-input" accept=".pdf">
                     </div>
 
                     <!-- Bachelor Cert -->
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">نسخة مصدقة أصولاً عن الإجازة الجامعية الأولى *</label>
-                        <input type="file" name="file_ba_cert" class="form-control" accept=".pdf" required>
+                        <label class="form-label label-md fw-medium text-dark">نسخة مصدقة أصولاً عن الإجازة الجامعية الأولى *</label>
+                        <input type="file" name="file_ba_cert" class="form-control academic-input" accept=".pdf" required>
                     </div>
 
                     <!-- Bachelor Equivalence Decision File (Conditional) -->
                     <div class="col-md-6" id="ba-decision-file-container" style="display: none;">
-                        <label class="form-label fw-bold text-dark">صورة عن قرار معادلة الشهادة الجامعية الأولى *</label>
-                        <input type="file" name="ba_decision_file" id="input-baDecisionFile" class="form-control" accept=".pdf">
+                        <label class="form-label label-md fw-medium text-dark">صورة عن قرار معادلة الشهادة الجامعية الأولى *</label>
+                        <input type="file" name="ba_decision_file" id="input-baDecisionFile" class="form-control academic-input" accept=".pdf">
                     </div>
 
                     <!-- Master Cert -->
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">نسخة مصدقة أصولاً عن شهادة الماجستير *</label>
-                        <input type="file" name="file_ma_cert" class="form-control" accept=".pdf" required>
+                        <label class="form-label label-md fw-medium text-dark">نسخة مصدقة أصولاً عن شهادة الماجستير *</label>
+                        <input type="file" name="file_ma_cert" class="form-control academic-input" accept=".pdf" required>
                     </div>
 
                     <!-- Master Registration / Defense dates doc -->
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">وثيقة تواريخ التسجيل والمناقشة والمنح بالماجستير *</label>
-                        <input type="file" name="file_ma_dates" class="form-control" accept=".pdf" required>
+                        <label class="form-label label-md fw-medium text-dark">وثيقة تواريخ التسجيل والمناقشة والمنح بالماجستير *</label>
+                        <input type="file" name="file_ma_dates" class="form-control academic-input" accept=".pdf" required>
                     </div>
 
                     <!-- Arabic Thesis Summary -->
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">ملخص باللغة العربية عن رسالة الماجستير إلكترونياً *</label>
-                        <input type="file" name="file_thesis_summary" class="form-control" accept=".pdf" required>
+                        <label class="form-label label-md fw-medium text-dark">ملخص باللغة العربية عن رسالة الماجستير إلكترونياً *</label>
+                        <input type="file" name="file_thesis_summary" class="form-control academic-input" accept=".pdf" required>
                     </div>
 
                     <!-- University Request Doc -->
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">كتاب صادر عن الجامعة يتضمن طلب تقويم درجاته العلمية *</label>
-                        <input type="file" name="file_uni_request" class="form-control" accept=".pdf" required>
+                        <label class="form-label label-md fw-medium text-dark">كتاب صادر عن الجامعة يتضمن طلب تقويم درجاته العلمية *</label>
+                        <input type="file" name="file_uni_request" class="form-control academic-input" accept=".pdf" required>
                     </div>
 
                     <!-- Language & ICDL Certificates -->
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">شهادة اللغة الإنكليزية + شهادة ICDL معتمدة *</label>
-                        <input type="file" name="file_lang_icdl" class="form-control" accept=".pdf" required>
+                        <label class="form-label label-md fw-medium text-dark">شهادة اللغة الإنكليزية + شهادة ICDL معتمدة *</label>
+                        <input type="file" name="file_lang_icdl" class="form-control academic-input" accept=".pdf" required>
                     </div>
 
                     <!-- CV -->
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">السيرة الذاتية للمرشح كاملة *</label>
-                        <input type="file" name="file_cv" class="form-control" accept=".pdf" required>
+                        <label class="form-label label-md fw-medium text-dark">السيرة الذاتية للمرشح كاملة *</label>
+                        <input type="file" name="file_cv" class="form-control academic-input" accept=".pdf" required>
                     </div>
 
                     <!-- Payment Receipt -->
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">إيصال تسديد رسم تعادل 100,000 ل.س *</label>
-                        <input type="file" name="file_payment" class="form-control" accept=".pdf" required>
+                        <label class="form-label label-md fw-medium text-dark">إيصال تسديد رسم تعادل 100,000 ل.س *</label>
+                        <input type="file" name="file_payment" class="form-control academic-input" accept=".pdf" required>
                     </div>
 
                     <!-- Experience Certificate (Conditional) -->
                     <div class="col-md-6 exp-conditional-file" style="display: none;">
-                        <label class="form-label fw-bold text-dark">شهادة خبرة لا تقل عن سنتين ما بعد الدرجة *</label>
-                        <input type="file" name="file_exp_cert" id="input-fileExpCert" class="form-control" accept=".pdf">
+                        <label class="form-label label-md fw-medium text-dark">شهادة خبرة لا تقل عن سنتين ما بعد الدرجة *</label>
+                        <input type="file" name="file_exp_cert" id="input-fileExpCert" class="form-control academic-input" accept=".pdf">
                     </div>
 
                     <!-- Contracts & Salary Slips (Conditional) -->
                     <div class="col-md-6 exp-conditional-file" style="display: none;">
-                        <label class="form-label fw-bold text-dark">العقود وإيصالات الرواتب مصدقة أصولاً *</label>
-                        <input type="file" name="file_contracts" id="input-fileContracts" class="form-control" accept=".pdf">
+                        <label class="form-label label-md fw-medium text-dark">العقود وإيصالات الرواتب مصدقة أصولاً *</label>
+                        <input type="file" name="file_contracts" id="input-fileContracts" class="form-control academic-input" accept=".pdf">
                     </div>
                 </div>
             </div>
 
             <!-- ================= STEP 7: REVIEW & SUBMIT ================= -->
             <div class="form-section" id="step-7" style="display: none;">
-                <h5 class="fw-bold border-bottom pb-2 mb-4 text-primary"><i class="fa-solid fa-print me-1"></i> الخطوة 7: مراجعة البيانات المدخلة وتأكيد الإرسال</h5>
+                <h5 class="fw-bold border-bottom pb-2 mb-4 d-flex align-items-center gap-2" style="color: var(--primary-container); border-bottom-color: var(--outline-variant) !important;">
+                    <i class="fa-solid fa-print fs-5" style="color: var(--heritage-gold);"></i> الخطوة 7: مراجعة البيانات المدخلة وتأكيد الإرسال
+                </h5>
                 
-                <p class="text-muted mb-4">يرجى مراجعة كافة البيانات المدخلة قبل النقر على زر إنهاء الإرسال. يمكنك التعديل والرجوع لأي خطوة سابقة.</p>
+                <p class="label-md text-muted mb-4">يرجى مراجعة كافة البيانات المدخلة قبل النقر على زر إنهاء الإرسال. يمكنك التعديل والرجوع لأي خطوة سابقة.</p>
 
-                <!-- Mozhakkara Consolidated Review Report (Inspired by design template) -->
-                <div class="mozhakkara-container rounded-3 border">
-                    <div class="mozhakkara-header">
-                        <h4 class="mozhakkara-title">تقرير طلب تقويم وتعادل الشهادات العلمية للمرشح</h4>
-                        <div class="text-muted fw-bold">مجلس التعليم العالي - الجمهورية العربية السورية</div>
+                <!-- Mozhakkara Consolidated Review Report -->
+                <div class="card p-4 shadow-sm border-0" style="border-top: 3px solid var(--heritage-gold) !important; border-radius: 4px; border: 1px solid var(--outline-variant) !important; background-color: #ffffff;">
+                    <div class="text-center pb-3 mb-4 border-bottom" style="border-bottom-color: var(--outline-variant) !important;">
+                        <h4 class="fw-bold mb-1" style="color: var(--primary-container);">تقرير طلب تقويم وتعادل الشهادات العلمية للمرشح</h4>
+                        <div class="text-muted fw-bold label-sm">مجلس التعليم العالي - الجمهورية العربية السورية</div>
                     </div>
                     
-                    <div class="row g-4 p-2 text-dark text-start" dir="rtl" style="text-align: right;">
+                    <div class="row g-4 text-dark text-start" dir="rtl" style="text-align: right;">
                         <!-- Group 1: Personal Details -->
-                        <div class="col-12 border-bottom pb-2">
-                            <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-user me-1"></i> 1. البيانات الشخصية للمرشح:</h6>
+                        <div class="col-12 border-bottom pb-2" style="border-bottom-color: var(--outline-variant) !important;">
+                            <h6 class="fw-bold mb-3" style="color: var(--primary-container);"><i class="fa-solid fa-user me-1" style="color: var(--heritage-gold);"></i> 1. البيانات الشخصية للمرشح:</h6>
                             <div class="row g-2">
                                 <div class="col-md-6"><strong>الاسم والكنية:</strong> <span id="preview-fullName"></span></div>
                                 <div class="col-md-6"><strong>اسم الأب:</strong> <span id="preview-fatherName"></span></div>
@@ -507,8 +562,8 @@
                         </div>
 
                         <!-- Group 2: High School -->
-                        <div class="col-12 border-bottom pb-2">
-                            <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-graduation-cap me-1"></i> 2. بيانات الشهادة الثانوية:</h6>
+                        <div class="col-12 border-bottom pb-2" style="border-bottom-color: var(--outline-variant) !important;">
+                            <h6 class="fw-bold mb-3" style="color: var(--primary-container);"><i class="fa-solid fa-graduation-cap me-1" style="color: var(--heritage-gold);"></i> 2. بيانات الشهادة الثانوية:</h6>
                             <div class="row g-2">
                                 <div class="col-md-6"><strong>الدولة المانحة:</strong> <span id="preview-hsCountry"></span></div>
                                 <div class="col-md-6"><strong>نوع البكالوريا:</strong> <span id="preview-hsType"></span></div>
@@ -518,8 +573,8 @@
                         </div>
 
                         <!-- Group 3: Bachelor's -->
-                        <div class="col-12 border-bottom pb-2">
-                            <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-building-columns me-1"></i> 3. بيانات الإجازة الجامعية الأولى (البكالوريوس):</h6>
+                        <div class="col-12 border-bottom pb-2" style="border-bottom-color: var(--outline-variant) !important;">
+                            <h6 class="fw-bold mb-3" style="color: var(--primary-container);"><i class="fa-solid fa-building-columns me-1" style="color: var(--heritage-gold);"></i> 3. بيانات الإجازة الجامعية الأولى (البكالوريوس):</h6>
                             <div class="row g-2">
                                 <div class="col-md-6"><strong>الدولة المانحة:</strong> <span id="preview-baCountry"></span></div>
                                 <div class="col-md-6"><strong>الجامعة المانحة / الجهة المانحة:</strong> <span id="preview-baUni"></span></div>
@@ -533,8 +588,8 @@
                         </div>
 
                         <!-- Group 4: Master's -->
-                        <div class="col-12 border-bottom pb-2">
-                            <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-graduation-cap me-1"></i> 4. بيانات درجة الماجستير والخبرة التدريسية:</h6>
+                        <div class="col-12 border-bottom pb-2" style="border-bottom-color: var(--outline-variant) !important;">
+                            <h6 class="fw-bold mb-3" style="color: var(--primary-container);"><i class="fa-solid fa-graduation-cap me-1" style="color: var(--heritage-gold);"></i> 4. بيانات درجة الماجستير والخبرة التدريسية:</h6>
                             <div class="row g-2">
                                 <div class="col-md-6"><strong>الجامعة المانحة (سورية):</strong> <span id="preview-maUni"></span></div>
                                 <div class="col-md-6"><strong>التخصص العام:</strong> <span id="preview-maFaculty"></span></div>
@@ -548,7 +603,7 @@
                                 
                                 <!-- Experience Section in Report -->
                                 <div class="col-12 mt-2" id="preview-experience-container" style="display: none;">
-                                    <div class="card p-2 bg-light border-0">
+                                    <div class="card p-2 border-0" style="background-color: var(--surface-container-low);">
                                         <strong>الخبرة التدريسية (> سنتين):</strong> 
                                         <div>الجهة/المكان: <span id="preview-expPlace"></span> | من عام: <span id="preview-expFrom"></span> إلى عام: <span id="preview-expTo"></span></div>
                                     </div>
@@ -558,15 +613,15 @@
 
                         <!-- Group 5: Request & Courses -->
                         <div class="col-12">
-                            <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-file-signature me-1"></i> 5. كتاب طلب الجامعة والمقررات المرشح لتدريسها:</h6>
+                            <h6 class="fw-bold mb-3" style="color: var(--primary-container);"><i class="fa-solid fa-file-signature me-1" style="color: var(--heritage-gold);"></i> 5. كتاب طلب الجامعة والمقررات المرشح لتدريسها:</h6>
                             <div class="row g-2 mb-3">
                                 <div class="col-md-6"><strong>رقم كتاب الجامعة:</strong> <span id="preview-reqNo"></span></div>
                                 <div class="col-md-6"><strong>تاريخ كتاب الجامعة:</strong> <span id="preview-reqDate"></span></div>
                             </div>
                             <strong>المقررات المقترحة لتدريسها:</strong>
                             <div class="table-responsive mt-2">
-                                <table class="table table-bordered table-sm fs-8 text-center align-middle">
-                                    <thead class="table-light">
+                                <table class="table mohe-table text-center align-middle">
+                                    <thead>
                                         <tr>
                                             <th>اسم المقرر الدراسي</th>
                                             <th>الكلية</th>
@@ -583,26 +638,26 @@
                 </div>
 
                 <!-- Final check warning confirmation -->
-                <div class="form-check form-switch mt-4 p-3 bg-light rounded-3 d-flex align-items-center gap-3">
-                    <input class="form-check-input ms-0 me-3" type="checkbox" id="chkConfirm" required>
-                    <label class="form-check-label fw-bold text-dark mb-0" for="chkConfirm">
+                <div class="form-check form-switch mt-4 p-3 border rounded d-flex align-items-center gap-3" style="background-color: var(--surface-container-low); border-color: var(--outline-variant) !important;">
+                    <input class="form-check-input ms-0 me-3" type="checkbox" id="chkConfirm" required style="width: 2.2em; height: 1.2em;">
+                    <label class="form-check-label fw-bold text-dark mb-0 label-md" for="chkConfirm">
                         نصادق نحن في إدارة الجامعة على صحة كافة البيانات والوثائق المرفقة أعلاه، ونتحمل المسؤولية القانونية كاملة عن أي معلومات مغلوطة.
                     </label>
                 </div>
             </div>
 
             <!-- ================= BUTTONS NAVIGATION ================= -->
-            <div class="d-flex justify-content-between mt-5 pt-3 border-top">
-                <button type="button" class="btn btn-secondary px-4 py-2" id="btn-prev" onclick="changeStep(-1)" style="display: none;">
+            <div class="d-flex justify-content-between mt-5 pt-3 border-top" style="border-top-color: var(--outline-variant) !important;">
+                <button type="button" class="btn btn-outline-navy px-4 py-2" id="btn-prev" onclick="changeStep(-1)" style="display: none;">
                     <i class="fa-solid fa-arrow-right me-1"></i> السابق
                 </button>
                 <div id="spacer-prev"></div> <!-- Spacer if step 1 -->
 
-                <button type="button" class="btn btn-mohe-primary px-4 py-2" id="btn-next" onclick="changeStep(1)">
+                <button type="button" class="btn btn-primary px-4 py-2" id="btn-next" onclick="changeStep(1)">
                     التالي <i class="fa-solid fa-arrow-left ms-1"></i>
                 </button>
 
-                <button type="submit" class="btn btn-mohe-gold px-5 py-2" id="btn-submit" style="display: none;">
+                <button type="submit" class="btn btn-gold-cta px-5 py-2" id="btn-submit" style="display: none;">
                     إنهاء وإرسال الطلب للوزارة <i class="fa-solid fa-paper-plane ms-1"></i>
                 </button>
             </div>
@@ -628,15 +683,15 @@
         const newRow = document.createElement('tr');
         newRow.innerHTML = `
             <td>
-                <input type="text" name="courses[${courseCount}][name]" class="form-control form-control-sm course-name-input" placeholder="مثال: معمارية الحاسب" required>
+                <input type="text" name="courses[${courseCount}][name]" class="form-control form-control-sm academic-input course-name-input" placeholder="مثال: معمارية الحاسب" required>
             </td>
             <td>
-                <input type="text" name="courses[${courseCount}][faculty]" class="form-control form-control-sm course-faculty-input" placeholder="مثال: هندسة المعلوماتية" required>
+                <input type="text" name="courses[${courseCount}][faculty]" class="form-control form-control-sm academic-input course-faculty-input" placeholder="مثال: هندسة المعلوماتية" required>
             </td>
             <td>
-                <input type="text" name="courses[${courseCount}][department]" class="form-control form-control-sm course-dept-input" placeholder="مثال: قسم البرمجيات" required>
+                <input type="text" name="courses[${courseCount}][department]" class="form-control form-control-sm academic-input course-dept-input" placeholder="مثال: قسم البرمجيات" required>
             </td>
-            <td>
+            <td class="text-center">
                 <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeCourseRow(this)">
                     <i class="fa-solid fa-trash"></i>
                 </button>
@@ -778,12 +833,14 @@
 
         // Update indicators
         updateWizardProgress();
+
+        // Scroll smooth to wizard top
+        window.scrollTo({ top: 150, behavior: 'smooth' });
     }
 
     function updateWizardProgress() {
         // Update Progress Bar
         const barWidth = ((currentStep - 1) / (totalSteps - 1)) * 100;
-        document.getElementById('wizard-progress-bar').style.style = `width: ${barWidth}%`;
         document.getElementById('wizard-progress-bar').style.width = `${barWidth}%`;
 
         // Update Circle indicators
@@ -916,6 +973,117 @@
             `;
             previewCoursesTbody.appendChild(row);
         });
+    }
+
+    function toggleCandidateLookup(show) {
+        const box = document.getElementById('candidate_lookup_box');
+        if (box) {
+            if (show) {
+                box.classList.remove('d-none');
+            } else {
+                box.classList.add('d-none');
+            }
+        }
+    }
+
+    function performCandidateLookup() {
+        const input = document.getElementById('candidate_search_input');
+        const area = document.getElementById('lookup_results_area');
+        if (!input || !area) return;
+
+        const query = input.value.trim();
+        if (query.length < 2) {
+            area.innerHTML = '<div class="alert alert-warning py-1.5 px-3 fs-8 mt-2">يرجى كتابة الرقم الوطني للمرشح للاستعلام.</div>';
+            return;
+        }
+
+        area.innerHTML = '<div class="text-center py-2 text-muted fs-8"><i class="fa-solid fa-spinner fa-spin me-1"></i> جاري الاستعلام بالرقم الوطني في قاعدة البيانات...</div>';
+
+        fetch(`{{ route('university.candidate.lookup') }}?national_id=${encodeURIComponent(query)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success || !data.candidate) {
+                    area.innerHTML = `<div class="alert alert-info py-1.5 px-3 fs-8 mt-2">${data.message || 'لم يتم العثور على أي مرشح مسجل سابقاً بهذا الرقم الوطني.'}</div>`;
+                    return;
+                }
+
+                const c = data.candidate;
+                const hs = data.high_school;
+                const ba = data.bachelor;
+                const ma = data.master;
+
+                // Auto-fill Step 1 (Personal Info)
+                if (c.full_name) document.getElementById('input-fullName').value = c.full_name;
+                if (c.national_id) document.getElementById('input-nationalId').value = c.national_id;
+                if (c.dob) document.getElementById('input-dob').value = c.dob;
+                if (c.job_title) document.getElementById('input-jobTitle').value = c.job_title;
+                if (c.gender) document.getElementById('input-gender').value = c.gender;
+                if (c.email) document.getElementById('input-email').value = c.email;
+                if (c.mobile) document.getElementById('input-mobile').value = c.mobile;
+                if (c.phone) document.getElementById('input-phone').value = c.phone;
+                if (c.address) document.getElementById('input-address').value = c.address;
+                if (c.nationality_id) {
+                    document.getElementById('input-nationality').value = c.nationality_id;
+                    updateSyrianStatus(document.getElementById('input-nationality'));
+                }
+
+                // Auto-fill Step 2 (High School)
+                if (hs) {
+                    if (hs.country_id) {
+                        const hsCountry = document.getElementById('input-hsCountry');
+                        if (hsCountry) {
+                            hsCountry.value = hs.country_id;
+                            toggleHsCountrySection(hsCountry);
+                        }
+                    }
+                    if (hs.type) document.getElementById('input-hsType').value = hs.type;
+                    if (hs.grant_date) document.getElementById('input-hsDate').value = hs.grant_date;
+                    if (hs.decision_no) document.getElementById('input-hsDecisionNo').value = hs.decision_no;
+                }
+
+                // Auto-fill Step 3 (Bachelor's Degree)
+                if (ba) {
+                    if (ba.country_id) {
+                        const baCountry = document.getElementById('input-baCountry');
+                        if (baCountry) {
+                            baCountry.value = ba.country_id;
+                            toggleBaCountrySection(baCountry);
+                        }
+                    }
+                    if (ba.university_id) document.getElementById('input-baUniId').value = ba.university_id;
+                    if (ba.university_other) document.getElementById('input-baUniOther').value = ba.university_other;
+                    if (ba.faculty) document.getElementById('input-baFaculty').value = ba.faculty;
+                    if (ba.department) document.getElementById('input-baDept').value = ba.department;
+                    if (ba.registration_date) document.getElementById('input-baRegDate').value = ba.registration_date;
+                    if (ba.grant_date) document.getElementById('input-baGrantDate').value = ba.grant_date;
+                    if (ba.rank) document.getElementById('input-baRank').value = ba.rank;
+                    if (ba.decision_no) document.getElementById('input-baDecisionNo').value = ba.decision_no;
+                }
+
+                // Auto-fill Step 4 (Master's Degree)
+                if (ma) {
+                    if (ma.university_id) document.getElementById('input-maUniId').value = ma.university_id;
+                    if (ma.faculty) document.getElementById('input-maFaculty').value = ma.faculty;
+                    if (ma.department) document.getElementById('input-maDept').value = ma.department;
+                    if (ma.registration_date) document.getElementById('input-maRegDate').value = ma.registration_date;
+                    if (ma.defense_date) document.getElementById('input-maDefDate').value = ma.defense_date;
+                    if (ma.grant_date) document.getElementById('input-maGrantDate').value = ma.grant_date;
+                    if (ma.rank) document.getElementById('input-maRank').value = ma.rank;
+                    if (ma.supervisor) document.getElementById('input-maSupervisor').value = ma.supervisor;
+                    if (ma.thesis_title) document.getElementById('input-maThesisTitle').value = ma.thesis_title;
+                }
+
+                area.innerHTML = `
+                    <div class="alert alert-success py-2 px-3 fs-8 mt-2 shadow-sm border-0" style="background-color: #E6F4EA; color: #137333;">
+                        <i class="fa-solid fa-circle-check fs-6 me-1.5" style="color: #137333;"></i>
+                        <strong>تم الاستعلام والتعبئة بنجاح بالرقم الوطني (${c.national_id}):</strong><br>
+                        تم جلب وتعبئة البيانات الشخصية والمؤهلات العلمية السابقة للمرشح (<strong>${c.full_name}</strong>) تلقائياً عبر جميع الخطوات! يمكنك الضغط على "التالي" لمتابعة الخطوات ومراجعة أو إضافة مرفقات جديدة.
+                    </div>
+                `;
+            })
+            .catch(err => {
+                area.innerHTML = '<div class="alert alert-danger py-1.5 px-3 fs-8 mt-2">حدث خطأ أثناء إجراء عملية الاستعلام. يرجى التأكد من الرقم الوطني وإعادة المحاولة.</div>';
+            });
     }
 </script>
 @endpush

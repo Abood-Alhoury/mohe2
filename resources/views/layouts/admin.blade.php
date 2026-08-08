@@ -57,8 +57,8 @@
         }
 
         .mohe-emblem-ring {
-            width: 52px;
-            height: 52px;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
             border: 2px solid var(--heritage-gold);
             padding: 2px;
@@ -100,16 +100,18 @@
     <header class="mohe-header">
         <div class="container-fluid px-4 d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-3">
-                <!-- Circular Gold Ring Logo Emblem -->
-                <div class="mohe-emblem-ring">
-                    <img src="{{ asset('assets/logo.jpg') }}" 
-                         alt="وزارة التعليم العالي" 
-                         onerror="this.onerror=null; this.src='{{ asset('images/mohe_logo.jpg') }}';">
-                </div>
-                <div>
-                    <h1 class="h5 fw-bold text-white mb-0">مجلس التعليم العالي</h1>
-                    <p class="small text-white-50 mb-0">نظام إدارة وقرارات معادلة الشهادات العلمية</p>
-                </div>
+                <a href="{{ route('admin.dashboard') }}" class="d-flex align-items-center gap-3 text-decoration-none">
+                    <!-- Circular Gold Ring Logo Emblem -->
+                    <div class="mohe-emblem-ring">
+                        <img src="{{ asset('assets/logo.jpg') }}" 
+                             alt="وزارة التعليم العالي" 
+                             onerror="this.onerror=null; this.src='{{ asset('images/mohe_logo.jpg') }}';">
+                    </div>
+                    <div>
+                        <h1 class="h5 fw-bold text-white mb-0">مجلس التعليم العالي</h1>
+                        <p class="small text-white-50 mb-0">نظام إدارة وقرارات معادلة الشهادات العلمية</p>
+                    </div>
+                </a>
 
                 <!-- SIDEBAR EXPAND/COLLAPSE TOGGLE BUTTON -->
                 <button type="button" 
