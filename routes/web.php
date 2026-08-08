@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\ApplicationsController;
@@ -10,17 +12,33 @@ use App\Http\Controllers\Admin\SearchController;
 use App\Http\Controllers\Admin\ReportsController;
 use App\Http\Controllers\Admin\PdfReportController;
 use App\Http\Controllers\Admin\DecisionsController;
+use App\Http\Controllers\University\DashboardController as UniDashboardController;
+use App\Http\Controllers\University\ApplicationWizardController;
 
-// Redirect root to Admin Dashboard
+// 1. Redirect Root based on authentication
 Route::get('/', function () {
-    return redirect()->route('admin.dashboard');
+    if (Auth::check()) {
+        $user = Auth::user();
+        if ($user->role && $user->role->name === 'admin') {
+            return redirect()->route('admin.dashboard');
+        } elseif ($user->role && $user->role->name === 'university') {
+            return redirect()->route('university.dashboard');
+        }
+    }
+    return redirect()->route('login');
 });
 
-Route::prefix('admin')->group(function () {
-    // 1. Dashboard
+// 2. Authentication Routes
+Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [LoginController::class, 'login']);
+Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
+// 3. Admin Area (Protected by role:admin)
+Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
+    // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
 
-    // 2. Settings (Tabs: Add Admin, Add Uni, Uni Accounts, Add Country, Add Level, Site Lock)
+    // Settings
     Route::get('/settings', [SettingsController::class, 'index'])->name('admin.settings');
     Route::post('/settings/admin', [SettingsController::class, 'storeAdmin'])->name('admin.settings.store_admin');
     Route::post('/settings/university', [SettingsController::class, 'storeUniversity'])->name('admin.settings.store_university');
@@ -34,7 +52,7 @@ Route::prefix('admin')->group(function () {
     Route::delete('/settings/country/{id}', [SettingsController::class, 'deleteCountry'])->name('admin.settings.delete_country');
     Route::delete('/settings/level/{id}', [SettingsController::class, 'deleteEducationLevel'])->name('admin.settings.delete_level');
 
-    // 3. Equivalence Applications
+    // Equivalence Applications
     Route::get('/applications', [ApplicationsController::class, 'index'])->name('admin.applications.index');
     Route::patch('/applications/{id}/status', [ApplicationsController::class, 'updateStatus'])->name('admin.applications.update_status');
     Route::post('/applications/{id}/message', [ApplicationsController::class, 'sendMessage'])->name('admin.applications.send_message');
@@ -42,20 +60,38 @@ Route::prefix('admin')->group(function () {
     Route::patch('/applications/{id}/candidate', [EditApplicationController::class, 'updateCandidate'])->name('admin.applications.update_candidate');
     Route::patch('/applications/{id}/education', [EditApplicationController::class, 'updateEducation'])->name('admin.applications.update_education');
 
-    // 4. General Committee Topics
+    // General Committee Topics
     Route::get('/committee', [CommitteeController::class, 'index'])->name('admin.committee.index');
     Route::patch('/committee/{id}', [CommitteeController::class, 'decide'])->name('admin.committee.decide');
 
-    // 5. Advanced Search
+    // Advanced Search
     Route::get('/search', [SearchController::class, 'index'])->name('admin.search.index');
 
-    // 6. Reports & Statistics
+    // Reports & Statistics
     Route::get('/reports', [ReportsController::class, 'index'])->name('admin.reports.index');
+    Route::get('/reports/export-pdf', [ReportsController::class, 'exportPdf'])->name('admin.reports.pdf');
     Route::get('/reports/{id}/mozhakkara', [PdfReportController::class, 'show'])->name('admin.reports.show');
     Route::get('/reports/{id}/pdf', [PdfReportController::class, 'downloadPdf'])->name('admin.reports.download_pdf');
     Route::get('/reports/{id}/consolidated', [PdfReportController::class, 'consolidatedView'])->name('admin.reports.consolidated');
 
-    // 7. Equivalence Decisions Upload & Issue
+    // Equivalence Decisions Upload & Issue
     Route::get('/decisions', [DecisionsController::class, 'index'])->name('admin.decisions.index');
     Route::post('/decisions', [DecisionsController::class, 'store'])->name('admin.decisions.store');
+});
+
+// 4. University Area (Protected by role:university)
+Route::prefix('university')->middleware(['auth', 'role:university'])->group(function () {
+    // Dashboard
+    Route::get('/dashboard', [UniDashboardController::class, 'index'])->name('university.dashboard');
+    
+    // Notifications & Messages
+    Route::get('/messages', [UniDashboardController::class, 'messages'])->name('university.messages');
+    Route::post('/applications/{appId}/reply', [UniDashboardController::class, 'replyMessage'])->name('university.applications.reply');
+
+    // Wizard: Choose Equivalence Type
+    Route::get('/apply/options', [ApplicationWizardController::class, 'showOptions'])->name('university.apply.options');
+    
+    // Wizard: Syrian Master's step-by-step
+    Route::get('/apply/syrian-masters', [ApplicationWizardController::class, 'showSyrianMastersWizard'])->name('university.apply.syrian_masters');
+    Route::post('/apply/syrian-masters', [ApplicationWizardController::class, 'submitSyrianMastersWizard'])->name('university.apply.syrian_masters.submit');
 });

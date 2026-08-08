@@ -24,11 +24,11 @@
         <div class="container-fluid px-4">
             <div class="d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center gap-3">
-                    <!-- Ministry Emblem SVG Icon -->
-                    <div class="mohe-emblem bg-white p-2 rounded-circle shadow-sm" style="width: 55px; height: 55px; display: flex; align-items: center; justify-content: center;">
-                        <i class="fa-solid me-0 fa-landmark text-success fs-2" style="color: #0f392b !important;"></i>
+                    <!-- Ministry Emblem Image -->
+                    <div class="mohe-emblem">
+                        <img src="{{ asset('assets/logo.jpg') }}" alt="وزارة التعليم العالي">
                     </div>
-                    <div>
+                    <div class="brand-info-wrapper">
                         <div class="brand-title">وزارة التعليم العالي والبحث العلمي</div>
                         <div class="brand-subtitle"><i class="fa-solid fa-graduation-cap me-1"></i> مجلس التعليم العالي - نظام إدارة وقرارات معادلة الشهادات العلمية</div>
                     </div>
@@ -51,7 +51,14 @@
                         <ul class="dropdown-menu dropdown-menu-end shadow">
                             <li><a class="dropdown-item" href="{{ route('admin.settings') }}"><i class="fa-solid fa-gear me-2 text-primary"></i> إعدادات الموقع</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="#"><i class="fa-solid fa-right-from-bracket me-2"></i> تسجيل الخروج</a></li>
+                            <li>
+                                <form action="{{ route('logout') }}" method="POST">
+                                    @csrf
+                                    <button class="dropdown-item text-danger fw-bold" type="submit">
+                                        <i class="fa-solid fa-right-from-bracket me-2"></i> تسجيل الخروج
+                                    </button>
+                                </form>
+                            </li>
                         </ul>
                     </div>
                 </div>

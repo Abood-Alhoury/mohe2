@@ -50,6 +50,7 @@ return new class extends Migration
             $table->string('password', 255);
             $table->boolean('is_active')->default(true);
             $table->string('card_status', 50)->default('normal'); // 'normal', 'yellow_card', 'frozen'
+            $table->rememberToken();
             $table->timestamps();
         });
 
@@ -57,6 +58,8 @@ return new class extends Migration
         Schema::create('equivalence_profiles', function (Blueprint $table) {
             $table->id();
             $table->string('full_name', 255);
+            $table->string('father_name', 255)->nullable();
+            $table->string('mother_name', 255)->nullable();
             $table->string('national_id', 50)->nullable()->unique();
             $table->date('dob')->nullable();
             $table->string('job_title', 150)->nullable();
@@ -105,13 +108,17 @@ return new class extends Migration
             $table->foreignId('education_level_id')->constrained('lookup_education_levels');
             $table->foreignId('country_id')->nullable()->constrained('lookup_countries')->nullOnDelete();
             $table->foreignId('university_id')->nullable()->constrained('lookup_universities')->nullOnDelete();
+            $table->string('faculty', 255)->nullable();
+            $table->string('department', 255)->nullable();
             $table->string('section_name', 255)->nullable();
             $table->string('general_specialization', 255)->nullable();
             $table->string('exact_specialization', 255)->nullable();
             $table->date('registration_date')->nullable();
+            $table->date('graduation_date')->nullable();
             $table->date('grant_date')->nullable();
             $table->date('defense_date')->nullable();
             $table->string('rank', 100)->nullable(); // المرتبة/التقدير
+            $table->string('supervisor', 255)->nullable();
             $table->string('supervisor_name', 255)->nullable();
             $table->text('thesis_title')->nullable();
             $table->string('envoy_decision', 255)->nullable(); // قرار الإيفاد

@@ -12,8 +12,8 @@ class DashboardController extends Controller
     public function index()
     {
         $totalApps = Application::count();
-        $underStudyCount = Application::where('status', 'قيد الدراسة')->count();
-        $approvedCount = Application::whereIn('status', ['موافقة', 'تم الصدور', 'مقبول مبدئياً'])->count();
+        $underStudyCount = Application::where('status', 'تحت التدقيق الأولي')->count();
+        $approvedCount = Application::where('status', 'تم الصدور')->count();
         $committeeCount = Application::where('status', 'معلق')->count();
         $rejectedCount = Application::where('status', 'مرفوض')->count();
 

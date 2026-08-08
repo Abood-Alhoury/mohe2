@@ -11,9 +11,9 @@ class DecisionsController extends Controller
 {
     public function index(Request $request)
     {
-        // Approved applications ready for decision issuing
+        // Applications ready for decision issuing
         $approvedApps = Application::with(['candidate', 'workUniversity', 'latestDecision'])
-            ->whereIn('status', ['موافق عليها', 'تم الصدور', 'مقبول مبدئياً', 'قيد الدراسة'])
+            ->whereIn('status', ['تحت التدقيق الأولي', 'بانتظار الوثائق', 'تم الصدور'])
             ->latest()
             ->get();
 

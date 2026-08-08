@@ -32,7 +32,8 @@ class ApplicationsController extends Controller
         $universities = LookupUniversity::all();
 
         $statusesList = [
-            'قيد الدراسة',
+            'تحت التدقيق الأولي',
+            'بانتظار الوثائق',
             'معلق',
             'مرفوض',
             'تم الصدور',

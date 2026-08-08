@@ -1,111 +1,250 @@
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&family=Tajawal:wght@300;400;500;700;800&display=swap');
 
 :root {
-    --mohe-primary: #0f392b;
-    --mohe-primary-dark: #0a261d;
-    --mohe-primary-light: #18523f;
-    --mohe-gold: #c5a059;
-    --mohe-gold-light: #dfc17b;
-    --mohe-gold-dark: #a37f39;
-    --mohe-bg: #f4f6f8;
+    --mohe-primary: #1E3A5F;
+    --mohe-primary-dark: #0F2137;
+    --mohe-primary-nav: #08121E;
+    --mohe-primary-light: #2b4f7c;
+    --mohe-gold: #C6A969;
+    --mohe-gold-light: #D4AF37;
+    --mohe-gold-dark: #9e7e2a;
+    --mohe-bg: #f0f3f8;
     --mohe-card-bg: #ffffff;
-    --mohe-border: #e2e8f0;
-    --mohe-text: #1f2937;
-    --mohe-text-muted: #6b7280;
+    --mohe-border: #dde3ec;
+    --mohe-text: #1a2332;
+    --mohe-text-muted: #5a6a80;
 }
 
 body {
-    font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+    font-family: 'Cairo', 'Tajawal', system-ui, -apple-system, sans-serif;
     background-color: var(--mohe-bg);
     color: var(--mohe-text);
     direction: rtl;
     text-align: right;
     min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
-/* Header & Navigation Bar */
+/* =====================================================
+   Premium Government Header - Ministry of Higher Education
+===================================================== */
 .mohe-header {
-    background: linear-gradient(135deg, var(--mohe-primary-dark) 0%, var(--mohe-primary) 100%);
+    background: linear-gradient(160deg, #0B192C 0%, #0F2137 55%, #162c4a 100%);
     color: white;
     border-bottom: 4px solid var(--mohe-gold);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+    position: relative;
+    padding: 1.1rem 0;
+    z-index: 99;
+}
+
+/* Subtle decorative top accent line */
+.mohe-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--mohe-gold), transparent);
+    opacity: 0.6;
 }
 
 .mohe-header .brand-title {
-    font-weight: 800;
-    font-size: 1.35rem;
+    font-family: 'Cairo', 'Tajawal', sans-serif;
+    font-weight: 900;
+    font-size: 1.45rem;
     color: #ffffff;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    line-height: 1.3;
 }
 
 .mohe-header .brand-subtitle {
-    font-size: 0.85rem;
-    color: var(--mohe-gold-light);
+    font-family: 'Cairo', 'Tajawal', sans-serif;
+    font-size: 0.82rem;
+    color: var(--mohe-gold);
+    font-weight: 600;
+    margin-top: 2px;
+    opacity: 0.95;
+    letter-spacing: 0.2px;
 }
 
+/* =====================================================
+   Circular Official Seal / Logo
+===================================================== */
+.mohe-emblem {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 2.5px solid var(--mohe-gold);
+    box-shadow:
+        0 0 0 3px rgba(198, 169, 105, 0.18),
+        0 6px 20px rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: rgba(255,255,255,0.06);
+    flex-shrink: 0;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.mohe-emblem:hover {
+    transform: scale(1.07);
+    box-shadow:
+        0 0 0 4px rgba(198, 169, 105, 0.3),
+        0 8px 25px rgba(0, 0, 0, 0.45);
+}
+
+.mohe-emblem img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 50%;
+    mix-blend-mode: multiply;
+    filter: contrast(1.05) brightness(1.02);
+}
+
+.brand-info-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* =====================================================
+   System Status Badge - Pulsing Green Dot
+===================================================== */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    font-family: 'Cairo', sans-serif;
+    border: 1px solid rgba(255,255,255,0.12);
+    backdrop-filter: blur(4px);
+    background: rgba(255, 255, 255, 0.07);
+    color: #e2e8f0;
+    white-space: nowrap;
+}
+
+.status-badge.status-open .status-dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+    animation: pulse-green 1.8s infinite;
+    flex-shrink: 0;
+}
+
+.status-badge.status-locked .status-dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: #ef4444;
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    animation: pulse-red 1.8s infinite;
+    flex-shrink: 0;
+}
+
+@keyframes pulse-green {
+    0%   { box-shadow: 0 0 0 0 rgba(34,197,94,0.7); }
+    70%  { box-shadow: 0 0 0 7px rgba(34,197,94,0); }
+    100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+}
+
+@keyframes pulse-red {
+    0%   { box-shadow: 0 0 0 0 rgba(239,68,68,0.7); }
+    70%  { box-shadow: 0 0 0 7px rgba(239,68,68,0); }
+    100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+}
+
+/* Admin / User Glass Button */
+.btn-glass {
+    background: rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #f1f5f9;
+    font-family: 'Cairo', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    border-radius: 10px;
+    padding: 6px 16px;
+    backdrop-filter: blur(4px);
+    transition: all 0.22s ease;
+    white-space: nowrap;
+}
+
+.btn-glass:hover, .btn-glass:focus {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: var(--mohe-gold);
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+}
+
+.btn-glass .text-warning {
+    color: var(--mohe-gold) !important;
+}
+
+/* =====================================================
+   Main Navigation Bar
+===================================================== */
 .mohe-nav {
-    background-color: var(--mohe-primary-dark);
-    border-top: 1px solid rgba(197, 160, 89, 0.3);
+    background-color: #08121E;
+    border-top: 1px solid rgba(198, 169, 105, 0.2);
+    border-bottom: 1px solid rgba(198, 169, 105, 0.08);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.3);
 }
 
 .mohe-nav .nav-link {
-    color: #e5e7eb;
-    font-weight: 600;
-    padding: 0.75rem 1.25rem;
-    border-radius: 0;
-    transition: all 0.2s ease-in-out;
-}
-
-.mohe-nav .nav-link:hover, .mohe-nav .nav-link.active {
-    color: #ffffff;
-    background-color: var(--mohe-primary-light);
-    border-bottom: 3px solid var(--mohe-gold);
-}
-
-/* Top Tab Bar matching ASPX Legacy Design Tabs */
-.legacy-tab-bar {
-    background-color: #2b3e50;
-    border-radius: 6px;
-    padding: 6px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    justify-content: center;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-}
-
-.legacy-tab-btn {
-    background-color: #3498db;
-    color: white;
-    border: none;
-    padding: 8px 18px;
+    font-family: 'Cairo', 'Tajawal', sans-serif;
+    color: #94a3b8;
     font-weight: 700;
-    font-size: 0.9rem;
-    border-radius: 4px;
-    text-decoration: none;
-    transition: background-color 0.2s;
+    font-size: 0.87rem;
+    padding: 0.8rem 1.2rem;
+    border-radius: 0;
+    border-bottom: 3px solid transparent;
+    transition: all 0.22s ease;
+    letter-spacing: 0.2px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
-.legacy-tab-btn:hover, .legacy-tab-btn.active {
-    background-color: #1d6fa5;
+.mohe-nav .nav-link:hover {
+    color: #e2e8f0;
+    background: rgba(198, 169, 105, 0.07);
+    border-bottom: 3px solid rgba(198, 169, 105, 0.5);
+}
+
+.mohe-nav .nav-link.active {
     color: #ffffff;
+    background: rgba(198, 169, 105, 0.12);
+    border-bottom: 3px solid var(--mohe-gold);
+    font-weight: 800;
 }
 
 /* Cards & Widgets */
 .mohe-card {
     background: var(--mohe-card-bg);
     border: 1px solid var(--mohe-border);
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
     margin-bottom: 1.5rem;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.mohe-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(30, 58, 95, 0.08);
 }
 
 .mohe-card-header {
     background-color: #ffffff;
     border-bottom: 2px solid var(--mohe-gold);
-    padding: 1rem 1.25rem;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
+    padding: 1.1rem 1.35rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -115,7 +254,39 @@ body {
     font-weight: 700;
     color: var(--mohe-primary);
     margin: 0;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
+}
+
+/* Legacy Tab Bar (matching admin settings sub-tabs) */
+.legacy-tab-bar {
+    background-color: var(--mohe-primary-dark);
+    border-radius: 8px;
+    padding: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    margin-bottom: 1.5rem;
+}
+
+.legacy-tab-btn {
+    background-color: var(--mohe-primary-light);
+    color: #cbd5e1;
+    border: 1px solid rgba(255,255,255,0.05);
+    padding: 10px 20px;
+    font-weight: 700;
+    font-size: 0.92rem;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.legacy-tab-btn:hover, .legacy-tab-btn.active {
+    background-color: var(--mohe-gold);
+    color: #ffffff;
+    border-color: var(--mohe-gold);
+    box-shadow: 0 2px 8px rgba(201, 176, 55, 0.3);
 }
 
 /* Custom Table Styles */
@@ -128,16 +299,16 @@ body {
     background-color: var(--mohe-primary);
     color: #ffffff;
     font-weight: 700;
-    font-size: 0.9rem;
-    padding: 0.85rem;
-    border: 1px solid #164e3b;
+    font-size: 0.92rem;
+    padding: 0.95rem;
+    border: 1px solid var(--mohe-primary-dark);
     text-align: center;
     vertical-align: middle;
 }
 
 .mohe-table td {
-    padding: 0.75rem;
-    font-size: 0.9rem;
+    padding: 0.85rem;
+    font-size: 0.92rem;
     border: 1px solid #e2e8f0;
     vertical-align: middle;
     text-align: center;
@@ -148,19 +319,23 @@ body {
 }
 
 .mohe-table tbody tr:hover {
-    background-color: #f0fdf4;
+    background-color: #f0f7ff;
 }
 
 /* Buttons */
 .btn-mohe-primary {
     background-color: var(--mohe-primary);
     color: white;
-    font-weight: 600;
+    font-weight: 700;
     border: none;
+    transition: background 0.2s, transform 0.1s;
 }
 .btn-mohe-primary:hover {
     background-color: var(--mohe-primary-light);
     color: white;
+}
+.btn-mohe-primary:active {
+    transform: scale(0.98);
 }
 
 .btn-mohe-gold {
@@ -168,35 +343,180 @@ body {
     color: #ffffff;
     font-weight: 700;
     border: none;
+    transition: background 0.2s, transform 0.1s;
+    box-shadow: 0 2px 6px rgba(201, 176, 55, 0.25);
 }
 .btn-mohe-gold:hover {
     background-color: var(--mohe-gold-dark);
     color: #ffffff;
 }
-
-/* Status Badges */
-.badge-status {
-    padding: 0.4em 0.8em;
-    font-size: 0.85rem;
-    font-weight: 600;
-    border-radius: 6px;
+.btn-mohe-gold:active {
+    transform: scale(0.98);
 }
 
-.badge-study { background-color: #3b82f6; color: white; } /* قيد الدراسة */
-.badge-approved { background-color: #10b981; color: white; } /* موافقة / تم الصدور */
-.badge-rejected { background-color: #ef4444; color: white; } /* مرفوض */
-.badge-suspended { background-color: #f59e0b; color: white; } /* معلق */
-.badge-paper { background-color: #8b5cf6; color: white; } /* استكمال أوراق */
+/* Status Badges (Colored text only, no background box) */
+.badge-status {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 800;
+    border-radius: 0;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    display: inline-block;
+}
+
+.badge-study { color: #2563eb !important; background: transparent !important; } /* تحت التدقيق الأولي */
+.badge-approved { color: #16a34a !important; background: transparent !important; } /* تم الصدور */
+.badge-rejected { color: #dc2626 !important; background: transparent !important; } /* مرفوض */
+.badge-suspended { color: #d97706 !important; background: transparent !important; } /* معلق */
+.badge-paper { color: #d97706 !important; background: transparent !important; } /* بانتظار الوثائق */
+
+/* Notifications Dropdown */
+.notification-dropdown {
+    width: 320px;
+    max-height: 400px;
+    overflow-y: auto;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.notification-item {
+    border-bottom: 1px solid #e2e8f0;
+    padding: 12px 15px;
+    display: block;
+    text-decoration: none;
+    color: var(--mohe-text);
+    transition: background 0.2s;
+}
+
+.notification-item:hover {
+    background-color: #f1f5f9;
+    color: var(--mohe-primary);
+}
+
+.notification-item.unread {
+    background-color: #eff6ff;
+    font-weight: 600;
+}
+
+/* Multi-step progress bar */
+.wizard-steps {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    margin-bottom: 2.5rem;
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+    border: 1px solid #e2e8f0;
+}
+
+.wizard-steps::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 5%;
+    right: 5%;
+    height: 4px;
+    background-color: #e2e8f0;
+    transform: translateY(-50%);
+    z-index: 1;
+}
+
+.wizard-progress {
+    position: absolute;
+    top: 50%;
+    right: 5%;
+    height: 4px;
+    background-color: var(--mohe-gold);
+    transform: translateY(-50%);
+    z-index: 1;
+    transition: width 0.4s ease;
+}
+
+.wizard-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+    cursor: default;
+}
+
+.wizard-icon {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    border: 3px solid #e2e8f0;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.wizard-step.active .wizard-icon {
+    border-color: var(--mohe-primary);
+    background-color: var(--mohe-primary);
+    color: #ffffff;
+    transform: scale(1.15);
+    box-shadow: 0 0 0 5px rgba(30, 58, 95, 0.15);
+}
+
+.wizard-step.completed .wizard-icon {
+    border-color: var(--mohe-gold);
+    background-color: var(--mohe-gold);
+    color: #ffffff;
+}
+
+.wizard-label {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #64748b;
+    transition: color 0.3s ease;
+    text-align: center;
+}
+
+.wizard-step.active .wizard-label {
+    color: var(--mohe-primary);
+}
+
+.wizard-step.completed .wizard-label {
+    color: var(--mohe-gold-dark);
+}
+
+.form-section {
+    display: none;
+}
+
+.form-section.active {
+    display: block;
+    animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 
 /* Custom "مذكرة العرض" PDF style preview container */
 .mozhakkara-container {
     background: #ffffff;
     padding: 2.5rem;
-    border: 1px solid #d1d5db;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
     margin: 0 auto 2rem auto;
     max-width: 900px;
-    color: #000;
+    color: #0f172a;
 }
 
 .mozhakkara-header {
@@ -211,4 +531,22 @@ body {
     font-weight: 800;
     font-size: 1.6rem;
     margin-top: 0.5rem;
+}
+
+/* Hide website navigation and headers on print */
+@media print {
+    .mohe-header, .mohe-nav, .no-print, footer, header {
+        display: none !important;
+    }
+    body {
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .container, .container-fluid {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
 }

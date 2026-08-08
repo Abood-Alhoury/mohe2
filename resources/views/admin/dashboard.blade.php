@@ -95,16 +95,18 @@
                         <td>{{ $app->workUniversity->name ?? 'جامعة غير محددة' }}</td>
                         <td>{{ $app->work_faculty ?? 'غ/م' }}</td>
                         <td>
-                            @if($app->status == 'قيد الدراسة')
-                                <span class="badge badge-status badge-study">قيد الدراسة</span>
-                            @elseif($app->status == 'موافقة' || $app->status == 'تم الصدور')
-                                <span class="badge badge-status badge-approved">تم الصدور / موافقة</span>
+                            @if($app->status == 'تحت التدقيق الأولي' || $app->status == 'قيد الدراسة')
+                                <span class="badge-status badge-study">تحت التدقيق الأولي</span>
+                            @elseif($app->status == 'بانتظار الوثائق')
+                                <span class="badge-status badge-paper">بانتظار الوثائق</span>
+                            @elseif($app->status == 'تم الصدور' || $app->status == 'موافقة')
+                                <span class="badge-status badge-approved">تم الصدور</span>
                             @elseif($app->status == 'معلق')
-                                <span class="badge badge-status badge-suspended">معلق (لجنة)</span>
+                                <span class="badge-status badge-suspended">معلق</span>
                             @elseif($app->status == 'مرفوض')
-                                <span class="badge badge-status badge-rejected">مرفوض</span>
+                                <span class="badge-status badge-rejected">مرفوض</span>
                             @else
-                                <span class="badge bg-secondary text-white fw-bold">{{ $app->status }}</span>
+                                <span class="badge-status badge-study">{{ $app->status }}</span>
                             @endif
                         </td>
                         <td class="text-muted fs-7">{{ $app->created_at ? $app->created_at->format('Y-m-d') : 'غ/م' }}</td>
