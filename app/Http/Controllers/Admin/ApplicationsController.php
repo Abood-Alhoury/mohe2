@@ -17,6 +17,7 @@ class ApplicationsController extends Controller
     {
         $statusFilter = $request->query('status');
         $universityFilter = $request->query('university_id');
+        $searchQuery = $request->query('search');
 
         $query = Application::with(['candidate', 'workUniversity', 'user', 'messages', 'decisions']);
 
@@ -26,6 +27,16 @@ class ApplicationsController extends Controller
 
         if ($universityFilter) {
             $query->where('work_university_id', $universityFilter);
+        }
+
+        if ($searchQuery) {
+            $query->where(function($q) use ($searchQuery) {
+                $q->whereHas('candidate', function($cq) use ($searchQuery) {
+                    $cq->where('full_name', 'like', '%'.$searchQuery.'%');
+                })
+                ->orWhere('application_no', 'like', '%'.$searchQuery.'%')
+                ->orWhere('work_faculty', 'like', '%'.$searchQuery.'%');
+            });
         }
 
         $applications = $query->latest()->paginate(15);
@@ -44,7 +55,8 @@ class ApplicationsController extends Controller
             'universities',
             'statusesList',
             'statusFilter',
-            'universityFilter'
+            'universityFilter',
+            'searchQuery'
         ));
     }
 

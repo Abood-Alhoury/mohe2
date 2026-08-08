@@ -6,162 +6,283 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'بوابة الخدمات الإلكترونية للجامعات') - مجلس التعليم العالي</title>
     
+    <!-- Google Fonts: IBM Plex Sans Arabic -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+
     <!-- Bootstrap 5 RTL CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
     <!-- FontAwesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     
+    <!-- Vite CSS/JS (Tailwind CSS v4 & custom design tokens) -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
     <!-- Custom MoHE Theme CSS -->
-    <link class="mohe-css-link" rel="stylesheet" href="{{ asset('assets/css/mohe.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/mohe.css') }}">
+
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <style>
+        :root {
+            --imperial-navy: #1A2A44;
+            --imperial-navy-dark: #04152E;
+            --heritage-gold: #C5A059;
+            --heritage-gold-light: #FED488;
+            --surface-bg: #F9F9FF;
+            --surface-card: #FFFFFF;
+            --outline-variant: #C5C6CE;
+        }
+
+        body {
+            font-family: 'IBM Plex Sans Arabic', system-ui, -apple-system, sans-serif;
+            background-color: var(--surface-bg);
+            color: #111C2C;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .mohe-header {
+            background-color: var(--imperial-navy);
+            color: #ffffff;
+            border-bottom: 3px solid var(--heritage-gold);
+            box-shadow: 0 4px 12px rgba(4, 21, 46, 0.2);
+            padding: 0.85rem 1.5rem;
+            z-index: 50;
+        }
+
+        .mohe-emblem-ring {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            border: 2px solid var(--heritage-gold);
+            padding: 2px;
+            background-color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            flex-shrink: 0;
+        }
+
+        .mohe-emblem-ring img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 50%;
+        }
+
+        .mohe-footer-institutional {
+            background-color: #e4e2e4;
+            color: #44474D;
+            border-top: 1px solid var(--outline-variant);
+            padding: 1.25rem 2rem;
+            font-size: 0.85rem;
+            margin-top: auto;
+        }
+    </style>
+
     @stack('styles')
 </head>
-<body>
+<body class="bg-[#F9F9FF]" x-data="{ isExpanded: localStorage.getItem('sidebar_expanded') === 'true' }" x-init="$watch('isExpanded', val => localStorage.setItem('sidebar_expanded', val))">
 
-    <!-- Header Banner -->
-    <header class="mohe-header py-3">
-        <div class="container-fluid px-4">
-            <div class="d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center gap-3">
-                    <!-- Official MoHE Logo -->
-                    <div class="mohe-emblem">
-                        <img src="{{ asset('assets/logo.jpg') }}" alt="وزارة التعليم العالي">
-                    </div>
-                    <div class="brand-info-wrapper">
-                        <div class="brand-title">وزارة التعليم العالي والبحث العلمي</div>
-                        <div class="brand-subtitle"><i class="fa-solid fa-building-columns me-1"></i> البوابة الإلكترونية للجامعات السورية - نظام تعادل الشهادات</div>
-                    </div>
+    <!-- 1. TOP HEADER BANNER -->
+    <header class="mohe-header">
+        <div class="container-fluid px-4 d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+                <!-- Circular Gold Ring Logo Emblem -->
+                <div class="mohe-emblem-ring">
+                    <img src="{{ asset('assets/logo.jpg') }}" 
+                         alt="وزارة التعليم العالي"
+                         onerror="this.onerror=null; this.src='{{ asset('images/mohe_logo.jpg') }}';">
+                </div>
+                <div>
+                    <h1 class="h5 fw-bold text-white mb-0">وزارة التعليم العالي والبحث العلمي</h1>
+                    <p class="small text-white-50 mb-0">البوابة الإلكترونية للجامعات السورية - نظام تعادل الشهادات</p>
                 </div>
 
-                <div class="d-flex align-items-center gap-3">
-                    
-                    <!-- Notifications Dropdown Center -->
-                    <div class="dropdown">
-                        <button class="btn btn-outline-light position-relative p-2" type="button" id="notifDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                            <i class="fa-regular fa-bell fs-5"></i>
+                <!-- SIDEBAR EXPAND/COLLAPSE TOGGLE BUTTON -->
+                <button type="button" 
+                        @click="isExpanded = !isExpanded" 
+                        class="btn-sidebar-toggle ms-3" 
+                        title="طَي / توسيع القائمة الجانبية">
+                    <i class="fa-solid" :class="isExpanded ? 'fa-align-right' : 'fa-bars-staggered'"></i>
+                    <span class="d-none d-md-inline ms-1 fw-bold" style="font-size: 0.8rem;" x-text="isExpanded ? 'طَي' : 'توسيع'">توسيع</span>
+                </button>
+            </div>
+
+            <div class="d-flex align-items-center gap-3 ms-auto">
+                @php
+                    $siteLocked = \App\Models\SiteSetting::get('site_locked', '0') === '1';
+                @endphp
+                @if($siteLocked)
+                    <span class="status-badge">
+                        <span class="status-dot pulse-red"></span>
+                        <span>الموقع مغلق للجامعات</span>
+                    </span>
+                @else
+                    <span class="status-badge">
+                        <span class="status-dot pulse-green"></span>
+                        <span>النظام متاح وشغال</span>
+                    </span>
+                @endif
+
+                <!-- Notifications Dropdown -->
+                <div class="dropdown">
+                    <button class="btn btn-outline-light position-relative p-2" type="button" id="notifDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-color: rgba(197, 160, 89, 0.4);">
+                        <i class="fa-regular fa-bell fs-5" style="color: var(--heritage-gold-light);"></i>
+                        @if(isset($notifications) && $notifications->count() > 0)
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.7rem;">
+                                {{ $notifications->count() }}
+                            </span>
+                        @endif
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end shadow-lg py-0 border-0" aria-labelledby="notifDropdown" style="width: 320px; border-top: 3px solid var(--heritage-gold) !important;">
+                        <div class="p-3 border-bottom bg-light d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 fw-bold" style="color: var(--imperial-navy);"><i class="fa-solid fa-bell me-1" style="color: var(--heritage-gold);"></i> الإشعارات والرسائل</h6>
                             @if(isset($notifications) && $notifications->count() > 0)
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.7rem;">
-                                    {{ $notifications->count() }}
-                                </span>
+                                <span class="badge bg-danger">{{ $notifications->count() }} جديدة</span>
                             @endif
-                        </button>
-                        <div class="dropdown-menu dropdown-menu-end shadow-lg notification-dropdown py-0" aria-labelledby="notifDropdown">
-                            <div class="p-3 border-bottom bg-light d-flex justify-content-between align-items-center">
-                                <h6 class="mb-0 fw-bold text-primary"><i class="fa-solid fa-bell me-1"></i> الإشعارات والرسائل</h6>
-                                @if(isset($notifications) && $notifications->count() > 0)
-                                    <span class="badge bg-danger">{{ $notifications->count() }} جديدة</span>
-                                @endif
-                            </div>
-                            <div style="max-height: 320px; overflow-y: auto;">
-                                @if(isset($notifications) && $notifications->count() > 0)
-                                    @foreach($notifications as $notif)
-                                        <a href="{{ route('university.messages') }}" class="notification-item unread">
-                                            <div class="d-flex justify-content-between align-items-start mb-1">
-                                                <span class="badge bg-warning text-dark fs-8">{{ $notif->application->application_no ?? 'طلب' }}</span>
-                                                <small class="text-muted fs-8">{{ $notif->created_at->diffForHumans() }}</small>
-                                            </div>
-                                            <div class="small fw-bold text-dark mb-1">{{ $notif->application->candidate->full_name ?? 'المرشح' }}</div>
-                                            <div class="text-muted text-truncate fs-7" style="max-width: 280px;">{{ $notif->message }}</div>
-                                        </a>
-                                    @endforeach
-                                @else
-                                    <div class="text-center py-4 text-muted">
-                                        <i class="fa-regular fa-bell-slash fs-2 mb-2 d-block"></i>
-                                        لا توجد إشعارات جديدة حالياً
-                                    </div>
-                                @endif
-                            </div>
-                            <div class="p-2 border-top text-center">
-                                <a href="{{ route('university.messages') }}" class="btn btn-sm btn-link text-primary fw-bold text-decoration-none">
-                                    استعراض كافة المراسلات <i class="fa-solid fa-arrow-left ms-1"></i>
-                                </a>
-                            </div>
+                        </div>
+                        <div style="max-height: 320px; overflow-y: auto;">
+                            @if(isset($notifications) && $notifications->count() > 0)
+                                @foreach($notifications as $notif)
+                                    <a href="{{ route('university.messages') }}" class="dropdown-item p-3 border-bottom text-wrap">
+                                        <div class="d-flex justify-content-between align-items-start mb-1">
+                                            <span class="badge bg-warning text-dark fs-8">{{ $notif->application->application_no ?? 'طلب' }}</span>
+                                            <small class="text-muted fs-8">{{ $notif->created_at->diffForHumans() }}</small>
+                                        </div>
+                                        <div class="small fw-bold text-dark mb-1">{{ $notif->application->candidate->full_name ?? 'المرشح' }}</div>
+                                        <div class="text-muted text-truncate fs-7" style="max-width: 280px;">{{ $notif->message }}</div>
+                                    </a>
+                                @endforeach
+                            @else
+                                <div class="text-center py-4 text-muted">
+                                    <i class="fa-regular fa-bell-slash fs-2 mb-2 d-block"></i>
+                                    لا توجد إشعارات جديدة حالياً
+                                </div>
+                            @endif
+                        </div>
+                        <div class="p-2 border-top text-center bg-light">
+                            <a href="{{ route('university.messages') }}" class="btn btn-sm btn-link fw-bold text-decoration-none" style="color: var(--imperial-navy);">
+                                استعراض كافة المراسلات <i class="fa-solid fa-arrow-left ms-1"></i>
+                            </a>
                         </div>
                     </div>
-
-                    <!-- User Account Dropdown -->
-                    <div class="dropdown">
-                        <button class="btn btn-outline-light dropdown-toggle fw-bold" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fa-solid fa-university text-warning me-1"></i> 
-                            {{ Auth::user()->name }}
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userMenu">
-                            <li>
-                                <div class="dropdown-header text-dark fw-bold border-bottom pb-2">
-                                    {{ Auth::user()->university->name ?? 'جامعة مسجلة' }}
-                                </div>
-                            </li>
-                            <li>
-                                <a class="dropdown-item py-2" href="{{ route('university.messages') }}">
-                                    <i class="fa-regular fa-envelope me-2 text-primary"></i> مركز المراسلات
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <form action="{{ route('logout') }}" method="POST">
-                                    @csrf
-                                    <button class="dropdown-item py-2 text-danger fw-bold" type="submit">
-                                        <i class="fa-solid fa-right-from-bracket me-2"></i> تسجيل الخروج
-                                    </button>
-                                </form>
-                            </li>
-                        </ul>
-                    </div>
-
                 </div>
+
+                <!-- User Account Dropdown -->
+                <div class="dropdown">
+                    <button class="btn btn-outline-light dropdown-toggle fw-bold d-flex align-items-center gap-2 px-3 py-1.5" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false" style="border-color: var(--heritage-gold);">
+                        <i class="fa-solid fa-university me-1" style="color: var(--heritage-gold);"></i> 
+                        <span>{{ Auth::user()->name }}</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="userMenu" style="border-top: 3px solid var(--heritage-gold) !important;">
+                        <li>
+                            <div class="dropdown-header text-dark fw-bold border-bottom pb-2">
+                                {{ Auth::user()->university->name ?? 'جامعة مسجلة' }}
+                            </div>
+                        </li>
+                        <li>
+                            <a class="dropdown-item py-2" href="{{ route('university.messages') }}">
+                                <i class="fa-regular fa-envelope me-2 text-primary"></i> مركز المراسلات
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form action="{{ route('logout') }}" method="POST">
+                                @csrf
+                                <button class="dropdown-item py-2 text-danger fw-bold" type="submit">
+                                    <i class="fa-solid fa-right-from-bracket me-2"></i> تسجيل الخروج
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+
             </div>
         </div>
     </header>
 
-    <!-- Main Navigation Bar -->
-    <nav class="mohe-nav shadow-sm mb-4">
-        <div class="container-fluid px-4">
-            <ul class="nav nav-pills me-auto">
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('university.dashboard') ? 'active' : '' }}" href="{{ route('university.dashboard') }}">
-                        <i class="fa-solid fa-chart-line me-1"></i> لوحة التحكم
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('university.apply*') ? 'active' : '' }}" href="{{ route('university.apply.options') }}">
-                        <i class="fa-solid fa-file-circle-plus me-1"></i> تقديم معاملة تعادل
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('university.messages') ? 'active' : '' }}" href="{{ route('university.messages') }}">
-                        <i class="fa-solid fa-comments me-1"></i> المراسلات والإشعارات
-                        @if(isset($notifications) && $notifications->count() > 0)
-                            <span class="badge bg-danger ms-1">{{ $notifications->count() }}</span>
-                        @endif
-                    </a>
-                </li>
-            </ul>
-        </div>
-    </nav>
-
-    <!-- Main Content Area -->
-    <main class="container-fluid px-4 pb-5 flex-grow-1">
-        <!-- Flash Alert Messages -->
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
-                <i class="fa-solid fa-circle-check me-2"></i> {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <!-- 2. MAIN LAYOUT WITH COLLAPSED-BY-DEFAULT SIDEBAR & CANVAS -->
+    <div class="d-flex flex-1">
+        
+        <!-- GLOBAL SIDEBAR FOR UNIVERSITY PORTAL (COLLAPSED BY DEFAULT) -->
+        <aside class="sidebar-container" :class="{ 'expanded': isExpanded }">
+            
+            <!-- University User Profile Box -->
+            <div class="sidebar-profile-box text-center p-3 mb-2 border-bottom border-secondary-subtle">
+                <div class="d-inline-flex align-items-center justify-content-center p-1.5 rounded-circle bg-white shadow-sm mb-2" style="border: 2px solid var(--heritage-gold); width: 60px; height: 60px;">
+                    <i class="fa-solid fa-university fs-3" style="color: var(--imperial-navy);"></i>
+                </div>
+                <h6 class="fw-bold mb-0 text-truncate" style="color: var(--imperial-navy);">{{ Auth::user()->name }}</h6>
+                <small class="text-muted text-truncate d-block">{{ Auth::user()->university->name ?? 'الجامعة المسجلة' }}</small>
             </div>
-        @endif
 
-        @if(session('error'))
-            <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
-                <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <!-- University Sidebar Links -->
+            <nav class="d-flex flex-column gap-1 p-2">
+                <a href="{{ route('university.dashboard') }}" 
+                   class="sidebar-link {{ request()->routeIs('university.dashboard') ? 'active' : '' }}"
+                   :title="!isExpanded ? 'لوحة التحكم الرئيسية' : ''">
+                    <i class="fa-solid fa-chart-line fs-5"></i>
+                    <span class="sidebar-text-label">لوحة التحكم الرئيسية</span>
+                </a>
+
+                <a href="{{ route('university.apply.options') }}" 
+                   class="sidebar-link {{ request()->routeIs('university.apply*') ? 'active' : '' }}"
+                   :title="!isExpanded ? 'تقديم معاملة تعادل جديدة' : ''">
+                    <i class="fa-solid fa-file-circle-plus fs-5"></i>
+                    <span class="sidebar-text-label">تقديم معاملة تعادل</span>
+                </a>
+
+                <a href="{{ route('university.messages') }}" 
+                   class="sidebar-link {{ request()->routeIs('university.messages') ? 'active' : '' }}"
+                   :title="!isExpanded ? 'المراسلات والإشعارات' : ''">
+                    <i class="fa-solid fa-comments fs-5"></i>
+                    <span class="sidebar-text-label">المراسلات والإشعارات</span>
+                    @if(isset($notifications) && $notifications->count() > 0)
+                        <span class="badge bg-danger ms-auto sidebar-text-label">{{ $notifications->count() }}</span>
+                    @endif
+                </a>
+            </nav>
+        </aside>
+
+        <!-- MAIN CANVAS -->
+        <main class="flex-grow-1 p-4">
+            <!-- Flash Alert Messages -->
+            @if(session('success'))
+                <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 mb-4" role="alert" style="border-right: 4px solid #059669 !important;">
+                    <i class="fa-solid fa-circle-check me-2"></i> {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 mb-4" role="alert" style="border-right: 4px solid #ba1a1a !important;">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+
+            @yield('content')
+        </main>
+    </div>
+
+    <!-- 3. OFFICIAL FOOTER -->
+    <footer class="mohe-footer-institutional">
+        <div class="container-fluid px-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <span class="fw-semibold">جميع الحقوق محفوظة © {{ date('Y') }} - وزارة التعليم العالي والبحث العلمي - مجلس التعليم العالي - جمهورية سوريا العربية</span>
             </div>
-        @endif
-
-        @yield('content')
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-white border-top py-3 text-center text-muted mt-auto">
-        <div class="container">
-            <small>جميع الحقوق محفوظة &copy; {{ date('Y') }} - وزارة التعليم العالي والبحث العلمي - مجلس التعليم العالي - جمهورية سوريا العربية</small>
+            <div class="d-flex gap-4">
+                <a href="#" class="text-secondary text-decoration-none">عن المجلس</a>
+                <a href="#" class="text-secondary text-decoration-none">سياسة الخصوصية</a>
+                <a href="#" class="text-secondary text-decoration-none">اتصل بنا</a>
+            </div>
         </div>
     </footer>
 

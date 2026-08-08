@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap');
 @import 'tailwindcss';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -6,6 +7,81 @@
 @source '../**/*.js';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'IBM Plex Sans Arabic', system-ui, -apple-system, sans-serif;
+    --color-imperial-navy: #1A2A44;
+    --color-imperial-navy-dark: #04152E;
+    --color-heritage-gold: #C5A059;
+    --color-heritage-gold-light: #FED488;
+    --color-surface-bg: #F9F9FF;
+    --color-surface-card: #FFFFFF;
 }
+
+/* Design System Custom Utilities */
+:root {
+    --navy-primary: #1A2A44;
+    --navy-dark: #04152E;
+    --gold-heritage: #C5A059;
+    --gold-light: #FED488;
+    --gold-hover: #b38e46;
+    --surface-bg: #F9F9FF;
+    --surface-card: #FFFFFF;
+    --outline-gray: #C5C6CE;
+}
+
+body {
+    font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif;
+    background-color: var(--surface-bg);
+    color: #111C2C;
+}
+
+/* Custom Input Focus Glow */
+.academic-input {
+    border: 1px solid #C5C6CE;
+    border-radius: 4px;
+    transition: all 0.2s ease-in-out;
+}
+
+.academic-input:focus {
+    border-color: #1A2A44 !important;
+    box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.3) !important;
+    outline: none !important;
+}
+
+/* Gold CTA Button */
+.btn-gold-cta {
+    background-color: #C5A059;
+    color: #1A2A44;
+    font-weight: 700;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.btn-gold-cta:hover {
+    background-color: #b38e46;
+    color: #04152E;
+    box-shadow: 0 4px 12px rgba(197, 160, 89, 0.35);
+}
+
+.btn-gold-cta:active {
+    transform: scale(0.99);
+}
+
+/* Gold Circular Ring Emblem Container */
+.gold-ring-emblem {
+    border-radius: 50%;
+    border: 2px solid #C5A059;
+    padding: 3px;
+    background-color: #ffffff;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+/* Level 1 Elevation Shadow */
+.shadow-academic-level1 {
+    box-shadow: 0px 4px 20px rgba(26, 42, 68, 0.05), 0px 1px 3px rgba(26, 42, 68, 0.03);
+}
+
+.shadow-academic-elevated {
+    box-shadow: 0px 10px 30px rgba(26, 42, 68, 0.08);
+}
+

@@ -6,133 +6,260 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'نظام إدارة وقرارات معادلة الشهادات') - مجلس التعليم العالي</title>
     
+    <!-- Google Fonts: IBM Plex Sans Arabic -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+
     <!-- Bootstrap 5 RTL CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
     <!-- FontAwesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <!-- Vite CSS/JS (Tailwind CSS v4 & custom design tokens) -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
     <!-- Custom MoHE Theme -->
     <link rel="stylesheet" href="{{ asset('assets/css/mohe.css') }}">
+    
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
+    <style>
+        :root {
+            --imperial-navy: #1A2A44;
+            --imperial-navy-dark: #04152E;
+            --heritage-gold: #C5A059;
+            --heritage-gold-light: #FED488;
+            --surface-bg: #F9F9FF;
+            --surface-card: #FFFFFF;
+            --outline-variant: #C5C6CE;
+        }
+
+        body {
+            font-family: 'IBM Plex Sans Arabic', system-ui, -apple-system, sans-serif;
+            background-color: var(--surface-bg);
+            color: #111C2C;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Header Styling */
+        .mohe-header {
+            background-color: var(--imperial-navy);
+            color: #ffffff;
+            border-bottom: 3px solid var(--heritage-gold);
+            box-shadow: 0 4px 12px rgba(4, 21, 46, 0.2);
+            padding: 0.85rem 1.5rem;
+            z-index: 50;
+        }
+
+        .mohe-emblem-ring {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            border: 2px solid var(--heritage-gold);
+            padding: 2px;
+            background-color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            flex-shrink: 0;
+        }
+
+        .mohe-emblem-ring img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 50%;
+        }
+
+        .shadow-ambient {
+            box-shadow: 0px 4px 20px rgba(26, 42, 68, 0.05);
+        }
+
+        /* Footer */
+        .mohe-footer-institutional {
+            background-color: #e4e2e4;
+            color: #44474D;
+            border-top: 1px solid var(--outline-variant);
+            padding: 1.25rem 2rem;
+            font-size: 0.85rem;
+            margin-top: auto;
+        }
+    </style>
+
     @stack('styles')
 </head>
-<body>
+<body class="bg-[#F9F9FF]" x-data="{ isExpanded: localStorage.getItem('sidebar_expanded') === 'true' }" x-init="$watch('isExpanded', val => localStorage.setItem('sidebar_expanded', val))">
 
-    <!-- Header Banner -->
-    <header class="mohe-header py-3">
-        <div class="container-fluid px-4">
-            <div class="d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center gap-3">
-                    <!-- Ministry Emblem Image -->
-                    <div class="mohe-emblem">
-                        <img src="{{ asset('assets/logo.jpg') }}" alt="وزارة التعليم العالي">
-                    </div>
-                    <div class="brand-info-wrapper">
-                        <div class="brand-title">وزارة التعليم العالي والبحث العلمي</div>
-                        <div class="brand-subtitle"><i class="fa-solid fa-graduation-cap me-1"></i> مجلس التعليم العالي - نظام إدارة وقرارات معادلة الشهادات العلمية</div>
-                    </div>
+    <!-- 1. TOP HEADER (UNTOUCHED LOGO, TITLE, TOGGLE BUTTON & USER MENU) -->
+    <header class="mohe-header">
+        <div class="container-fluid px-4 d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+                <!-- Circular Gold Ring Logo Emblem -->
+                <div class="mohe-emblem-ring">
+                    <img src="{{ asset('assets/logo.jpg') }}" 
+                         alt="وزارة التعليم العالي" 
+                         onerror="this.onerror=null; this.src='{{ asset('images/mohe_logo.jpg') }}';">
+                </div>
+                <div>
+                    <h1 class="h5 fw-bold text-white mb-0">مجلس التعليم العالي</h1>
+                    <p class="small text-white-50 mb-0">نظام إدارة وقرارات معادلة الشهادات العلمية</p>
                 </div>
 
-                <div class="d-flex align-items-center gap-3">
-                    @php
-                        $siteLocked = \App\Models\SiteSetting::get('site_locked', '0') === '1';
-                    @endphp
-                    @if($siteLocked)
-                        <span class="badge bg-danger fs-6 p-2 shadow-sm"><i class="fa-solid fa-lock me-1"></i> الموقع مغلق للجامعات</span>
-                    @else
-                        <span class="badge bg-success fs-6 p-2 shadow-sm"><i class="fa-solid fa-lock-open me-1"></i> النظام متاح وشغال</span>
-                    @endif
+                <!-- SIDEBAR EXPAND/COLLAPSE TOGGLE BUTTON -->
+                <button type="button" 
+                        @click="isExpanded = !isExpanded" 
+                        class="btn-sidebar-toggle ms-3" 
+                        title="طَي / توسيع القائمة الجانبية">
+                    <i class="fa-solid" :class="isExpanded ? 'fa-align-right' : 'fa-bars-staggered'"></i>
+                    <span class="d-none d-md-inline ms-1 fw-bold" style="font-size: 0.8rem;" x-text="isExpanded ? 'طَي' : 'توسيع'">توسيع</span>
+                </button>
+            </div>
 
-                    <div class="dropdown">
-                        <button class="btn btn-outline-light dropdown-toggle font-bold" type="button" data-bs-toggle="dropdown">
-                            <i class="fa-solid fa-user-shield text-warning me-1"></i> مدير التعادل (Admin)
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end shadow">
-                            <li><a class="dropdown-item" href="{{ route('admin.settings') }}"><i class="fa-solid fa-gear me-2 text-primary"></i> إعدادات الموقع</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <form action="{{ route('logout') }}" method="POST">
-                                    @csrf
-                                    <button class="dropdown-item text-danger fw-bold" type="submit">
-                                        <i class="fa-solid fa-right-from-bracket me-2"></i> تسجيل الخروج
-                                    </button>
-                                </form>
-                            </li>
-                        </ul>
-                    </div>
+            <div class="d-flex align-items-center gap-3 ms-auto">
+                @php
+                    $siteLocked = \App\Models\SiteSetting::get('site_locked', '0') === '1';
+                @endphp
+                @if($siteLocked)
+                    <span class="status-badge">
+                        <span class="status-dot pulse-red"></span>
+                        <span>الموقع مغلق للجامعات</span>
+                    </span>
+                @else
+                    <span class="status-badge">
+                        <span class="status-dot pulse-green"></span>
+                        <span>النظام متاح وشغال</span>
+                    </span>
+                @endif
+
+                <div class="dropdown">
+                    <button class="btn btn-outline-light dropdown-toggle font-bold d-flex align-items-center gap-2 px-3 py-1.5" type="button" data-bs-toggle="dropdown" style="border-color: var(--heritage-gold);">
+                        <i class="fa-solid fa-user-shield me-1" style="color: var(--heritage-gold);"></i>
+                        <span>مدير التعادل (Admin)</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="border-top: 3px solid var(--heritage-gold) !important;">
+                        <li><a class="dropdown-item py-2" href="{{ route('admin.settings') }}"><i class="fa-solid fa-gear me-2 text-primary"></i> إعدادات الموقع</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form action="{{ route('logout') }}" method="POST">
+                                @csrf
+                                <button class="dropdown-item text-danger fw-bold py-2" type="submit">
+                                    <i class="fa-solid fa-right-from-bracket me-2"></i> تسجيل الخروج
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Main Navigation Bar -->
-    <nav class="mohe-nav shadow-sm mb-4">
-        <div class="container-fluid px-4">
-            <ul class="nav nav-pills me-auto">
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">
-                        <i class="fa-solid fa-house me-1"></i> الرئيسية
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.settings*') ? 'active' : '' }}" href="{{ route('admin.settings') }}">
-                        <i class="fa-solid fa-sliders me-1"></i> إعدادات الموقع
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.applications.index') || request()->routeIs('admin.applications.edit') ? 'active' : '' }}" href="{{ route('admin.applications.index') }}">
-                        <i class="fa-solid fa-file-signature me-1"></i> طلبات التعادل
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.committee*') ? 'active' : '' }}" href="{{ route('admin.committee.index') }}">
-                        <i class="fa-solid fa-users-rectangle me-1"></i> مواضيع اللجنة العامة
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.reports*') ? 'active' : '' }}" href="{{ route('admin.reports.index') }}">
-                        <i class="fa-solid fa-chart-pie me-1"></i> الإحصائيات والتقارير
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.search*') ? 'active' : '' }}" href="{{ route('admin.search.index') }}">
-                        <i class="fa-solid fa-magnifying-glass me-1"></i> بحث حسب
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.decisions*') ? 'active' : '' }}" href="{{ route('admin.decisions.index') }}">
-                        <i class="fa-solid fa-stamp me-1"></i> إرسال قرار التعادل
-                    </a>
-                </li>
-            </ul>
-        </div>
-    </nav>
-
-    <!-- Main Content Area -->
-    <main class="container-fluid px-4 pb-5">
-        <!-- Flash Alert Messages -->
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
-                <i class="fa-solid fa-circle-check me-2"></i> {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <!-- 2. MAIN LAYOUT WITH COLLAPSED-BY-DEFAULT SIDEBAR & CANVAS -->
+    <div class="d-flex flex-1">
+        <!-- GLOBAL SIDE NAVIGATION MENU (COLLAPSED BY DEFAULT, EXPANDS ONLY ON USER TOGGLE) -->
+        <aside class="sidebar-container" :class="{ 'expanded': isExpanded }">
+            
+            <!-- User Profile Box inside Sidebar -->
+            <div class="sidebar-profile-box text-center p-3 mb-2 border-bottom border-secondary-subtle">
+                <div class="d-inline-flex align-items-center justify-content-center p-1.5 rounded-circle bg-white shadow-sm mb-2" style="border: 2px solid var(--heritage-gold); width: 60px; height: 60px;">
+                    <i class="fa-solid fa-user-gear fs-3" style="color: var(--imperial-navy);"></i>
+                </div>
+                <h6 class="fw-bold mb-0 text-truncate" style="color: var(--imperial-navy);">مدير النظام</h6>
+                <small class="text-muted">لوحة التحكم الإدارية</small>
             </div>
-        @endif
 
-        @if(session('error'))
-            <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
-                <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <!-- Side Navigation Links -->
+            <nav class="d-flex flex-column gap-1 p-2">
+                
+                <a href="{{ route('admin.dashboard') }}" 
+                   class="sidebar-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" 
+                   :title="!isExpanded ? 'لوحة التحكم الرئيسية' : ''">
+                    <i class="fa-solid fa-gauge-high fs-5"></i>
+                    <span class="sidebar-text-label">لوحة التحكم الرئيسية</span>
+                </a>
+
+                <a href="{{ route('admin.settings') }}" 
+                   class="sidebar-link {{ request()->routeIs('admin.settings*') ? 'active' : '' }}"
+                   :title="!isExpanded ? 'إعدادات الموقع' : ''">
+                    <i class="fa-solid fa-sliders fs-5"></i>
+                    <span class="sidebar-text-label">إعدادات الموقع</span>
+                </a>
+
+                <a href="{{ route('admin.applications.index') }}" 
+                   class="sidebar-link {{ request()->routeIs('admin.applications.index') || request()->routeIs('admin.applications.edit') ? 'active' : '' }}"
+                   :title="!isExpanded ? 'سجل طلبات التعادل' : ''">
+                    <i class="fa-solid fa-list-check fs-5"></i>
+                    <span class="sidebar-text-label">سجل طلبات التعادل</span>
+                </a>
+
+                <a href="{{ route('admin.committee.index') }}" 
+                   class="sidebar-link {{ request()->routeIs('admin.committee*') ? 'active' : '' }}"
+                   :title="!isExpanded ? 'مواضيع اللجنة العامة' : ''">
+                    <i class="fa-solid fa-users-rectangle fs-5"></i>
+                    <span class="sidebar-text-label">مواضيع اللجنة العامة</span>
+                </a>
+
+                <a href="{{ route('admin.reports.index') }}" 
+                   class="sidebar-link {{ request()->routeIs('admin.reports*') ? 'active' : '' }}"
+                   :title="!isExpanded ? 'التقارير السنوية' : ''">
+                    <i class="fa-solid fa-chart-pie fs-5"></i>
+                    <span class="sidebar-text-label">التقارير السنوية</span>
+                </a>
+
+                <a href="{{ route('admin.search.index') }}" 
+                   class="sidebar-link {{ request()->routeIs('admin.search*') ? 'active' : '' }}"
+                   :title="!isExpanded ? 'بحث المتقدمين' : ''">
+                    <i class="fa-solid fa-magnifying-glass fs-5"></i>
+                    <span class="sidebar-text-label">بحث المتقدمين</span>
+                </a>
+
+                <a href="{{ route('admin.decisions.index') }}" 
+                   class="sidebar-link {{ request()->routeIs('admin.decisions*') ? 'active' : '' }}"
+                   :title="!isExpanded ? 'إصدار القرارات الرسمية' : ''">
+                    <i class="fa-solid fa-stamp fs-5"></i>
+                    <span class="sidebar-text-label">إصدار القرارات الرسمية</span>
+                </a>
+
+            </nav>
+        </aside>
+
+        <!-- MAIN CANVAS -->
+        <main class="flex-grow-1 p-4">
+            <!-- Flash Alert Messages -->
+            @if(session('success'))
+                <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 mb-4" role="alert" style="border-right: 4px solid #059669 !important;">
+                    <i class="fa-solid fa-circle-check me-2"></i> {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 mb-4" role="alert" style="border-right: 4px solid #ba1a1a !important;">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+
+            @yield('content')
+        </main>
+    </div>
+
+    <!-- 3. OFFICIAL FOOTER -->
+    <footer class="mohe-footer-institutional">
+        <div class="container-fluid px-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <span class="fw-semibold">© {{ date('Y') }} مجلس التعليم العالي - الجمهورية العربية السورية. جميع الحقوق محفوظة.</span>
             </div>
-        @endif
-
-        @yield('content')
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-white border-top py-3 text-center text-muted mt-auto">
-        <div class="container">
-            <small>جميع الحقوق محفوظة &copy; {{ date('Y') }} - وزارة التعليم العالي والبحث العلمي - مجلس التعليم العالي - جمهورية سوريا العربية</small>
+            <div class="d-flex gap-4">
+                <a href="#" class="text-secondary text-decoration-none hover-navy">عن المجلس</a>
+                <a href="#" class="text-secondary text-decoration-none hover-navy">سياسة الخصوصية</a>
+                <a href="#" class="text-secondary text-decoration-none hover-navy">اتصل بنا</a>
+            </div>
         </div>
     </footer>
 
