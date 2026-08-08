@@ -71,7 +71,10 @@ class PdfReportController extends Controller
             'phdEd'
         ))->setPaper('a4', 'portrait');
 
-        return $pdf->stream('Mozhakkara_'.$application->application_no.'.pdf');
+        $safeAppNo = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $application->application_no ?? $application->id);
+        $fileName = 'Mozhakkara_' . $safeAppNo . '.pdf';
+
+        return $pdf->stream($fileName);
     }
 
     // Consolidated Viewer: Page 1 Mozhakkara report + Page 2+ attachments
