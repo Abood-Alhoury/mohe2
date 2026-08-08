@@ -175,33 +175,42 @@
                     </div>
                 </div>
 
-                <!-- User Account Dropdown -->
+                <!-- MODERN INSTITUTIONAL USER PROFILE DROPDOWN -->
                 <div class="dropdown">
-                    <button class="btn btn-outline-light dropdown-toggle fw-bold d-flex align-items-center gap-2 px-3 py-1.5" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false" style="border-color: var(--heritage-gold);">
-                        <i class="fa-solid fa-university me-1" style="color: var(--heritage-gold);"></i> 
-                        <span>{{ Auth::user()->name }}</span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="userMenu" style="border-top: 3px solid var(--heritage-gold) !important;">
-                        <li>
-                            <div class="dropdown-header text-dark fw-bold border-bottom pb-2">
-                                {{ Auth::user()->university->name ?? 'جامعة مسجلة' }}
+                    <div class="user-menu-pill" data-bs-toggle="dropdown" aria-expanded="false" role="button">
+                        <div class="user-avatar-circle">
+                            <i class="fa-solid fa-university"></i>
+                        </div>
+                        <div class="d-none d-sm-block text-start pe-1">
+                            <span class="fw-bold d-block lh-1 text-white" style="font-size: 0.88rem;">{{ Auth::user()->name ?? 'حساب الجامعة' }}</span>
+                            <span class="text-white-50 lh-1" style="font-size: 0.72rem;">{{ Auth::user()->university->name ?? 'جامعة مسجلة' }}</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-down ms-1" style="font-size: 0.75rem; color: var(--heritage-gold);"></i>
+                    </div>
+
+                    <div class="dropdown-menu dropdown-menu-end user-dropdown-card shadow-lg p-0">
+                        <div class="user-dropdown-header">
+                            <div class="d-inline-flex align-items-center justify-content-center p-1 rounded-circle bg-white shadow-sm mb-2" style="border: 2px solid var(--heritage-gold); width: 54px; height: 54px;">
+                                <i class="fa-solid fa-university fs-4" style="color: var(--imperial-navy);"></i>
                             </div>
-                        </li>
-                        <li>
-                            <a class="dropdown-item py-2" href="{{ route('university.messages') }}">
-                                <i class="fa-regular fa-envelope me-2 text-primary"></i> مركز المراسلات
+                            <h6 class="fw-bold mb-0 text-white">{{ Auth::user()->name ?? 'حساب الجامعة' }}</h6>
+                            <small class="text-white-50 fs-8">{{ Auth::user()->email ?? 'uni@mohe.gov.sy' }}</small>
+                        </div>
+                        <div class="py-2 bg-white">
+                            <a class="user-dropdown-item" href="{{ route('university.messages') }}">
+                                <i class="fa-regular fa-envelope text-primary fs-5"></i>
+                                <span>مركز المراسلات والإشعارات</span>
                             </a>
-                        </li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <form action="{{ route('logout') }}" method="POST">
+                            <div class="dropdown-divider my-1"></div>
+                            <form action="{{ route('logout') }}" method="POST" class="m-0">
                                 @csrf
-                                <button class="dropdown-item py-2 text-danger fw-bold" type="submit">
-                                    <i class="fa-solid fa-right-from-bracket me-2"></i> تسجيل الخروج
+                                <button class="user-dropdown-item logout-item w-100 border-0 bg-transparent text-start" type="submit">
+                                    <i class="fa-solid fa-right-from-bracket fs-5"></i>
+                                    <span>تسجيل الخروج</span>
                                 </button>
                             </form>
-                        </li>
-                    </ul>
+                        </div>
+                    </div>
                 </div>
 
             </div>

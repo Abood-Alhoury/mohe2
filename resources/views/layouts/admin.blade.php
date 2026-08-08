@@ -137,23 +137,42 @@
                     </span>
                 @endif
 
+                <!-- MODERN INSTITUTIONAL USER PROFILE DROPDOWN -->
                 <div class="dropdown">
-                    <button class="btn btn-outline-light dropdown-toggle font-bold d-flex align-items-center gap-2 px-3 py-1.5" type="button" data-bs-toggle="dropdown" style="border-color: var(--heritage-gold);">
-                        <i class="fa-solid fa-user-shield me-1" style="color: var(--heritage-gold);"></i>
-                        <span>مدير التعادل (Admin)</span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="border-top: 3px solid var(--heritage-gold) !important;">
-                        <li><a class="dropdown-item py-2" href="{{ route('admin.settings') }}"><i class="fa-solid fa-gear me-2 text-primary"></i> إعدادات الموقع</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <form action="{{ route('logout') }}" method="POST">
+                    <div class="user-menu-pill" data-bs-toggle="dropdown" aria-expanded="false" role="button">
+                        <div class="user-avatar-circle">
+                            <i class="fa-solid fa-user-shield"></i>
+                        </div>
+                        <div class="d-none d-sm-block text-start pe-1">
+                            <span class="fw-bold d-block lh-1 text-white" style="font-size: 0.88rem;">{{ Auth::user()->name ?? 'مدير التعادل' }}</span>
+                            <span class="text-white-50 lh-1" style="font-size: 0.72rem;">مدير النظام (Admin)</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-down ms-1" style="font-size: 0.75rem; color: var(--heritage-gold);"></i>
+                    </div>
+
+                    <div class="dropdown-menu dropdown-menu-end user-dropdown-card shadow-lg p-0">
+                        <div class="user-dropdown-header">
+                            <div class="d-inline-flex align-items-center justify-content-center p-1 rounded-circle bg-white shadow-sm mb-2" style="border: 2px solid var(--heritage-gold); width: 54px; height: 54px;">
+                                <i class="fa-solid fa-user-shield fs-4" style="color: var(--imperial-navy);"></i>
+                            </div>
+                            <h6 class="fw-bold mb-0 text-white">{{ Auth::user()->name ?? 'مدير التعادل' }}</h6>
+                            <small class="text-white-50 fs-8">{{ Auth::user()->email ?? 'admin@mohe.gov.sy' }}</small>
+                        </div>
+                        <div class="py-2 bg-white">
+                            <a class="user-dropdown-item" href="{{ route('admin.settings') }}">
+                                <i class="fa-solid fa-gear text-primary fs-5"></i>
+                                <span>إعدادات الموقع والحسابات</span>
+                            </a>
+                            <div class="dropdown-divider my-1"></div>
+                            <form action="{{ route('logout') }}" method="POST" class="m-0">
                                 @csrf
-                                <button class="dropdown-item text-danger fw-bold py-2" type="submit">
-                                    <i class="fa-solid fa-right-from-bracket me-2"></i> تسجيل الخروج
+                                <button class="user-dropdown-item logout-item w-100 border-0 bg-transparent text-start" type="submit">
+                                    <i class="fa-solid fa-right-from-bracket fs-5"></i>
+                                    <span>تسجيل الخروج</span>
                                 </button>
                             </form>
-                        </li>
-                    </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

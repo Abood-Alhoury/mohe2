@@ -464,9 +464,90 @@ body {
 }
 
 /* =====================================================
-   7. PDF Printable Reports & Official Mozhakkara Styling
+   8. Institutional Header User Profile Menu Dropdown
 ===================================================== */
-.mozhakkara-container, .pdf-container, .report-print-slab {
+.user-menu-pill {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(197, 160, 89, 0.5) !important;
+    border-radius: 30px;
+    padding: 4px 14px 4px 8px;
+    color: #ffffff !important;
+    transition: all 0.25s ease;
+    backdrop-filter: blur(4px);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.user-menu-pill:hover, 
+.user-menu-pill:focus, 
+.show > .user-menu-pill {
+    background: rgba(255, 255, 255, 0.18) !important;
+    border-color: var(--mohe-gold) !important;
+    box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.25);
+    color: #ffffff !important;
+}
+
+.user-avatar-circle {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    border: 1.5px solid var(--mohe-gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--mohe-primary);
+    font-size: 0.95rem;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    flex-shrink: 0;
+}
+
+.user-dropdown-card {
+    border: none !important;
+    border-radius: 8px !important;
+    overflow: hidden;
+    width: 280px;
+    box-shadow: 0 10px 30px rgba(4, 21, 46, 0.25) !important;
+    border-top: 3.5px solid var(--mohe-gold) !important;
+    margin-top: 8px !important;
+    padding: 0 !important;
+}
+
+.user-dropdown-header {
+    background: var(--mohe-primary) !important;
+    color: #ffffff;
+    padding: 1.1rem 1rem;
+    text-align: center;
+    border-bottom: 1px solid rgba(197, 160, 89, 0.2);
+}
+
+.user-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0.75rem 1.1rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #111C2C;
+    transition: all 0.18s ease;
+    text-decoration: none;
+}
+
+.user-dropdown-item:hover {
+    background-color: #f5f3f5;
+    color: var(--mohe-primary);
+}
+
+.user-dropdown-item.logout-item {
+    color: #dc2626;
+}
+
+.user-dropdown-item.logout-item:hover {
+    background-color: #fef2f2;
+    color: #b91c1c;
+}
     background-color: #ffffff;
     border-radius: 4px;
     border: 1px solid var(--mohe-border);
