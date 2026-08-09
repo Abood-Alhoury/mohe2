@@ -366,22 +366,36 @@
                     <td class="text-muted label-sm">{{ $app->created_at ? $app->created_at->format('Y-m-d') : 'غ/م' }}</td>
                     <td class="text-center">
                         <div class="d-flex align-items-center justify-content-center gap-1.5">
-                            <!-- Download Official Mozhakkara Report PDF -->
-                            <a href="{{ route('university.applications.download_pdf', $app->id) }}" target="_blank" class="btn btn-gold-cta py-1 px-2 text-decoration-none" title="تحميل وطباعة تقرير ومذكرة عرض الطلب (PDF)">
-                                <i class="fa-solid fa-file-pdf me-1" style="padding: 12px;"></i>
+                            {{-- 1. تعديل / استكمال الوثائق (أيقونة فقط) --}}
+                            @if($app->status == 'بانتظار الوثائق')
+                                <a href="{{ route('university.applications.edit', $app->id) }}" class="btn btn-sm btn-warning px-2 py-1 shadow-sm" title="تعديل البيانات واستكمال الوثائق المطلوبة">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </a>
+                            @endif
+
+                            {{-- 2. تحميل قرار التعادل الوزاري الصادر (أيقونة فقط) --}}
+                            @if($app->latestDecision)
+                                <a href="{{ asset('storage/' . $app->latestDecision->file_path) }}" target="_blank" class="btn btn-sm btn-gold-cta px-2 py-1 text-decoration-none shadow-sm" title="تحميل وتنزيل قرار التعادل الصادر">
+                                    <i class="fa-solid fa-stamp" style="color: var(--imperial-navy);"></i>
+                                </a>
+                            @endif
+
+                            {{-- 3. تحميل تقرير ومذكرة عرض الطلب PDF (أيقونة فقط) --}}
+                            <a href="{{ route('university.applications.download_pdf', $app->id) }}" target="_blank" class="btn btn-sm btn-outline-danger px-2 py-1 text-decoration-none shadow-sm" title="تحميل وطباعة تقرير ومذكرة عرض الطلب (PDF)">
+                                <i class="fa-solid fa-file-pdf"></i>
                             </a>
 
-                            <!-- Nudge Application Button (خدمة حث واستعجال دراسة المعاملة) -->
-                            <form action="{{ route('university.applications.nudge', $app->id) }}" method="POST" class="d-inline">
+                            {{-- 4. حث وتذكير المعاملة (أيقونة فقط) --}}
+                            <form action="{{ route('university.applications.nudge', $app->id) }}" method="POST" class="d-inline m-0">
                                 @csrf
-                                <button type="submit" class="btn btn-outline-gold py-1 px-2" title="إرسال طلب حث واستعجال دراسة هذه المعاملة للوزارة">
-                                    <i class="fa-solid fa-bell me-1"></i> تذكير!
+                                <button type="submit" class="btn btn-sm btn-outline-gold px-2 py-1 shadow-sm" title="إرسال طلب حث واستعجال دراسة هذه المعاملة للوزارة">
+                                    <i class="fa-solid fa-bell"></i>
                                 </button>
                             </form>
 
-                            <!-- Messages Button -->
-                            <a href="{{ route('university.messages') }}?application_id={{ $app->id }}" class="btn btn-outline-navy py-1 px-2" title="مراسلة الوزارة حول هذا الطلب">
-                                <i class="fa-solid fa-comments me-1"></i> مراسلة
+                            {{-- 5. المراسلات والإشعارات (أيقونة فقط) --}}
+                            <a href="{{ route('university.messages') }}?application_id={{ $app->id }}" class="btn btn-sm btn-outline-navy px-2 py-1 shadow-sm" title="مراسلة الوزارة ومتابعة الملاحظات حول هذا الطلب">
+                                <i class="fa-solid fa-comments"></i>
                             </a>
                         </div>
                     </td>

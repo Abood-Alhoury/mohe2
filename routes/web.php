@@ -100,6 +100,10 @@ Route::prefix('university')->middleware(['auth', 'role:university'])->group(func
     // Candidate Lookup API (for second-time equivalence auto-fill)
     Route::get('/candidate/lookup', [ApplicationWizardController::class, 'lookupCandidate'])->name('university.candidate.lookup');
 
+    // Edit & Update Application (when status is 'بانتظار الوثائق' or completing documents)
+    Route::get('/applications/{appId}/edit', [UniDashboardController::class, 'editApplication'])->name('university.applications.edit');
+    Route::post('/applications/{appId}/update', [UniDashboardController::class, 'updateApplication'])->name('university.applications.update');
+
     // Official Application Report & Mozhakkara PDF Download
     Route::get('/applications/{appId}/mozhakkara', [UniDashboardController::class, 'showMozhakkara'])->name('university.applications.mozhakkara');
     Route::get('/applications/{appId}/download-pdf', [UniDashboardController::class, 'downloadPdf'])->name('university.applications.download_pdf');

@@ -11,9 +11,9 @@ class DecisionsController extends Controller
 {
     public function index(Request $request)
     {
-        // Applications ready for decision issuing
+        // Applications ready for decision issuing (Requirement 4: Exclude 'بانتظار الوثائق', 'مرفوض', 'معلق')
         $approvedApps = Application::with(['candidate', 'workUniversity', 'latestDecision'])
-            ->whereIn('status', ['تحت التدقيق الأولي', 'بانتظار الوثائق', 'تم الصدور'])
+            ->whereNotIn('status', ['بانتظار الوثائق', 'مرفوض', 'معلق'])
             ->latest()
             ->get();
 
@@ -42,6 +42,13 @@ class DecisionsController extends Controller
             'decision_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
 
+        $app = Application::findOrFail($request->application_id);
+        $forbiddenStatuses = ['بانتظار الوثائق', 'مرفوض', 'معلق'];
+
+        if (in_array($app->status, $forbiddenStatuses)) {
+            return redirect()->back()->with('error', 'لا يمكن إرفاق قرار تعادل لطلب حالته حالياً (' . $app->status . ').');
+        }
+
         $path = $request->file('decision_file')->store('decisions', 'public');
 
         $decision = ApplicationDecision::create([
@@ -53,10 +60,18 @@ class DecisionsController extends Controller
         ]);
 
         // Automatically update application status
-        $app = Application::findOrFail($request->application_id);
         $app->status = 'تم الصدور';
         $app->save();
 
-        return redirect()->route('admin.decisions.index')->with('success', 'تم إصدار وإرسال قرار التعادل للجامعة المعنية بنجاح');
+        // Requirement 3: Send automated message to university
+        $candidateName = $app->candidate ? $app->candidate->full_name : '';
+        \App\Models\ApplicationMessage::create([
+            'application_id' => $app->id,
+            'sender_id' => \Illuminate\Support\Facades\Auth::id() ?? 1,
+            'message' => "📜 [إشعار رسمي - صدور قرار التعادل]: تم صدور قرار معادلة الشهادة العلمية رسمياً برقم ({$request->decision_no}) للطلب رقم (#{$app->application_no}) للمرشح ({$candidateName}). يمكنك الاطلاع على نسخة القرار وتحميلها أصولاً.",
+            'is_read' => false,
+        ]);
+
+        return redirect()->route('admin.decisions.index')->with('success', 'تم إصدار وإرسال قرار التعادل وإشعار الجامعة المعنية بنجاح.');
     }
 }

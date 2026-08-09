@@ -94,7 +94,7 @@
                 <tbody>
                     @forelse($results as $res)
                     @php
-                        $highestEducation = $res->educations->sortByDesc('education_level_id')->first();
+                        $lastEducation = $res->educations->last();
                     @endphp
                     <tr>
                         <td class="fw-bold text-secondary">{{ $res->id }}</td>
@@ -102,7 +102,7 @@
                         <td class="fw-bold">{{ $res->workUniversity->name ?? 'جامعة غير محددة' }}</td>
                         <td class="text-primary fw-bold">{{ $res->candidate->full_name ?? 'غ/م' }}</td>
                         <td>{{ $res->work_faculty ?? 'إدارة جامعة' }}</td>
-                        <td>{{ $highestEducation->level->name ?? 'إجازة جامعية' }}</td>
+                        <td>{{ $lastEducation->level->name ?? 'إجازة جامعية' }}</td>
                         <td>
                             @if($res->status == 'قيد الدراسة')
                                 <span class="badge badge-status badge-study">قيد الدراسة</span>

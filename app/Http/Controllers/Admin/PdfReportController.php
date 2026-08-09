@@ -72,11 +72,9 @@ class PdfReportController extends Controller
             'phdEd'
         ))->render();
 
-        // 2. Apply ArPHP Arabic glyph shaping — protect <style> blocks first
+        // 2. Apply ArPHP glyph shaping
         try {
             $arabic = new \ArPHP\I18N\Arabic();
-
-            // Extract <style> blocks so ArPHP doesn't mangle CSS
             $styleBlocks = [];
             $html = preg_replace_callback('/<style[^>]*>.*?<\/style>/si', function ($m) use (&$styleBlocks) {
                 $placeholder = '___STYLE_BLOCK_' . count($styleBlocks) . '___';
@@ -84,7 +82,6 @@ class PdfReportController extends Controller
                 return $placeholder;
             }, $html);
 
-            // Apply glyph shaping to the HTML body (without CSS)
             $p = $arabic->arIdentify($html);
             if ($p && count($p) > 0) {
                 for ($i = count($p) - 1; $i >= 0; $i -= 2) {
@@ -93,15 +90,12 @@ class PdfReportController extends Controller
                 }
             }
 
-            // Restore the CSS blocks untouched
             foreach ($styleBlocks as $placeholder => $block) {
                 $html = str_replace($placeholder, $block, $html);
             }
-        } catch (\Throwable $e) {
-            // If ArPHP fails for any reason, continue without reshaping
-        }
+        } catch (\Throwable $e) {}
 
-        // 3. Load the pre-processed HTML into dompdf
+        // 3. Load the pre-processed HTML into DomPDF
         $pdf = Pdf::loadHtml($html)->setPaper('a4', 'portrait');
 
         $safeAppNo = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $application->application_no ?? $application->id);
@@ -156,6 +150,7 @@ class PdfReportController extends Controller
                 $styleBlocks[$placeholder] = $m[0];
                 return $placeholder;
             }, $html);
+
             $p = $arabic->arIdentify($html);
             if ($p && count($p) > 0) {
                 for ($i = count($p) - 1; $i >= 0; $i -= 2) {
@@ -163,6 +158,7 @@ class PdfReportController extends Controller
                     $html   = substr_replace($html, $utf8ar, $p[$i - 1], $p[$i] - $p[$i - 1]);
                 }
             }
+
             foreach ($styleBlocks as $placeholder => $block) {
                 $html = str_replace($placeholder, $block, $html);
             }

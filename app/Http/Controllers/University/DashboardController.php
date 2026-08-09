@@ -226,9 +226,7 @@ class DashboardController extends Controller
             foreach ($styleBlocks as $placeholder => $block) {
                 $html = str_replace($placeholder, $block, $html);
             }
-        } catch (\Throwable $e) {
-            // fallback if ArPHP shaping fails
-        }
+        } catch (\Throwable $e) {}
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)
             ->setPaper('a4', 'portrait')
@@ -275,6 +273,7 @@ class DashboardController extends Controller
                 $styleBlocks[$placeholder] = $m[0];
                 return $placeholder;
             }, $html);
+
             $p = $arabic->arIdentify($html);
             if ($p && count($p) > 0) {
                 for ($i = count($p) - 1; $i >= 0; $i -= 2) {
@@ -282,6 +281,7 @@ class DashboardController extends Controller
                     $html   = substr_replace($html, $utf8ar, $p[$i - 1], $p[$i] - $p[$i - 1]);
                 }
             }
+
             foreach ($styleBlocks as $placeholder => $block) {
                 $html = str_replace($placeholder, $block, $html);
             }
@@ -340,6 +340,125 @@ class DashboardController extends Controller
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
         ]);
+    }
+
+    public function editApplication($appId)
+    {
+        $user = Auth::user();
+        $application = Application::where('id', $appId)
+            ->where('work_university_id', $user->university_id)
+            ->with([
+                'candidate',
+                'workUniversity',
+                'courses',
+                'educations.level',
+                'educations.country',
+                'educations.university',
+                'educations.attachments.attachmentType'
+            ])->firstOrFail();
+
+        $candidate = $application->candidate;
+
+        $highSchoolEd = $application->educations->first(function($e) {
+            return $e->level && str_contains($e->level->name, 'ثانوية');
+        });
+        $bachelorEd = $application->educations->first(function($e) {
+            return $e->level && str_contains($e->level->name, 'إجازة');
+        });
+        $diplomaEd = $application->educations->first(function($e) {
+            return $e->level && str_contains($e->level->name, 'دبلوم');
+        });
+        $masterEd = $application->educations->first(function($e) {
+            return $e->level && str_contains($e->level->name, 'ماجستير');
+        });
+        $phdEd = $application->educations->first(function($e) {
+            return $e->level && str_contains($e->level->name, 'دكتوراه');
+        });
+
+        $countries = \App\Models\LookupCountry::all();
+        $universities = \App\Models\LookupUniversity::all();
+
+        return view('university.applications.edit', compact(
+            'application',
+            'candidate',
+            'highSchoolEd',
+            'bachelorEd',
+            'diplomaEd',
+            'masterEd',
+            'phdEd',
+            'countries',
+            'universities'
+        ));
+    }
+
+    public function updateApplication(Request $request, $appId)
+    {
+        $user = Auth::user();
+        $app = Application::where('id', $appId)
+            ->where('work_university_id', $user->university_id)
+            ->firstOrFail();
+
+        // Update candidate details if provided
+        if ($request->has('candidate')) {
+            $candidate = $app->candidate;
+            if ($candidate) {
+                $candidate->update(array_filter($request->input('candidate', [])));
+            }
+        }
+
+        // Update educations if provided
+        if ($request->has('educations')) {
+            foreach ($request->input('educations', []) as $edId => $edData) {
+                $ed = \App\Models\Education::where('id', $edId)->where('application_id', $app->id)->first();
+                if ($ed) {
+                    $ed->update(array_filter($edData, function($v) { return $v !== null; }));
+                }
+            }
+        }
+
+        // Handle attachment files uploaded by university
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $edId => $files) {
+                $ed = \App\Models\Education::where('id', $edId)->where('application_id', $app->id)->first();
+                if ($ed) {
+                    if (is_array($files)) {
+                        foreach ($files as $fileKey => $file) {
+                            if ($file && $file->isValid()) {
+                                $path = $file->store('attachments/' . $app->id, 'public');
+                                \App\Models\EducationAttachment::create([
+                                    'education_id' => $ed->id,
+                                    'attachment_type_id' => 3,
+                                    'file_path' => $path,
+                                    'notes' => 'وثيقة مستكملة مرفوعة من صفحة الجامعة',
+                                ]);
+                            }
+                        }
+                    } elseif ($files && $files->isValid()) {
+                        $path = $files->store('attachments/' . $app->id, 'public');
+                        \App\Models\EducationAttachment::create([
+                            'education_id' => $ed->id,
+                            'attachment_type_id' => 3,
+                            'file_path' => $path,
+                            'notes' => 'وثيقة مستكملة مرفوعة من صفحة الجامعة',
+                        ]);
+                    }
+                }
+            }
+        }
+
+        // Automated notification message to admin
+        $candidateName = $app->candidate ? $app->candidate->full_name : '';
+        $uniName = $user->university ? $user->university->name : 'الجامعة';
+
+        ApplicationMessage::create([
+            'application_id' => $app->id,
+            'sender_id' => $user->id,
+            'message' => "📑 [استكمال وثائق]: قامت جامعة ({$uniName}) بتحديث بيانات وإضافة المرفقات والوثائق المطلوبة للطلب رقم (#{$app->application_no}) للمرشح ({$candidateName}).",
+            'is_read' => false,
+        ]);
+
+        return redirect()->route('university.dashboard')
+            ->with('success', 'تم تعديل البيانات وإضافة المرفقات والوثائق المطلوبة للطلب رقم (#' . ($app->application_no ?? $app->id) . ') بنجاح وإشعار مدير التعادل.');
     }
 }
 

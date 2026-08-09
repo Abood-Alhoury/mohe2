@@ -70,24 +70,45 @@ class ApplicationsController extends Controller
         ]);
 
         $app = Application::findOrFail($id);
+        $forbiddenStatuses = ['بانتظار الوثائق', 'مرفوض', 'معلق'];
+
+        // Requirement 4: If attaching decision, enforce forbidden status check
+        if ($request->hasFile('decision_file') || $request->status === 'تم الصدور') {
+            if (in_array($app->status, $forbiddenStatuses)) {
+                return redirect()->back()->with('error', 'لا يمكن إرفاق قرار تعادل لطلب حالته حالياً (' . $app->status . ').');
+            }
+        }
+
+        $oldStatus = $app->status;
         $app->status = $request->status;
         $app->save();
 
-        // If uploading Equivalence Decision File
+        // If uploading Equivalence Decision File or status set to "تم الصدور"
         if ($request->hasFile('decision_file')) {
             $file = $request->file('decision_file');
             $path = $file->store('decisions', 'public');
 
-            ApplicationDecision::create([
+            $decision = ApplicationDecision::create([
                 'application_id' => $app->id,
-                'decision_no' => $request->decision_no ?? 'قرار-'.$app->application_no,
+                'decision_no' => $request->decision_no ?? 'قرار-' . $app->application_no,
                 'decision_date' => now(),
                 'file_path' => $path,
                 'notes' => $request->notes ?? 'تم الصدور والتوقيع من رئيس مجلس التعليم العالي',
             ]);
         }
 
-        return redirect()->back()->with('success', 'تم تحديث حالة الطلب إلى ('.$app->status.') بنجاح');
+        // Requirement 3: Send automated message to university when decision is issued
+        if ($app->status === 'تم الصدور' || $request->hasFile('decision_file')) {
+            $candidateName = $app->candidate ? $app->candidate->full_name : '';
+            ApplicationMessage::create([
+                'application_id' => $app->id,
+                'sender_id' => Auth::id() ?? 1,
+                'message' => "📜 [إشعار رسمي - صدور قرار التعادل]: تم صدور قرار معادلة الشهادة العلمية رسمياً للطلب رقم (#{$app->application_no}) للمرشح ({$candidateName}). يمكنك الاطلاع على نسخة القرار وتحميلها أصولاً.",
+                'is_read' => false,
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'تم تحديث حالة الطلب إلى (' . $app->status . ') بنجاح وإشعار الجامعة.');
     }
 
     // Action 2: Send Message to University regarding specific application
@@ -106,6 +127,6 @@ class ApplicationsController extends Controller
             'is_read' => false,
         ]);
 
-        return redirect()->back()->with('success', 'تم إرسال الرسالة والإشعار بنجاح للجامعة بخصوص الطلب رقم '.$app->application_no);
+        return redirect()->back()->with('success', 'تم إرسال الرسالة والإشعار بنجاح للجامعة بخصوص الطلب رقم ' . $app->application_no);
     }
 }

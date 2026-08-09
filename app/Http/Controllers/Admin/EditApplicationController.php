@@ -22,7 +22,8 @@ class EditApplicationController extends Controller
             'educations.level',
             'educations.country',
             'educations.university',
-            'educations.residences'
+            'educations.residences',
+            'educations.attachments.attachmentType'
         ])->findOrFail($id);
 
         $countries = LookupCountry::all();
@@ -32,11 +33,21 @@ class EditApplicationController extends Controller
         // Categorize Educations for Form
         $candidate = $application->candidate;
 
-        $highSchoolEd = $application->educations->where('level.name', 'ثانوية عامة')->first();
-        $bachelorEd = $application->educations->where('level.name', 'إجازة جامعية')->first();
-        $diplomaEd = $application->educations->where('level.name', 'دبلوم دراسات عليا')->first();
-        $masterEd = $application->educations->where('level.name', 'ماجستير')->first();
-        $phdEd = $application->educations->where('level.name', 'دكتوراه')->first();
+        $highSchoolEd = $application->educations->first(function($e) {
+            return $e->level && str_contains($e->level->name, 'ثانوية');
+        });
+        $bachelorEd = $application->educations->first(function($e) {
+            return $e->level && str_contains($e->level->name, 'إجازة');
+        });
+        $diplomaEd = $application->educations->first(function($e) {
+            return $e->level && str_contains($e->level->name, 'دبلوم');
+        });
+        $masterEd = $application->educations->first(function($e) {
+            return $e->level && str_contains($e->level->name, 'ماجستير');
+        });
+        $phdEd = $application->educations->first(function($e) {
+            return $e->level && str_contains($e->level->name, 'دكتوراه');
+        });
 
         return view('admin.applications.edit', compact(
             'application',
@@ -82,7 +93,7 @@ class EditApplicationController extends Controller
         $educationId = $request->input('education_id');
         $levelId = $request->input('education_level_id');
 
-        $data = $request->only([
+        $data = array_filter($request->only([
             'country_id',
             'university_id',
             'section_name',
@@ -99,7 +110,7 @@ class EditApplicationController extends Controller
             'experience_from_year',
             'experience_to_year',
             'notes',
-        ]);
+        ]), function($v) { return $v !== null; });
 
         if ($educationId) {
             $ed = Education::findOrFail($educationId);
@@ -107,9 +118,21 @@ class EditApplicationController extends Controller
         } else {
             $data['application_id'] = $app->id;
             $data['education_level_id'] = $levelId;
-            Education::create($data);
+            $ed = Education::create($data);
         }
 
-        return redirect()->back()->with('success', 'تم تحديث المؤهل العلمي للشهادة بنجاح');
+        // Handle attachment upload if provided
+        if ($request->hasFile('new_attachment')) {
+            $file = $request->file('new_attachment');
+            $path = $file->store('attachments/' . $app->id, 'public');
+            \App\Models\EducationAttachment::create([
+                'education_id' => $ed->id,
+                'attachment_type_id' => 3,
+                'file_path' => $path,
+                'notes' => $request->input('attachment_notes', 'وثيقة مرفقة حديثاً من صفحة التعديل الإداري'),
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'تم تحديث البيانات والمؤهل العلمي للشهادة بنجاح');
     }
 }

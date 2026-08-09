@@ -30,7 +30,7 @@
                 <tbody>
                     @forelse($committeeApps as $app)
                     @php
-                        $highestEducation = $app->educations->sortByDesc('education_level_id')->first();
+                        $lastEducation = $app->educations->last();
                     @endphp
                     <tr>
                         <td class="fw-bold text-secondary">{{ $app->id }}</td>
@@ -38,7 +38,7 @@
                         <td class="fw-bold">{{ $app->workUniversity->name ?? 'جامعة غير محددة' }}</td>
                         <td class="text-primary fw-bold">{{ $app->candidate->full_name ?? 'غ/م' }}</td>
                         <td>{{ $app->work_faculty ?? 'إدارة جامعة' }}</td>
-                        <td>{{ $highestEducation->level->name ?? 'دكتوراه' }}</td>
+                        <td>{{ $lastEducation->level->name ?? 'إجازة جامعية' }}</td>
                         <td><span class="badge badge-status badge-suspended fs-7">معلق</span></td>
                         <td>
                             <form action="{{ route('admin.committee.decide', $app->id) }}" method="POST" class="d-flex gap-1 justify-content-center">

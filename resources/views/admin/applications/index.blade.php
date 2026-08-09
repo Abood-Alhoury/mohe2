@@ -105,7 +105,9 @@
             <tbody>
                 @forelse($applications as $app)
                 @php
-                    $highestEducation = $app->educations->sortByDesc('education_level_id')->first();
+                    // Requirement 2: المؤهل العلمي هو آخر مؤهل أدخله المستخدم في طلبه
+                    $lastEducation = $app->educations->last();
+                    $isForbiddenStatus = in_array($app->status, ['بانتظار الوثائق', 'مرفوض', 'معلق']);
                 @endphp
                 <tr>
                     <td class="fw-bold text-secondary">{{ $app->id }}</td>
@@ -113,7 +115,7 @@
                     <td class="fw-bold" style="color: var(--imperial-navy);">{{ $app->workUniversity->name ?? 'غير محددة' }}</td>
                     <td class="fw-bold" style="color: #1d4ed8;">{{ $app->candidate->full_name ?? 'غ/م' }}</td>
                     <td>{{ $app->work_faculty ?? 'إدارة جامعة' }}</td>
-                    <td>{{ $highestEducation->level->name ?? 'إجازة جامعية' }}</td>
+                    <td class="fw-semibold">{{ $lastEducation->level->name ?? 'إجازة جامعية' }}</td>
                     <td class="text-center">
                         <!-- Quick Status Update Form -->
                         <form action="{{ route('admin.applications.update_status', $app->id) }}" method="POST" class="d-inline">
@@ -128,12 +130,17 @@
                     </td>
                     <td class="text-center">
                         @if($app->latestDecision)
-                            <a href="{{ asset('storage/' . $app->latestDecision->file_path) }}" target="_blank" class="btn btn-xs btn-gold-cta py-1 px-2 text-decoration-none">
-                                <i class="fa-solid fa-file-pdf me-1"></i> تحميل القرار
+                            <a href="{{ asset('storage/' . $app->latestDecision->file_path) }}" target="_blank" class="btn btn-xs btn-gold-cta py-1 px-2 text-decoration-none shadow-sm">
+                                <i class="fa-solid fa-file-pdf me-1 text-danger"></i> تحميل القرار
                             </a>
+                        @elseif($isForbiddenStatus)
+                            {{-- Requirement 4: Disable decision upload if status is بانتظار الوثائق, مرفوض, or معلق --}}
+                            <button type="button" class="btn btn-xs btn-secondary py-1 px-2 opacity-75" disabled title="لا يمكن رفع قرار التعادل لطلب حالته ({{ $app->status }})">
+                                <i class="fa-solid fa-ban me-1"></i> غير متاح ({{ $app->status }})
+                            </button>
                         @else
-                            <button type="button" class="btn btn-xs btn-solid-navy py-1 px-2" data-bs-toggle="modal" data-bs-target="#decisionModal{{ $app->id }}">
-                                <i class="fa-solid fa-cloud-arrow-up me-1"></i> إرفاق قرار
+                            <button type="button" class="btn btn-xs btn-solid-navy py-1 px-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#decisionModal{{ $app->id }}">
+                                <i class="fa-solid fa-cloud-arrow-up me-1" style="color: var(--heritage-gold-light);"></i> إرفاق قرار
                             </button>
                         @endif
                     </td>
