@@ -6,7 +6,7 @@
 <div class="card-academic-table" x-data="{ showFilter: {{ $statusFilter || $universityFilter ? 'true' : 'false' }} }">
     
     <!-- HEADER BAR: TITLE ON RIGHT, SEARCH BOX IN MIDDLE, FILTER & RESET BUTTONS ON FAR LEFT -->
-    <div class="table-header-slab d-flex flex-wrap align-items-center justify-content-between gap-3">
+    <div class="table-header-slab d-flex flex-wrap align-items-center justify-content-between gap-3" style="margin-bottom: 20px;">
         <!-- 1. RIGHT: SECTION TITLE -->
         <div class="d-flex align-items-center gap-2">
             <i class="fa-solid fa-list-check fs-5" style="color: var(--imperial-navy);"></i>

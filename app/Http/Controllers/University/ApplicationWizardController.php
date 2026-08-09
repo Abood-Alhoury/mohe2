@@ -61,9 +61,9 @@ class ApplicationWizardController extends Controller
             'national_id' => 'required|string|max:50',
             'dob' => 'required|date',
             'job_title' => 'required|string|max:150',
-            'phone' => 'nullable|string|max:50',
-            'mobile' => 'required|string|max:50',
-            'email' => 'required|email|max:255',
+            'phone' => 'nullable|string|regex:/^[0-9]{10}$/',
+            'mobile' => 'required|string|regex:/^[0-9]{10}$/',
+            'email' => 'required|email:filter|max:255',
             'address' => 'required|string',
             'gender' => 'required|string|in:ذكر,أنثى',
             'is_syrian' => 'required|boolean',
@@ -82,7 +82,7 @@ class ApplicationWizardController extends Controller
             'ba_faculty' => 'required|string|max:255',
             'ba_department' => 'required|string|max:255',
             'ba_registration_date' => 'required|date',
-            'ba_grant_date' => 'required|date',
+            'ba_grant_date' => 'required|date|after:ba_registration_date|before_or_equal:today',
             'ba_rank' => 'required|string|max:100',
             'ba_decision_no' => 'nullable|string|max:100',
             'ba_decision_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
@@ -92,8 +92,8 @@ class ApplicationWizardController extends Controller
             'ma_faculty' => 'required|string|max:255',
             'ma_department' => 'required|string|max:255',
             'ma_registration_date' => 'required|date',
-            'ma_defense_date' => 'required|date',
-            'ma_grant_date' => 'required|date',
+            'ma_defense_date' => 'required|date|after:ma_registration_date',
+            'ma_grant_date' => 'required|date|after:ma_defense_date|before_or_equal:today',
             'ma_rank' => 'required|string|max:100',
             'ma_supervisor' => 'required|string|max:255',
             'ma_thesis_title' => 'required|string',
@@ -105,7 +105,7 @@ class ApplicationWizardController extends Controller
             'exp_to_year' => 'nullable|required_if:has_experience,1|integer|min:1900|max:2099',
 
             // Step 5: University Request & Courses Details
-            'req_no' => 'required|string|max:100',
+            'req_no' => 'required|regex:/^[0-9]+$/',
             'req_date' => 'required|date',
             'courses' => 'required|array|min:1',
             'courses.*.name' => 'required|string|max:255',
@@ -124,6 +124,16 @@ class ApplicationWizardController extends Controller
             'file_lang_icdl' => 'required|file|mimes:pdf|max:10240',
             'file_cv' => 'required|file|mimes:pdf|max:10240',
             'file_payment' => 'required|file|mimes:pdf|max:10240',
+        ], [
+            'mobile.regex' => 'رقم الهاتف المحمول يجب أن يتكون من 10 أرقام.',
+            'phone.regex' => 'رقم الهاتف الأرضي يجب أن يتكون من 10 أرقام.',
+            'email.email' => 'البريد الإلكتروني المدخل غير صحيح.',
+            'ba_grant_date.after' => 'تاريخ التخرج من الإجازة يجب أن يكون بعد تاريخ التسجيل بالإجازة.',
+            'ba_grant_date.before_or_equal' => 'تاريخ التخرج من الإجازة يجب أن يكون قبل أو يساوي اليوم الحالي.',
+            'ma_defense_date.after' => 'تاريخ المناقشة يجب أن يكون بعد تاريخ التسجيل بالدرجة.',
+            'ma_grant_date.after' => 'تاريخ منح الدرجة يجب أن يكون بعد تاريخ المناقشة.',
+            'ma_grant_date.before_or_equal' => 'تاريخ منح الدرجة يجب أن يكون قبل أو يساوي اليوم الحالي وليس في المستقبل.',
+            'req_no.regex' => 'رقم كتاب طلب التقويم الصادر عن الجامعة يجب أن يتكون من أرقام فقط.',
         ]);
 
         // 2. Save Equivalence Profile (Candidate)
@@ -131,6 +141,8 @@ class ApplicationWizardController extends Controller
             ['national_id' => $request->national_id],
             [
                 'full_name' => $request->full_name,
+                'father_name' => $request->father_name,
+                'mother_name' => $request->mother_name,
                 'dob' => $request->dob,
                 'job_title' => $request->job_title,
                 'nationality_id' => $request->nationality_id,
@@ -330,10 +342,25 @@ class ApplicationWizardController extends Controller
             return $e->level && str_contains($e->level->name, 'ماجستير');
         })->last();
 
+        $fatherName = $candidate->father_name;
+        if (empty($fatherName) && !empty($candidate->full_name)) {
+            $cleanName = preg_replace('/^(د\.|م\.|أ\.|أ\.د\.|أستاذ|دكتور|مهندس)\s+/u', '', trim($candidate->full_name));
+            $parts = preg_split('/\s+/u', $cleanName);
+            if (count($parts) >= 3) {
+                $fatherName = $parts[1];
+            } elseif (count($parts) == 2) {
+                $fatherName = $parts[1];
+            }
+        }
+
+        $motherName = $candidate->mother_name;
+
         return response()->json([
             'success' => true,
             'candidate' => [
                 'full_name' => $candidate->full_name,
+                'father_name' => $fatherName,
+                'mother_name' => $motherName,
                 'national_id' => $candidate->national_id,
                 'dob' => $candidate->dob,
                 'job_title' => $candidate->job_title,

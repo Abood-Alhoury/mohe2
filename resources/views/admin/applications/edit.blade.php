@@ -51,12 +51,20 @@
                     @method('PATCH')
                     <div class="row g-3 mb-3">
                         <div class="col-md-4">
-                            <label class="form-label fw-bold">الرقم الوطني :</label>
-                            <input type="text" name="national_id" class="form-control" value="{{ $candidate->national_id }}">
+                            <label class="form-label fw-bold">اسم المرشح الكامل :</label>
+                            <input type="text" name="full_name" class="form-control" value="{{ $candidate->full_name }}" required>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label fw-bold">الاسم :</label>
-                            <input type="text" name="full_name" class="form-control" value="{{ $candidate->full_name }}" required>
+                            <label class="form-label fw-bold">اسم الأب :</label>
+                            <input type="text" name="father_name" class="form-control" value="{{ $candidate->father_name }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">اسم الأم ونسبتها :</label>
+                            <input type="text" name="mother_name" class="form-control" value="{{ $candidate->mother_name }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">الرقم الوطني :</label>
+                            <input type="text" name="national_id" class="form-control" value="{{ $candidate->national_id }}">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-bold">الجنسية :</label>

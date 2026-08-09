@@ -368,7 +368,7 @@
                         <div class="d-flex align-items-center justify-content-center gap-1.5">
                             <!-- Download Official Mozhakkara Report PDF -->
                             <a href="{{ route('university.applications.download_pdf', $app->id) }}" target="_blank" class="btn btn-gold-cta py-1 px-2 text-decoration-none" title="تحميل وطباعة تقرير ومذكرة عرض الطلب (PDF)">
-                                <i class="fa-solid fa-file-pdf me-1"></i> التقرير (PDF)
+                                <i class="fa-solid fa-file-pdf me-1" style="padding: 12px;"></i>
                             </a>
 
                             <!-- Nudge Application Button (خدمة حث واستعجال دراسة المعاملة) -->

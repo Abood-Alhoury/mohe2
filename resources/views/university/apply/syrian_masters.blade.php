@@ -78,13 +78,13 @@
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="equivalence_frequency" id="freq_first" value="تعادل للمرة الأولى" checked onchange="toggleCandidateLookup(false)">
                             <label class="form-check-label fw-bold" for="freq_first" style="color: var(--primary-container); cursor: pointer;">
-                                📌 تعادل للمرة الأولى (أول تقديم لطلب تعادل بالوزارة لهذا المرشح)
+                                تعادل للمرة الأولى
                             </label>
                         </div>
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="equivalence_frequency" id="freq_second" value="تعادل للمرة الثانية" onchange="toggleCandidateLookup(true)">
                             <label class="form-check-label fw-bold" for="freq_second" style="color: var(--primary-container); cursor: pointer;">
-                                🔄 تعادل للمرة الثانية أو أكثر (سبق للمرشح تقديم طلب تعادل سابق بالوزارة)
+                               تعادل للمرة الثانية أو أكثر
                             </label>
                         </div>
                     </div>
@@ -152,16 +152,16 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">البريد الإلكتروني *</label>
-                        <input type="email" name="email" id="input-email" class="form-control academic-input" placeholder="name@example.com" required>
+                        <input type="email" name="email" id="input-email" class="form-control academic-input" placeholder="name@example.com" oninput="this.setCustomValidity('')" required>
                     </div>
 
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">الهاتف المحمول *</label>
-                        <input type="text" name="mobile" id="input-mobile" class="form-control academic-input" placeholder="09xxxxxxxx" required>
+                        <input type="text" name="mobile" id="input-mobile" class="form-control academic-input" placeholder="09xxxxxxxx" maxlength="10" pattern="[0-9]{10}" oninput="this.setCustomValidity(''); this.value = this.value.replace(/[^0-9]/g, '')" required>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">الهاتف الأرضي</label>
-                        <input type="text" name="phone" id="input-phone" class="form-control academic-input" placeholder="011xxxxxxx">
+                        <input type="text" name="phone" id="input-phone" class="form-control academic-input" placeholder="011xxxxxxx" maxlength="10" pattern="[0-9]{10}" oninput="this.setCustomValidity(''); this.value = this.value.replace(/[^0-9]/g, '')">
                     </div>
 
                     <div class="col-12">
@@ -270,11 +270,11 @@
 
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">تاريخ التسجيل بالإجازة *</label>
-                        <input type="date" name="ba_registration_date" id="input-baRegDate" class="form-control academic-input" required>
+                        <input type="date" name="ba_registration_date" id="input-baRegDate" class="form-control academic-input" oninput="this.setCustomValidity(''); const g = document.getElementById('input-baGrantDate'); if(g) g.setCustomValidity('');" required>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">تاريخ التخرج / الحصول عليها *</label>
-                        <input type="date" name="ba_grant_date" id="input-baGrantDate" class="form-control academic-input" required>
+                        <input type="date" name="ba_grant_date" id="input-baGrantDate" class="form-control academic-input" oninput="this.setCustomValidity('')" required>
                     </div>
 
                     <!-- Conditional bachelor's equivalence if country is not Syria -->
@@ -335,15 +335,15 @@
 
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">تاريخ التسجيل بالدرجة *</label>
-                        <input type="date" name="ma_registration_date" id="input-maRegDate" class="form-control academic-input" required>
+                        <input type="date" name="ma_registration_date" id="input-maRegDate" class="form-control academic-input" oninput="this.setCustomValidity(''); const d = document.getElementById('input-maDefDate'); if(d) d.setCustomValidity(''); const g = document.getElementById('input-maGrantDate'); if(g) g.setCustomValidity('');" required>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">تاريخ المناقشة *</label>
-                        <input type="date" name="ma_defense_date" id="input-maDefDate" class="form-control academic-input" required>
+                        <input type="date" name="ma_defense_date" id="input-maDefDate" class="form-control academic-input" oninput="this.setCustomValidity(''); const g = document.getElementById('input-maGrantDate'); if(g) g.setCustomValidity('');" required>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">تاريخ منح الدرجة (الحصول على الشهادة) *</label>
-                        <input type="date" name="ma_grant_date" id="input-maGrantDate" class="form-control academic-input" required>
+                        <input type="date" name="ma_grant_date" id="input-maGrantDate" class="form-control academic-input" oninput="this.setCustomValidity('')" required>
                     </div>
 
                     <div class="col-12">
@@ -387,7 +387,7 @@
                 <div class="row g-3 mb-4">
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">رقم كتاب طلب التقويم الصادر عن الجامعة *</label>
-                        <input type="text" name="req_no" id="input-reqNo" class="form-control academic-input" placeholder="رقم الكتاب الرسمي" required>
+                        <input type="text" name="req_no" id="input-reqNo" class="form-control academic-input" placeholder="رقم الكتاب الرسمي (أرقام فقط)" pattern="[0-9]+" oninput="this.setCustomValidity(''); this.value = this.value.replace(/[^0-9]/g, '')" required>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">تاريخ كتاب طلب التقويم *</label>
@@ -812,6 +812,118 @@
                 }
             });
             if (!isValid) return;
+
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            if (currentStep === 1) {
+                // Step 1: Personal Info Validation
+                const mobileInput = document.getElementById('input-mobile');
+                const phoneInput = document.getElementById('input-phone');
+                const emailInput = document.getElementById('input-email');
+
+                if (mobileInput) {
+                    const mobileVal = mobileInput.value.trim();
+                    if (!/^[0-9]{10}$/.test(mobileVal)) {
+                        mobileInput.setCustomValidity('رقم الهاتف المحمول يجب أن يكون مكوناً من 10 أرقام (مثال: 0991168727).');
+                        mobileInput.reportValidity();
+                        return;
+                    } else {
+                        mobileInput.setCustomValidity('');
+                    }
+                }
+
+                if (phoneInput && phoneInput.value.trim() !== '') {
+                    const phoneVal = phoneInput.value.trim();
+                    if (!/^[0-9]{10}$/.test(phoneVal)) {
+                        phoneInput.setCustomValidity('رقم الهاتف الأرضي يجب أن يكون مكوناً من 10 أرقام (مثال: 0113414768).');
+                        phoneInput.reportValidity();
+                        return;
+                    } else {
+                        phoneInput.setCustomValidity('');
+                    }
+                }
+
+                if (emailInput) {
+                    const emailVal = emailInput.value.trim();
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(emailVal)) {
+                        emailInput.setCustomValidity('يرجى إدخال عنوان بريد إلكتروني صحيح (مثال: example@domain.com).');
+                        emailInput.reportValidity();
+                        return;
+                    } else {
+                        emailInput.setCustomValidity('');
+                    }
+                }
+            } else if (currentStep === 3) {
+                // Step 3: Bachelor's Degree Info Validation
+                const baRegInput = document.getElementById('input-baRegDate');
+                const baGrantInput = document.getElementById('input-baGrantDate');
+
+                if (baRegInput && baGrantInput) {
+                    const regDate = baRegInput.value;
+                    const grantDate = baGrantInput.value;
+
+                    if (grantDate <= regDate) {
+                        baGrantInput.setCustomValidity('تاريخ التخرج من الإجازة يجب أن يكون بعد تاريخ التسجيل بالإجازة.');
+                        baGrantInput.reportValidity();
+                        return;
+                    } else if (grantDate > todayStr) {
+                        baGrantInput.setCustomValidity('تاريخ التخرج من الإجازة يجب أن يكون قبل أو يساوي اليوم الحالي وليس في المستقبل.');
+                        baGrantInput.reportValidity();
+                        return;
+                    } else {
+                        baGrantInput.setCustomValidity('');
+                    }
+                }
+            } else if (currentStep === 4) {
+                // Step 4: Master's Degree Info Validation
+                const maRegInput = document.getElementById('input-maRegDate');
+                const maDefInput = document.getElementById('input-maDefDate');
+                const maGrantInput = document.getElementById('input-maGrantDate');
+
+                if (maRegInput && maDefInput) {
+                    const regDate = maRegInput.value;
+                    const defDate = maDefInput.value;
+
+                    if (defDate <= regDate) {
+                        maDefInput.setCustomValidity('تاريخ المناقشة يجب أن يكون بعد تاريخ التسجيل بالدرجة.');
+                        maDefInput.reportValidity();
+                        return;
+                    } else {
+                        maDefInput.setCustomValidity('');
+                    }
+                }
+
+                if (maDefInput && maGrantInput) {
+                    const defDate = maDefInput.value;
+                    const grantDate = maGrantInput.value;
+
+                    if (grantDate <= defDate) {
+                        maGrantInput.setCustomValidity('تاريخ منح الدرجة (الحصول على الشهادة) يجب أن يكون بعد تاريخ المناقشة.');
+                        maGrantInput.reportValidity();
+                        return;
+                    } else if (grantDate > todayStr) {
+                        maGrantInput.setCustomValidity('تاريخ منح الدرجة (الحصول على الشهادة) يجب أن يكون قبل أو يساوي اليوم الحالي وليس في المستقبل.');
+                        maGrantInput.reportValidity();
+                        return;
+                    } else {
+                        maGrantInput.setCustomValidity('');
+                    }
+                }
+            } else if (currentStep === 5) {
+                // Step 5: University Request Details Validation
+                const reqNoInput = document.getElementById('input-reqNo');
+                if (reqNoInput) {
+                    const reqNoVal = reqNoInput.value.trim();
+                    if (!/^[0-9]+$/.test(reqNoVal)) {
+                        reqNoInput.setCustomValidity('رقم كتاب طلب التقويم الصادر عن الجامعة يجب أن يحتوي على أرقام فقط.');
+                        reqNoInput.reportValidity();
+                        return;
+                    } else {
+                        reqNoInput.setCustomValidity('');
+                    }
+                }
+            }
         }
 
         // Hide current step
@@ -1014,6 +1126,8 @@
 
                 // Auto-fill Step 1 (Personal Info)
                 if (c.full_name) document.getElementById('input-fullName').value = c.full_name;
+                if (c.father_name) document.getElementById('input-fatherName').value = c.father_name;
+                if (c.mother_name) document.getElementById('input-motherName').value = c.mother_name;
                 if (c.national_id) document.getElementById('input-nationalId').value = c.national_id;
                 if (c.dob) document.getElementById('input-dob').value = c.dob;
                 if (c.job_title) document.getElementById('input-jobTitle').value = c.job_title;

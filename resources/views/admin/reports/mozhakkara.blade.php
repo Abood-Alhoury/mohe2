@@ -126,8 +126,8 @@
         <a href="{{ route('admin.reports.download_pdf', $application->id) }}" target="_blank" class="btn btn-gold-cta fw-bold px-3">
             <i class="fa-solid fa-file-pdf me-1"></i> تنزيل PDF
         </a>
-        <a href="{{ route('admin.reports.consolidated', $application->id) }}" class="btn btn-outline-gold fw-bold px-3">
-            <i class="fa-solid fa-layer-group me-1"></i> المرفقات المدمجة
+        <a href="{{ route('admin.reports.download_consolidated_pdf', $application->id) }}" target="_blank" class="btn btn-outline-gold fw-bold px-3" title="تنزيل حزمة الملف المدموج (مذكرة العرض + كافـة المرفقات والشهادات كملف PDF واحد)">
+            <i class="fa-solid fa-layer-group me-1"></i> المرفقات المدمجة (PDF مدموج)
         </a>
     </div>
 </div>

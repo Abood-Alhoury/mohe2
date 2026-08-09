@@ -50,6 +50,8 @@ class FullSampleDataSeeder extends Seeder
         // 2. Candidate Profile
         $candidateId = DB::table('equivalence_profiles')->insertGetId([
             'full_name'    => 'د. سارة محمود الخالد',
+            'father_name'  => 'محمود',
+            'mother_name'  => 'فاطمة العلي',
             'national_id'  => '02020202099',
             'dob'          => '1996-07-20',
             'gender'       => 'أنثى',

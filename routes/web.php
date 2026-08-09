@@ -73,6 +73,7 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/reports/{id}/mozhakkara', [PdfReportController::class, 'show'])->name('admin.reports.show');
     Route::get('/reports/{id}/pdf', [PdfReportController::class, 'downloadPdf'])->name('admin.reports.download_pdf');
     Route::get('/reports/{id}/consolidated', [PdfReportController::class, 'consolidatedView'])->name('admin.reports.consolidated');
+    Route::get('/reports/{id}/consolidated-pdf', [PdfReportController::class, 'downloadConsolidatedPdf'])->name('admin.reports.download_consolidated_pdf');
 
     // Equivalence Decisions Upload & Issue
     Route::get('/decisions', [DecisionsController::class, 'index'])->name('admin.decisions.index');
@@ -102,4 +103,5 @@ Route::prefix('university')->middleware(['auth', 'role:university'])->group(func
     // Official Application Report & Mozhakkara PDF Download
     Route::get('/applications/{appId}/mozhakkara', [UniDashboardController::class, 'showMozhakkara'])->name('university.applications.mozhakkara');
     Route::get('/applications/{appId}/download-pdf', [UniDashboardController::class, 'downloadPdf'])->name('university.applications.download_pdf');
+    Route::get('/applications/{appId}/consolidated-pdf', [UniDashboardController::class, 'downloadConsolidatedPdf'])->name('university.applications.download_consolidated_pdf');
 });

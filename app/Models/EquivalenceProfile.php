@@ -10,6 +10,8 @@ class EquivalenceProfile extends Model
 
     protected $fillable = [
         'full_name',
+        'father_name',
+        'mother_name',
         'national_id',
         'dob',
         'job_title',

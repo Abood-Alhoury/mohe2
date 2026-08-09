@@ -60,6 +60,8 @@ class EditApplicationController extends Controller
 
         $candidate->update($request->only([
             'full_name',
+            'father_name',
+            'mother_name',
             'national_id',
             'dob',
             'gender',

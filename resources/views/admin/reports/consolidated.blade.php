@@ -8,7 +8,10 @@
         <i class="fa-solid fa-arrow-right me-1"></i> العودة لمذكرة العرض
     </a>
     <div class="d-flex gap-2">
-        <button onclick="window.print()" class="btn btn-mohe-gold fw-bold">
+        <a href="{{ route('admin.reports.download_consolidated_pdf', $application->id) }}" target="_blank" class="btn btn-gold-cta fw-bold shadow-sm">
+            <i class="fa-solid fa-file-pdf me-1"></i> 📥 تنزيل الحزمة المدمجة كاملة كـ PDF
+        </a>
+        <button onclick="window.print()" class="btn btn-solid-navy fw-bold">
             <i class="fa-solid fa-print me-1"></i> طباعة الحزمة المدمجة كاملة
         </button>
     </div>
