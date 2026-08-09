@@ -56,8 +56,8 @@
         }
 
         .mohe-emblem-ring {
-            width: 100px;
-            height: 100px;
+            width: 75px;
+            height: 75px;
             border-radius: 50%;
             border: 2px solid var(--heritage-gold);
             padding: 2px;
@@ -102,19 +102,10 @@
                              onerror="this.onerror=null; this.src='{{ asset('images/mohe_logo.jpg') }}';">
                     </div>
                     <div>
-                        <h1 class="h5 fw-bold text-white mb-0">وزارة التعليم العالي والبحث العلمي</h1>
-                        <p class="small text-white-50 mb-0">البوابة الإلكترونية للجامعات السورية - نظام تعادل الشهادات</p>
+                        <h1 class="h5 fw-bold text-white mb-0">بوابة الجامعة الإلكترونية</h1>
+                        <p class="small text-white-50 mb-0">نظام إدارة ورفع طلبات تعادل الشهادات العلمية</p>
                     </div>
                 </a>
-
-                <!-- SIDEBAR EXPAND/COLLAPSE TOGGLE BUTTON -->
-                <button type="button" 
-                        @click="isExpanded = !isExpanded" 
-                        class="btn-sidebar-toggle ms-3" 
-                        title="طَي / توسيع القائمة الجانبية">
-                    <i class="fa-solid" :class="isExpanded ? 'fa-align-right' : 'fa-bars-staggered'"></i>
-                    <span class="d-none d-md-inline ms-1 fw-bold" style="font-size: 0.8rem;" x-text="isExpanded ? 'طَي' : 'توسيع'">توسيع</span>
-                </button>
             </div>
 
             <div class="d-flex align-items-center gap-3 ms-auto">
@@ -224,6 +215,13 @@
         
         <!-- GLOBAL SIDEBAR FOR UNIVERSITY PORTAL (COLLAPSED BY DEFAULT) -->
         <aside class="sidebar-container" :class="{ 'expanded': isExpanded }">
+            <!-- MIDDLE-EDGE TOGGLE ARROW BUTTON -->
+            <button type="button" 
+                    @click="isExpanded = !isExpanded" 
+                    class="sidebar-edge-toggle" 
+                    :title="isExpanded ? 'طَي القائمة الجانبية' : 'توسيع القائمة الجانبية'">
+                <i class="fa-solid fa-chevron-left" :class="{ 'rotated': isExpanded }"></i>
+            </button>
             
             <!-- University User Profile Box -->
             <div class="sidebar-profile-box text-center p-3 mb-2 border-bottom border-secondary-subtle">

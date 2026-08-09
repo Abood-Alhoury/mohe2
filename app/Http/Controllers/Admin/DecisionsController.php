@@ -49,7 +49,14 @@ class DecisionsController extends Controller
             return redirect()->back()->with('error', 'لا يمكن إرفاق قرار تعادل لطلب حالته حالياً (' . $app->status . ').');
         }
 
-        $path = $request->file('decision_file')->store('decisions', 'public');
+        $safeAppNo = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $app->application_no ?? ('App_' . $app->id));
+        $safeDecNo = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $request->decision_no);
+        $candidateName = $app->candidate ? preg_replace('/[^\p{L}\p{N}\s\-_]/u', '', $app->candidate->full_name) : '';
+        $cleanCandidateName = trim(preg_replace('/\s+/', '_', $candidateName));
+        $ext = $request->file('decision_file')->getClientOriginalExtension();
+
+        $decisionFileName = 'Official_Decision_No' . $safeDecNo . '_' . $safeAppNo . ($cleanCandidateName ? '_' . $cleanCandidateName : '') . '.' . $ext;
+        $path = $request->file('decision_file')->storeAs('decisions', $decisionFileName, 'public');
 
         $decision = ApplicationDecision::create([
             'application_id' => $request->application_id,

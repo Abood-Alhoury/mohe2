@@ -270,4 +270,25 @@
 
 @endforeach
 
+@push('scripts')
+@if(request()->has('open_message'))
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var openAppId = "{{ request()->get('open_message') }}";
+        var modalEl = document.getElementById('messageModal' + openAppId);
+        if (modalEl) {
+            var modal = new bootstrap.Modal(modalEl);
+            modal.show();
+            
+            // Scroll chat box to bottom
+            var chatBox = modalEl.querySelector('.messages-chat-box');
+            if (chatBox) {
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+        }
+    });
+</script>
+@endif
+@endpush
+
 @endsection

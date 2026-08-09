@@ -52,10 +52,11 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::delete('/settings/country/{id}', [SettingsController::class, 'deleteCountry'])->name('admin.settings.delete_country');
     Route::delete('/settings/level/{id}', [SettingsController::class, 'deleteEducationLevel'])->name('admin.settings.delete_level');
 
-    // Equivalence Applications
+    // Equivalence Applications & Messages Center
     Route::get('/applications', [ApplicationsController::class, 'index'])->name('admin.applications.index');
     Route::patch('/applications/{id}/status', [ApplicationsController::class, 'updateStatus'])->name('admin.applications.update_status');
     Route::post('/applications/{id}/message', [ApplicationsController::class, 'sendMessage'])->name('admin.applications.send_message');
+    Route::get('/messages', [ApplicationsController::class, 'messagesLog'])->name('admin.messages.index');
     Route::get('/applications/{id}/edit', [EditApplicationController::class, 'edit'])->name('admin.applications.edit');
     Route::patch('/applications/{id}/candidate', [EditApplicationController::class, 'updateCandidate'])->name('admin.applications.update_candidate');
     Route::patch('/applications/{id}/education', [EditApplicationController::class, 'updateEducation'])->name('admin.applications.update_education');

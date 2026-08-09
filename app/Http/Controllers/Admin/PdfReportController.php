@@ -98,10 +98,15 @@ class PdfReportController extends Controller
         // 3. Load the pre-processed HTML into DomPDF
         $pdf = Pdf::loadHtml($html)->setPaper('a4', 'portrait');
 
-        $safeAppNo = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $application->application_no ?? $application->id);
-        $fileName  = 'Mozhakkara_' . $safeAppNo . '.pdf';
+        $safeAppNo = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $application->application_no ?? ('App_' . $application->id));
+        $candidateName = $candidate ? preg_replace('/[^\p{L}\p{N}\s\-_]/u', '', $candidate->full_name) : '';
+        $cleanCandidateName = trim(preg_replace('/\s+/', '_', $candidateName));
 
-        return $pdf->stream($fileName);
+        $fileName = 'Mozhakkara_' . $safeAppNo . ($cleanCandidateName ? '_' . $cleanCandidateName : '') . '.pdf';
+
+        return $pdf->stream($fileName, [
+            'Attachment' => 0
+        ]);
     }
 
 
@@ -207,9 +212,12 @@ class PdfReportController extends Controller
             }
         }
 
-        // 4. Output merged PDF
-        $safeAppNo = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $application->application_no ?? $application->id);
-        $fileName  = 'Merged_Package_' . $safeAppNo . '.pdf';
+        // 4. Output merged PDF with clean, descriptive filename
+        $safeAppNo = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $application->application_no ?? ('App_' . $application->id));
+        $candidateName = $candidate ? preg_replace('/[^\p{L}\p{N}\s\-_]/u', '', $candidate->full_name) : '';
+        $cleanCandidateName = trim(preg_replace('/\s+/', '_', $candidateName));
+
+        $fileName = 'Merged_Package_' . $safeAppNo . ($cleanCandidateName ? '_' . $cleanCandidateName : '') . '.pdf';
 
         // Clean up temp file
         $mergedContent = $merger->Output('S');
@@ -217,8 +225,7 @@ class PdfReportController extends Controller
 
         return response($mergedContent, 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"; filename*=UTF-8\'\'' . rawurlencode($fileName),
         ]);
     }
 }
-

@@ -57,8 +57,8 @@
         }
 
         .mohe-emblem-ring {
-            width: 100px;
-            height: 100px;
+            width: 75px;
+            height: 75px;
             border-radius: 50%;
             border: 2px solid var(--heritage-gold);
             padding: 2px;
@@ -112,15 +112,6 @@
                         <p class="small text-white-50 mb-0">نظام إدارة وقرارات معادلة الشهادات العلمية</p>
                     </div>
                 </a>
-
-                <!-- SIDEBAR EXPAND/COLLAPSE TOGGLE BUTTON -->
-                <button type="button" 
-                        @click="isExpanded = !isExpanded" 
-                        class="btn-sidebar-toggle ms-3" 
-                        title="طَي / توسيع القائمة الجانبية">
-                    <i class="fa-solid" :class="isExpanded ? 'fa-align-right' : 'fa-bars-staggered'"></i>
-                    <span class="d-none d-md-inline ms-1 fw-bold" style="font-size: 0.8rem;" x-text="isExpanded ? 'طَي' : 'توسيع'">توسيع</span>
-                </button>
             </div>
 
             <div class="d-flex align-items-center gap-3 ms-auto">
@@ -138,6 +129,53 @@
                         <span>النظام متاح وشغال</span>
                     </span>
                 @endif
+
+                <!-- ADMIN NOTIFICATIONS DROPDOWN BUTTON -->
+                <div class="dropdown">
+                    <button class="btn btn-outline-light position-relative p-2" type="button" id="adminNotifDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-color: rgba(197, 160, 89, 0.4);" title="مركز التنبيهات والإشعارات القادمة من الجامعات">
+                        <i class="fa-regular fa-bell fs-5" style="color: var(--heritage-gold-light);"></i>
+                        @if(isset($adminNotifications) && $adminNotifications->count() > 0)
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.7rem;">
+                                {{ $adminNotifications->count() }}
+                            </span>
+                        @endif
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end shadow-lg py-0 border-0" aria-labelledby="adminNotifDropdown" style="width: 330px; border-top: 3px solid var(--heritage-gold) !important;">
+                        <div class="p-3 border-bottom bg-light d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 fw-bold" style="color: var(--imperial-navy);"><i class="fa-solid fa-bell me-1" style="color: var(--heritage-gold);"></i> إشعارات ورسائل الجامعات</h6>
+                            @if(isset($adminNotifications) && $adminNotifications->count() > 0)
+                                <span class="badge bg-danger">{{ $adminNotifications->count() }} جديدة</span>
+                            @endif
+                        </div>
+                        <div style="max-height: 330px; overflow-y: auto;">
+                            @if(isset($adminNotifications) && $adminNotifications->count() > 0)
+                                @foreach($adminNotifications as $notif)
+                                    <a href="{{ route('admin.applications.index') }}?open_message={{ $notif->application_id }}" class="dropdown-item p-3 border-bottom text-wrap">
+                                        <div class="d-flex justify-content-between align-items-start mb-1">
+                                            <span class="badge bg-warning text-dark fs-8">{{ $notif->application->application_no ?? ('طلب #' . $notif->application_id) }}</span>
+                                            <small class="text-muted fs-8">{{ $notif->created_at ? $notif->created_at->diffForHumans() : '' }}</small>
+                                        </div>
+                                        <div class="small fw-bold text-dark mb-1">
+                                            {{ $notif->application->candidate->full_name ?? 'المرشح' }}
+                                            <span class="text-muted fw-normal" style="font-size: 0.78rem;">({{ optional($notif->application->workUniversity)->name ?? 'جامعة مسجلة' }})</span>
+                                        </div>
+                                        <div class="text-muted text-truncate fs-7" style="max-width: 290px;">{{ $notif->message }}</div>
+                                    </a>
+                                @endforeach
+                            @else
+                                <div class="text-center py-4 text-muted">
+                                    <i class="fa-regular fa-bell-slash fs-2 mb-2 d-block" style="color: var(--heritage-gold);"></i>
+                                    لا توجد إشعارات أو رسائل جديدة حالياً
+                                </div>
+                            @endif
+                        </div>
+                        <div class="p-2 border-top text-center bg-light">
+                            <a href="{{ route('admin.messages.index') }}" class="btn btn-sm btn-link fw-bold text-decoration-none" style="color: var(--imperial-navy);">
+                                استعراض كافة المحادثات والرسائل <i class="fa-solid fa-arrow-left ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- MODERN INSTITUTIONAL USER PROFILE DROPDOWN -->
                 <div class="dropdown">
@@ -161,8 +199,12 @@
                             <small class="text-white-50 fs-8">{{ Auth::user()->email ?? 'admin@mohe.gov.sy' }}</small>
                         </div>
                         <div class="py-2 bg-white">
+                            <a class="user-dropdown-item" href="{{ route('admin.messages.index') }}">
+                                <i class="fa-regular fa-comments text-primary fs-5"></i>
+                                <span>مركز المحادثات والرسائل</span>
+                            </a>
                             <a class="user-dropdown-item" href="{{ route('admin.settings') }}">
-                                <i class="fa-solid fa-gear text-primary fs-5"></i>
+                                <i class="fa-solid fa-gear text-secondary fs-5"></i>
                                 <span>إعدادات الموقع والحسابات</span>
                             </a>
                             <div class="dropdown-divider my-1"></div>
@@ -184,6 +226,13 @@
     <div class="d-flex flex-1">
         <!-- GLOBAL SIDE NAVIGATION MENU (COLLAPSED BY DEFAULT, EXPANDS ONLY ON USER TOGGLE) -->
         <aside class="sidebar-container" :class="{ 'expanded': isExpanded }">
+            <!-- MIDDLE-EDGE TOGGLE ARROW BUTTON -->
+            <button type="button" 
+                    @click="isExpanded = !isExpanded" 
+                    class="sidebar-edge-toggle" 
+                    :title="isExpanded ? 'طَي القائمة الجانبية' : 'توسيع القائمة الجانبية'">
+                <i class="fa-solid fa-chevron-left" :class="{ 'rotated': isExpanded }"></i>
+            </button>
             
             <!-- User Profile Box inside Sidebar -->
             <div class="sidebar-profile-box text-center p-3 mb-2 border-bottom border-secondary-subtle">
@@ -216,6 +265,13 @@
                    :title="!isExpanded ? 'سجل طلبات التعادل' : ''">
                     <i class="fa-solid fa-list-check fs-5"></i>
                     <span class="sidebar-text-label">سجل طلبات التعادل</span>
+                </a>
+
+                <a href="{{ route('admin.messages.index') }}" 
+                   class="sidebar-link {{ request()->routeIs('admin.messages*') ? 'active' : '' }}"
+                   :title="!isExpanded ? 'سجل الرسائل والمحادثات' : ''">
+                    <i class="fa-solid fa-comments fs-5"></i>
+                    <span class="sidebar-text-label">سجل الرسائل والمحادثات</span>
                 </a>
 
                 <a href="{{ route('admin.committee.index') }}" 

@@ -391,11 +391,53 @@ body {
   display: flex;
   flex-direction: column;
   z-index: 40;
+  position: relative;
+  overflow: visible !important;
+}
+
+/* Sidebar Middle-Edge Toggle Arrow Button */
+.sidebar-edge-toggle {
+  position: absolute;
+  top: 50%;
+  left: -14px;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: var(--imperial-navy);
+  border: 2px solid var(--heritage-gold);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(4, 21, 46, 0.35);
+  z-index: 100;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  outline: none !important;
+}
+
+.sidebar-edge-toggle:hover {
+  background-color: var(--imperial-navy-dark);
+  border-color: #ffffff;
+  box-shadow: 0 4px 12px rgba(4, 21, 46, 0.5);
+  transform: translateY(-50%) scale(1.12);
+}
+
+.sidebar-edge-toggle i {
+  font-size: 0.75rem;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--heritage-gold);
+}
+
+.sidebar-edge-toggle i.rotated {
+  transform: rotate(180deg);
 }
 
 .sidebar-container .sidebar-text-label,
 .sidebar-container .sidebar-profile-box {
   display: none;
+  white-space: nowrap;
 }
 
 .sidebar-container .sidebar-link {

@@ -39,6 +39,14 @@ class ApplicationsController extends Controller
             });
         }
 
+        // Handle marking notification messages as read when clicked from header notification bell
+        if ($request->has('open_message')) {
+            $openAppId = $request->query('open_message');
+            ApplicationMessage::where('application_id', $openAppId)
+                ->where('is_read', false)
+                ->update(['is_read' => true]);
+        }
+
         $applications = $query->latest()->paginate(15);
         $universities = LookupUniversity::all();
 
@@ -86,7 +94,14 @@ class ApplicationsController extends Controller
         // If uploading Equivalence Decision File or status set to "تم الصدور"
         if ($request->hasFile('decision_file')) {
             $file = $request->file('decision_file');
-            $path = $file->store('decisions', 'public');
+            $safeAppNo = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $app->application_no ?? ('App_' . $app->id));
+            $safeDecNo = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $request->decision_no ?? $app->application_no);
+            $candidateName = $app->candidate ? preg_replace('/[^\p{L}\p{N}\s\-_]/u', '', $app->candidate->full_name) : '';
+            $cleanCandidateName = trim(preg_replace('/\s+/', '_', $candidateName));
+            $ext = $file->getClientOriginalExtension();
+
+            $decisionFileName = 'Official_Decision_No' . $safeDecNo . '_' . $safeAppNo . ($cleanCandidateName ? '_' . $cleanCandidateName : '') . '.' . $ext;
+            $path = $file->storeAs('decisions', $decisionFileName, 'public');
 
             $decision = ApplicationDecision::create([
                 'application_id' => $app->id,
@@ -128,5 +143,74 @@ class ApplicationsController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'تم إرسال الرسالة والإشعار بنجاح للجامعة بخصوص الطلب رقم ' . $app->application_no);
+    }
+
+    // Action 3: Dedicated Admin Messages Log & Center Page
+    public function messagesLog(Request $request)
+    {
+        $selectedAppId = $request->query('application_id');
+        $search = $request->query('search');
+        $uniFilter = $request->query('university_id');
+
+        // Query applications that have messages
+        $appsQuery = Application::whereHas('messages')
+            ->with(['candidate', 'workUniversity', 'messages' => function($q) {
+                $q->latest();
+            }]);
+
+        if ($uniFilter) {
+            $appsQuery->where('work_university_id', $uniFilter);
+        }
+
+        if ($search) {
+            $appsQuery->where(function($q) use ($search) {
+                $q->whereHas('candidate', function($cq) use ($search) {
+                    $cq->where('full_name', 'like', "%{$search}%")
+                      ->orWhere('national_id', 'like', "%{$search}%");
+                })
+                ->orWhere('application_no', 'like', "%{$search}%");
+            });
+        }
+
+        $applicationsList = $appsQuery->get()->sortByDesc(function($app) {
+            return optional($app->messages->first())->created_at;
+        });
+
+        // Determine selected application
+        $selectedApp = null;
+        if ($selectedAppId) {
+            $selectedApp = Application::with(['candidate', 'workUniversity', 'messages.sender'])->find($selectedAppId);
+        }
+
+        if (!$selectedApp && $applicationsList->count() > 0) {
+            $selectedApp = Application::with(['candidate', 'workUniversity', 'messages.sender'])->find($applicationsList->first()->id);
+        }
+
+        // Mark unread messages as read for selected application
+        if ($selectedApp) {
+            ApplicationMessage::where('application_id', $selectedApp->id)
+                ->where('is_read', false)
+                ->update(['is_read' => true]);
+
+            // Reload fresh messages
+            $selectedApp->load(['messages' => function($q) {
+                $q->orderBy('created_at', 'asc')->with('sender');
+            }]);
+        }
+
+        $universities = LookupUniversity::all();
+        $totalMessagesCount = ApplicationMessage::count();
+        $unreadCount = ApplicationMessage::where('sender_id', '!=', Auth::id() ?? 1)->where('is_read', false)->count();
+
+        return view('admin.messages.index', compact(
+            'applicationsList',
+            'selectedApp',
+            'universities',
+            'selectedAppId',
+            'search',
+            'uniFilter',
+            'totalMessagesCount',
+            'unreadCount'
+        ));
     }
 }

@@ -232,7 +232,11 @@ class DashboardController extends Controller
             ->setPaper('a4', 'portrait')
             ->setWarnings(false);
 
-        $fileName = 'Report_' . ($application->application_no ?? $application->id) . '.pdf';
+        $safeAppNo = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $application->application_no ?? ('App_' . $application->id));
+        $candidateName = $candidate ? preg_replace('/[^\p{L}\p{N}\s\-_]/u', '', $candidate->full_name) : '';
+        $cleanCandidateName = trim(preg_replace('/\s+/', '_', $candidateName));
+
+        $fileName = 'Mozhakkara_' . $safeAppNo . ($cleanCandidateName ? '_' . $cleanCandidateName : '') . '.pdf';
         return $pdf->download($fileName);
     }
 
@@ -329,16 +333,19 @@ class DashboardController extends Controller
             }
         }
 
-        // 4. Output merged PDF
-        $safeAppNo = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $application->application_no ?? $application->id);
-        $fileName  = 'Merged_Package_' . $safeAppNo . '.pdf';
+        // 4. Output merged PDF with clean, descriptive filename
+        $safeAppNo = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $application->application_no ?? ('App_' . $application->id));
+        $candidateName = $candidate ? preg_replace('/[^\p{L}\p{N}\s\-_]/u', '', $candidate->full_name) : '';
+        $cleanCandidateName = trim(preg_replace('/\s+/', '_', $candidateName));
+
+        $fileName = 'Merged_Package_' . $safeAppNo . ($cleanCandidateName ? '_' . $cleanCandidateName : '') . '.pdf';
 
         $mergedContent = $merger->Output('S');
         @unlink($mozhakkaraTmpPath);
 
         return response($mergedContent, 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"; filename*=UTF-8\'\'' . rawurlencode($fileName),
         ]);
     }
 
