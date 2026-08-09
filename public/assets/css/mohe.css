@@ -189,41 +189,68 @@ body {
    ========================================================================== */
 
 .mohe-header {
-  background-color: var(--primary-container);
+  background: radial-gradient(circle at 12% 50%, rgba(197, 160, 89, 0.14) 0%, transparent 60%),
+              linear-gradient(135deg, #071526 0%, #152B47 50%, #0B1C33 100%);
   color: var(--on-primary);
-  border-bottom: 3px solid var(--heritage-gold);
-  box-shadow: 0 4px 16px rgba(4, 21, 46, 0.25);
+  border-bottom: 1px solid rgba(197, 160, 89, 0.35);
+  box-shadow: 0 8px 30px rgba(4, 21, 46, 0.4);
   position: relative;
-  padding: 0.75rem 1.5rem;
+  padding: 0.85rem 1.75rem;
   z-index: 50;
 }
 
+/* Glowing Metallic Gold Accent Bar on Header Bottom */
+.mohe-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, 
+              rgba(197, 160, 89, 0) 0%, 
+              #C5A059 25%, 
+              #FED488 50%, 
+              #C5A059 75%, 
+              rgba(197, 160, 89, 0) 100%);
+  box-shadow: 0 0 12px rgba(197, 160, 89, 0.6);
+}
+
 .mohe-header .brand-title {
-  font-weight: 700;
-  font-size: 1.2rem;
+  font-weight: 800;
+  font-size: 1.22rem;
   color: #ffffff;
   margin-bottom: 0;
+  letter-spacing: -0.2px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
 .mohe-header .brand-subtitle {
-  font-size: 0.8rem;
-  color: var(--heritage-gold-light);
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.75);
   margin-bottom: 0;
+  font-weight: 500;
 }
 
 /* Official Emblem Ring */
 .mohe-emblem-ring {
-  width: 54px;
-  height: 54px;
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
-  border: 2px solid var(--heritage-gold);
-  padding: 2px;
-  background-color: #ffffff;
+  border: 2px solid #C5A059;
+  padding: 2.5px;
+  background: linear-gradient(135deg, #FFFFFF 0%, #F5F0E6 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 15px rgba(197, 160, 89, 0.35), 0 4px 12px rgba(0, 0, 0, 0.3);
   flex-shrink: 0;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.mohe-emblem-ring:hover {
+  transform: scale(1.04);
+  box-shadow: 0 0 22px rgba(197, 160, 89, 0.55), 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
 .mohe-emblem-ring img {
@@ -387,41 +414,42 @@ body {
   border-left: 1px solid var(--outline-variant);
   flex-shrink: 0;
   transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-  min-height: calc(100vh - 65px);
+  min-height: calc(100vh - 75px);
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
   display: flex;
   flex-direction: column;
-  z-index: 40;
-  position: relative;
+  z-index: 45;
   overflow: visible !important;
 }
 
-/* Sidebar Middle-Edge Toggle Arrow Button */
+/* Senior UX Top-Pinned Edge Toggle Button (Fixed to Top Edge & Sticky Scroll) */
 .sidebar-edge-toggle {
   position: absolute;
-  top: 50%;
+  top: 22px;
   left: -14px;
-  transform: translateY(-50%);
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background-color: var(--imperial-navy);
-  border: 2px solid var(--heritage-gold);
+  background: radial-gradient(circle at 30% 30%, #152B47 0%, #071526 100%);
+  border: 1.5px solid var(--heritage-gold);
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(4, 21, 46, 0.35);
+  box-shadow: 0 4px 12px rgba(4, 21, 46, 0.4), 0 0 0 2px rgba(255, 255, 255, 0.9);
   z-index: 100;
-  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
   outline: none !important;
 }
 
 .sidebar-edge-toggle:hover {
-  background-color: var(--imperial-navy-dark);
-  border-color: #ffffff;
-  box-shadow: 0 4px 12px rgba(4, 21, 46, 0.5);
-  transform: translateY(-50%) scale(1.12);
+  background: radial-gradient(circle at 30% 30%, #1E3E62 0%, #0D1E34 100%);
+  border-color: #FED488;
+  box-shadow: 0 0 14px rgba(197, 160, 89, 0.55), 0 4px 14px rgba(4, 21, 46, 0.5);
+  transform: scale(1.12);
 }
 
 .sidebar-edge-toggle i {
@@ -971,20 +999,24 @@ body {
    INSTITUTIONAL FOOTER
    ========================================================================== */
 
-.mohe-footer-institutional {
-  background-color: var(--surface-container-low);
-  color: var(--on-surface-variant);
-  border-top: 1px solid var(--outline-variant);
-  padding: 1.25rem 2rem;
-  font-size: 0.85rem;
-  margin-top: auto;
+.mohe-footer-executive .footer-link {
+  color: rgba(255, 255, 255, 0.72);
+  text-decoration: none;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-block;
 }
 
-.mohe-footer-institutional a {
-  color: var(--on-surface-variant);
+.mohe-footer-executive .footer-link:hover {
+  color: #FED488;
+  transform: translateX(-4px);
+}
+
+.mohe-footer-executive .footer-sublink {
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
   transition: color 0.18s ease;
 }
 
-.mohe-footer-institutional a:hover {
-  color: var(--primary-container);
+.mohe-footer-executive .footer-sublink:hover {
+  color: #ffffff;
 }

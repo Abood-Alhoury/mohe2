@@ -101,15 +101,20 @@
         <div class="container-fluid px-4 d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-3">
                 <a href="{{ route('admin.dashboard') }}" class="d-flex align-items-center gap-3 text-decoration-none">
-                    <!-- Circular Gold Ring Logo Emblem -->
+                    <!-- Circular Gold Ring Logo Emblem with Hover Glow -->
                     <div class="mohe-emblem-ring">
                         <img src="{{ asset('assets/logo.jpg') }}" 
                              alt="وزارة التعليم العالي" 
                              onerror="this.onerror=null; this.src='{{ asset('images/mohe_logo.jpg') }}';">
                     </div>
                     <div>
-                        <h1 class="h5 fw-bold text-white mb-0">مجلس التعليم العالي</h1>
-                        <p class="small text-white-50 mb-0">نظام إدارة وقرارات معادلة الشهادات العلمية</p>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="badge" style="background: rgba(197,160,89,0.2); color: #FED488; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.5px; border: 1px solid rgba(197,160,89,0.35); border-radius: 4px; padding: 2px 7px;">
+                                الجمهورية العربية السورية | وزارة التعليم العالي
+                            </span>
+                        </div>
+                        <h1 class="brand-title">مجلس التعليم العالي والتعادل الأكاديمي</h1>
+                        <p class="brand-subtitle">نظام الإدارة المركزية والقرارات الوزارية لمعادلة الشهادات والدرجات العلمية</p>
                     </div>
                 </a>
             </div>
@@ -119,12 +124,12 @@
                     $siteLocked = \App\Models\SiteSetting::get('site_locked', '0') === '1';
                 @endphp
                 @if($siteLocked)
-                    <span class="status-badge">
+                    <span class="status-badge" style="background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.35); color: #fca5a5;">
                         <span class="status-dot pulse-red"></span>
                         <span>الموقع مغلق للجامعات</span>
                     </span>
                 @else
-                    <span class="status-badge">
+                    <span class="status-badge" style="background: rgba(34,197,94,0.12); border-color: rgba(34,197,94,0.35); color: #86efac;">
                         <span class="status-dot pulse-green"></span>
                         <span>النظام متاح وشغال</span>
                     </span>
@@ -132,15 +137,17 @@
 
                 <!-- ADMIN NOTIFICATIONS DROPDOWN BUTTON -->
                 <div class="dropdown">
-                    <button class="btn btn-outline-light position-relative p-2" type="button" id="adminNotifDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-color: rgba(197, 160, 89, 0.4);" title="مركز التنبيهات والإشعارات القادمة من الجامعات">
+                    <button class="btn position-relative p-2" type="button" id="adminNotifDropdown" data-bs-toggle="dropdown" aria-expanded="false" 
+                            style="border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(197, 160, 89, 0.4); backdrop-filter: blur(6px);" 
+                            title="مركز التنبيهات والإشعارات القادمة من الجامعات">
                         <i class="fa-regular fa-bell fs-5" style="color: var(--heritage-gold-light);"></i>
                         @if(isset($adminNotifications) && $adminNotifications->count() > 0)
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.7rem;">
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.7rem; box-shadow: 0 0 8px rgba(220,38,38,0.6);">
                                 {{ $adminNotifications->count() }}
                             </span>
                         @endif
                     </button>
-                    <div class="dropdown-menu dropdown-menu-end shadow-lg py-0 border-0" aria-labelledby="adminNotifDropdown" style="width: 330px; border-top: 3px solid var(--heritage-gold) !important;">
+                    <div class="dropdown-menu dropdown-menu-end shadow-lg py-0 border-0" aria-labelledby="adminNotifDropdown" style="width: 330px; border-top: 3px solid var(--heritage-gold) !important; margin-top: 8px;">
                         <div class="p-3 border-bottom bg-light d-flex justify-content-between align-items-center">
                             <h6 class="mb-0 fw-bold" style="color: var(--imperial-navy);"><i class="fa-solid fa-bell me-1" style="color: var(--heritage-gold);"></i> إشعارات ورسائل الجامعات</h6>
                             @if(isset($adminNotifications) && $adminNotifications->count() > 0)
@@ -326,19 +333,8 @@
         </main>
     </div>
 
-    <!-- 3. OFFICIAL FOOTER -->
-    <footer class="mohe-footer-institutional">
-        <div class="container-fluid px-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <div>
-                <span class="fw-semibold">© {{ date('Y') }} مجلس التعليم العالي - الجمهورية العربية السورية. جميع الحقوق محفوظة.</span>
-            </div>
-            <div class="d-flex gap-4">
-                <a href="#" class="text-secondary text-decoration-none hover-navy">عن المجلس</a>
-                <a href="#" class="text-secondary text-decoration-none hover-navy">سياسة الخصوصية</a>
-                <a href="#" class="text-secondary text-decoration-none hover-navy">اتصل بنا</a>
-            </div>
-        </div>
-    </footer>
+    <!-- 3. OFFICIAL EXECUTIVE FOOTER -->
+    @include('partials.footer')
 
     <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

@@ -26,13 +26,20 @@ class DashboardController extends Controller
         $totalApps = Application::where('work_university_id', $uniId)->count();
         $underStudyCount = Application::where('work_university_id', $uniId)->where('status', 'تحت التدقيق الأولي')->count();
         $suspendedCount = Application::where('work_university_id', $uniId)->whereIn('status', ['معلق', 'بانتظار الوثائق', 'مواضيع اللجنة العامة (معلق)'])->count();
+        $draftsCount = Application::where('work_university_id', $uniId)->where('status', 'مسودة')->count();
         
         $approvedCount = Application::where('work_university_id', $uniId)
             ->whereIn('status', ['تم الصدور', 'موافقة'])
             ->count();
 
+        $draftApplications = Application::where('work_university_id', $uniId)
+            ->where('status', 'مسودة')
+            ->with(['candidate', 'educations.attachments'])
+            ->latest()
+            ->get();
+
         $query = Application::where('work_university_id', $uniId)
-            ->with(['candidate']);
+            ->with(['candidate', 'latestDecision', 'educations.level', 'educations.country', 'educations.university', 'educations.attachments.attachmentType']);
 
         if ($request->filled('search')) {
             $search = trim($request->search);
@@ -63,6 +70,8 @@ class DashboardController extends Controller
             'totalApps',
             'underStudyCount',
             'suspendedCount',
+            'draftsCount',
+            'draftApplications',
             'approvedCount',
             'recentApplications',
             'notifications',
@@ -466,6 +475,79 @@ class DashboardController extends Controller
 
         return redirect()->route('university.dashboard')
             ->with('success', 'تم تعديل البيانات وإضافة المرفقات والوثائق المطلوبة للطلب رقم (#' . ($app->application_no ?? $app->id) . ') بنجاح وإشعار مدير التعادل.');
+    }
+
+    public function requiredDocuments()
+    {
+        $user = Auth::user();
+        $uniId = $user->university_id;
+        $notifications = ApplicationMessage::whereHas('application', function($q) use ($uniId) {
+                $q->where('work_university_id', $uniId);
+            })
+            ->where('sender_id', '!=', $user->id)
+            ->where('is_read', false)
+            ->with(['application.candidate', 'sender'])
+            ->latest()
+            ->get();
+
+        return view('university.required_documents', compact('notifications'));
+    }
+
+    public function deleteDraft($appId)
+    {
+        $user = Auth::user();
+        $app = Application::where('id', $appId)
+            ->where('work_university_id', $user->university_id)
+            ->where('status', 'مسودة')
+            ->firstOrFail();
+
+        $app->delete();
+
+        return redirect()->back()->with('success', 'تم حذف مسودة الطلب بنجاح.');
+    }
+
+    public function showApplication($appId)
+    {
+        $user = Auth::user();
+        $application = Application::where('id', $appId)
+            ->where('work_university_id', $user->university_id)
+            ->with([
+                'candidate.nationality',
+                'workUniversity',
+                'courses',
+                'messages.sender',
+                'latestDecision',
+                'educations.level',
+                'educations.country',
+                'educations.university',
+                'educations.attachments.attachmentType'
+            ])->firstOrFail();
+
+        $candidate = $application->candidate;
+
+        $highSchoolEd = $application->educations->where('level.name', 'ثانوية عامة')->first();
+        $bachelorEd   = $application->educations->where('level.name', 'إجازة جامعية')->first();
+        $diplomaEd    = $application->educations->where('level.name', 'دبلوم دراسات عليا')->first();
+        $masterEd     = $application->educations->where('level.name', 'ماجستير')->first();
+        $phdEd        = $application->educations->where('level.name', 'دكتوراه')->first();
+
+        $notifications = ApplicationMessage::whereHas('application', function($q) use ($user) {
+                $q->where('work_university_id', $user->university_id);
+            })
+            ->where('sender_id', '!=', $user->id)
+            ->where('is_read', false)
+            ->get();
+
+        return view('university.applications.show', compact(
+            'application',
+            'candidate',
+            'highSchoolEd',
+            'bachelorEd',
+            'diplomaEd',
+            'masterEd',
+            'phdEd',
+            'notifications'
+        ));
     }
 }
 

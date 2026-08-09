@@ -162,6 +162,9 @@ class ApplicationWizardController extends Controller
         $frequency = $request->input('equivalence_frequency', 'تعادل للمرة الأولى');
         $requestType = $frequency . ' - ماجستير سوري';
 
+        $isDraft = $request->input('action') === 'save_draft';
+        $appStatus = $isDraft ? 'مسودة' : 'تحت التدقيق الأولي';
+
         $application = Application::create([
             'candidate_id' => $profile->id,
             'application_no' => $appNo,
@@ -171,7 +174,7 @@ class ApplicationWizardController extends Controller
             'work_department' => $request->ma_department,
             'study_system' => 'فصلي',
             'has_previous_degree' => $request->has_experience ? true : false,
-            'status' => 'قيد الدراسة',
+            'status' => $appStatus,
             'user_id' => Auth::id(),
         ]);
 
@@ -287,6 +290,11 @@ class ApplicationWizardController extends Controller
         }
         if ($request->hasFile('file_contracts')) {
             $uploadAndAttach('file_contracts', $edMA->id, 3, 'العقود وإيصالات الرواتب المصدقة');
+        }
+
+        if ($isDraft) {
+            return redirect()->route('university.dashboard')
+                ->with('success', 'تم حفظ معاملة (' . $requestType . ') كمسودة بنجاح! للطلب رقم: ' . $appNo . '. يمكنك استكمال رفع المرفقات والوثائق الناقصة في أي وقت من قسم المسودات.');
         }
 
         return redirect()->route('university.dashboard')

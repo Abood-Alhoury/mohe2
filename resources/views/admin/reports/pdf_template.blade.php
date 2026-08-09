@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar" dir="ltr">
+<html lang="ar" dir="rtl">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 <style>
@@ -20,7 +20,7 @@
 }
 
 body { 
-    direction: ltr; 
+    direction: rtl; 
     text-align: right; 
     font-size: 12.5px; 
     color: #111C2C; 
@@ -308,11 +308,20 @@ body {
     </tr>
 </table>
 
-<div class="wblock">
-    <b>المرشح للعمل في قسم :</b> {{ $application->work_department ?? '---' }} &nbsp; | &nbsp;
-    <b>في كلية :</b> {{ $application->work_faculty ?? '---' }} &nbsp; | &nbsp;
-    <b>في جامعة :</b> {{ optional($application->workUniversity)->name ?? '---' }}
-    <span class="note">التي تطلب الجامعة تكليفه بتدريسها استناداً إلى قرار معادلة شهادته العلمية.</span>
+<div class="dblock">
+    <table class="mt">
+        <tr>
+            <td style="color: #1A2A44; font-weight: bold;">{{ optional($application->workUniversity)->name ?? '---' }}</td>
+            <td class="l">في جامعة :</td>
+            <td style="color: #1A2A44; font-weight: bold;">{{ $application->work_faculty ?? '---' }}</td>
+            <td class="l">في كلية :</td>
+            <td style="color: #1A2A44; font-weight: bold;">{{ $application->work_department ?? '---' }}</td>
+            <td class="l">المرشح للعمل في قسم :</td>
+        </tr>
+    </table>
+    <div style="color: #64748B; font-size: 11px; margin-top: 4px; padding: 4px 8px; text-align: right;">
+        التي تطلب الجامعة تكليفه بتدريسها استناداً إلى قرار معادلة شهادته العلمية.
+    </div>
 </div>
 
 <!-- 2. المقررات -->
@@ -501,10 +510,21 @@ body {
 
 <!-- 4. معلومات إضافية -->
 <div class="sec">معلومات إضافية :</div>
-<div class="ebox">
-    <div><b>هل المرشح جنسيته السورية :</b> {{ $candidate->is_syrian ? 'نعم' : 'لا' }}</div>
-    <div><b>هل المرشح حاصل على مؤهل علمي قبل المؤهل الأخير :</b> {{ $application->has_previous_degree ? 'نعم' : 'لا' }}</div>
-    <div><b>نظام دراسة المرشح :</b> {{ $application->study_system ?? '---' }}</div>
+<div class="dblock">
+    <table class="mt">
+        <tr>
+            <td style="color: #1A2A44; font-weight: bold;">{{ $candidate->is_syrian ? 'نعم' : 'لا' }}</td>
+            <td class="l" style="width: 70%;">هل المرشح جنسيته السورية :</td>
+        </tr>
+        <tr>
+            <td style="color: #1A2A44; font-weight: bold;">{{ $application->has_previous_degree ? 'نعم' : 'لا' }}</td>
+            <td class="l" style="width: 70%;">هل المرشح حاصل على مؤهل علمي قبل المؤهل الأخير :</td>
+        </tr>
+        <tr>
+            <td style="color: #1A2A44; font-weight: bold;">{{ $application->study_system ?? 'فصلي' }}</td>
+            <td class="l" style="width: 70%;">نظام دراسة المرشح :</td>
+        </tr>
+    </table>
 </div>
 
 </body>

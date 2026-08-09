@@ -94,13 +94,23 @@ body { direction: ltr; text-align: right; font-size: 13px; color: #111C2C; margi
     </tr>
 </table>
 
-<div class="wblock">
-    <b>المرشح للعمل في قسم :</b> {{ $application->work_department ?? '---' }}
-    &nbsp; | &nbsp;
-    <b>في كلية :</b> {{ $application->work_faculty ?? '---' }}
-    &nbsp; | &nbsp;
-    <b>في جامعة :</b> {{ optional($application->workUniversity)->name ?? '---' }}
-    <span class="note">التي تطلب الجامعة تكليفه بتدريسها استنادا الى قرار معادلة شهادته العلمية.</span>
+<div class="wblock" style="background-color: #f8fafc; border: 1px solid #cbd5e1; padding: 8px 12px; border-radius: 4px; margin-bottom: 12px;">
+    <table style="width: 100%; border-collapse: collapse; border: none; font-size: 13px; direction: rtl;">
+        <tr>
+            <td style="width: 34%; border: none; padding: 2px; text-align: right;">
+                <b>المرشح للعمل في قسم:</b> {{ $application->work_department ?? '---' }}
+            </td>
+            <td style="width: 33%; border: none; padding: 2px; text-align: right;">
+                <b>في كلية:</b> {{ $application->work_faculty ?? '---' }}
+            </td>
+            <td style="width: 33%; border: none; padding: 2px; text-align: right;">
+                <b>في جامعة:</b> {{ optional($application->workUniversity)->name ?? '---' }}
+            </td>
+        </tr>
+    </table>
+    <div style="color: #64748B; font-size: 11px; margin-top: 4px; text-align: right;">
+        التي تطلب الجامعة تكليفه بتدريسها استناداً إلى قرار معادلة شهادته العلمية.
+    </div>
 </div>
 
 <div class="sec">المقررات التي يدرسها بموجب قرار لجنة التأهيل ومعادلة الدرجات العلمية :</div>

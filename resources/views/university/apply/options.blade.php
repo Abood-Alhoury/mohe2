@@ -12,10 +12,10 @@
 </div>
 
 <div class="row justify-content-center g-4 mb-5">
-    <!-- Option A: Syrian Master's (ACTIVE) -->
+    <!-- Option 1: Syrian Master's (ACTIVE) -->
     <div class="col-md-4">
-        <a href="{{ route('university.apply.syrian_masters') }}" class="card text-center p-4 h-100 text-decoration-none mohe-card active-option-card position-relative" style="border-radius: 8px; border-top: 3px solid var(--heritage-gold) !important;">
-            <div class="card-option-badge">متاح الآن</div>
+        <a href="{{ route('university.apply.syrian_masters') }}" class="card text-center p-4 h-100 text-decoration-none mohe-card active-option-card position-relative" style="border-radius: 8px; border-top: 3.5px solid var(--heritage-gold) !important;">
+            <div class="card-option-badge">متاح للتقديم</div>
             <div class="option-icon-wrapper mx-auto mb-3">
                 <i class="fa-solid fa-graduation-cap fs-1" style="color: var(--heritage-gold);"></i>
             </div>
@@ -25,7 +25,7 @@
         </a>
     </div>
 
-    <!-- Option B: Syrian Doctorate (Disabled Placeholder) -->
+    <!-- Option 2: Syrian Doctorate (Disabled Placeholder) -->
     <div class="col-md-4">
         <div class="card text-center p-4 h-100 text-decoration-none mohe-card disabled-option-card position-relative" style="border-radius: 8px;">
             <div class="card-option-badge bg-secondary text-white border-0">قريباً</div>
@@ -38,7 +38,7 @@
         </div>
     </div>
 
-    <!-- Option C: Non-Syrian Master's (Disabled Placeholder) -->
+    <!-- Option 3: Non-Syrian Master's (Disabled Placeholder) -->
     <div class="col-md-4">
         <div class="card text-center p-4 h-100 text-decoration-none mohe-card disabled-option-card position-relative" style="border-radius: 8px;">
             <div class="card-option-badge bg-secondary text-white border-0">قريباً</div>
@@ -51,7 +51,7 @@
         </div>
     </div>
 
-    <!-- Option D: Non-Syrian Doctorate (Disabled Placeholder) -->
+    <!-- Option 4: Non-Syrian Doctorate (Disabled Placeholder) -->
     <div class="col-md-4">
         <div class="card text-center p-4 h-100 text-decoration-none mohe-card disabled-option-card position-relative" style="border-radius: 8px;">
             <div class="card-option-badge bg-secondary text-white border-0">قريباً</div>
@@ -64,7 +64,7 @@
         </div>
     </div>
 
-    <!-- Option E: Faculty Member (Disabled Placeholder) -->
+    <!-- Option 5: Faculty Member (Disabled Placeholder) -->
     <div class="col-md-4">
         <div class="card text-center p-4 h-100 text-decoration-none mohe-card disabled-option-card position-relative" style="border-radius: 8px;">
             <div class="card-option-badge bg-secondary text-white border-0">قريباً</div>
@@ -77,7 +77,7 @@
         </div>
     </div>
 
-    <!-- Option F: Researcher (Disabled Placeholder) -->
+    <!-- Option 6: Research Centers Scientist (Disabled Placeholder) -->
     <div class="col-md-4">
         <div class="card text-center p-4 h-100 text-decoration-none mohe-card disabled-option-card position-relative" style="border-radius: 8px;">
             <div class="card-option-badge bg-secondary text-white border-0">قريباً</div>

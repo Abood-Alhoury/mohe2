@@ -90,20 +90,25 @@
 </head>
 <body class="bg-[#F9F9FF]" x-data="{ isExpanded: localStorage.getItem('sidebar_expanded') === 'true' }" x-init="$watch('isExpanded', val => localStorage.setItem('sidebar_expanded', val))">
 
-    <!-- 1. TOP HEADER BANNER -->
+    <!-- 1. TOP INSTITUTIONAL HEADER BANNER -->
     <header class="mohe-header">
         <div class="container-fluid px-4 d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-3">
                 <a href="{{ route('university.dashboard') }}" class="d-flex align-items-center gap-3 text-decoration-none">
-                    <!-- Circular Gold Ring Logo Emblem -->
+                    <!-- Circular Gold Ring Logo Emblem with Hover Glow -->
                     <div class="mohe-emblem-ring">
                         <img src="{{ asset('assets/logo.jpg') }}" 
                              alt="وزارة التعليم العالي"
                              onerror="this.onerror=null; this.src='{{ asset('images/mohe_logo.jpg') }}';">
                     </div>
                     <div>
-                        <h1 class="h5 fw-bold text-white mb-0">بوابة الجامعة الإلكترونية</h1>
-                        <p class="small text-white-50 mb-0">نظام إدارة ورفع طلبات تعادل الشهادات العلمية</p>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="badge" style="background: rgba(197,160,89,0.2); color: #FED488; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.5px; border: 1px solid rgba(197,160,89,0.35); border-radius: 4px; padding: 2px 7px;">
+                                الجمهورية العربية السورية | مجلس التعليم العالي
+                            </span>
+                        </div>
+                        <h1 class="brand-title">بوابة الجامعات للتعادل الأكاديمي</h1>
+                        <p class="brand-subtitle">النظام الإلكتروني الموحد لإدارة ورفع طلبات معادلة الشهادات والدرجات العلمية</p>
                     </div>
                 </a>
             </div>
@@ -248,6 +253,15 @@
                     <span class="sidebar-text-label">تقديم معاملة تعادل</span>
                 </a>
 
+                <a href="#" 
+                   data-bs-toggle="modal" 
+                   data-bs-target="#searchModal" 
+                   class="sidebar-link"
+                   :title="!isExpanded ? 'البحث السريع عن المعاملات' : ''">
+                    <i class="fa-solid fa-magnifying-glass fs-5" style="color: var(--heritage-gold);"></i>
+                    <span class="sidebar-text-label">البحث السريع عن طلب</span>
+                </a>
+
                 <a href="{{ route('university.messages') }}" 
                    class="sidebar-link {{ request()->routeIs('university.messages') ? 'active' : '' }}"
                    :title="!isExpanded ? 'المراسلات والإشعارات' : ''">
@@ -256,6 +270,20 @@
                     @if(isset($notifications) && $notifications->count() > 0)
                         <span class="badge bg-danger ms-auto sidebar-text-label">{{ $notifications->count() }}</span>
                     @endif
+                </a>
+
+                <a href="{{ route('university.required_documents') }}" 
+                   class="sidebar-link {{ request()->routeIs('university.required_documents') ? 'active' : '' }}"
+                   :title="!isExpanded ? 'الأوراق والشهادات المطلوبة' : ''">
+                    <i class="fa-solid fa-file-circle-check fs-5"></i>
+                    <span class="sidebar-text-label">الأوراق المطلوبة للتعادل</span>
+                </a>
+
+                <a href="{{ route('contact') }}" 
+                   class="sidebar-link {{ request()->routeIs('contact') ? 'active' : '' }}"
+                   :title="!isExpanded ? 'الدعم والتواصل المؤسسي' : ''">
+                    <i class="fa-solid fa-headset fs-5"></i>
+                    <span class="sidebar-text-label">الدعم والتواصل المؤسسي</span>
                 </a>
             </nav>
         </aside>
@@ -281,19 +309,8 @@
         </main>
     </div>
 
-    <!-- 3. OFFICIAL FOOTER -->
-    <footer class="mohe-footer-institutional">
-        <div class="container-fluid px-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <div>
-                <span class="fw-semibold">جميع الحقوق محفوظة © {{ date('Y') }} - وزارة التعليم العالي والبحث العلمي - مجلس التعليم العالي - جمهورية سوريا العربية</span>
-            </div>
-            <div class="d-flex gap-4">
-                <a href="#" class="text-secondary text-decoration-none">عن المجلس</a>
-                <a href="#" class="text-secondary text-decoration-none">سياسة الخصوصية</a>
-                <a href="#" class="text-secondary text-decoration-none">اتصل بنا</a>
-            </div>
-        </div>
-    </footer>
+    <!-- 3. OFFICIAL EXECUTIVE FOOTER -->
+    @include('partials.footer')
 
     <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

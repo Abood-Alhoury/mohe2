@@ -647,19 +647,27 @@
             </div>
 
             <!-- ================= BUTTONS NAVIGATION ================= -->
-            <div class="d-flex justify-content-between mt-5 pt-3 border-top" style="border-top-color: var(--outline-variant) !important;">
-                <button type="button" class="btn btn-outline-navy px-4 py-2" id="btn-prev" onclick="changeStep(-1)" style="display: none;">
-                    <i class="fa-solid fa-arrow-right me-1"></i> السابق
-                </button>
-                <div id="spacer-prev"></div> <!-- Spacer if step 1 -->
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mt-5 pt-3 border-top" style="border-top-color: var(--outline-variant) !important;">
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-outline-navy px-4 py-2" id="btn-prev" onclick="changeStep(-1)" style="display: none;">
+                        <i class="fa-solid fa-arrow-right me-1"></i> السابق
+                    </button>
+                    <div id="spacer-prev"></div> <!-- Spacer if step 1 -->
 
-                <button type="button" class="btn btn-primary px-4 py-2" id="btn-next" onclick="changeStep(1)">
-                    التالي <i class="fa-solid fa-arrow-left ms-1"></i>
-                </button>
+                    <button type="submit" formnovalidate name="action" value="save_draft" class="btn btn-outline-warning px-3 py-2 fw-bold" id="btn-draft" title="حفظ البيانات المعبأة كمسودة للعودة إليها لاحقاً برقم الطلب">
+                        <i class="fa-solid fa-floppy-disk me-1"></i> حفظ كمسودة ومتابعة لاحقاً
+                    </button>
+                </div>
 
-                <button type="submit" class="btn btn-gold-cta px-5 py-2" id="btn-submit" style="display: none;">
-                    إنهاء وإرسال الطلب للوزارة <i class="fa-solid fa-paper-plane ms-1"></i>
-                </button>
+                <div>
+                    <button type="button" class="btn btn-primary px-4 py-2" id="btn-next" onclick="changeStep(1)">
+                        التالي <i class="fa-solid fa-arrow-left ms-1"></i>
+                    </button>
+
+                    <button type="submit" name="action" value="submit_final" class="btn btn-gold-cta px-5 py-2" id="btn-submit" style="display: none;">
+                        إنهاء وإرسال الطلب للوزارة <i class="fa-solid fa-paper-plane ms-1"></i>
+                    </button>
+                </div>
             </div>
 
         </form>
@@ -983,9 +991,9 @@
 
         if (currentStep === totalSteps) {
             btnNext.style.display = 'none';
-            btnSubmit.style.display = 'block';
+            btnSubmit.style.display = 'inline-block';
         } else {
-            btnNext.style.display = 'block';
+            btnNext.style.display = 'inline-block';
             btnSubmit.style.display = 'none';
         }
     }

@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\PdfReportController;
 use App\Http\Controllers\Admin\DecisionsController;
 use App\Http\Controllers\University\DashboardController as UniDashboardController;
 use App\Http\Controllers\University\ApplicationWizardController;
+use App\Http\Controllers\PageController;
 
 // 1. Redirect Root based on authentication
 Route::get('/', function () {
@@ -27,6 +28,11 @@ Route::get('/', function () {
     }
     return redirect()->route('login');
 });
+
+// Public Institutional Pages
+Route::get('/contact', [PageController::class, 'contact'])->name('contact');
+Route::post('/contact', [PageController::class, 'submitContact'])->name('contact.submit');
+Route::get('/privacy', [PageController::class, 'privacy'])->name('privacy');
 
 // 2. Authentication Routes
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -83,8 +89,9 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
 
 // 4. University Area (Protected by role:university)
 Route::prefix('university')->middleware(['auth', 'role:university'])->group(function () {
-    // Dashboard
+    // Dashboard & Required Documents
     Route::get('/dashboard', [UniDashboardController::class, 'index'])->name('university.dashboard');
+    Route::get('/required-documents', [UniDashboardController::class, 'requiredDocuments'])->name('university.required_documents');
     
     // Notifications & Messages
     Route::get('/messages', [UniDashboardController::class, 'messages'])->name('university.messages');
@@ -101,9 +108,11 @@ Route::prefix('university')->middleware(['auth', 'role:university'])->group(func
     // Candidate Lookup API (for second-time equivalence auto-fill)
     Route::get('/candidate/lookup', [ApplicationWizardController::class, 'lookupCandidate'])->name('university.candidate.lookup');
 
-    // Edit & Update Application (when status is 'بانتظار الوثائق' or completing documents)
+    // View, Edit, Update & Delete Application / Draft
+    Route::get('/applications/{appId}/show', [UniDashboardController::class, 'showApplication'])->name('university.applications.show');
     Route::get('/applications/{appId}/edit', [UniDashboardController::class, 'editApplication'])->name('university.applications.edit');
     Route::post('/applications/{appId}/update', [UniDashboardController::class, 'updateApplication'])->name('university.applications.update');
+    Route::delete('/applications/{appId}/draft', [UniDashboardController::class, 'deleteDraft'])->name('university.applications.delete_draft');
 
     // Official Application Report & Mozhakkara PDF Download
     Route::get('/applications/{appId}/mozhakkara', [UniDashboardController::class, 'showMozhakkara'])->name('university.applications.mozhakkara');
