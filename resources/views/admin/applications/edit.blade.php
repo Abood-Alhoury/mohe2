@@ -454,11 +454,11 @@
                     <input type="date" name="envoy_date" class="form-control" value="{{ $masterEd->envoy_date }}">
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">الخبرة التدريسية (من - إلى) :</label>
+                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">الخبرة التدريسية (من تاريخ - إلى تاريخ) :</label>
                     <div class="input-group">
-                        <input type="number" name="experience_from_year" class="form-control" placeholder="من" value="{{ $masterEd->experience_from_year }}">
-                        <span class="input-group-text bg-white">-</span>
-                        <input type="number" name="experience_to_year" class="form-control" placeholder="إلى" value="{{ $masterEd->experience_to_year }}">
+                        <input type="date" name="experience_from_year" class="form-control" value="{{ $masterEd->experience_from_year }}">
+                        <span class="input-group-text bg-white">إلى</span>
+                        <input type="date" name="experience_to_year" class="form-control" value="{{ $masterEd->experience_to_year }}">
                     </div>
                 </div>
             </div>

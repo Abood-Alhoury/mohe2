@@ -238,51 +238,79 @@
             </div>
 
             <!-- University Sidebar Links -->
-            <nav class="d-flex flex-column gap-1 p-2">
+            <nav class="d-flex flex-column gap-2 p-2">
+                <!-- 1. Dashboard -->
                 <a href="{{ route('university.dashboard') }}" 
                    class="sidebar-link {{ request()->routeIs('university.dashboard') ? 'active' : '' }}"
                    :title="!isExpanded ? 'لوحة التحكم الرئيسية' : ''">
-                    <i class="fa-solid fa-chart-line fs-5"></i>
+                    <div class="sidebar-icon-tile tile-indigo">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
                     <span class="sidebar-text-label">لوحة التحكم الرئيسية</span>
                 </a>
 
+                <!-- 2. Apply New -->
                 <a href="{{ route('university.apply.options') }}" 
                    class="sidebar-link {{ request()->routeIs('university.apply*') ? 'active' : '' }}"
                    :title="!isExpanded ? 'تقديم معاملة تعادل جديدة' : ''">
-                    <i class="fa-solid fa-file-circle-plus fs-5"></i>
+                    <div class="sidebar-icon-tile tile-emerald">
+                        <i class="fa-solid fa-file-circle-plus"></i>
+                    </div>
                     <span class="sidebar-text-label">تقديم معاملة تعادل</span>
                 </a>
 
+                <!-- 3. Drafts -->
+                <a href="{{ route('university.dashboard') }}#drafts-section" 
+                   class="sidebar-link"
+                   :title="!isExpanded ? 'مسودات الطلبات غير المكتملة' : ''">
+                    <div class="sidebar-icon-tile tile-amber">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                    </div>
+                    <span class="sidebar-text-label">مسودات الطلبات المحفوظة</span>
+                </a>
+
+                <!-- 4. Quick Search -->
                 <a href="#" 
                    data-bs-toggle="modal" 
                    data-bs-target="#searchModal" 
                    class="sidebar-link"
                    :title="!isExpanded ? 'البحث السريع عن المعاملات' : ''">
-                    <i class="fa-solid fa-magnifying-glass fs-5" style="color: var(--heritage-gold);"></i>
+                    <div class="sidebar-icon-tile tile-purple">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </div>
                     <span class="sidebar-text-label">البحث السريع عن طلب</span>
                 </a>
 
+                <!-- 5. Messages & Notifications -->
                 <a href="{{ route('university.messages') }}" 
                    class="sidebar-link {{ request()->routeIs('university.messages') ? 'active' : '' }}"
                    :title="!isExpanded ? 'المراسلات والإشعارات' : ''">
-                    <i class="fa-solid fa-comments fs-5"></i>
+                    <div class="sidebar-icon-tile tile-sky">
+                        <i class="fa-solid fa-comments"></i>
+                    </div>
                     <span class="sidebar-text-label">المراسلات والإشعارات</span>
                     @if(isset($notifications) && $notifications->count() > 0)
-                        <span class="badge bg-danger ms-auto sidebar-text-label">{{ $notifications->count() }}</span>
+                        <span class="badge bg-danger rounded-pill ms-auto sidebar-text-label">{{ $notifications->count() }}</span>
                     @endif
                 </a>
 
+                <!-- 6. Required Documents -->
                 <a href="{{ route('university.required_documents') }}" 
                    class="sidebar-link {{ request()->routeIs('university.required_documents') ? 'active' : '' }}"
                    :title="!isExpanded ? 'الأوراق والشهادات المطلوبة' : ''">
-                    <i class="fa-solid fa-file-circle-check fs-5"></i>
+                    <div class="sidebar-icon-tile tile-rose">
+                        <i class="fa-solid fa-file-circle-check"></i>
+                    </div>
                     <span class="sidebar-text-label">الأوراق المطلوبة للتعادل</span>
                 </a>
 
+                <!-- 7. Support -->
                 <a href="{{ route('contact') }}" 
                    class="sidebar-link {{ request()->routeIs('contact') ? 'active' : '' }}"
                    :title="!isExpanded ? 'الدعم والتواصل المؤسسي' : ''">
-                    <i class="fa-solid fa-headset fs-5"></i>
+                    <div class="sidebar-icon-tile tile-teal">
+                        <i class="fa-solid fa-headset"></i>
+                    </div>
                     <span class="sidebar-text-label">الدعم والتواصل المؤسسي</span>
                 </a>
             </nav>
@@ -292,10 +320,26 @@
         <main class="flex-grow-1 p-4">
             <!-- Flash Alert Messages -->
             @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 mb-4" role="alert" style="border-right: 4px solid #059669 !important;">
-                    <i class="fa-solid fa-circle-check me-2"></i> {{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 mb-4" id="autoDismissAlert" role="alert" style="border-right: 4px solid #059669 !important;">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <i class="fa-solid fa-circle-check me-2 fs-5 text-success"></i> {{ session('success') }}
+                        </div>
+                        <button type="button" class="btn-close ms-2" data-bs-dismiss="alert" aria-label="إغلاق"></button>
+                    </div>
                 </div>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        setTimeout(function() {
+                            var alertEl = document.getElementById('autoDismissAlert');
+                            if (alertEl) {
+                                alertEl.style.transition = 'opacity 0.6s ease';
+                                alertEl.style.opacity = '0';
+                                setTimeout(function() { alertEl.remove(); }, 600);
+                            }
+                        }, 4000);
+                    });
+                </script>
             @endif
 
             @if(session('error'))

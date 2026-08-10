@@ -363,7 +363,13 @@ class DashboardController extends Controller
         $user = Auth::user();
         $application = Application::where('id', $appId)
             ->where('work_university_id', $user->university_id)
-            ->with([
+            ->firstOrFail();
+
+        if ($application->status === 'مسودة') {
+            return redirect()->route('university.apply.syrian_masters', ['draft_id' => $application->id]);
+        }
+
+        $application->load([
                 'candidate',
                 'workUniversity',
                 'courses',

@@ -25,8 +25,17 @@ class ApplicationWizardController extends Controller
         return view('university.apply.options', compact('notifications'));
     }
 
-    public function showSyrianMastersWizard()
+    public function showSyrianMastersWizard(Request $request)
     {
+        $draft = null;
+        if ($request->filled('draft_id')) {
+            $draft = Application::where('id', $request->draft_id)
+                ->where('work_university_id', Auth::user()->university_id)
+                ->where('status', 'مسودة')
+                ->with(['candidate', 'educations.level', 'educations.country', 'educations.university', 'courses'])
+                ->first();
+        }
+
         $countries = LookupCountry::orderBy('name', 'asc')->get();
         
         // Find Syria country model
@@ -45,96 +54,157 @@ class ApplicationWizardController extends Controller
             'universities', 
             'educationLevels', 
             'syriaId',
-            'notifications'
+            'notifications',
+            'draft'
         ));
     }
 
     public function submitSyrianMastersWizard(Request $request)
     {
+        $isDraft = $request->input('action') === 'save_draft';
+
         // 1. Validation of all sections
-        $validated = $request->validate([
-            // Step 1: Personal Info
-            'full_name' => 'required|string|max:255',
-            'father_name' => 'required|string|max:255',
-            'mother_name' => 'required|string|max:255',
-            'nationality_id' => 'required|exists:lookup_countries,id',
-            'national_id' => 'required|string|max:50',
-            'dob' => 'required|date',
-            'job_title' => 'required|string|max:150',
-            'phone' => 'nullable|string|regex:/^[0-9]{10}$/',
-            'mobile' => 'required|string|regex:/^[0-9]{10}$/',
-            'email' => 'required|email:filter|max:255',
-            'address' => 'required|string',
-            'gender' => 'required|string|in:ذكر,أنثى',
-            'is_syrian' => 'required|boolean',
+        if ($isDraft) {
+            $rules = [
+                'full_name' => 'required|string|max:255',
+                'national_id' => 'required|string|max:50',
+                'father_name' => 'nullable|string|max:255',
+                'mother_name' => 'nullable|string|max:255',
+                'nationality_id' => 'nullable|exists:lookup_countries,id',
+                'dob' => 'nullable|date',
+                'job_title' => 'nullable|string|max:150',
+                'phone' => 'nullable|string',
+                'mobile' => 'nullable|string',
+                'email' => 'nullable|email:filter|max:255',
+                'address' => 'nullable|string',
+                'gender' => 'nullable|string|in:ذكر,أنثى',
+                'is_syrian' => 'nullable|boolean',
 
-            // Step 2: High School Info
-            'hs_country_id' => 'required|exists:lookup_countries,id',
-            'hs_type' => 'required|string|in:علمي,أدبي,تجاري,صناعي',
-            'hs_grant_date' => 'required|date',
-            'hs_decision_no' => 'nullable|string|max:100',
-            'hs_decision_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+                'hs_country_id' => 'nullable|exists:lookup_countries,id',
+                'hs_type' => 'nullable|string',
+                'hs_grant_date' => 'nullable|date',
 
-            // Step 3: Bachelor's Degree Info
-            'ba_country_id' => 'required|exists:lookup_countries,id',
-            'ba_university_id' => 'nullable|exists:lookup_universities,id',
-            'ba_university_other' => 'nullable|string|max:255',
-            'ba_faculty' => 'required|string|max:255',
-            'ba_department' => 'required|string|max:255',
-            'ba_registration_date' => 'required|date',
-            'ba_grant_date' => 'required|date|after:ba_registration_date|before_or_equal:today',
-            'ba_rank' => 'required|string|max:100',
-            'ba_decision_no' => 'nullable|string|max:100',
-            'ba_decision_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+                'ba_country_id' => 'nullable|exists:lookup_countries,id',
+                'ba_university_id' => 'nullable|exists:lookup_universities,id',
+                'ba_faculty' => 'nullable|string',
+                'ba_department' => 'nullable|string',
+                'ba_registration_date' => 'nullable|date',
+                'ba_grant_date' => 'nullable|date',
+                'ba_rank' => 'nullable|string',
 
-            // Step 4: Syrian Master's Degree Info
-            'ma_university_id' => 'required|exists:lookup_universities,id',
-            'ma_faculty' => 'required|string|max:255',
-            'ma_department' => 'required|string|max:255',
-            'ma_registration_date' => 'required|date',
-            'ma_defense_date' => 'required|date|after:ma_registration_date',
-            'ma_grant_date' => 'required|date|after:ma_defense_date|before_or_equal:today',
-            'ma_rank' => 'required|string|max:100',
-            'ma_supervisor' => 'required|string|max:255',
-            'ma_thesis_title' => 'required|string',
-            
-            // Experience (Optional/Required if more than 2 years exist)
-            'has_experience' => 'nullable|boolean',
-            'exp_place' => 'nullable|required_if:has_experience,1|string|max:255',
-            'exp_from_year' => 'nullable|required_if:has_experience,1|integer|min:1900|max:2099',
-            'exp_to_year' => 'nullable|required_if:has_experience,1|integer|min:1900|max:2099',
+                'ma_university_id' => 'nullable|exists:lookup_universities,id',
+                'ma_faculty' => 'nullable|string',
+                'ma_department' => 'nullable|string',
+                'ma_registration_date' => 'nullable|date',
+                'ma_defense_date' => 'nullable|date',
+                'ma_grant_date' => 'nullable|date',
+                'ma_rank' => 'nullable|string',
+                'ma_supervisor' => 'nullable|string',
+                'ma_thesis_title' => 'nullable|string',
 
-            // Step 5: University Request & Courses Details
-            'req_no' => 'required|regex:/^[0-9]+$/',
-            'req_date' => 'required|date',
-            'courses' => 'required|array|min:1',
-            'courses.*.name' => 'required|string|max:255',
-            'courses.*.faculty' => 'required|string|max:255',
-            'courses.*.department' => 'required|string|max:255',
+                'req_no' => 'nullable',
+                'req_date' => 'nullable|date',
+                'courses' => 'nullable|array',
 
-            // Step 6: Final Attachments Upload
-            'file_uni_request' => 'required|file|mimes:pdf|max:10240',
-            'file_hs_cert' => 'required|file|mimes:pdf|max:10240',
-            'file_ba_cert' => 'required|file|mimes:pdf|max:10240',
-            'file_ma_cert' => 'required|file|mimes:pdf|max:10240',
-            'file_ma_dates' => 'required|file|mimes:pdf|max:10240',
-            'file_thesis_summary' => 'required|file|mimes:pdf|max:10240',
-            'file_exp_cert' => 'nullable|file|mimes:pdf|max:10240',
-            'file_contracts' => 'nullable|file|mimes:pdf|max:10240',
-            'file_lang_icdl' => 'required|file|mimes:pdf|max:10240',
-            'file_cv' => 'required|file|mimes:pdf|max:10240',
-            'file_payment' => 'required|file|mimes:pdf|max:10240',
-        ], [
-            'mobile.regex' => 'رقم الهاتف المحمول يجب أن يتكون من 10 أرقام.',
-            'phone.regex' => 'رقم الهاتف الأرضي يجب أن يتكون من 10 أرقام.',
-            'email.email' => 'البريد الإلكتروني المدخل غير صحيح.',
-            'ba_grant_date.after' => 'تاريخ التخرج من الإجازة يجب أن يكون بعد تاريخ التسجيل بالإجازة.',
-            'ba_grant_date.before_or_equal' => 'تاريخ التخرج من الإجازة يجب أن يكون قبل أو يساوي اليوم الحالي.',
-            'ma_defense_date.after' => 'تاريخ المناقشة يجب أن يكون بعد تاريخ التسجيل بالدرجة.',
-            'ma_grant_date.after' => 'تاريخ منح الدرجة يجب أن يكون بعد تاريخ المناقشة.',
-            'ma_grant_date.before_or_equal' => 'تاريخ منح الدرجة يجب أن يكون قبل أو يساوي اليوم الحالي وليس في المستقبل.',
-            'req_no.regex' => 'رقم كتاب طلب التقويم الصادر عن الجامعة يجب أن يتكون من أرقام فقط.',
-        ]);
+                'file_uni_request' => 'nullable|file|mimes:pdf|max:10240',
+                'file_hs_cert' => 'nullable|file|mimes:pdf|max:10240',
+                'file_ba_cert' => 'nullable|file|mimes:pdf|max:10240',
+                'file_ma_cert' => 'nullable|file|mimes:pdf|max:10240',
+                'file_ma_dates' => 'nullable|file|mimes:pdf|max:10240',
+                'file_thesis_summary' => 'nullable|file|mimes:pdf|max:10240',
+                'file_lang_icdl' => 'nullable|file|mimes:pdf|max:10240',
+                'file_cv' => 'nullable|file|mimes:pdf|max:10240',
+                'file_payment' => 'nullable|file|mimes:pdf|max:10240',
+            ];
+            $messages = [];
+        } else {
+            $rules = [
+                // Step 1: Personal Info
+                'full_name' => 'required|string|max:255',
+                'father_name' => 'required|string|max:255',
+                'mother_name' => 'required|string|max:255',
+                'nationality_id' => 'required|exists:lookup_countries,id',
+                'national_id' => 'required|string|max:50',
+                'dob' => 'required|date',
+                'job_title' => 'required|string|max:150',
+                'phone' => 'nullable|string|regex:/^[0-9]{10}$/',
+                'mobile' => 'required|string|regex:/^[0-9]{10}$/',
+                'email' => 'required|email:filter|max:255',
+                'address' => 'required|string',
+                'gender' => 'required|string|in:ذكر,أنثى',
+                'is_syrian' => 'required|boolean',
+
+                // Step 2: High School Info
+                'hs_country_id' => 'required|exists:lookup_countries,id',
+                'hs_type' => 'required|string|in:علمي,أدبي,تجاري,صناعي',
+                'hs_grant_date' => 'required|date',
+                'hs_decision_no' => 'nullable|string|max:100',
+                'hs_decision_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+
+                // Step 3: Bachelor's Degree Info
+                'ba_country_id' => 'required|exists:lookup_countries,id',
+                'ba_university_id' => 'nullable|exists:lookup_universities,id',
+                'ba_university_other' => 'nullable|string|max:255',
+                'ba_faculty' => 'required|string|max:255',
+                'ba_department' => 'required|string|max:255',
+                'ba_registration_date' => 'required|date',
+                'ba_grant_date' => 'required|date|after:ba_registration_date|before_or_equal:today',
+                'ba_rank' => 'required|string|max:100',
+                'ba_decision_no' => 'nullable|string|max:100',
+                'ba_decision_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+
+                // Step 4: Syrian Master's Degree Info
+                'ma_university_id' => 'required|exists:lookup_universities,id',
+                'ma_faculty' => 'required|string|max:255',
+                'ma_department' => 'required|string|max:255',
+                'ma_registration_date' => 'required|date',
+                'ma_defense_date' => 'required|date|after:ma_registration_date',
+                'ma_grant_date' => 'required|date|after:ma_defense_date|before_or_equal:today',
+                'ma_rank' => 'required|string|max:100',
+                'ma_supervisor' => 'required|string|max:255',
+                'ma_thesis_title' => 'required|string',
+                
+                // Experience
+                'has_experience' => 'nullable|boolean',
+                'exp_place' => 'nullable|required_if:has_experience,1|string|max:255',
+                'exp_from_year' => 'nullable|required_if:has_experience,1|date',
+                'exp_to_year' => 'nullable|required_if:has_experience,1|date|after_or_equal:exp_from_year',
+
+                // Step 5: University Request & Courses Details
+                'req_no' => 'required|regex:/^[0-9]+$/',
+                'req_date' => 'required|date',
+                'courses' => 'required|array|min:1',
+                'courses.*.name' => 'required|string|max:255',
+                'courses.*.faculty' => 'required|string|max:255',
+                'courses.*.department' => 'required|string|max:255',
+
+                // Step 6: Final Attachments Upload
+                'file_uni_request' => 'required|file|mimes:pdf|max:10240',
+                'file_hs_cert' => 'required|file|mimes:pdf|max:10240',
+                'file_ba_cert' => 'required|file|mimes:pdf|max:10240',
+                'file_ma_cert' => 'required|file|mimes:pdf|max:10240',
+                'file_ma_dates' => 'required|file|mimes:pdf|max:10240',
+                'file_thesis_summary' => 'required|file|mimes:pdf|max:10240',
+                'file_exp_cert' => 'nullable|file|mimes:pdf|max:10240',
+                'file_contracts' => 'nullable|file|mimes:pdf|max:10240',
+                'file_lang_icdl' => 'required|file|mimes:pdf|max:10240',
+                'file_cv' => 'required|file|mimes:pdf|max:10240',
+                'file_payment' => 'required|file|mimes:pdf|max:10240',
+            ];
+            $messages = [
+                'mobile.regex' => 'رقم الهاتف المحمول يجب أن يتكون من 10 أرقام.',
+                'phone.regex' => 'رقم الهاتف الأرضي يجب أن يتكون من 10 أرقام.',
+                'email.email' => 'البريد الإلكتروني المدخل غير صحيح.',
+                'ba_grant_date.after' => 'تاريخ التخرج من الإجازة يجب أن يكون بعد تاريخ التسجيل بالإجازة.',
+                'ba_grant_date.before_or_equal' => 'تاريخ التخرج من الإجازة يجب أن يكون قبل أو يساوي اليوم الحالي.',
+                'ma_defense_date.after' => 'تاريخ المناقشة يجب أن يكون بعد تاريخ التسجيل بالدرجة.',
+                'ma_grant_date.after' => 'تاريخ منح الدرجة يجب أن يكون بعد تاريخ المناقشة.',
+                'ma_grant_date.before_or_equal' => 'تاريخ منح الدرجة يجب أن يكون قبل أو يساوي اليوم الحالي وليس في المستقبل.',
+                'req_no.regex' => 'رقم كتاب طلب التقويم الصادر عن الجامعة يجب أن يتكون من أرقام فقط.',
+            ];
+        }
+
+        $validated = $request->validate($rules, $messages);
 
         // 2. Save Equivalence Profile (Candidate)
         $profile = EquivalenceProfile::updateOrCreate(
@@ -160,33 +230,58 @@ class ApplicationWizardController extends Controller
         $appNo = 'MA-SY-' . rand(100000, 999999); // Generate a unique application number
 
         $frequency = $request->input('equivalence_frequency', 'تعادل للمرة الأولى');
-        $requestType = $frequency . ' - ماجستير سوري';
+        $hasExp = $request->boolean('has_experience') && !empty($request->input('exp_place'));
+        $trackName = $hasExp ? 'ماجستير سوري' : 'ماجستير تطبيقي';
+        $requestType = $frequency . ' - ' . $trackName;
 
         $isDraft = $request->input('action') === 'save_draft';
         $appStatus = $isDraft ? 'مسودة' : 'تحت التدقيق الأولي';
 
-        $application = Application::create([
-            'candidate_id' => $profile->id,
-            'application_no' => $appNo,
-            'request_type' => $requestType,
-            'work_university_id' => $uniId,
-            'work_faculty' => $request->ma_faculty,
-            'work_department' => $request->ma_department,
-            'study_system' => 'فصلي',
-            'has_previous_degree' => $request->has_experience ? true : false,
-            'status' => $appStatus,
-            'user_id' => Auth::id(),
-        ]);
+        $application = null;
+        if ($request->filled('draft_id')) {
+            $application = Application::where('id', $request->draft_id)
+                ->where('work_university_id', $uniId)
+                ->first();
+        }
 
-        // 4. Save Courses
-        foreach ($request->courses as $course) {
-            ApplicationCourse::create([
-                'application_id' => $application->id,
-                'faculty' => $course['faculty'],
-                'department' => $course['department'],
-                'course_name' => $course['name'],
-                'course_status' => 'مطلوب تدريسه',
+        if ($application) {
+            $application->update([
+                'candidate_id' => $profile->id,
+                'request_type' => $requestType,
+                'work_faculty' => $request->ma_faculty,
+                'work_department' => $request->ma_department,
+                'has_previous_degree' => $request->has_experience ? true : false,
+                'status' => $appStatus,
             ]);
+            ApplicationCourse::where('application_id', $application->id)->delete();
+        } else {
+            $application = Application::create([
+                'candidate_id' => $profile->id,
+                'application_no' => $appNo,
+                'request_type' => $requestType,
+                'work_university_id' => $uniId,
+                'work_faculty' => $request->ma_faculty,
+                'work_department' => $request->ma_department,
+                'study_system' => 'فصلي',
+                'has_previous_degree' => $request->has_experience ? true : false,
+                'status' => $appStatus,
+                'user_id' => Auth::id(),
+            ]);
+        }
+
+        // 4. Save Courses (if provided)
+        if ($request->has('courses') && is_array($request->courses)) {
+            foreach ($request->courses as $course) {
+                if (!empty($course['name'])) {
+                    ApplicationCourse::create([
+                        'application_id' => $application->id,
+                        'faculty' => $course['faculty'] ?? '',
+                        'department' => $course['department'] ?? '',
+                        'course_name' => $course['name'],
+                        'course_status' => 'مطلوب تدريسه',
+                    ]);
+                }
+            }
         }
 
         // Get Education Levels from DB

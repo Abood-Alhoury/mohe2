@@ -256,56 +256,72 @@
                 <a href="{{ route('admin.dashboard') }}" 
                    class="sidebar-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" 
                    :title="!isExpanded ? 'لوحة التحكم الرئيسية' : ''">
-                    <i class="fa-solid fa-gauge-high fs-5"></i>
+                    <div class="sidebar-icon-tile tile-amber">
+                        <i class="fa-solid fa-gauge-high"></i>
+                    </div>
                     <span class="sidebar-text-label">لوحة التحكم الرئيسية</span>
                 </a>
 
                 <a href="{{ route('admin.settings') }}" 
                    class="sidebar-link {{ request()->routeIs('admin.settings*') ? 'active' : '' }}"
                    :title="!isExpanded ? 'إعدادات الموقع' : ''">
-                    <i class="fa-solid fa-sliders fs-5"></i>
+                    <div class="sidebar-icon-tile tile-indigo">
+                        <i class="fa-solid fa-sliders"></i>
+                    </div>
                     <span class="sidebar-text-label">إعدادات الموقع</span>
                 </a>
 
                 <a href="{{ route('admin.applications.index') }}" 
                    class="sidebar-link {{ request()->routeIs('admin.applications.index') || request()->routeIs('admin.applications.edit') ? 'active' : '' }}"
                    :title="!isExpanded ? 'سجل طلبات التعادل' : ''">
-                    <i class="fa-solid fa-list-check fs-5"></i>
+                    <div class="sidebar-icon-tile tile-emerald">
+                        <i class="fa-solid fa-list-check"></i>
+                    </div>
                     <span class="sidebar-text-label">سجل طلبات التعادل</span>
                 </a>
 
                 <a href="{{ route('admin.messages.index') }}" 
                    class="sidebar-link {{ request()->routeIs('admin.messages*') ? 'active' : '' }}"
                    :title="!isExpanded ? 'سجل الرسائل والمحادثات' : ''">
-                    <i class="fa-solid fa-comments fs-5"></i>
+                    <div class="sidebar-icon-tile tile-sky">
+                        <i class="fa-solid fa-comments"></i>
+                    </div>
                     <span class="sidebar-text-label">سجل الرسائل والمحادثات</span>
                 </a>
 
                 <a href="{{ route('admin.committee.index') }}" 
                    class="sidebar-link {{ request()->routeIs('admin.committee*') ? 'active' : '' }}"
                    :title="!isExpanded ? 'مواضيع اللجنة العامة' : ''">
-                    <i class="fa-solid fa-users-rectangle fs-5"></i>
+                    <div class="sidebar-icon-tile tile-purple">
+                        <i class="fa-solid fa-users-rectangle"></i>
+                    </div>
                     <span class="sidebar-text-label">مواضيع اللجنة العامة</span>
                 </a>
 
                 <a href="{{ route('admin.reports.index') }}" 
                    class="sidebar-link {{ request()->routeIs('admin.reports*') ? 'active' : '' }}"
                    :title="!isExpanded ? 'التقارير السنوية' : ''">
-                    <i class="fa-solid fa-chart-pie fs-5"></i>
+                    <div class="sidebar-icon-tile tile-rose">
+                        <i class="fa-solid fa-chart-pie"></i>
+                    </div>
                     <span class="sidebar-text-label">التقارير السنوية</span>
                 </a>
 
                 <a href="{{ route('admin.search.index') }}" 
                    class="sidebar-link {{ request()->routeIs('admin.search*') ? 'active' : '' }}"
                    :title="!isExpanded ? 'بحث المتقدمين' : ''">
-                    <i class="fa-solid fa-magnifying-glass fs-5"></i>
+                    <div class="sidebar-icon-tile tile-teal">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </div>
                     <span class="sidebar-text-label">بحث المتقدمين</span>
                 </a>
 
                 <a href="{{ route('admin.decisions.index') }}" 
                    class="sidebar-link {{ request()->routeIs('admin.decisions*') ? 'active' : '' }}"
                    :title="!isExpanded ? 'إصدار القرارات الرسمية' : ''">
-                    <i class="fa-solid fa-stamp fs-5"></i>
+                    <div class="sidebar-icon-tile tile-amber">
+                        <i class="fa-solid fa-stamp"></i>
+                    </div>
                     <span class="sidebar-text-label">إصدار القرارات الرسمية</span>
                 </a>
 

@@ -273,19 +273,20 @@
     </div>
 </div>
 
-@if(isset($draftApplications) && $draftApplications->count() > 0)
 <!-- DRAFTS SECTION (المسودات المحفوظة قيد الإعداد) -->
-<div class="card-academic-table mb-4" style="border-top: 4px solid var(--heritage-gold) !important;">
+<div class="card-academic-table mb-4" id="drafts-section" style="border-top: 4px solid var(--heritage-gold) !important;">
     <div class="table-header-slab d-flex flex-wrap align-items-center justify-content-between gap-3 bg-white p-3 border-bottom">
         <div class="d-flex align-items-center gap-2">
             <i class="fa-solid fa-floppy-disk fs-5 text-warning"></i>
             <h6 class="fw-bold mb-0" style="color: var(--imperial-navy);">
                 المسودات والطلبات المحفوظة (غير المكتملة)
             </h6>
-            <span class="badge bg-warning text-dark fw-bold rounded-pill px-2.5 py-1 fs-8">{{ $draftApplications->count() }} مسودة</span>
+            <span class="badge bg-warning text-dark fw-bold rounded-pill px-2.5 py-1 fs-8">{{ isset($draftApplications) ? $draftApplications->count() : 0 }} مسودة</span>
         </div>
         <p class="text-muted small mb-0">يمكنك العودة لاستكمال إدخال البيانات المتبقية ورفع المرفقات الناقصة ثم إرسال المعاملة أصولاً للوزارة.</p>
     </div>
+
+    @if(isset($draftApplications) && $draftApplications->count() > 0)
     <div class="table-responsive">
         <table class="table-academic">
             <thead>
@@ -314,8 +315,8 @@
                     <td class="fs-8 text-muted">{{ $draft->updated_at ? $draft->updated_at->format('Y-m-d H:i') : '' }}</td>
                     <td class="text-center">
                         <div class="d-flex align-items-center justify-content-center gap-2">
-                            <a href="{{ route('university.applications.edit', $draft->id) }}" class="btn btn-sm btn-solid-navy px-3 py-1 fs-8 fw-bold">
-                                <i class="fa-solid fa-pen-to-square me-1"></i> استكمال الطلب
+                            <a href="{{ route('university.applications.edit', $draft->id) }}" class="btn btn-sm btn-solid-navy px-2 py-1 fs-8" title="استكمال الطلب">
+                                <i class="fa-solid fa-pen-to-square"></i>
                             </a>
                             <form action="{{ route('university.applications.delete_draft', $draft->id) }}" method="POST" class="d-inline m-0" onsubmit="return confirm('هل أنت تأكد من إغلاق وحذف هذه المسودة؟');">
                                 @csrf
@@ -331,8 +332,13 @@
             </tbody>
         </table>
     </div>
+    @else
+    <div class="text-center py-4 text-muted bg-white">
+        <i class="fa-solid fa-folder-open fs-2 mb-2 text-warning d-block"></i>
+        <p class="mb-0 fs-7">لا توجد مسودات غير مكتملة حالياً. عند إدخال طلب جديد واختيار <strong>"حفظ كمسودة ومتابعة لاحقاً"</strong> ستظهر هنا مباشرة.</p>
+    </div>
+    @endif
 </div>
-@endif
 
 <!-- 4. RECENT APPLICATIONS DATA TABLE WITH NUDGE (حث الطلب) SERVICE -->
 <div class="card-academic-table mb-4">

@@ -62,6 +62,7 @@
         <!-- Form Tag -->
         <form action="{{ route('university.apply.syrian_masters.submit') }}" method="POST" enctype="multipart/form-data" id="wizard-form">
             @csrf
+            <input type="hidden" name="draft_id" value="{{ optional($draft)->id }}">
 
             <!-- ================= STEP 1: PERSONAL INFO ================= -->
             <div class="form-section active" id="step-1">
@@ -110,63 +111,63 @@
                 <div class="row g-3">
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">اسم المرشح الكامل *</label>
-                        <input type="text" name="full_name" id="input-fullName" class="form-control academic-input" placeholder="الاسم والنسبة" required>
+                        <input type="text" name="full_name" id="input-fullName" class="form-control academic-input" placeholder="الاسم والنسبة" value="{{ old('full_name', optional(optional($draft)->candidate)->full_name) }}" required>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">اسم الأب *</label>
-                        <input type="text" name="father_name" id="input-fatherName" class="form-control academic-input" placeholder="اسم الأب" required>
+                        <input type="text" name="father_name" id="input-fatherName" class="form-control academic-input" placeholder="اسم الأب" value="{{ old('father_name', optional(optional($draft)->candidate)->father_name) }}" required>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">اسم الأم ونسبتها *</label>
-                        <input type="text" name="mother_name" id="input-motherName" class="form-control academic-input" placeholder="اسم ونسبة الأم" required>
+                        <input type="text" name="mother_name" id="input-motherName" class="form-control academic-input" placeholder="اسم ونسبة الأم" value="{{ old('mother_name', optional(optional($draft)->candidate)->mother_name) }}" required>
                     </div>
 
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">الجنسية *</label>
                         <select name="nationality_id" id="input-nationality" class="form-select academic-input" onchange="updateSyrianStatus(this)" required>
                             @foreach($countries as $c)
-                                <option value="{{ $c->id }}" {{ $c->name === 'سوريا' ? 'selected' : '' }}>{{ $c->name }}</option>
+                                <option value="{{ $c->id }}" {{ old('nationality_id', optional(optional($draft)->candidate)->nationality_id ?? $syriaId) == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
                             @endforeach
                         </select>
                         <input type="hidden" name="is_syrian" id="input-isSyrian" value="1">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">الرقم الوطني / رقم جواز السفر *</label>
-                        <input type="text" name="national_id" id="input-nationalId" class="form-control academic-input" placeholder="الرقم الوطني المكون من 11 خانة" required>
+                        <input type="text" name="national_id" id="input-nationalId" class="form-control academic-input" placeholder="الرقم الوطني المكون من 11 خانة" value="{{ old('national_id', optional(optional($draft)->candidate)->national_id) }}" required>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">تاريخ الميلاد *</label>
-                        <input type="date" name="dob" id="input-dob" class="form-control academic-input" required>
+                        <input type="date" name="dob" id="input-dob" class="form-control academic-input" value="{{ old('dob', optional(optional($draft)->candidate)->dob) }}" required>
                     </div>
 
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">الوظيفة الحالية للمرشح *</label>
-                        <input type="text" name="job_title" id="input-jobTitle" class="form-control academic-input" placeholder="مثال: مهندس، موظف، معيد" required>
+                        <input type="text" name="job_title" id="input-jobTitle" class="form-control academic-input" placeholder="مثال: مهندس، موظف، معيد" value="{{ old('job_title', optional(optional($draft)->candidate)->job_title) }}" required>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">الجنس *</label>
                         <select name="gender" id="input-gender" class="form-select academic-input" required>
-                            <option value="ذكر">ذكر</option>
-                            <option value="أنثى">أنثى</option>
+                            <option value="ذكر" {{ old('gender', optional(optional($draft)->candidate)->gender) == 'ذكر' ? 'selected' : '' }}>ذكر</option>
+                            <option value="أنثى" {{ old('gender', optional(optional($draft)->candidate)->gender) == 'أنثى' ? 'selected' : '' }}>أنثى</option>
                         </select>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">البريد الإلكتروني *</label>
-                        <input type="email" name="email" id="input-email" class="form-control academic-input" placeholder="name@example.com" oninput="this.setCustomValidity('')" required>
+                        <input type="email" name="email" id="input-email" class="form-control academic-input" placeholder="name@example.com" value="{{ old('email', optional(optional($draft)->candidate)->email) }}" oninput="this.setCustomValidity('')" required>
                     </div>
 
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">الهاتف المحمول *</label>
-                        <input type="text" name="mobile" id="input-mobile" class="form-control academic-input" placeholder="09xxxxxxxx" maxlength="10" pattern="[0-9]{10}" oninput="this.setCustomValidity(''); this.value = this.value.replace(/[^0-9]/g, '')" required>
+                        <input type="text" name="mobile" id="input-mobile" class="form-control academic-input" placeholder="09xxxxxxxx" maxlength="10" pattern="[0-9]{10}" value="{{ old('mobile', optional(optional($draft)->candidate)->mobile) }}" oninput="this.setCustomValidity(''); this.value = this.value.replace(/[^0-9]/g, '')" required>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">الهاتف الأرضي</label>
-                        <input type="text" name="phone" id="input-phone" class="form-control academic-input" placeholder="011xxxxxxx" maxlength="10" pattern="[0-9]{10}" oninput="this.setCustomValidity(''); this.value = this.value.replace(/[^0-9]/g, '')">
+                        <input type="text" name="phone" id="input-phone" class="form-control academic-input" placeholder="011xxxxxxx" maxlength="10" pattern="[0-9]{10}" value="{{ old('phone', optional(optional($draft)->candidate)->phone) }}" oninput="this.setCustomValidity(''); this.value = this.value.replace(/[^0-9]/g, '')">
                     </div>
 
                     <div class="col-12">
                         <label class="form-label label-md fw-medium text-dark">عنوان الإقامة الحالي بالتفصيل *</label>
-                        <textarea name="address" id="input-address" class="form-control academic-input" rows="2" placeholder="المحافظة - المدينة - الشارع - البناء" required></textarea>
+                        <textarea name="address" id="input-address" class="form-control academic-input" rows="2" placeholder="المحافظة - المدينة - الشارع - البناء" required>{{ old('address', optional(optional($draft)->candidate)->address) }}</textarea>
                     </div>
                 </div>
             </div>
@@ -343,7 +344,7 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">تاريخ منح الدرجة (الحصول على الشهادة) *</label>
-                        <input type="date" name="ma_grant_date" id="input-maGrantDate" class="form-control academic-input" oninput="this.setCustomValidity('')" required>
+                        <input type="date" name="ma_grant_date" id="input-maGrantDate" class="form-control academic-input" onchange="checkMasterGrantDateForExperience()" oninput="this.setCustomValidity(''); checkMasterGrantDateForExperience();" required>
                     </div>
 
                     <div class="col-12">
@@ -351,8 +352,8 @@
                         <textarea name="ma_thesis_title" id="input-maThesisTitle" class="form-control academic-input" rows="2" placeholder="أدخل عنوان رسالة الماجستير كما هو مذكور في مصدقة التخرج" required></textarea>
                     </div>
 
-                    <!-- Experience details toggle (> 2 years) -->
-                    <div class="col-12 mt-4">
+                    <!-- Experience details toggle (> 2 years since master grant date) -->
+                    <div class="col-12 mt-4" id="experience-toggle-container" style="display: none;">
                         <div class="card border-0 shadow-sm p-3" style="background-color: var(--surface-container-low); border: 1px solid var(--outline-variant) !important; border-radius: 4px;">
                             <div class="form-check form-switch mb-3">
                                 <input class="form-check-input" type="checkbox" id="input-hasExperience" name="has_experience" value="1" onchange="toggleExperienceSection(this)">
@@ -364,12 +365,12 @@
                                     <input type="text" name="exp_place" id="input-expPlace" class="form-control academic-input" placeholder="اسم الكلية أو الجامعة والمعهد">
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label label-md fw-medium text-dark">من عام *</label>
-                                    <input type="number" name="exp_from_year" id="input-expFrom" class="form-control academic-input" placeholder="2021">
+                                    <label class="form-label label-md fw-medium text-dark">من تاريخ *</label>
+                                    <input type="date" name="exp_from_year" id="input-expFrom" class="form-control academic-input">
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label label-md fw-medium text-dark">إلى عام *</label>
-                                    <input type="number" name="exp_to_year" id="input-expTo" class="form-control academic-input" placeholder="2023">
+                                    <label class="form-label label-md fw-medium text-dark">إلى تاريخ *</label>
+                                    <input type="date" name="exp_to_year" id="input-expTo" class="form-control academic-input">
                                 </div>
                             </div>
                         </div>
@@ -1193,6 +1194,7 @@
                     if (ma.rank) document.getElementById('input-maRank').value = ma.rank;
                     if (ma.supervisor) document.getElementById('input-maSupervisor').value = ma.supervisor;
                     if (ma.thesis_title) document.getElementById('input-maThesisTitle').value = ma.thesis_title;
+                    checkMasterGrantDateForExperience();
                 }
 
                 area.innerHTML = `
@@ -1207,5 +1209,42 @@
                 area.innerHTML = '<div class="alert alert-danger py-1.5 px-3 fs-8 mt-2">حدث خطأ أثناء إجراء عملية الاستعلام. يرجى التأكد من الرقم الوطني وإعادة المحاولة.</div>';
             });
     }
+
+    function checkMasterGrantDateForExperience() {
+        const grantDateInput = document.getElementById('input-maGrantDate');
+        const container = document.getElementById('experience-toggle-container');
+        const switchInput = document.getElementById('input-hasExperience');
+        const detailsSection = document.getElementById('experience-details-section');
+
+        if (!grantDateInput || !grantDateInput.value) {
+            if (container) container.style.display = 'none';
+            if (switchInput) switchInput.checked = false;
+            if (detailsSection) detailsSection.style.display = 'none';
+            return;
+        }
+
+        const grantDate = new Date(grantDateInput.value);
+        const today = new Date();
+
+        let yearsDiff = today.getFullYear() - grantDate.getFullYear();
+        let monthsDiff = today.getMonth() - grantDate.getMonth();
+        let daysDiff = today.getDate() - grantDate.getDate();
+
+        if (monthsDiff < 0 || (monthsDiff === 0 && daysDiff < 0)) {
+            yearsDiff--;
+        }
+
+        if (yearsDiff >= 2) {
+            if (container) container.style.display = 'block';
+        } else {
+            if (container) container.style.display = 'none';
+            if (switchInput) switchInput.checked = false;
+            if (detailsSection) detailsSection.style.display = 'none';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        checkMasterGrantDateForExperience();
+    });
 </script>
 @endpush
