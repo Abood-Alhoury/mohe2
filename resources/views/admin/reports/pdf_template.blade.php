@@ -263,7 +263,13 @@ body {
 </table>
 
 <!-- TITLE -->
-<div class="moz-title">(مذكرة العرض)</div>
+@if($application->request_type == 'تحويل قرار المعادلة')
+    <div class="moz-title" style="color: #1E40AF;">(مذكرة عرض - تحويل قرار المعادلة ونقل التكليف)</div>
+@elseif($application->request_type == 'إضافة مقررات دراسية')
+    <div class="moz-title" style="color: #059669;">(مذكرة عرض - إضافة مقررات دراسية جديدة)</div>
+@else
+    <div class="moz-title">(مذكرة العرض)</div>
+@endif
 
 <!-- 1. البيانات الشخصية للمرشح -->
 <div class="sec">البيانات الشخصية للمرشح :</div>
@@ -272,7 +278,15 @@ body {
     <tr>
         <td style="font-weight: bold;">{{ $candidate->id }}</td>
         <td class="l">ID :</td>
-        <td style="font-weight: bold; color: #1A2A44;">{{ $application->request_type ?? 'تعادل' }}</td>
+        <td style="font-weight: bold; color: #1A2A44;">
+            @if($application->request_type == 'تحويل قرار المعادلة')
+                <span style="color: #1E40AF; font-weight: bold;">تحويل قرار المعادلة</span>
+            @elseif($application->request_type == 'إضافة مقررات دراسية')
+                <span style="color: #059669; font-weight: bold;">إضافة مقررات دراسية</span>
+            @else
+                {{ $application->request_type ?? 'تعادل' }}
+            @endif
+        </td>
         <td class="l">نوع الطلب :</td>
     </tr>
 </table>
@@ -308,6 +322,70 @@ body {
     </tr>
 </table>
 
+@if($application->request_type == 'تحويل قرار المعادلة')
+@php
+    $parentApp = $application->parentApplication;
+    $parentDecision = $parentApp ? $parentApp->latestDecision : null;
+@endphp
+<!-- TRANSFER EQUIVALENCE COMPARISON BLOCK FOR PDF -->
+<div style="margin: 10px 0; border: 1.5px dashed #3B82F6; padding: 8px; background: #F0F9FF;">
+    <div style="font-weight: bold; color: #1E40AF; font-size: 12px; margin-bottom: 6px; border-bottom: 1px solid #BAE6FD; padding-bottom: 3px; text-align: right;">
+        تفاصيل تحويل قرار المعادلة ونقل التكليف بين الجامعات:
+    </div>
+    <table style="width: 100%; border-collapse: collapse; border: none; font-size: 11.5px;">
+        <tr>
+            <!-- Previous University -->
+            <td style="width: 50%; vertical-align: top; padding: 4px; border: 1px solid #CBD5E1; background: #FFFFFF;">
+                <div style="font-weight: bold; color: #991B1B; font-size: 11.5px; margin-bottom: 4px;">
+                    1. جهة التكليف والقرار السابق (المعادلة الأولى):
+                </div>
+                <div><b>الجامعة السابقة:</b> {{ optional(optional($parentApp)->workUniversity)->name ?? '---' }}</div>
+                <div><b>الكلية والقسم:</b> {{ optional($parentApp)->work_faculty ?? '---' }} / {{ optional($parentApp)->work_department ?? '---' }}</div>
+                <div style="color: #B91C1C; font-weight: bold;">
+                    <b>قرار المعادلة السابق:</b> {{ $parentDecision ? 'رقم (' . $parentDecision->decision_no . ') بتاريخ ' . $parentDecision->decision_date : 'تم الصدور أصولاً' }}
+                </div>
+            </td>
+
+            <!-- New University -->
+            <td style="width: 50%; vertical-align: top; padding: 4px; border: 1px solid #CBD5E1; background: #FFFFFF;">
+                <div style="font-weight: bold; color: #065F46; font-size: 11.5px; margin-bottom: 4px;">
+                    2. جهة التكليف الجديدة والمراد النقل إليها:
+                </div>
+                <div><b>الجامعة الجديدة:</b> {{ optional($application->workUniversity)->name ?? '---' }}</div>
+                <div><b>الكلية والقسم الجديد:</b> {{ $application->work_faculty ?? '---' }} / {{ $application->work_department ?? '---' }}</div>
+                <div style="color: #047857; font-weight: bold;">
+                    <b>كتاب الجامعة الجديدة:</b> {{ $application->new_uni_request_no ? 'رقم (' . $application->new_uni_request_no . ') بتاريخ ' . $application->new_uni_request_date : 'مرفق بالطلب' }}
+                </div>
+            </td>
+        </tr>
+    </table>
+</div>
+@elseif($application->request_type == 'إضافة مقررات دراسية')
+@php
+    $parentApp = $application->parentApplication;
+    $parentDecision = $parentApp ? $parentApp->latestDecision : null;
+@endphp
+<!-- ADD COURSES BLOCK FOR PDF -->
+<div style="margin: 10px 0; border: 1.5px dashed #10B981; padding: 8px; background: #ECFDF5;">
+    <div style="font-weight: bold; color: #065F46; font-size: 12px; margin-bottom: 6px; border-bottom: 1px solid #A7F3D0; padding-bottom: 3px; text-align: right;">
+        تفاصيل طلب إضافة مقررات دراسية جديدة:
+    </div>
+    <table style="width: 100%; border-collapse: collapse; border: none; font-size: 11.5px;">
+        <tr>
+            <td style="padding: 3px 0; color: #475569; width: 140px;"><b>الجامعة والكلية والقسم:</b></td>
+            <td style="padding: 3px 0; font-weight: bold; color: #065F46;">
+                {{ optional($application->workUniversity)->name }} - {{ $application->work_faculty }} / {{ $application->work_department }}
+            </td>
+        </tr>
+        <tr>
+            <td style="padding: 3px 0; color: #475569;"><b>قرار المعادلة السابق:</b></td>
+            <td style="padding: 3px 0; font-weight: bold; color: #0F172A;">
+                {{ $parentDecision ? 'رقم (' . $parentDecision->decision_no . ') بتاريخ ' . $parentDecision->decision_date : 'تم الصدور أصولاً' }}
+            </td>
+        </tr>
+    </table>
+</div>
+@else
 <div class="dblock">
     <table class="mt">
         <tr>
@@ -323,33 +401,160 @@ body {
         التي تطلب الجامعة تكليفه بتدريسها استناداً إلى قرار معادلة شهادته العلمية.
     </div>
 </div>
+@endif
 
 <!-- 2. المقررات -->
-<div class="sec">المقررات التي يدرسها بموجب قرار لجنة التأهيل ومعادلة الدرجات العلمية :</div>
-<table class="ct">
-    <thead>
-        <tr>
-            <th>حالة المقرر</th>
-            <th>الكلية</th>
-            <th>القسم</th>
-            <th>اسم المقرر</th>
-        </tr>
-    </thead>
-    <tbody>
-        @forelse($application->courses as $c)
-        <tr>
-            <td>{{ $c->course_status }}</td>
-            <td>{{ $c->faculty }}</td>
-            <td>{{ $c->department }}</td>
-            <td style="font-weight: bold; color: #1A2A44;">{{ $c->course_name }}</td>
-        </tr>
-        @empty
-        <tr>
-            <td colspan="4" style="color: #b91c1c; font-weight: bold; text-align: center;">لا توجد مقررات تطلبها الجامعة</td>
-        </tr>
-        @endforelse
-    </tbody>
-</table>
+@if($application->request_type == 'تحويل قرار المعادلة')
+    @php
+        $parentApp = $application->parentApplication;
+        $oldUniName = optional(optional($parentApp)->workUniversity)->name ?? 'الجامعة السابقة';
+        $newUniName = optional($application->workUniversity)->name ?? 'الجامعة الجديدة';
+    @endphp
+    <div class="sec">المقررات الدراسية (مقارنة المقررات بين الجامعة السابقة والجديدة) :</div>
+    
+    <!-- Previous University Courses -->
+    <div style="margin-top: 6px; margin-bottom: 3px; font-weight: bold; color: #991B1B; font-size: 11.5px; text-align: right;">
+        أولاً: المقررات التي تم تكليفه بها سابقاً في ({{ $oldUniName }}) :
+    </div>
+    <table class="ct" style="margin-bottom: 8px;">
+        <thead>
+            <tr style="background: #991B1B;">
+                <th style="background: #991B1B; width: 30px;">#</th>
+                <th style="background: #991B1B;">اسم المقرر الدراسي (في الجامعة السابقة)</th>
+                <th style="background: #991B1B;">الكلية والفرع</th>
+                <th style="background: #991B1B;">حالة المقرر</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if($parentApp && $parentApp->courses && $parentApp->courses->count() > 0)
+                @foreach($parentApp->courses as $idx => $c)
+                <tr>
+                    <td style="font-weight: bold;">{{ $idx + 1 }}</td>
+                    <td style="font-weight:bold; color: #991B1B;">{{ $c->course_name }}</td>
+                    <td>{{ $c->faculty ?? $parentApp->work_faculty }} - {{ $c->department ?? $parentApp->work_department }}</td>
+                    <td>مستوفى</td>
+                </tr>
+                @endforeach
+            @else
+                <tr><td colspan="4" style="color: #64748B; text-align: center;">لم تكن هناك مقررات دراسية مطالب بها في القرار السابق.</td></tr>
+            @endif
+        </tbody>
+    </table>
+
+    <!-- New University Courses -->
+    <div style="margin-top: 6px; margin-bottom: 3px; font-weight: bold; color: #065F46; font-size: 11.5px; text-align: right;">
+        ثانياً: المقررات الدراسية المحدّثة المطلوب تكليفه بها في ({{ $newUniName }}) :
+    </div>
+    <table class="ct" style="margin-bottom: 8px;">
+        <thead>
+            <tr style="background: #065F46;">
+                <th style="background: #065F46; width: 30px;">#</th>
+                <th style="background: #065F46;">اسم المقرر الدراسي (في الجامعة الجديدة)</th>
+                <th style="background: #065F46;">الكلية والفرع</th>
+                <th style="background: #065F46;">الحالة</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($application->courses as $idx => $c)
+            <tr>
+                <td style="font-weight: bold;">{{ $idx + 1 }}</td>
+                <td style="font-weight:bold; color: #065F46;">{{ $c->course_name }}</td>
+                <td>{{ $application->work_faculty }} - {{ $application->work_department }}</td>
+                <td style="font-weight: bold; color: #065F46;">مطالب به</td>
+            </tr>
+            @empty
+            <tr><td colspan="4" style="color:#b91c1c; font-weight:bold; text-align:center;">لا توجد مقررات جديدة مضافة في التكليف الجديد.</td></tr>
+            @endforelse
+        </tbody>
+    </table>
+@elseif($application->request_type == 'إضافة مقررات دراسية')
+    @php
+        $parentApp = $application->parentApplication;
+    @endphp
+    <div class="sec">المقررات الدراسية (المقررات السابقة والمقررات المضافة حديثاً) :</div>
+    
+    <!-- Previous Courses -->
+    <div style="margin-top: 6px; margin-bottom: 3px; font-weight: bold; color: #475569; font-size: 11.5px; text-align: right;">
+        أولاً: المقررات التي تم تكليفه بها سابقاً بموجب القرار الصادر :
+    </div>
+    <table class="ct" style="margin-bottom: 8px;">
+        <thead>
+            <tr style="background: #475569;">
+                <th style="background: #475569; width: 30px;">#</th>
+                <th style="background: #475569;">اسم المقرر الدراسي (في القرار السابق)</th>
+                <th style="background: #475569;">الكلية والفرع</th>
+                <th style="background: #475569;">حالة المقرر</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if($parentApp && $parentApp->courses && $parentApp->courses->count() > 0)
+                @foreach($parentApp->courses as $idx => $c)
+                <tr>
+                    <td style="font-weight: bold;">{{ $idx + 1 }}</td>
+                    <td style="font-weight:bold; color: #334155;">{{ $c->course_name }}</td>
+                    <td>{{ $c->faculty ?? $parentApp->work_faculty }} - {{ $c->department ?? $parentApp->work_department }}</td>
+                    <td>مستوفى</td>
+                </tr>
+                @endforeach
+            @else
+                <tr><td colspan="4" style="color: #64748B; text-align: center;">لم تكن هناك مقررات دراسية مطالب بها في القرار السابق.</td></tr>
+            @endif
+        </tbody>
+    </table>
+
+    <!-- New Added Courses -->
+    <div style="margin-top: 6px; margin-bottom: 3px; font-weight: bold; color: #065F46; font-size: 11.5px; text-align: right;">
+        ثانياً: المقررات الدراسية الجديدة المضافة بطلب الإضافة الحالي :
+    </div>
+    <table class="ct" style="margin-bottom: 8px;">
+        <thead>
+            <tr style="background: #065F46;">
+                <th style="background: #065F46; width: 30px;">#</th>
+                <th style="background: #065F46;">اسم المقرر الدراسي الجديد المضاف</th>
+                <th style="background: #065F46;">الكلية والفرع</th>
+                <th style="background: #065F46;">الحالة</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($application->courses as $idx => $c)
+            <tr>
+                <td style="font-weight: bold;">{{ $idx + 1 }}</td>
+                <td style="font-weight:bold; color: #065F46;">{{ $c->course_name }}</td>
+                <td>{{ $application->work_faculty }} - {{ $application->work_department }}</td>
+                <td style="font-weight: bold; color: #065F46;">مُضاف حديثاً</td>
+            </tr>
+            @empty
+            <tr><td colspan="4" style="color:#b91c1c; font-weight:bold; text-align:center;">لا توجد مقررات مضافة في هذا الطلب.</td></tr>
+            @endforelse
+        </tbody>
+    </table>
+@else
+    <div class="sec">المقررات التي يدرسها بموجب قرار لجنة التأهيل ومعادلة الدرجات العلمية :</div>
+    <table class="ct">
+        <thead>
+            <tr>
+                <th>حالة المقرر</th>
+                <th>الكلية</th>
+                <th>القسم</th>
+                <th>اسم المقرر</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($application->courses as $c)
+            <tr>
+                <td>{{ $c->course_status }}</td>
+                <td>{{ $c->faculty }}</td>
+                <td>{{ $c->department }}</td>
+                <td style="font-weight: bold; color: #1A2A44;">{{ $c->course_name }}</td>
+            </tr>
+            @empty
+            <tr>
+                <td colspan="4" style="color: #b91c1c; font-weight: bold; text-align: center;">لا توجد مقررات تطلبها الجامعة</td>
+            </tr>
+            @endforelse
+        </tbody>
+    </table>
+@endif
 
 <!-- 3. الشهادات -->
 <div class="sec">الشهادات التي يحملها المرشح :</div>

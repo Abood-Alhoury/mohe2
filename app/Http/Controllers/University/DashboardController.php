@@ -156,6 +156,8 @@ class DashboardController extends Controller
                 'candidate.nationality',
                 'workUniversity',
                 'courses',
+                'parentApplication.workUniversity',
+                'parentApplication.latestDecision',
                 'educations.level',
                 'educations.country',
                 'educations.university',
@@ -191,6 +193,8 @@ class DashboardController extends Controller
                 'candidate.nationality',
                 'workUniversity',
                 'courses',
+                'parentApplication.workUniversity',
+                'parentApplication.latestDecision',
                 'educations.level',
                 'educations.country',
                 'educations.university',
@@ -258,6 +262,10 @@ class DashboardController extends Controller
                 'candidate.nationality',
                 'workUniversity',
                 'courses',
+                'parentApplication.workUniversity',
+                'parentApplication.latestDecision',
+                'parentApplication.courses',
+                'parentApplication.educations.attachments.attachmentType',
                 'educations.level',
                 'educations.country',
                 'educations.university',
@@ -304,13 +312,28 @@ class DashboardController extends Controller
         $mozhakkaraTmpPath = storage_path('app/tmp_mozhakkara_uni_' . $appId . '.pdf');
         file_put_contents($mozhakkaraTmpPath, $mozhakkaraPdf->output());
 
-        // 2. Collect all uploaded PDF attachment file paths
+        // 2. Collect all uploaded PDF attachment file paths (Latest application attachments first!)
         $attachmentPaths = [];
         foreach ($application->educations as $ed) {
-            foreach ($ed->attachments as $att) {
+            foreach ($ed->attachments->sortByDesc('id') as $att) {
                 $fullPath = storage_path('app/public/' . $att->file_path);
                 if (file_exists($fullPath) && strtolower(pathinfo($fullPath, PATHINFO_EXTENSION)) === 'pdf') {
-                    $attachmentPaths[] = $fullPath;
+                    if (!in_array($fullPath, $attachmentPaths)) {
+                        $attachmentPaths[] = $fullPath;
+                    }
+                }
+            }
+        }
+
+        if ($application->parentApplication) {
+            foreach ($application->parentApplication->educations as $pEd) {
+                foreach ($pEd->attachments->sortByDesc('id') as $att) {
+                    $fullPath = storage_path('app/public/' . $att->file_path);
+                    if (file_exists($fullPath) && strtolower(pathinfo($fullPath, PATHINFO_EXTENSION)) === 'pdf') {
+                        if (!in_array($fullPath, $attachmentPaths)) {
+                            $attachmentPaths[] = $fullPath;
+                        }
+                    }
                 }
             }
         }

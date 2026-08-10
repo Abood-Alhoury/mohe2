@@ -52,8 +52,43 @@
                 @endif
             </div>
         </div>
-    </div>
 </div>
+
+@if($application->request_type == 'تحويل قرار المعادلة' || $application->parent_application_id)
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; background: #EEF2FF; border: 2px solid #3B82F6 !important;">
+        <div class="card-body p-4">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 pb-2 border-bottom border-primary-subtle">
+                <h5 class="fw-bold mb-0 text-primary">
+                    <i class="fa-solid fa-right-left me-2"></i>
+                    طلب تحويل قرار معادلة (نقل التكليف وتعديل المقررات)
+                </h5>
+                @if($application->parentApplication)
+                    <span class="badge bg-white text-dark border px-3 py-1.5 fw-bold shadow-2xs">
+                        <i class="fa-solid fa-link me-1 text-warning"></i>
+                        مرتبط بالطلب الأصلي الصادر رقم: #{{ $application->parentApplication->application_no ?? $application->parentApplication->id }}
+                    </span>
+                @endif
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="p-3 bg-white rounded border shadow-2xs">
+                        <span class="text-muted d-block fs-8 fw-bold">الجامعة والجهة الجديدة المكلّف بها:</span>
+                        <strong class="fs-6 text-primary">{{ optional($application->workUniversity)->name }}</strong>
+                        <div class="text-muted small mt-1">الكلية: {{ $application->work_faculty }} | القسم: {{ $application->work_department }}</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-3 bg-white rounded border shadow-2xs">
+                        <span class="text-muted d-block fs-8 fw-bold">رقم وتاريخ كتاب الجامعة الجديدة الصادر بالتكليف:</span>
+                        <strong class="fs-6 text-dark">رقم الكتاب: {{ $application->new_uni_request_no ?? 'غير محدد' }}</strong>
+                        <div class="text-muted small mt-1">تاريخ الكتاب: {{ $application->new_uni_request_date ?? 'غير محدد' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+@endif
 
 <!-- SECTION 1: البيانات الشخصية للمرشح -->
 <div class="card border mb-4 shadow-sm" style="border-top: 3px solid var(--imperial-navy) !important; border-radius: 4px;">

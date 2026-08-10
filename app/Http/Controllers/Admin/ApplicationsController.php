@@ -19,7 +19,7 @@ class ApplicationsController extends Controller
         $universityFilter = $request->query('university_id');
         $searchQuery = $request->query('search');
 
-        $query = Application::with(['candidate', 'workUniversity', 'user', 'messages', 'decisions']);
+        $query = Application::with(['candidate.applications', 'workUniversity', 'user', 'messages', 'decisions']);
 
         if ($statusFilter) {
             $query->where('status', $statusFilter);

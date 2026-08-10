@@ -15,6 +15,9 @@ class PdfReportController extends Controller
             'candidate.nationality',
             'workUniversity',
             'courses',
+            'parentApplication.workUniversity',
+            'parentApplication.latestDecision',
+            'parentApplication.courses',
             'educations.level',
             'educations.country',
             'educations.university',
@@ -47,6 +50,9 @@ class PdfReportController extends Controller
             'candidate.nationality',
             'workUniversity',
             'courses',
+            'parentApplication.workUniversity',
+            'parentApplication.latestDecision',
+            'parentApplication.courses',
             'educations.level',
             'educations.country',
             'educations.university',
@@ -114,11 +120,31 @@ class PdfReportController extends Controller
     public function consolidatedView($id)
     {
         $application = Application::with([
-            'candidate',
+            'candidate.nationality',
+            'workUniversity',
+            'courses',
+            'parentApplication.workUniversity',
+            'parentApplication.latestDecision',
+            'parentApplication.courses',
+            'parentApplication.educations.attachments.attachmentType',
+            'educations.level',
+            'educations.country',
+            'educations.university',
+            'educations.residences',
             'educations.attachments.attachmentType'
         ])->findOrFail($id);
 
-        return view('admin.reports.consolidated', compact('application'));
+        $candidate = $application->candidate;
+
+        $highSchoolEd = $application->educations->where('level.name', 'ثانوية عامة')->first();
+        $bachelorEd   = $application->educations->where('level.name', 'إجازة جامعية')->first();
+        $diplomaEd    = $application->educations->where('level.name', 'دبلوم دراسات عليا')->first();
+        $masterEd     = $application->educations->where('level.name', 'ماجستير')->first();
+        $phdEd        = $application->educations->where('level.name', 'دكتوراه')->first();
+
+        return view('admin.reports.consolidated', compact(
+            'application', 'candidate', 'highSchoolEd', 'bachelorEd', 'diplomaEd', 'masterEd', 'phdEd'
+        ));
     }
 
     public function downloadConsolidatedPdf($id)
@@ -127,6 +153,10 @@ class PdfReportController extends Controller
             'candidate.nationality',
             'workUniversity',
             'courses',
+            'parentApplication.workUniversity',
+            'parentApplication.latestDecision',
+            'parentApplication.courses',
+            'parentApplication.educations.attachments.attachmentType',
             'educations.level',
             'educations.country',
             'educations.university',
@@ -173,13 +203,28 @@ class PdfReportController extends Controller
         $mozhakkaraTmpPath = storage_path('app/tmp_mozhakkara_' . $id . '.pdf');
         file_put_contents($mozhakkaraTmpPath, $mozhakkaraPdf->output());
 
-        // 2. Collect all uploaded PDF attachment file paths
+        // 2. Collect all uploaded PDF attachment file paths (Latest application attachments first!)
         $attachmentPaths = [];
         foreach ($application->educations as $ed) {
-            foreach ($ed->attachments as $att) {
+            foreach ($ed->attachments->sortByDesc('id') as $att) {
                 $fullPath = storage_path('app/public/' . $att->file_path);
                 if (file_exists($fullPath) && strtolower(pathinfo($fullPath, PATHINFO_EXTENSION)) === 'pdf') {
-                    $attachmentPaths[] = $fullPath;
+                    if (!in_array($fullPath, $attachmentPaths)) {
+                        $attachmentPaths[] = $fullPath;
+                    }
+                }
+            }
+        }
+
+        if ($application->parentApplication) {
+            foreach ($application->parentApplication->educations as $pEd) {
+                foreach ($pEd->attachments->sortByDesc('id') as $att) {
+                    $fullPath = storage_path('app/public/' . $att->file_path);
+                    if (file_exists($fullPath) && strtolower(pathinfo($fullPath, PATHINFO_EXTENSION)) === 'pdf') {
+                        if (!in_array($fullPath, $attachmentPaths)) {
+                            $attachmentPaths[] = $fullPath;
+                        }
+                    }
                 }
             }
         }

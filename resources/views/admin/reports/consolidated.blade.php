@@ -25,30 +25,38 @@
     </div>
 </div>
 
-<!-- PAGE 1: Mozhakkara Summary -->
-<div class="card mb-4 border-2 border-primary shadow-sm">
-    <div class="card-header bg-primary text-white font-bold d-flex justify-content-between align-items-center">
-        <span><i class="fa-solid fa-file-invoice me-2"></i> الصفحة 1 : ملخص مذكرة العرض وبيانات الطلب</span>
-        <span class="badge bg-white text-primary fw-bold">صفحة 1 من الملف المدمج</span>
+<!-- PAGE 1: Mozhakkara Document Paper -->
+<div class="card mb-4 border-2 border-primary shadow-sm" style="border-radius: 10px; overflow: hidden;">
+    <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between align-items-center py-2.5">
+        <span><i class="fa-solid fa-file-invoice me-2"></i> الصفحة 1 : مذكرة العرض المحدثة وتفاصيل التكليف</span>
+        <span class="badge bg-white text-primary fw-bold px-3 py-1">الصفحة الأولى من الملف المدمج</span>
     </div>
-    <div class="card-body p-4">
-        <div class="row g-3">
-            <div class="col-md-6"><span class="fw-bold">اسم المرشح :</span> {{ $application->candidate->full_name ?? '' }}</div>
-            <div class="col-md-6"><span class="fw-bold">الرقم الوطني :</span> {{ $application->candidate->national_id ?? '' }}</div>
-            <div class="col-md-6"><span class="fw-bold">الجامعة المتقدمة :</span> {{ $application->workUniversity->name ?? '' }}</div>
-            <div class="col-md-6"><span class="fw-bold">الكلية والفرع :</span> {{ $application->work_faculty ?? 'الهندسة المدنية' }}</div>
-            <div class="col-md-6"><span class="fw-bold">حالة الطلب :</span> <span class="badge bg-success">{{ $application->status }}</span></div>
-            <div class="col-md-6"><span class="fw-bold">تاريخ التقديم :</span> {{ $application->created_at ? $application->created_at->format('Y-m-d') : '' }}</div>
-        </div>
+    <div class="card-body p-3 bg-light">
+        @include('admin.reports.mozhakkara_paper_snippet')
     </div>
 </div>
 
 <!-- PAGE 2+: Uploaded Document Attachments -->
 @php
     $attachments = collect();
+    
+    // 1. Current Application Attachments (Latest 3 Transfer Documents & Degree attachments)
     foreach($application->educations as $ed) {
-        foreach($ed->attachments as $att) {
-            $attachments->push($att);
+        foreach($ed->attachments->sortByDesc('id') as $att) {
+            if (!$attachments->contains('id', $att->id)) {
+                $attachments->push($att);
+            }
+        }
+    }
+
+    // 2. Parent Application Attachments (if transfer application)
+    if ($application->parentApplication) {
+        foreach($application->parentApplication->educations as $pEd) {
+            foreach($pEd->attachments->sortByDesc('id') as $att) {
+                if (!$attachments->contains('id', $att->id)) {
+                    $attachments->push($att);
+                }
+            }
         }
     }
 @endphp
@@ -61,6 +69,9 @@
         <span class="fw-bold text-dark">
             <i class="fa-solid fa-file-pdf me-2 text-danger"></i> 
             المرفق رقم {{ $index + 2 }} : {{ $attachment->attachmentType->name ?? 'وثيقة رسمية' }}
+            @if($attachment->notes)
+                <small class="text-muted ms-2">({{ $attachment->notes }})</small>
+            @endif
         </span>
         <a href="{{ asset('storage/' . $attachment->file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary">
             <i class="fa-solid fa-expand me-1"></i> فتح في نافذة مستقلة

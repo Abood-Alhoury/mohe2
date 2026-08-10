@@ -10,16 +10,29 @@ class Application extends Model
 
     protected $fillable = [
         'candidate_id',
+        'parent_application_id',
         'application_no',
         'request_type',
         'work_university_id',
         'work_faculty',
         'work_department',
+        'new_uni_request_no',
+        'new_uni_request_date',
         'study_system',
         'has_previous_degree',
         'status',
         'user_id',
     ];
+
+    public function parentApplication()
+    {
+        return $this->belongsTo(Application::class, 'parent_application_id');
+    }
+
+    public function transferChildren()
+    {
+        return $this->hasMany(Application::class, 'parent_application_id');
+    }
 
     public function candidate()
     {

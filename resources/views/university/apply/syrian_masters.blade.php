@@ -77,13 +77,13 @@
                     </label>
                     <div class="d-flex flex-wrap gap-4 align-items-center mb-2">
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="equivalence_frequency" id="freq_first" value="تعادل للمرة الأولى" checked onchange="toggleCandidateLookup(false)">
+                            <input class="form-check-input" type="radio" name="equivalence_frequency" id="freq_first" value="تعادل للمرة الأولى" {{ old('equivalence_frequency', 'تعادل للمرة الأولى') == 'تعادل للمرة الأولى' ? 'checked' : '' }} onchange="toggleCandidateLookup(false)">
                             <label class="form-check-label fw-bold" for="freq_first" style="color: var(--primary-container); cursor: pointer;">
                                 تعادل للمرة الأولى
                             </label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="equivalence_frequency" id="freq_second" value="تعادل للمرة الثانية" onchange="toggleCandidateLookup(true)">
+                            <input class="form-check-input" type="radio" name="equivalence_frequency" id="freq_second" value="تعادل للمرة الثانية" {{ old('equivalence_frequency') == 'تعادل للمرة الثانية' ? 'checked' : '' }} onchange="toggleCandidateLookup(true)">
                             <label class="form-check-label fw-bold" for="freq_second" style="color: var(--primary-container); cursor: pointer;">
                                تعادل للمرة الثانية أو أكثر
                             </label>
@@ -1245,6 +1245,13 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         checkMasterGrantDateForExperience();
+        @if(isset($candidate) && $candidate)
+            const lookupInput = document.getElementById('candidate_search_input');
+            if (lookupInput) {
+                lookupInput.value = '{{ $candidate->national_id }}';
+                performCandidateLookup();
+            }
+        @endif
     });
 </script>
 @endpush

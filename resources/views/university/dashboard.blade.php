@@ -124,23 +124,32 @@
             </div>
         </div>
     </div>
-<!-- Success Flash Alert with Direct PDF Download Link -->
+<!-- Success Flash Alert with Direct PDF Download Link & Auto-dismiss -->
 @if(session('success'))
-<div class="alert border-0 shadow-sm d-flex flex-wrap align-items-center justify-content-between mb-4 p-3.5" role="alert" style="background-color: #E6F4EA; border-right: 4px solid #137333 !important; border-radius: 4px;">
-    <div class="d-flex align-items-center gap-3">
+<div x-data="{ showAlert: true }" 
+     x-show="showAlert" 
+     x-init="setTimeout(() => showAlert = false, 7000)" 
+     x-transition:leave="transition ease-in duration-300"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     class="alert alert-dismissible fade show border-0 shadow-sm d-flex flex-wrap align-items-center justify-content-between mb-4 p-3.5 position-relative" 
+     role="alert" 
+     style="background-color: #E6F4EA; border-right: 4px solid #137333 !important; border-radius: 6px;">
+    <div class="d-flex align-items-center gap-3 pe-4">
         <i class="fa-solid fa-circle-check fs-2" style="color: #137333;"></i>
         <div>
             <h6 class="fw-bold mb-1" style="color: #137333; font-size: 1.05rem;">{{ session('success') }}</h6>
-            <p class="mb-0 small text-muted">يمكنك الآن تحميل وطباعة تقرير الطلب ومذكرة العرض الرسمية المعتمدة وتسليمها مع ملف الثبوتيات.</p>
+            <p class="mb-0 small text-muted">يمكنك الآن متابعة المعاملة في جدول الطلبات أسفله أو تحميل وطباعة تقرير الطلب.</p>
         </div>
     </div>
-    @if(session('submitted_app_id'))
-    <div class="mt-2 mt-md-0">
+    <div class="d-flex align-items-center gap-2 mt-2 mt-md-0">
+        @if(session('submitted_app_id'))
         <a href="{{ route('university.applications.download_pdf', session('submitted_app_id')) }}" target="_blank" class="btn btn-gold-cta px-3 py-2 fw-bold text-decoration-none shadow-sm">
             <i class="fa-solid fa-file-pdf me-1 fs-5"></i> 📥 تحميل وطباعة تقرير الطلب (PDF)
         </a>
+        @endif
+        <button type="button" @click="showAlert = false" class="btn-close ms-2" aria-label="Close"></button>
     </div>
-    @endif
 </div>
 @endif
 
@@ -222,7 +231,7 @@
 
     <!-- Quick Action 2: Transfer Equivalence -->
     <div class="col-12 col-sm-6 col-md-4 col-lg-2">
-        <a href="#" class="action-portal-card text-center" data-bs-toggle="modal" data-bs-target="#transferModal">
+        <a href="{{ route('university.apply.transfer') }}" class="action-portal-card text-center">
             <i class="fa-solid fa-arrows-spin fs-2 mb-2" style="color: #1A2A44;"></i>
             <h6 class="fw-bold mb-1" style="color: #1A2A44; font-size: 0.92rem;">تحويل معادلة</h6>
             <p class="label-sm text-muted mb-0">نقل من جامعة لأخرى</p>
@@ -231,10 +240,10 @@
 
     <!-- Quick Action 3: Add Courses -->
     <div class="col-12 col-sm-6 col-md-4 col-lg-2">
-        <a href="#" class="action-portal-card text-center" data-bs-toggle="modal" data-bs-target="#addCourseModal">
+        <a href="{{ route('university.apply.add_courses') }}" class="action-portal-card text-center">
             <i class="fa-solid fa-book-medical fs-2 mb-2" style="color: #1A2A44;"></i>
             <h6 class="fw-bold mb-1" style="color: #1A2A44; font-size: 0.92rem;">إضافة مقررات</h6>
-            <p class="label-sm text-muted mb-0">ربط وتحديد المقررات</p>
+            <p class="label-sm text-muted mb-0">إضافة مواد جديدة لدكتور</p>
         </a>
     </div>
 
@@ -402,7 +411,17 @@
                     <td class="fw-bold" style="color: #C5A059;">{{ $app->application_no ?? $app->id }}</td>
                     <td class="fw-bold" style="color: #1A2A44;">{{ $app->candidate->full_name ?? 'غ/م' }}</td>
                     <td>
-                        <span class="badge bg-light text-dark border fw-medium px-2 py-1 label-sm">{{ $app->request_type ?? 'تعادل' }}</span>
+                        @if($app->request_type == 'تحويل قرار المعادلة')
+                            <span class="badge bg-primary-subtle text-primary border border-primary fw-bold px-2.5 py-1 label-sm">
+                                <i class="fa-solid fa-right-left me-1"></i> تحويل قرار معادلة
+                            </span>
+                        @elseif($app->request_type == 'إضافة مقررات دراسية')
+                            <span class="badge bg-success-subtle text-success border border-success fw-bold px-2.5 py-1 label-sm">
+                                <i class="fa-solid fa-book-medical me-1"></i> إضافة مقررات دراسية
+                            </span>
+                        @else
+                            <span class="badge bg-light text-dark border fw-medium px-2 py-1 label-sm">{{ $app->request_type ?? 'تعادل' }}</span>
+                        @endif
                     </td>
                     <td class="fs-7 text-muted">{{ $app->work_faculty ?? '' }} - {{ $app->work_department ?? 'غ/م' }}</td>
                     <td>
@@ -433,42 +452,49 @@
                     <td class="text-muted label-sm">{{ $app->created_at ? $app->created_at->format('Y-m-d') : 'غ/م' }}</td>
                     <td class="text-center">
                         <div class="d-flex align-items-center justify-content-center gap-1.5">
-                            {{-- 0. معاينة استعراض كامل تفاصيل الطلب (أيقونة عين - يفتح صفحة مستقلة مباشرة) --}}
+                            {{-- 1. زر العين (معاينة تفاصيل الطلب) - متاح دائماً --}}
                             <a href="{{ route('university.applications.show', $app->id) }}" class="btn btn-sm btn-outline-info px-2 py-1 shadow-sm" title="فتح صفحة مستقلة لمعاينة كافة تفاصيل المعاملة والمؤهلات">
                                 <i class="fa-solid fa-eye"></i>
                             </a>
 
-                            {{-- 1. تعديل / استكمال الوثائق (أيقونة فقط) --}}
-                            @if($app->status == 'بانتظار الوثائق')
-                                <a href="{{ route('university.applications.edit', $app->id) }}" class="btn btn-sm btn-warning px-2 py-1 shadow-sm" title="تعديل البيانات واستكمال الوثائق المطلوبة">
-                                    <i class="fa-solid fa-pen-to-square"></i>
+                            @if($app->status == 'تم الصدور')
+                                {{-- للمعاملات الصادرة رسمياً: زر العين + تنزيل قرار التعادل الصادر + زر المراسلات --}}
+                                @if($app->latestDecision)
+                                    <a href="{{ asset('storage/' . $app->latestDecision->file_path) }}" target="_blank" class="btn btn-sm btn-gold-cta px-2 py-1 text-decoration-none shadow-sm" title="تحميل وتنزيل قرار التعادل الصادر">
+                                        <i class="fa-solid fa-stamp" style="color: var(--imperial-navy);"></i>
+                                    </a>
+                                @endif
+
+                                {{-- المراسلات والإشعارات --}}
+                                <a href="{{ route('university.messages') }}?application_id={{ $app->id }}" class="btn btn-sm btn-outline-navy px-2 py-1 shadow-sm" title="مراسلة الوزارة ومتابعة الملاحظات حول هذا الطلب">
+                                    <i class="fa-solid fa-comments"></i>
+                                </a>
+                            @else
+                                {{-- لباقي المعاملات الجارية (تحت التدقيق الأولي، إلخ): زر العين، تنزيل المذكرة، التنبيهات، والمراسلات --}}
+                                @if($app->status == 'بانتظار الوثائق')
+                                    <a href="{{ route('university.applications.edit', $app->id) }}" class="btn btn-sm btn-warning px-2 py-1 shadow-sm" title="تعديل البيانات واستكمال الوثائق المطلوبة">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </a>
+                                @endif
+
+                                {{-- تحميل تقرير ومذكرة عرض الطلب PDF --}}
+                                <a href="{{ route('university.applications.download_pdf', $app->id) }}" target="_blank" class="btn btn-sm btn-outline-danger px-2 py-1 text-decoration-none shadow-sm" title="تحميل وطباعة تقرير ومذكرة عرض الطلب (PDF)">
+                                    <i class="fa-solid fa-file-pdf"></i>
+                                </a>
+
+                                {{-- حث وتذكير المعاملة --}}
+                                <form action="{{ route('university.applications.nudge', $app->id) }}" method="POST" class="d-inline m-0">
+                                    @csrf
+                                    <button type="submit" class="btn btn-sm btn-outline-gold px-2 py-1 shadow-sm" title="إرسال طلب حث واستعجال دراسة هذه المعاملة للوزارة">
+                                        <i class="fa-solid fa-bell"></i>
+                                    </button>
+                                </form>
+
+                                {{-- المراسلات والإشعارات --}}
+                                <a href="{{ route('university.messages') }}?application_id={{ $app->id }}" class="btn btn-sm btn-outline-navy px-2 py-1 shadow-sm" title="مراسلة الوزارة ومتابعة الملاحظات حول هذا الطلب">
+                                    <i class="fa-solid fa-comments"></i>
                                 </a>
                             @endif
-
-                            {{-- 2. تحميل قرار التعادل الوزاري الصادر (أيقونة فقط) --}}
-                            @if($app->latestDecision)
-                                <a href="{{ asset('storage/' . $app->latestDecision->file_path) }}" target="_blank" class="btn btn-sm btn-gold-cta px-2 py-1 text-decoration-none shadow-sm" title="تحميل وتنزيل قرار التعادل الصادر">
-                                    <i class="fa-solid fa-stamp" style="color: var(--imperial-navy);"></i>
-                                </a>
-                            @endif
-
-                            {{-- 3. تحميل تقرير ومذكرة عرض الطلب PDF (أيقونة فقط) --}}
-                            <a href="{{ route('university.applications.download_pdf', $app->id) }}" target="_blank" class="btn btn-sm btn-outline-danger px-2 py-1 text-decoration-none shadow-sm" title="تحميل وطباعة تقرير ومذكرة عرض الطلب (PDF)">
-                                <i class="fa-solid fa-file-pdf"></i>
-                            </a>
-
-                            {{-- 4. حث وتذكير المعاملة (أيقونة فقط) --}}
-                            <form action="{{ route('university.applications.nudge', $app->id) }}" method="POST" class="d-inline m-0">
-                                @csrf
-                                <button type="submit" class="btn btn-sm btn-outline-gold px-2 py-1 shadow-sm" title="إرسال طلب حث واستعجال دراسة هذه المعاملة للوزارة">
-                                    <i class="fa-solid fa-bell"></i>
-                                </button>
-                            </form>
-
-                            {{-- 5. المراسلات والإشعارات (أيقونة فقط) --}}
-                            <a href="{{ route('university.messages') }}?application_id={{ $app->id }}" class="btn btn-sm btn-outline-navy px-2 py-1 shadow-sm" title="مراسلة الوزارة ومتابعة الملاحظات حول هذا الطلب">
-                                <i class="fa-solid fa-comments"></i>
-                            </a>
                         </div>
 
                         <!-- Read-Only Application View Modal -->

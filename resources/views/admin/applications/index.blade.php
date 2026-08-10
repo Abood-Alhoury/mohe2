@@ -89,7 +89,7 @@
         <table class="table-academic">
             <thead>
                 <tr>
-                    <th style="width: 50px;">ID</th>
+                    <th style="width: 155px;" class="text-center">معرفات الطلب والمرشح</th>
                     <th>نوع الطلب</th>
                     <th>الجامعة</th>
                     <th>الاسم</th>
@@ -98,8 +98,8 @@
                     <th class="text-center">وضع الطلب</th>
                     <th class="text-center">إرفاق قرار التعادل</th>
                     <th class="text-center" style="width: 110px;">Messages</th>
-                    <th class="text-center" style="width: 90px;">Edit</th>
-                    <th class="text-center" style="width: 90px;">Select</th>
+                    <th class="text-center" style="width: 80px;">Edit</th>
+                    <th class="text-center" style="width: 80px;">Select</th>
                 </tr>
             </thead>
             <tbody>
@@ -110,12 +110,73 @@
                     $isForbiddenStatus = in_array($app->status, ['بانتظار الوثائق', 'مرفوض', 'معلق']);
                 @endphp
                 <tr>
-                    <td class="fw-bold text-secondary">{{ $app->id }}</td>
-                    <td><span class="badge-academic-tag">{{ $app->request_type ?? 'تعادل' }}</span></td>
+                    <!-- 1. ID الطلب & رقم المعاملة & ID المرشح -->
+                    <td class="text-center py-2">
+                        <div class="fw-bold text-dark fs-7" title="معرّف الطلب في النظام (Application ID)">
+                            ID الطلب: {{ $app->id }}
+                        </div>
+                        <div class="badge bg-light text-primary border font-monospace my-1 px-1.5 py-0.5" style="font-size: 0.72rem; display: block;" title="رقم المعاملة / الطلب الرسمي">
+                            {{ $app->application_no ?? ('TR-' . $app->id) }}
+                        </div>
+                        <div class="badge bg-secondary-subtle text-dark border font-monospace px-1.5 py-0.5" style="font-size: 0.70rem; display: block;" title="معرّف المرشح / الطالب (Candidate ID)">
+                            <i class="fa-solid fa-user me-1 text-secondary"></i> مرشح: {{ $app->candidate_id ?? optional($app->candidate)->id }}
+                        </div>
+                        @php
+                            $candidateTotalCount = optional($app->candidate)->applications ? optional($app->candidate)->applications->count() : 1;
+                        @endphp
+                        @if($candidateTotalCount > 1)
+                            <a href="{{ route('admin.applications.index') }}?search={{ urlencode($app->candidate->full_name ?? '') }}" class="badge bg-info-subtle text-info border border-info font-monospace mt-1 px-1.5 py-0.5 text-decoration-none" style="font-size: 0.68rem; display: block;" title="انقر لفلترة واستعراض جميع طلبات هذا المرشح الـ ({{ $candidateTotalCount }})">
+                                <i class="fa-solid fa-layer-group me-1"></i> إجمالي الطلبات: {{ $candidateTotalCount }}
+                            </a>
+                        @endif
+                    </td>
+
+                    <!-- 2. Request Type -->
+                    <td>
+                        @if($app->request_type == 'تحويل قرار المعادلة')
+                            <span class="badge bg-primary-subtle text-primary border border-primary px-2 py-1 fw-bold fs-8">
+                                <i class="fa-solid fa-right-left me-1"></i> تحويل قرار معادلة
+                            </span>
+                        @elseif($app->request_type == 'إضافة مقررات دراسية')
+                            <span class="badge bg-success-subtle text-success border border-success px-2 py-1 fw-bold fs-8">
+                                <i class="fa-solid fa-book-medical me-1"></i> إضافة مقررات دراسية
+                            </span>
+                        @else
+                            <span class="badge-academic-tag">{{ $app->request_type ?? 'تعادل' }}</span>
+                        @endif
+                    </td>
+
+                    <!-- 3. University -->
                     <td class="fw-bold" style="color: var(--imperial-navy);">{{ $app->workUniversity->name ?? 'غير محددة' }}</td>
-                    <td class="fw-bold" style="color: #1d4ed8;">{{ $app->candidate->full_name ?? 'غ/م' }}</td>
+
+                    <!-- 4. Candidate Name & Total Applications Count -->
+                    <td>
+                        <div class="d-flex align-items-center flex-wrap gap-1">
+                            <a href="{{ route('admin.applications.index') }}?search={{ urlencode($app->candidate->full_name ?? '') }}" class="fw-bold text-decoration-none" style="color: #1d4ed8;" title="انقر للبحث واستعراض جميع طلبات هذا المرشح">
+                                {{ $app->candidate->full_name ?? 'غ/م' }}
+                            </a>
+                            @php
+                                $candidateTotalApps = optional($app->candidate)->applications ? optional($app->candidate)->applications->count() : 1;
+                            @endphp
+                            @if($candidateTotalApps > 1)
+                                <a href="{{ route('admin.applications.index') }}?search={{ urlencode($app->candidate->full_name ?? '') }}" class="badge bg-primary-subtle text-primary border border-primary font-monospace px-1.5 py-0.5 fs-8 text-decoration-none" title="المرشح لديه {{ $candidateTotalApps }} طلبات مقدمة في النظام - انقر لاستعراضها">
+                                    <i class="fa-solid fa-layer-group me-1"></i> {{ $candidateTotalApps }} طلبات
+                                </a>
+                            @else
+                                <span class="badge bg-light text-muted border font-monospace px-1.5 py-0.5 fs-8" title="طلب واحد للمرشح في النظام">
+                                    1 طلب
+                                </span>
+                            @endif
+                        </div>
+                    </td>
+
+                    <!-- 5. Faculty / Branch -->
                     <td>{{ $app->work_faculty ?? 'إدارة جامعة' }}</td>
+
+                    <!-- 6. Degree Level -->
                     <td class="fw-semibold">{{ $lastEducation->level->name ?? 'إجازة جامعية' }}</td>
+
+                    <!-- 7. Application Status -->
                     <td class="text-center">
                         <!-- Quick Status Update Form -->
                         <form action="{{ route('admin.applications.update_status', $app->id) }}" method="POST" class="d-inline">
@@ -128,13 +189,14 @@
                             </select>
                         </form>
                     </td>
+
+                    <!-- 8. Decision Attachment -->
                     <td class="text-center">
                         @if($app->latestDecision)
                             <a href="{{ asset('storage/' . $app->latestDecision->file_path) }}" target="_blank" class="btn btn-xs btn-gold-cta py-1 px-2 text-decoration-none shadow-sm">
                                 <i class="fa-solid fa-file-pdf me-1 text-danger"></i> تحميل القرار
                             </a>
                         @elseif($isForbiddenStatus)
-                            {{-- Requirement 4: Disable decision upload if status is بانتظار الوثائق, مرفوض, or معلق --}}
                             <button type="button" class="btn btn-xs btn-secondary py-1 px-2 opacity-75" disabled title="لا يمكن رفع قرار التعادل لطلب حالته ({{ $app->status }})">
                                 <i class="fa-solid fa-ban me-1"></i> غير متاح ({{ $app->status }})
                             </button>
@@ -144,6 +206,8 @@
                             </button>
                         @endif
                     </td>
+
+                    <!-- 9. Messages -->
                     <td class="text-center">
                         <button type="button" class="btn btn-sm btn-outline-navy" data-bs-toggle="modal" data-bs-target="#messageModal{{ $app->id }}">
                             <i class="fa-solid fa-comments me-1"></i> Messages
@@ -152,11 +216,15 @@
                             @endif
                         </button>
                     </td>
+
+                    <!-- 10. Edit -->
                     <td class="text-center">
                         <a href="{{ route('admin.applications.edit', $app->id) }}" class="btn btn-sm btn-outline-gold">
                             <i class="fa-solid fa-pen-to-square me-1"></i> Edit
                         </a>
                     </td>
+
+                    <!-- 11. Select -->
                     <td class="text-center">
                         <a href="{{ route('admin.reports.show', $app->id) }}" class="btn btn-sm btn-outline-navy">
                             <i class="fa-solid fa-file-invoice me-1"></i> Select
