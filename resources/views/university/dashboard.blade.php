@@ -128,8 +128,8 @@
 @if(session('success'))
 <div x-data="{ showAlert: true }" 
      x-show="showAlert" 
-     x-init="setTimeout(() => showAlert = false, 7000)" 
-     x-transition:leave="transition ease-in duration-300"
+     x-init="setTimeout(() => showAlert = false, 2500)" 
+     x-transition:leave="transition ease-in duration-400"
      x-transition:leave-start="opacity-100"
      x-transition:leave-end="opacity-0"
      class="alert alert-dismissible fade show border-0 shadow-sm d-flex flex-wrap align-items-center justify-content-between mb-4 p-3.5 position-relative" 
@@ -149,6 +149,17 @@
         </a>
         @endif
         <button type="button" @click="showAlert = false" class="btn-close ms-2" aria-label="Close"></button>
+    </div>
+</div>
+@endif
+
+<!-- Site Closed Alert Notice -->
+@if(!empty($siteLocked) && $siteLocked)
+<div class="alert border-0 shadow-sm d-flex align-items-center mb-4 p-3.5" role="alert" style="background-color: #FEE2E2; color: #991B1B; border-right: 4px solid #DC2626 !important; border-radius: 6px;">
+    <i class="fa-solid fa-lock fs-3 me-3 text-danger"></i>
+    <div>
+        <h6 class="alert-heading fw-bold mb-1 text-danger"><i class="fa-solid fa-ban me-1"></i> تقديم الطلبات الجديدة مغلق حالياً لجميع الجامعات بقرار الإدارة</h6>
+        <p class="mb-0 small" style="color: #7F1D1D;">{{ $siteNotice ?: 'الموقع مغلق حالياً من قبل الإدارة لتلقي طلبات جديدة. يمكنك تصفح طلباتك السابقة، طباعة البيانات والـ PDF، وإرسال المراسلات مع الوزارة بشكل طبيعي.' }}</p>
     </div>
 </div>
 @endif
@@ -221,34 +232,25 @@
 
 <div class="row g-3 mb-4">
     <!-- Quick Action 1: New Equivalence -->
-    <div class="col-12 col-sm-6 col-md-4 col-lg-2">
-        <a href="{{ route('university.apply.options') }}" class="action-portal-card text-center">
-            <i class="fa-solid fa-file-circle-plus fs-2 mb-2" style="color: #1A2A44;"></i>
-            <h6 class="fw-bold mb-1" style="color: #1A2A44; font-size: 0.92rem;">تعادل جديد</h6>
-            <p class="label-sm text-muted mb-0">تقديم طلب جديد</p>
-        </a>
+    <div class="col-12 col-sm-6 col-md-3">
+        @if(!empty($siteLocked) && $siteLocked)
+            <div class="action-portal-card text-center opacity-75 position-relative" style="background-color: #f8fafc; border-color: #cbd5e1; cursor: not-allowed;" title="تقديم الطلبات الجديدة مغلق حالياً لجميع الجامعات بقرار الإدارة">
+                <span class="position-absolute top-0 end-0 badge bg-danger m-2 fs-9"><i class="fa-solid fa-lock"></i> مغلق</span>
+                <i class="fa-solid fa-file-circle-plus fs-2 mb-2 text-muted"></i>
+                <h6 class="fw-bold mb-1 text-muted" style="font-size: 0.92rem;">تقديم طلب تعادل جديد</h6>
+                <p class="label-sm text-danger fw-bold mb-0">مغلق للتقديم الجديد حالياً</p>
+            </div>
+        @else
+            <a href="{{ route('university.apply.options') }}" class="action-portal-card text-center">
+                <i class="fa-solid fa-file-circle-plus fs-2 mb-2" style="color: #1A2A44;"></i>
+                <h6 class="fw-bold mb-1" style="color: #1A2A44; font-size: 0.92rem;">تقديم طلب تعادل جديد</h6>
+                <p class="label-sm text-muted mb-0">اختر نوع درجة التعادل للبدء</p>
+            </a>
+        @endif
     </div>
 
-    <!-- Quick Action 2: Transfer Equivalence -->
-    <div class="col-12 col-sm-6 col-md-4 col-lg-2">
-        <a href="{{ route('university.apply.transfer') }}" class="action-portal-card text-center">
-            <i class="fa-solid fa-arrows-spin fs-2 mb-2" style="color: #1A2A44;"></i>
-            <h6 class="fw-bold mb-1" style="color: #1A2A44; font-size: 0.92rem;">تحويل معادلة</h6>
-            <p class="label-sm text-muted mb-0">نقل من جامعة لأخرى</p>
-        </a>
-    </div>
-
-    <!-- Quick Action 3: Add Courses -->
-    <div class="col-12 col-sm-6 col-md-4 col-lg-2">
-        <a href="{{ route('university.apply.add_courses') }}" class="action-portal-card text-center">
-            <i class="fa-solid fa-book-medical fs-2 mb-2" style="color: #1A2A44;"></i>
-            <h6 class="fw-bold mb-1" style="color: #1A2A44; font-size: 0.92rem;">إضافة مقررات</h6>
-            <p class="label-sm text-muted mb-0">إضافة مواد جديدة لدكتور</p>
-        </a>
-    </div>
-
-    <!-- Quick Action 4: Messages -->
-    <div class="col-12 col-sm-6 col-md-4 col-lg-2">
+    <!-- Quick Action 2: Messages -->
+    <div class="col-12 col-sm-6 col-md-3">
         <a href="{{ route('university.messages') }}" class="action-portal-card text-center">
             <div class="position-relative d-inline-block mb-2">
                 <i class="fa-solid fa-comments fs-2" style="color: #1A2A44;"></i>
@@ -259,25 +261,25 @@
                 @endif
             </div>
             <h6 class="fw-bold mb-1" style="color: #1A2A44; font-size: 0.92rem;">المراسلات والإشعارات</h6>
-            <p class="label-sm text-muted mb-0">التواصل مع الوزارة</p>
+            <p class="label-sm text-muted mb-0">التواصل مع الوزارة ومتابعة الردود</p>
         </a>
     </div>
 
-    <!-- Quick Action 5: Quick Search -->
-    <div class="col-12 col-sm-6 col-md-4 col-lg-2">
+    <!-- Quick Action 3: Quick Search -->
+    <div class="col-12 col-sm-6 col-md-3">
         <a href="#" class="action-portal-card text-center" data-bs-toggle="modal" data-bs-target="#searchModal">
             <i class="fa-solid fa-magnifying-glass fs-2 mb-2" style="color: #1A2A44;"></i>
             <h6 class="fw-bold mb-1" style="color: #1A2A44; font-size: 0.92rem;">بحث سريع</h6>
-            <p class="label-sm text-muted mb-0">بالاسم أو الرقم الوطني</p>
+            <p class="label-sm text-muted mb-0">بالاسم أو الرقم الوطني للمرشح</p>
         </a>
     </div>
 
-    <!-- Quick Action 6: Required Documents -->
-    <div class="col-12 col-sm-6 col-md-4 col-lg-2">
+    <!-- Quick Action 4: Required Documents -->
+    <div class="col-12 col-sm-6 col-md-3">
         <a href="{{ route('university.required_documents') }}" class="action-portal-card text-center">
             <i class="fa-solid fa-folder-closed fs-2 mb-2" style="color: #1A2A44;"></i>
-            <h6 class="fw-bold mb-1" style="color: #1A2A44; font-size: 0.92rem;">الأوراق المطلوبة</h6>
-            <p class="label-sm text-muted mb-0">دليل الثبوتيات والمستندات</p>
+            <h6 class="fw-bold mb-1" style="color: #1A2A44; font-size: 0.92rem;">الأوراق والشهادات المطلوبة</h6>
+            <p class="label-sm text-muted mb-0">دليل الثبوتيات والمستندات أصولاً</p>
         </a>
     </div>
 </div>
@@ -321,7 +323,7 @@
                             <i class="fa-solid fa-pen me-1"></i> مسودة (بانتظار الاستكمال)
                         </span>
                     </td>
-                    <td class="fs-8 text-muted">{{ $draft->updated_at ? $draft->updated_at->format('Y-m-d H:i') : '' }}</td>
+                    <td class="fs-8 text-muted">{{ $draft->updated_at ? $draft->updated_at->format('d/m/Y H:i') : '' }}</td>
                     <td class="text-center">
                         <div class="d-flex align-items-center justify-content-center gap-2">
                             <a href="{{ route('university.applications.edit', $draft->id) }}" class="btn btn-sm btn-solid-navy px-2 py-1 fs-8" title="استكمال الطلب">
@@ -427,29 +429,33 @@
                     <td>
                         @if($app->status == 'تحت التدقيق الأولي' || $app->status == 'قيد الدراسة')
                             <span class="badge-status badge-study">
-                                <i class="fa-solid fa-hourglass-half me-1"></i> تحت التدقيق الأولي
+                                <i class="fa-solid fa-magnifying-glass me-1"></i> تحت التدقيق الأولي
                             </span>
                         @elseif($app->status == 'بانتظار الوثائق')
                             <span class="badge-status badge-paper">
                                 <i class="fa-solid fa-file-circle-exclamation me-1"></i> بانتظار الوثائق
                             </span>
+                        @elseif($app->status == 'لجنة عامة')
+                            <span class="badge-status badge-suspended">
+                                <i class="fa-solid fa-users me-1"></i> لجنة عامة
+                            </span>
+                        @elseif($app->status == 'بانتظار لجنة إنتاج علمي')
+                            <span class="badge-status badge-suspended" style="background-color: rgba(147, 51, 234, 0.1); color: #9333ea; border-color: rgba(147, 51, 234, 0.2);">
+                                <i class="fa-solid fa-flask me-1"></i> بانتظار لجنة إنتاج علمي
+                            </span>
+                        @elseif($app->status == 'بانتظار المقابلة')
+                            <span class="badge-status badge-suspended" style="background-color: rgba(79, 70, 229, 0.1); color: #4f46e5; border-color: rgba(79, 70, 229, 0.2);">
+                                <i class="fa-solid fa-user-tie me-1"></i> بانتظار المقابلة
+                            </span>
                         @elseif($app->status == 'تم الصدور' || $app->status == 'موافقة')
                             <span class="badge-status badge-approved">
-                                <i class="fa-solid fa-circle-check me-1"></i> تم الصدور
-                            </span>
-                        @elseif($app->status == 'معلق')
-                            <span class="badge-status badge-suspended">
-                                <i class="fa-solid fa-pause me-1"></i> معلق
-                            </span>
-                        @elseif($app->status == 'مرفوض')
-                            <span class="badge-status badge-rejected">
-                                <i class="fa-solid fa-xmark me-1"></i> مرفوض
+                                <i class="fa-solid fa-award me-1"></i> تم الصدور
                             </span>
                         @else
                             <span class="badge-status badge-study">{{ $app->status }}</span>
                         @endif
                     </td>
-                    <td class="text-muted label-sm">{{ $app->created_at ? $app->created_at->format('Y-m-d') : 'غ/م' }}</td>
+                    <td class="text-muted label-sm">{{ $app->created_at ? $app->created_at->format('d/m/Y') : 'غ/م' }}</td>
                     <td class="text-center">
                         <div class="d-flex align-items-center justify-content-center gap-1.5">
                             {{-- 1. زر العين (معاينة تفاصيل الطلب) - متاح دائماً --}}
@@ -481,14 +487,6 @@
                                 <a href="{{ route('university.applications.download_pdf', $app->id) }}" target="_blank" class="btn btn-sm btn-outline-danger px-2 py-1 text-decoration-none shadow-sm" title="تحميل وطباعة تقرير ومذكرة عرض الطلب (PDF)">
                                     <i class="fa-solid fa-file-pdf"></i>
                                 </a>
-
-                                {{-- حث وتذكير المعاملة --}}
-                                <form action="{{ route('university.applications.nudge', $app->id) }}" method="POST" class="d-inline m-0">
-                                    @csrf
-                                    <button type="submit" class="btn btn-sm btn-outline-gold px-2 py-1 shadow-sm" title="إرسال طلب حث واستعجال دراسة هذه المعاملة للوزارة">
-                                        <i class="fa-solid fa-bell"></i>
-                                    </button>
-                                </form>
 
                                 {{-- المراسلات والإشعارات --}}
                                 <a href="{{ route('university.messages') }}?application_id={{ $app->id }}" class="btn btn-sm btn-outline-navy px-2 py-1 shadow-sm" title="مراسلة الوزارة ومتابعة الملاحظات حول هذا الطلب">

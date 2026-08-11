@@ -13,13 +13,14 @@ class ReportsController extends Controller
     {
         $totalApps = Application::count();
 
-        // Official 5 statuses with icons matching Screenshot 2
+        // Official 6 statuses
         $officialStatuses = [
-            'تحت التدقيق الأولي' => ['icon' => 'fa-magnifying-glass text-primary'],
-            'بانتظار الوثائق'   => ['icon' => 'fa-hourglass-half text-warning'],
-            'معلق'             => ['icon' => 'fa-circle-exclamation text-warning'],
-            'مرفوض'           => ['icon' => 'fa-circle-xmark text-danger'],
-            'تم الصدور'         => ['icon' => 'fa-award text-success'],
+            'تحت التدقيق الأولي'   => ['icon' => 'fa-magnifying-glass text-primary'],
+            'بانتظار الوثائق'     => ['icon' => 'fa-hourglass-half text-warning'],
+            'لجنة عامة'           => ['icon' => 'fa-users text-info'],
+            'بانتظار لجنة إنتاج علمي' => ['icon' => 'fa-flask text-purple'],
+            'بانتظار المقابلة'     => ['icon' => 'fa-user-tie text-secondary'],
+            'تم الصدور'           => ['icon' => 'fa-award text-success'],
         ];
 
         $statusCounts = Application::select('status', DB::raw('count(*) as count'))
@@ -51,11 +52,12 @@ class ReportsController extends Controller
         $totalApps = Application::count();
 
         $officialStatuses = [
-            'تحت التدقيق الأولي' => ['icon' => 'fa-magnifying-glass text-primary'],
-            'بانتظار الوثائق'   => ['icon' => 'fa-hourglass-half text-warning'],
-            'معلق'             => ['icon' => 'fa-circle-exclamation text-warning'],
-            'مرفوض'           => ['icon' => 'fa-circle-xmark text-danger'],
-            'تم الصدور'         => ['icon' => 'fa-award text-success'],
+            'تحت التدقيق الأولي'   => ['icon' => 'fa-magnifying-glass text-primary'],
+            'بانتظار الوثائق'     => ['icon' => 'fa-hourglass-half text-warning'],
+            'لجنة عامة'           => ['icon' => 'fa-users text-info'],
+            'بانتظار لجنة إنتاج علمي' => ['icon' => 'fa-flask text-purple'],
+            'بانتظار المقابلة'     => ['icon' => 'fa-user-tie text-secondary'],
+            'تم الصدور'           => ['icon' => 'fa-award text-success'],
         ];
 
         $statusCounts = Application::select('status', DB::raw('count(*) as count'))

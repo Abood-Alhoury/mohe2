@@ -6,6 +6,10 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'بوابة الخدمات الإلكترونية للجامعات') - مجلس التعليم العالي</title>
     
+    <!-- Site Icon / Favicon -->
+    <link rel="icon" type="image/jpeg" href="{{ asset('assets/logo.jpg') }}">
+    <link rel="shortcut icon" type="image/jpeg" href="{{ asset('assets/logo.jpg') }}">
+    
     <!-- Google Fonts: IBM Plex Sans Arabic -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -83,6 +87,51 @@
             padding: 1.25rem 2rem;
             font-size: 0.85rem;
             margin-top: auto;
+        }
+
+        /* Global System-Wide Print Optimization Rules */
+        @media print {
+            @page {
+                size: auto;
+                margin: 8mm 10mm;
+            }
+            .mohe-header, 
+            .mohe-sidebar-nav, 
+            .mohe-footer-institutional, 
+            .executive-footer, 
+            header, 
+            aside, 
+            footer, 
+            nav, 
+            .no-print, 
+            .no-print-zone,
+            .btn, 
+            button, 
+            .alert {
+                display: none !important;
+                visibility: hidden !important;
+                height: 0 !important;
+                width: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: hidden !important;
+            }
+            body, main, .container-fluid {
+                background: #ffffff !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                box-shadow: none !important;
+            }
+            .moz-wrapper {
+                box-shadow: none !important;
+                border: none !important;
+                margin: 0 auto !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 0 !important;
+                border-top: none !important;
+            }
         }
     </style>
 
@@ -337,7 +386,7 @@
                                 alertEl.style.opacity = '0';
                                 setTimeout(function() { alertEl.remove(); }, 600);
                             }
-                        }, 4000);
+                        }, 2500);
                     });
                 </script>
             @endif
@@ -358,6 +407,23 @@
 
     <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Global Max 2MB File Size Validation -->
+    <script>
+        document.addEventListener('change', function(e) {
+            if (e.target && e.target.tagName === 'INPUT' && e.target.type === 'file') {
+                const file = e.target.files[0];
+                if (file) {
+                    const maxBytes = 2 * 1024 * 1024; // 2 MB
+                    if (file.size > maxBytes) {
+                        const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                        alert('⚠️ عذراً! حجم الملف المرفق (' + fileSizeMB + ' ميغابايت) يتجاوز الحد الأقصى المسموح به (2 ميغابايت).\nيرجى اختيار ملف بحجم أصغر لضمان عدم امتلاء السيرفر.');
+                        e.target.value = '';
+                    }
+                }
+            }
+        });
+    </script>
 
     @stack('scripts')
 </body>

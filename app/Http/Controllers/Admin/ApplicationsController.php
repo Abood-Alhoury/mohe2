@@ -19,7 +19,7 @@ class ApplicationsController extends Controller
         $universityFilter = $request->query('university_id');
         $searchQuery = $request->query('search');
 
-        $query = Application::with(['candidate.applications', 'workUniversity', 'user', 'messages', 'decisions']);
+        $query = Application::where('status', '!=', 'مسودة')->with(['candidate.applications', 'workUniversity', 'user', 'messages', 'decisions']);
 
         if ($statusFilter) {
             $query->where('status', $statusFilter);
@@ -53,8 +53,9 @@ class ApplicationsController extends Controller
         $statusesList = [
             'تحت التدقيق الأولي',
             'بانتظار الوثائق',
-            'معلق',
-            'مرفوض',
+            'لجنة عامة',
+            'بانتظار لجنة إنتاج علمي',
+            'بانتظار المقابلة',
             'تم الصدور',
         ];
 
@@ -91,8 +92,11 @@ class ApplicationsController extends Controller
         $app->status = $request->status;
         $app->save();
 
-        // If uploading Equivalence Decision File or status set to "تم الصدور"
+        // If uploading Equivalence Decision File, force status to "تم الصدور"
         if ($request->hasFile('decision_file')) {
+            $app->status = 'تم الصدور';
+            $app->save();
+
             $file = $request->file('decision_file');
             $safeAppNo = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $app->application_no ?? ('App_' . $app->id));
             $safeDecNo = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $request->decision_no ?? $app->application_no);

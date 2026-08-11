@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Application;
 use App\Models\ApplicationMessage;
 use App\Models\LookupUniversity;
+use App\Models\SiteSetting;
 
 class DashboardController extends Controller
 {
@@ -23,7 +24,7 @@ class DashboardController extends Controller
 
         $universityName = $user->university ? $user->university->name : 'الجامعة';
 
-        $totalApps = Application::where('work_university_id', $uniId)->count();
+        $totalApps = Application::where('work_university_id', $uniId)->where('status', '!=', 'مسودة')->count();
         $underStudyCount = Application::where('work_university_id', $uniId)->where('status', 'تحت التدقيق الأولي')->count();
         $suspendedCount = Application::where('work_university_id', $uniId)->whereIn('status', ['معلق', 'بانتظار الوثائق', 'مواضيع اللجنة العامة (معلق)'])->count();
         $draftsCount = Application::where('work_university_id', $uniId)->where('status', 'مسودة')->count();
@@ -39,6 +40,7 @@ class DashboardController extends Controller
             ->get();
 
         $query = Application::where('work_university_id', $uniId)
+            ->where('status', '!=', 'مسودة')
             ->with(['candidate', 'latestDecision', 'educations.level', 'educations.country', 'educations.university', 'educations.attachments.attachmentType']);
 
         if ($request->filled('search')) {
@@ -66,6 +68,9 @@ class DashboardController extends Controller
             ->latest()
             ->get();
 
+        $siteLocked = SiteSetting::get('site_locked', '0') === '1';
+        $siteNotice = SiteSetting::get('site_notice', '');
+
         return view('university.dashboard', compact(
             'totalApps',
             'underStudyCount',
@@ -76,7 +81,9 @@ class DashboardController extends Controller
             'recentApplications',
             'notifications',
             'universityName',
-            'user'
+            'user',
+            'siteLocked',
+            'siteNotice'
         ));
     }
 

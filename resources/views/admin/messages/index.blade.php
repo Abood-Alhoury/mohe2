@@ -164,7 +164,7 @@
                                         <i class="fa-solid {{ $isAdmin ? 'fa-user-shield' : 'fa-university' }} me-1"></i>
                                         {{ $isAdmin ? 'مدير التعادل (أدمن الوزارة)' : (optional($selectedApp->workUniversity)->name ?? 'الجامعة') }}
                                     </span>
-                                    <small class="fs-8 {{ $isAdmin ? 'text-white-50' : 'text-muted' }}">{{ $msg->created_at ? $msg->created_at->format('Y-m-d H:i') : '' }}</small>
+                                    <small class="fs-8 {{ $isAdmin ? 'text-white-50' : 'text-muted' }}">{{ $msg->created_at ? $msg->created_at->format('d/m/Y H:i') : '' }}</small>
                                 </div>
                                 <div class="fs-7 lh-base text-wrap" style="white-space: pre-line;">{{ $msg->message }}</div>
                             </div>

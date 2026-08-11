@@ -18,6 +18,7 @@ class Application extends Model
         'work_department',
         'new_uni_request_no',
         'new_uni_request_date',
+        'is_first_time',
         'study_system',
         'has_previous_degree',
         'status',

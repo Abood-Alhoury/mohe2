@@ -105,20 +105,7 @@ Route::prefix('university')->middleware(['auth', 'role:university'])->group(func
     Route::get('/apply/syrian-masters', [ApplicationWizardController::class, 'showSyrianMastersWizard'])->name('university.apply.syrian_masters');
     Route::post('/apply/syrian-masters', [ApplicationWizardController::class, 'submitSyrianMastersWizard'])->name('university.apply.syrian_masters.submit');
     
-    // Wizard: Transfer Equivalence Decision (تحويل قرار المعادلة)
-    Route::get('/apply/transfer', [ApplicationWizardController::class, 'showTransferSearch'])->name('university.apply.transfer');
-    Route::get('/apply/transfer/{appId}/create', [ApplicationWizardController::class, 'showTransferWizard'])->name('university.apply.transfer.create');
-    Route::post('/apply/transfer/submit', [ApplicationWizardController::class, 'submitTransferWizard'])->name('university.apply.transfer.submit');
-
-    // Add Courses Routes (إضافة مقررات دراسية)
-    Route::get('/apply/add-courses', [ApplicationWizardController::class, 'showAddCoursesSearch'])->name('university.apply.add_courses');
-    Route::get('/apply/add-courses/{appId}/create', [ApplicationWizardController::class, 'showAddCoursesWizard'])->name('university.apply.add_courses.create');
-    Route::post('/apply/add-courses/submit', [ApplicationWizardController::class, 'submitAddCoursesWizard'])->name('university.apply.add_courses.submit');
-
-    // Second-Time Equivalence Route (تعادل للمرة الثانية أو أكثر)
-    Route::get('/apply/second-time', [ApplicationWizardController::class, 'showSecondTimeSearch'])->name('university.apply.second_time');
-
-    // Candidate Lookup API (for second-time equivalence auto-fill)
+    // Candidate Lookup API (for candidate info auto-fill)
     Route::get('/candidate/lookup', [ApplicationWizardController::class, 'lookupCandidate'])->name('university.candidate.lookup');
 
     // View, Edit, Update & Delete Application / Draft

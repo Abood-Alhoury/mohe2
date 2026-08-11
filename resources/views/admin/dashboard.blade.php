@@ -283,7 +283,7 @@
                             <span class="fw-bold" style="color: #2563eb;">{{ $app->status }}</span>
                         @endif
                     </td>
-                    <td class="text-muted" style="font-size: 0.88rem;">{{ $app->created_at ? $app->created_at->format('Y-m-d') : 'غ/م' }}</td>
+                    <td class="text-muted" style="font-size: 0.88rem;">{{ $app->created_at ? $app->created_at->format('d/m/Y') : 'غ/م' }}</td>
                     <td class="text-center">
                         <div class="d-flex align-items-center justify-content-center gap-2">
                             <a href="{{ route('admin.reports.show', $app->id) }}" class="btn-outline-navy" title="عرض مذكرة العرض">

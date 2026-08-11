@@ -4,6 +4,12 @@
 
 @section('content')
 
+@php
+    $hsEd = $draft ? $draft->educations->first(function($e) { return $e->education_level_id == 6 || (optional($e->level)->name && str_contains(optional($e->level)->name, 'ثانوية')); }) : null;
+    $baEd = $draft ? $draft->educations->first(function($e) { return $e->education_level_id == 1 || (optional($e->level)->name && str_contains(optional($e->level)->name, 'إجازة')); }) : null;
+    $maEd = $draft ? $draft->educations->first(function($e) { return $e->education_level_id == 3 || (optional($e->level)->name && str_contains(optional($e->level)->name, 'ماجستير')); }) : null;
+@endphp
+
 <!-- BREADCRUMBS & PAGE HEADER -->
 <div class="row mb-4">
     <div class="col-12">
@@ -25,13 +31,13 @@
 <div class="card border-0 shadow-sm" style="border-radius: 8px; border-top: 3px solid var(--heritage-gold) !important; border: 1px solid var(--outline-variant) !important; background-color: #ffffff;">
     <div class="card-body p-4 p-md-5">
         
-        <!-- Multi-Step Progress Indicators -->
+        <!-- Multi-Step Progress Indicators (6 STEPS TOTAL) -->
         <div class="wizard-steps" id="wizard-steps-container">
             <div class="wizard-progress" id="wizard-progress-bar" style="width: 0%;"></div>
             
             <div class="wizard-step active" data-step="1">
                 <div class="wizard-icon">1</div>
-                <span class="wizard-label d-none d-md-inline">الشخصية</span>
+                <span class="wizard-label d-none d-md-inline">الشخصية والجامعة</span>
             </div>
             <div class="wizard-step" data-step="2">
                 <div class="wizard-icon">2</div>
@@ -47,14 +53,10 @@
             </div>
             <div class="wizard-step" data-step="5">
                 <div class="wizard-icon">5</div>
-                <span class="wizard-label d-none d-md-inline">المقررات</span>
+                <span class="wizard-label d-none d-md-inline">المرفقات</span>
             </div>
             <div class="wizard-step" data-step="6">
                 <div class="wizard-icon">6</div>
-                <span class="wizard-label d-none d-md-inline">المرفقات</span>
-            </div>
-            <div class="wizard-step" data-step="7">
-                <div class="wizard-icon">7</div>
                 <span class="wizard-label d-none d-md-inline">المراجعة</span>
             </div>
         </div>
@@ -64,49 +66,15 @@
             @csrf
             <input type="hidden" name="draft_id" value="{{ optional($draft)->id }}">
 
-            <!-- ================= STEP 1: PERSONAL INFO ================= -->
+            <!-- ================= STEP 1: PERSONAL INFO & UNIVERSITY REQUEST ================= -->
             <div class="form-section active" id="step-1">
                 <h5 class="fw-bold border-bottom pb-2 mb-4 d-flex align-items-center gap-2" style="color: var(--primary-container); border-bottom-color: var(--outline-variant) !important;">
-                    <i class="fa-solid fa-user fs-5" style="color: var(--heritage-gold);"></i> الخطوة 1: المعلومات الشخصية للمرشح وتكرار الطلب
+                    <i class="fa-solid fa-user fs-5" style="color: var(--heritage-gold);"></i> الخطوة 1: المعلومات الشخصية وبيانات كتاب طلب التقييم الصادر عن الجامعة
                 </h5>
                 
-                <!-- EQUIVALENCE FREQUENCY CHOICE & CANDIDATE LOOKUP -->
-                <div class="card mb-4 border p-3.5" style="background-color: var(--surface-container-low); border-right: 4px solid var(--heritage-gold) !important; border-radius: 4px;">
-                    <label class="form-label fw-bold mb-2" style="color: var(--primary-container); font-size: 0.98rem;">
-                        <i class="fa-solid fa-repeat me-1.5" style="color: var(--heritage-gold);"></i> تكرار تقديم طلب التعادل لهذا المرشح : <span class="text-danger">*</span>
-                    </label>
-                    <div class="d-flex flex-wrap gap-4 align-items-center mb-2">
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="equivalence_frequency" id="freq_first" value="تعادل للمرة الأولى" {{ old('equivalence_frequency', 'تعادل للمرة الأولى') == 'تعادل للمرة الأولى' ? 'checked' : '' }} onchange="toggleCandidateLookup(false)">
-                            <label class="form-check-label fw-bold" for="freq_first" style="color: var(--primary-container); cursor: pointer;">
-                                تعادل للمرة الأولى
-                            </label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="equivalence_frequency" id="freq_second" value="تعادل للمرة الثانية" {{ old('equivalence_frequency') == 'تعادل للمرة الثانية' ? 'checked' : '' }} onchange="toggleCandidateLookup(true)">
-                            <label class="form-check-label fw-bold" for="freq_second" style="color: var(--primary-container); cursor: pointer;">
-                               تعادل للمرة الثانية أو أكثر
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Candidate Lookup Container (Visible when "تعادل للمرة الثانية" is checked) -->
-                    <div id="candidate_lookup_box" class="mt-3 p-3 bg-white rounded border d-none">
-                        <div class="d-flex align-items-center justify-content-between mb-2">
-                            <span class="fw-bold fs-7" style="color: var(--primary-container);">
-                                <i class="fa-solid fa-magnifying-glass me-1" style="color: var(--heritage-gold);"></i> استعلام وجلب بيانات المرشح ومؤهلاته السابقة بالرقم الوطني:
-                            </span>
-                            <span class="badge bg-light text-muted border fs-8">الرقم الوطني للمرشح (المكون من 11 خانة)</span>
-                        </div>
-                        <div class="input-group input-group-sm">
-                            <input type="text" id="candidate_search_input" class="form-control academic-input" placeholder="ادخل الرقم الوطني للمرشح لاسترجاع كافة البيانات والمؤهلات...">
-                            <button type="button" class="btn btn-primary fw-bold px-3" onclick="performCandidateLookup()">
-                                <i class="fa-solid fa-search me-1"></i> استعلام بالرقم الوطني وجلب البيانات
-                            </button>
-                        </div>
-                        <div id="lookup_results_area" class="mt-2"></div>
-                    </div>
-                </div>
+                <!-- DEFAULT EQUIVALENCE FREQUENCY: FIRST TIME -->
+                <input type="hidden" name="equivalence_frequency" value="تعادل للمرة الأولى">
+                <input type="hidden" name="has_previous_degree" value="0">
 
                 <div class="row g-3">
                     <div class="col-md-4">
@@ -169,6 +137,33 @@
                         <label class="form-label label-md fw-medium text-dark">عنوان الإقامة الحالي بالتفصيل *</label>
                         <textarea name="address" id="input-address" class="form-control academic-input" rows="2" placeholder="المحافظة - المدينة - الشارع - البناء" required>{{ old('address', optional(optional($draft)->candidate)->address) }}</textarea>
                     </div>
+
+                    <!-- UNIVERSITY EVALUATION REQUEST LETTER DETAILS -->
+                    <div class="col-12 mt-4">
+                        <div class="card p-3.5 shadow-sm border-0" style="background-color: var(--surface-container-low); border-right: 4px solid var(--heritage-gold) !important; border-radius: 4px;">
+                            <h6 class="fw-bold mb-3" style="color: var(--primary-container);">
+                                <i class="fa-solid fa-file-signature me-1.5" style="color: var(--heritage-gold);"></i> بيانات كتاب طلب التقييم الصادر عن الجامعة
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label label-md fw-medium text-dark">رقم كتاب طلب التقييم الصادر عن الجامعة *</label>
+                                    <input type="text" name="req_no" id="input-reqNo" class="form-control academic-input" placeholder="أدخل أرقام كتاب الجامعة فقط" pattern="[0-9]+" value="{{ old('req_no', optional($draft)->new_uni_request_no) }}" oninput="this.setCustomValidity(''); this.value = this.value.replace(/[^0-9]/g, '')" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label label-md fw-medium text-dark">تاريخ كتاب طلب التقييم الصادر عن الجامعة *</label>
+                                    <input type="date" name="req_date" id="input-reqDate" class="form-control academic-input" value="{{ old('req_date', optional($draft)->new_uni_request_date) }}" required>
+                                </div>
+                                <div class="col-12 mt-3">
+                                    <div class="form-check form-switch p-3 border rounded d-flex align-items-center gap-3" style="background-color: #f0f7ff; border-color: #93c5fd !important; border-right: 4px solid #1D4ED8 !important;">
+                                        <input class="form-check-input ms-0 me-2" type="checkbox" id="input-isFirstTime" name="is_first_time" value="1" {{ old('is_first_time', optional($draft)->is_first_time ?? 1) ? 'checked' : '' }} style="width: 2.4em; height: 1.3em; cursor: pointer;">
+                                        <label class="form-check-label fw-bold text-dark mb-0 label-md" for="input-isFirstTime" style="cursor: pointer;">
+                                            هل يقدم المرشح معاملة التعادل للمرة الأولى؟
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -183,33 +178,38 @@
                         <label class="form-label label-md fw-medium text-dark">الدولة المانحة للثانوية *</label>
                         <select name="hs_country_id" id="input-hsCountry" class="form-select academic-input" onchange="toggleHsCountrySection(this)" required>
                             @foreach($countries as $c)
-                                <option value="{{ $c->id }}" {{ $c->name === 'سوريا' ? 'selected' : '' }}>{{ $c->name }}</option>
+                                <option value="{{ $c->id }}" {{ old('hs_country_id', optional($hsEd)->country_id ?? $syriaId) == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">نوع البكالوريا *</label>
                         <select name="hs_type" id="input-hsType" class="form-select academic-input" required>
-                            <option value="علمي">علمي</option>
-                            <option value="أدبي">أدبي</option>
-                            <option value="تجاري">تجاري</option>
-                            <option value="صناعي">صناعي</option>
+                            @php $oldHsType = old('hs_type', optional($hsEd)->section_name); @endphp
+                            <option value="علمي" {{ $oldHsType == 'علمي' ? 'selected' : '' }}>علمي</option>
+                            <option value="أدبي" {{ $oldHsType == 'أدبي' ? 'selected' : '' }}>أدبي</option>
+                            <option value="تجاري" {{ $oldHsType == 'تجاري' ? 'selected' : '' }}>تجاري</option>
+                            <option value="صناعي" {{ $oldHsType == 'صناعي' ? 'selected' : '' }}>صناعي</option>
                         </select>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">تاريخ الحصول على الشهادة *</label>
-                        <input type="date" name="hs_grant_date" id="input-hsDate" class="form-control academic-input" required>
+                        <input type="date" name="hs_grant_date" id="input-hsDate" class="form-control academic-input" value="{{ old('hs_grant_date', optional($hsEd)->grant_date) }}" required>
                     </div>
 
                     <!-- Conditional high school equivalence if country is not Syria -->
                     <div class="col-12 mt-4" id="hs-equivalence-section" style="display: none;">
                         <div class="card p-3 shadow-sm border-0" style="background-color: var(--warning-container); border-right: 4px solid var(--heritage-gold) !important; border-radius: 4px;">
-                            <h6 class="fw-bold mb-2" style="color: var(--warning);"><i class="fa-solid fa-triangle-exclamation me-1"></i> إدخال قرار معادلة الشهادة الثانوية</h6>
-                            <p class="label-sm text-muted mb-3">بما أن الشهادة الثانوية غير صادرة عن الجمهورية العربية السورية، يرجى إدخال رقم قرار المعادلة من وزارة التربية السورية ورفع صورة قرار المعادلة في خطوة المرفقات النهائية.</p>
-                            <div class="row">
+                            <h6 class="fw-bold mb-2" style="color: var(--warning);"><i class="fa-solid fa-triangle-exclamation me-1"></i> إدخال قرار معادلة الشهادة الثانوية غير السورية</h6>
+                            <p class="label-sm text-muted mb-3">بما أن الشهادة الثانوية غير صادرة عن الجمهورية العربية السورية، يرجى إدخال رقم وتاريخ قرار المعادلة الصادر عن وزارة التربية السورية، ورفع صورة القرار في خطوة المرفقات النهائية (إجباري).</p>
+                            <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label label-md fw-medium text-dark">رقم قرار معادلة الشهادة الثانوية *</label>
-                                    <input type="text" name="hs_decision_no" id="input-hsDecisionNo" class="form-control academic-input" placeholder="أدخل رقم القرار الرسمي">
+                                    <input type="text" name="hs_decision_no" id="input-hsDecisionNo" class="form-control academic-input" placeholder="أدخل رقم القرار الرسمي" value="{{ old('hs_decision_no', $hsEd && $hsEd->notes ? preg_replace('/.*رقم قرار المعادلة الثانوية:\s*([^\|]+).*/u', '$1', $hsEd->notes) : '') }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label label-md fw-medium text-dark">تاريخ قرار معادلة الشهادة الثانوية *</label>
+                                    <input type="date" name="hs_decision_date" id="input-hsDecisionDate" class="form-control academic-input" value="{{ old('hs_decision_date', $hsEd && $hsEd->notes && str_contains($hsEd->notes, 'تاريخ القرار:') ? preg_replace('/.*تاريخ القرار:\s*([0-9\-]+).*/u', '$1', $hsEd->notes) : '') }}">
                                 </div>
                             </div>
                         </div>
@@ -228,7 +228,7 @@
                         <label class="form-label label-md fw-medium text-dark">الدولة المانحة للإجازة *</label>
                         <select name="ba_country_id" id="input-baCountry" class="form-select academic-input" onchange="toggleBaCountrySection(this)" required>
                             @foreach($countries as $c)
-                                <option value="{{ $c->id }}" {{ $c->name === 'سوريا' ? 'selected' : '' }}>{{ $c->name }}</option>
+                                <option value="{{ $c->id }}" {{ old('ba_country_id', optional($baEd)->country_id ?? $syriaId) == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -239,7 +239,7 @@
                             <option value="">-- اختر الجامعة --</option>
                             @foreach($universities as $uni)
                                 @if($uni->country && $uni->country->name === 'سوريا')
-                                    <option value="{{ $uni->id }}">{{ $uni->name }}</option>
+                                    <option value="{{ $uni->id }}" {{ old('ba_university_id', optional($baEd)->university_id) == $uni->id ? 'selected' : '' }}>{{ $uni->name }}</option>
                                 @endif
                             @endforeach
                         </select>
@@ -247,46 +247,51 @@
 
                     <div class="col-md-4" id="ba-uni-text-container" style="display: none;">
                         <label class="form-label label-md fw-medium text-dark">اسم الجامعة الأجنبية / الجهة المانحة *</label>
-                        <input type="text" name="ba_university_other" id="input-baUniOther" class="form-control academic-input" placeholder="اسم الجامعة الكامل">
+                        <input type="text" name="ba_university_other" id="input-baUniOther" class="form-control academic-input" placeholder="اسم الجامعة الكامل" value="{{ old('ba_university_other', optional($baEd)->section_name) }}">
                     </div>
 
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">التقدير / المرتبة *</label>
+                        @php $oldBaRank = old('ba_rank', optional($baEd)->rank); @endphp
                         <select name="ba_rank" id="input-baRank" class="form-select academic-input" required>
-                            <option value="امتياز">امتياز</option>
-                            <option value="جيد جداً">جيد جداً</option>
-                            <option value="جيد">جيد</option>
-                            <option value="مقبول">مقبول</option>
+                            <option value="امتياز" {{ $oldBaRank == 'امتياز' ? 'selected' : '' }}>امتياز</option>
+                            <option value="جيد جداً" {{ $oldBaRank == 'جيد جداً' ? 'selected' : '' }}>جيد جداً</option>
+                            <option value="جيد" {{ $oldBaRank == 'جيد' ? 'selected' : '' }}>جيد</option>
+                            <option value="مقبول" {{ $oldBaRank == 'مقبول' ? 'selected' : '' }}>مقبول</option>
                         </select>
                     </div>
 
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">الكلية والفرع (التخصص العام) *</label>
-                        <input type="text" name="ba_faculty" id="input-baFaculty" class="form-control academic-input" placeholder="مثال: هندسة المعلوماتية" required>
+                        <input type="text" name="ba_faculty" id="input-baFaculty" class="form-control academic-input" placeholder="مثال: هندسة المعلوماتية" value="{{ old('ba_faculty', optional($baEd)->general_specialization) }}" required>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">القسم (التخصص الدقيق) *</label>
-                        <input type="text" name="ba_department" id="input-baDept" class="form-control academic-input" placeholder="مثال: هندسة البرمجيات ونظم المعلومات" required>
+                        <input type="text" name="ba_department" id="input-baDept" class="form-control academic-input" placeholder="مثال: هندسة البرمجيات ونظم المعلومات" value="{{ old('ba_department', optional($baEd)->exact_specialization) }}" required>
                     </div>
 
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">تاريخ التسجيل بالإجازة *</label>
-                        <input type="date" name="ba_registration_date" id="input-baRegDate" class="form-control academic-input" oninput="this.setCustomValidity(''); const g = document.getElementById('input-baGrantDate'); if(g) g.setCustomValidity('');" required>
+                        <input type="date" name="ba_registration_date" id="input-baRegDate" class="form-control academic-input" value="{{ old('ba_registration_date', optional($baEd)->registration_date) }}" oninput="this.setCustomValidity(''); const g = document.getElementById('input-baGrantDate'); if(g) g.setCustomValidity('');" required>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">تاريخ التخرج / الحصول عليها *</label>
-                        <input type="date" name="ba_grant_date" id="input-baGrantDate" class="form-control academic-input" oninput="this.setCustomValidity('')" required>
+                        <input type="date" name="ba_grant_date" id="input-baGrantDate" class="form-control academic-input" value="{{ old('ba_grant_date', optional($baEd)->grant_date) }}" oninput="this.setCustomValidity('')" required>
                     </div>
 
                     <!-- Conditional bachelor's equivalence if country is not Syria -->
                     <div class="col-12 mt-4" id="ba-equivalence-section" style="display: none;">
                         <div class="card p-3 shadow-sm border-0" style="background-color: var(--warning-container); border-right: 4px solid var(--heritage-gold) !important; border-radius: 4px;">
-                            <h6 class="fw-bold mb-2" style="color: var(--warning);"><i class="fa-solid fa-triangle-exclamation me-1"></i> إدخال قرار معادلة الإجازة الجامعية الأولى</h6>
-                            <p class="label-sm text-muted mb-3">بما أن الإجازة الجامعية الأولى غير صادرة عن الجمهورية العربية السورية، يرجى إدخال رقم قرار المعادلة الصادر عن وزارة التعليم العالي والبحث العلمي السورية ورفع صورة قرار المعادلة في خطوة المرفقات النهائية.</p>
-                            <div class="row">
+                            <h6 class="fw-bold mb-2" style="color: var(--warning);"><i class="fa-solid fa-triangle-exclamation me-1"></i> إدخال قرار معادلة الإجازة الجامعية الأولى غير السورية</h6>
+                            <p class="label-sm text-muted mb-3">بما أن الإجازة الجامعية الأولى غير صادرة عن الجمهورية العربية السورية، يرجى إدخال رقم وتاريخ قرار المعادلة الصادر عن وزارة التعليم العالي والبحث العلمي السورية، ورفع صورة القرار في خطوة المرفقات النهائية (إجباري).</p>
+                            <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label label-md fw-medium text-dark">رقم قرار تعادل الإجازة الجامعية *</label>
-                                    <input type="text" name="ba_decision_no" id="input-baDecisionNo" class="form-control academic-input" placeholder="أدخل رقم قرار التعادل الرسمي">
+                                    <input type="text" name="ba_decision_no" id="input-baDecisionNo" class="form-control academic-input" placeholder="أدخل رقم قرار التعادل الرسمي" value="{{ old('ba_decision_no', $baEd && $baEd->notes ? preg_replace('/.*رقم قرار معادلة الإجازة:\s*([^\|]+).*/u', '$1', $baEd->notes) : '') }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label label-md fw-medium text-dark">تاريخ قرار تعادل الإجازة الجامعية *</label>
+                                    <input type="date" name="ba_decision_date" id="input-baDecisionDate" class="form-control academic-input" value="{{ old('ba_decision_date', $baEd && $baEd->notes && str_contains($baEd->notes, 'تاريخ القرار:') ? preg_replace('/.*تاريخ القرار:\s*([0-9\-]+).*/u', '$1', $baEd->notes) : '') }}">
                                 </div>
                             </div>
                         </div>
@@ -307,145 +312,86 @@
                             <option value="">-- اختر الجامعة السورية --</option>
                             @foreach($universities as $uni)
                                 @if($uni->country && $uni->country->name === 'سوريا')
-                                    <option value="{{ $uni->id }}">{{ $uni->name }}</option>
+                                    <option value="{{ $uni->id }}" {{ old('ma_university_id', optional($maEd)->university_id) == $uni->id ? 'selected' : '' }}>{{ $uni->name }}</option>
                                 @endif
                             @endforeach
                         </select>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">التقدير / المرتبة *</label>
+                        @php $oldMaRank = old('ma_rank', optional($maEd)->rank); @endphp
                         <select name="ma_rank" id="input-maRank" class="form-select academic-input" required>
-                            <option value="امتياز">امتياز</option>
-                            <option value="جيد جداً">جيد جداً</option>
-                            <option value="جيد">جيد</option>
+                            <option value="امتياز" {{ $oldMaRank == 'امتياز' ? 'selected' : '' }}>امتياز</option>
+                            <option value="جيد جداً" {{ $oldMaRank == 'جيد جداً' ? 'selected' : '' }}>جيد جداً</option>
+                            <option value="جيد" {{ $oldMaRank == 'جيد' ? 'selected' : '' }}>جيد</option>
                         </select>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">اسم الأستاذ المشرف *</label>
-                        <input type="text" name="ma_supervisor" id="input-maSupervisor" class="form-control academic-input" placeholder="الاسم الثنائي للمشرف مع اللقب العلمي" required>
+                        <input type="text" name="ma_supervisor" id="input-maSupervisor" class="form-control academic-input" placeholder="الاسم الثنائي للمشرف مع اللقب العلمي" value="{{ old('ma_supervisor', optional($maEd)->supervisor_name) }}" required>
                     </div>
 
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">الكلية والفرع (التخصص العام للماجستير) *</label>
-                        <input type="text" name="ma_faculty" id="input-maFaculty" class="form-control academic-input" placeholder="كلية الهندسة المدنية" required>
+                        <input type="text" name="ma_faculty" id="input-maFaculty" class="form-control academic-input" placeholder="كلية الهندسة المدنية" value="{{ old('ma_faculty', optional($maEd)->general_specialization) }}" required>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">القسم (التخصص الدقيق للماجستير) *</label>
-                        <input type="text" name="ma_department" id="input-maDept" class="form-control academic-input" placeholder="إدارة المشاريع" required>
+                        <input type="text" name="ma_department" id="input-maDept" class="form-control academic-input" placeholder="إدارة المشاريع" value="{{ old('ma_department', optional($maEd)->exact_specialization) }}" required>
                     </div>
 
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">تاريخ التسجيل بالدرجة *</label>
-                        <input type="date" name="ma_registration_date" id="input-maRegDate" class="form-control academic-input" oninput="this.setCustomValidity(''); const d = document.getElementById('input-maDefDate'); if(d) d.setCustomValidity(''); const g = document.getElementById('input-maGrantDate'); if(g) g.setCustomValidity('');" required>
+                        <input type="date" name="ma_registration_date" id="input-maRegDate" class="form-control academic-input" value="{{ old('ma_registration_date', optional($maEd)->registration_date) }}" oninput="this.setCustomValidity(''); const d = document.getElementById('input-maDefDate'); if(d) d.setCustomValidity(''); const g = document.getElementById('input-maGrantDate'); if(g) g.setCustomValidity('');" required>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">تاريخ المناقشة *</label>
-                        <input type="date" name="ma_defense_date" id="input-maDefDate" class="form-control academic-input" oninput="this.setCustomValidity(''); const g = document.getElementById('input-maGrantDate'); if(g) g.setCustomValidity('');" required>
+                        <input type="date" name="ma_defense_date" id="input-maDefDate" class="form-control academic-input" value="{{ old('ma_defense_date', optional($maEd)->defense_date) }}" oninput="this.setCustomValidity(''); const g = document.getElementById('input-maGrantDate'); if(g) g.setCustomValidity('');" required>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">تاريخ منح الدرجة (الحصول على الشهادة) *</label>
-                        <input type="date" name="ma_grant_date" id="input-maGrantDate" class="form-control academic-input" onchange="checkMasterGrantDateForExperience()" oninput="this.setCustomValidity(''); checkMasterGrantDateForExperience();" required>
+                        <input type="date" name="ma_grant_date" id="input-maGrantDate" class="form-control academic-input" value="{{ old('ma_grant_date', optional($maEd)->grant_date) }}" onchange="checkMasterGrantDateForExperience()" oninput="this.setCustomValidity(''); checkMasterGrantDateForExperience();" required>
                     </div>
 
                     <div class="col-12">
                         <label class="form-label label-md fw-medium text-dark">عنوان رسالة الماجستير (الأطروحة) بالتفصيل *</label>
-                        <textarea name="ma_thesis_title" id="input-maThesisTitle" class="form-control academic-input" rows="2" placeholder="أدخل عنوان رسالة الماجستير كما هو مذكور في مصدقة التخرج" required></textarea>
+                        <textarea name="ma_thesis_title" id="input-maThesisTitle" class="form-control academic-input" rows="2" placeholder="أدخل عنوان رسالة الماجستير كما هو مذكور في مصدقة التخرج" required>{{ old('ma_thesis_title', optional($maEd)->thesis_title) }}</textarea>
                     </div>
 
                     <!-- Experience details toggle (> 2 years since master grant date) -->
                     <div class="col-12 mt-4" id="experience-toggle-container" style="display: none;">
                         <div class="card border-0 shadow-sm p-3" style="background-color: var(--surface-container-low); border: 1px solid var(--outline-variant) !important; border-radius: 4px;">
                             <div class="form-check form-switch mb-3">
-                                <input class="form-check-input" type="checkbox" id="input-hasExperience" name="has_experience" value="1" onchange="toggleExperienceSection(this)">
+                                <input class="form-check-input" type="checkbox" id="input-hasExperience" name="has_experience" value="1" {{ old('has_experience', optional($maEd)->experience_from_year ? '1' : '0') == '1' ? 'checked' : '' }} onchange="toggleExperienceSection(this)">
                                 <label class="form-check-label fw-bold text-dark ms-2 label-md" for="input-hasExperience">هل يمتلك المرشح خبرة تدريسية تفوق سنتين؟</label>
                             </div>
                             <div class="row g-3" id="experience-details-section" style="display: none;">
                                 <div class="col-md-6">
                                     <label class="form-label label-md fw-medium text-dark">مكان الخبرة التدريسية (الجهة/الجامعة) *</label>
-                                    <input type="text" name="exp_place" id="input-expPlace" class="form-control academic-input" placeholder="اسم الكلية أو الجامعة والمعهد">
+                                    <input type="text" name="exp_place" id="input-expPlace" class="form-control academic-input" placeholder="اسم الكلية أو الجامعة والمعهد" value="{{ old('exp_place', optional($maEd)->notes ? preg_replace('/.*مكان الخبرة التدريسية:\s*/u', '', $maEd->notes) : '') }}">
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label label-md fw-medium text-dark">من تاريخ *</label>
-                                    <input type="date" name="exp_from_year" id="input-expFrom" class="form-control academic-input">
+                                    <input type="date" name="exp_from_year" id="input-expFrom" class="form-control academic-input" value="{{ old('exp_from_year', optional($maEd)->experience_from_year) }}">
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label label-md fw-medium text-dark">إلى تاريخ *</label>
-                                    <input type="date" name="exp_to_year" id="input-expTo" class="form-control academic-input">
+                                    <input type="date" name="exp_to_year" id="input-expTo" class="form-control academic-input" value="{{ old('exp_to_year', optional($maEd)->experience_to_year) }}">
                                 </div>
                             </div>
                         </div>
                     </div>
-
                 </div>
             </div>
 
-            <!-- ================= STEP 5: UNIVERSITY REQUEST & COURSES ================= -->
+            <!-- ================= STEP 5: ATTACHMENTS ================= -->
             <div class="form-section" id="step-5" style="display: none;">
                 <h5 class="fw-bold border-bottom pb-2 mb-4 d-flex align-items-center gap-2" style="color: var(--primary-container); border-bottom-color: var(--outline-variant) !important;">
-                    <i class="fa-solid fa-list-check fs-5" style="color: var(--heritage-gold);"></i> الخطوة 5: بيانات طلب الجامعة والمقررات المرشح لتدريسها
-                </h5>
-                
-                <div class="row g-3 mb-4">
-                    <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">رقم كتاب طلب التقويم الصادر عن الجامعة *</label>
-                        <input type="text" name="req_no" id="input-reqNo" class="form-control academic-input" placeholder="رقم الكتاب الرسمي (أرقام فقط)" pattern="[0-9]+" oninput="this.setCustomValidity(''); this.value = this.value.replace(/[^0-9]/g, '')" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">تاريخ كتاب طلب التقويم *</label>
-                        <input type="date" name="req_date" id="input-reqDate" class="form-control academic-input" required>
-                    </div>
-                </div>
-
-                <!-- Proposed Courses to teach Table -->
-                <div class="card p-3 shadow-sm border-0" style="border-top: 3px solid var(--heritage-gold) !important; border-radius: 4px; border: 1px solid var(--outline-variant) !important; background-color: #ffffff;">
-                    <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2" style="border-bottom-color: var(--outline-variant) !important;">
-                        <h6 class="fw-bold mb-0" style="color: var(--primary-container);"><i class="fa-solid fa-book me-1" style="color: var(--heritage-gold);"></i> المقررات التي سيدرسها المرشح في الجامعة</h6>
-                        <button type="button" class="btn btn-sm btn-action" onclick="addCourseRow()">
-                            <i class="fa-solid fa-plus me-1"></i> إضافة مقرر
-                        </button>
-                    </div>
-                    
-                    <div class="table-responsive">
-                        <table class="table mohe-table align-middle">
-                            <thead>
-                                <tr>
-                                    <th>اسم المقرر الدراسي *</th>
-                                    <th>الكلية *</th>
-                                    <th>القسم *</th>
-                                    <th style="width: 80px;" class="text-center">حذف</th>
-                                </tr>
-                            </thead>
-                            <tbody id="courses-tbody">
-                                <tr>
-                                    <td>
-                                        <input type="text" name="courses[0][name]" class="form-control form-control-sm academic-input course-name-input" placeholder="مثال: معمارية الحاسب" required>
-                                    </td>
-                                    <td>
-                                        <input type="text" name="courses[0][faculty]" class="form-control form-control-sm academic-input course-faculty-input" placeholder="مثال: هندسة المعلوماتية" required>
-                                    </td>
-                                    <td>
-                                        <input type="text" name="courses[0][department]" class="form-control form-control-sm academic-input course-dept-input" placeholder="مثال: قسم البرمجيات" required>
-                                    </td>
-                                    <td class="text-center">
-                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeCourseRow(this)">
-                                            <i class="fa-solid fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ================= STEP 6: ATTACHMENTS ================= -->
-            <div class="form-section" id="step-6" style="display: none;">
-                <h5 class="fw-bold border-bottom pb-2 mb-4 d-flex align-items-center gap-2" style="color: var(--primary-container); border-bottom-color: var(--outline-variant) !important;">
-                    <i class="fa-solid fa-paperclip fs-5" style="color: var(--heritage-gold);"></i> الخطوة 6: رفع المرفقات والمستندات الثبوتية المطلوبة (بصيغة PDF فقط)
+                    <i class="fa-solid fa-paperclip fs-5" style="color: var(--heritage-gold);"></i> الخطوة 5: رفع المرفقات والمستندات الثبوتية المطلوبة (بصيغة PDF فقط - أقصى حجم 2 ميغابايت لكل ملف)
                 </h5>
                 
                 <div class="alert border-0 shadow-sm mb-4" style="background-color: var(--surface-container-low); border-right: 4px solid var(--primary-container) !important; color: var(--primary-container); border-radius: 4px;">
-                    <i class="fa-solid fa-info-circle me-1" style="color: var(--heritage-gold);"></i> يرجى التأكد من رفع ملفات PDF واضحة ومصدقة أصولاً لعدم تعليق المعاملة من قبل لجنة التعادل.
+                    <i class="fa-solid fa-info-circle me-1" style="color: var(--heritage-gold);"></i> يرجى التأكد من رفع ملفات PDF واضحة ومصدقة أصولاً، <strong>بحجم لا يتجاوز 2 ميغابايت لكل مرفق</strong> لعدم تعليق المعاملة ولضمان سرعة معالجة وحفظ الملفات.
                 </div>
 
                 <div class="row g-4">
@@ -529,10 +475,10 @@
                 </div>
             </div>
 
-            <!-- ================= STEP 7: REVIEW & SUBMIT ================= -->
-            <div class="form-section" id="step-7" style="display: none;">
+            <!-- ================= STEP 6: REVIEW & SUBMIT ================= -->
+            <div class="form-section" id="step-6" style="display: none;">
                 <h5 class="fw-bold border-bottom pb-2 mb-4 d-flex align-items-center gap-2" style="color: var(--primary-container); border-bottom-color: var(--outline-variant) !important;">
-                    <i class="fa-solid fa-print fs-5" style="color: var(--heritage-gold);"></i> الخطوة 7: مراجعة البيانات المدخلة وتأكيد الإرسال
+                    <i class="fa-solid fa-print fs-5" style="color: var(--heritage-gold);"></i> الخطوة 6: مراجعة البيانات المدخلة وتأكيد الإرسال
                 </h5>
                 
                 <p class="label-md text-muted mb-4">يرجى مراجعة كافة البيانات المدخلة قبل النقر على زر إنهاء الإرسال. يمكنك التعديل والرجوع لأي خطوة سابقة.</p>
@@ -681,7 +627,7 @@
 @push('scripts')
 <script>
     let currentStep = 1;
-    const totalSteps = 7;
+    const totalSteps = 6;
     const syriaCountryId = "{{ $syriaId }}";
 
     // Initialize course row counter
@@ -744,58 +690,87 @@
     }
 
     // Toggle High School Decision inputs
-    function toggleHsCountrySection(select) {
+    function toggleHsCountrySection(select, isInitial = false) {
         const section = document.getElementById('hs-equivalence-section');
-        const input = document.getElementById('input-hsDecisionNo');
+        const inputNo = document.getElementById('input-hsDecisionNo');
+        const inputDate = document.getElementById('input-hsDecisionDate');
         const fileContainer = document.getElementById('hs-decision-file-container');
-        const fileInput = fileContainer.querySelector('input');
+        const fileInput = fileContainer ? fileContainer.querySelector('input') : null;
 
-        if (select.value != syriaCountryId) {
-            section.style.display = 'block';
-            input.required = true;
-            fileContainer.style.display = 'block';
-            fileInput.required = true;
+        if (select && select.value != syriaCountryId) {
+            if (section) section.style.display = 'block';
+            if (inputNo) inputNo.required = true;
+            if (inputDate) inputDate.required = true;
+            if (fileContainer) fileContainer.style.display = 'block';
+            if (fileInput) fileInput.required = true;
         } else {
-            section.style.display = 'none';
-            input.required = false;
-            input.value = '';
-            fileContainer.style.display = 'none';
-            fileInput.required = false;
+            if (section) section.style.display = 'none';
+            if (inputNo) { inputNo.required = false; if (!isInitial) inputNo.value = ''; }
+            if (inputDate) { inputDate.required = false; if (!isInitial) inputDate.value = ''; }
+            if (fileContainer) fileContainer.style.display = 'none';
+            if (fileInput) { fileInput.required = false; }
         }
     }
 
     // Toggle Bachelor's Decision inputs
-    function toggleBaCountrySection(select) {
+    function toggleBaCountrySection(select, isInitial = false) {
         const selectContainer = document.getElementById('ba-uni-select-container');
         const textContainer = document.getElementById('ba-uni-text-container');
         const section = document.getElementById('ba-equivalence-section');
-        const input = document.getElementById('input-baDecisionNo');
+        const inputNo = document.getElementById('input-baDecisionNo');
+        const inputDate = document.getElementById('input-baDecisionDate');
         const fileContainer = document.getElementById('ba-decision-file-container');
-        const fileInput = fileContainer.querySelector('input');
+        const fileInput = fileContainer ? fileContainer.querySelector('input') : null;
 
-        if (select.value == syriaCountryId) {
-            selectContainer.style.display = 'block';
-            selectContainer.querySelector('select').required = true;
-            textContainer.style.display = 'none';
-            textContainer.querySelector('input').required = false;
-            textContainer.querySelector('input').value = '';
-            section.style.display = 'none';
-            input.required = false;
-            input.value = '';
-            fileContainer.style.display = 'none';
-            fileInput.required = false;
-        } else {
-            selectContainer.style.display = 'none';
-            selectContainer.querySelector('select').required = false;
-            selectContainer.querySelector('select').value = '';
-            textContainer.style.display = 'block';
-            textContainer.querySelector('input').required = true;
-            section.style.display = 'block';
-            input.required = true;
-            fileContainer.style.display = 'block';
-            fileInput.required = true;
+        if (select && select.value == syriaCountryId) {
+            if (selectContainer) {
+                selectContainer.style.display = 'block';
+                const s = selectContainer.querySelector('select');
+                if (s) s.required = true;
+            }
+            if (textContainer) {
+                textContainer.style.display = 'none';
+                const i = textContainer.querySelector('input');
+                if (i) { i.required = false; if (!isInitial) i.value = ''; }
+            }
+            if (section) section.style.display = 'none';
+            if (inputNo) { inputNo.required = false; if (!isInitial) inputNo.value = ''; }
+            if (inputDate) { inputDate.required = false; if (!isInitial) inputDate.value = ''; }
+            if (fileContainer) fileContainer.style.display = 'none';
+            if (fileInput) { fileInput.required = false; }
+        } else if (select) {
+            if (selectContainer) {
+                selectContainer.style.display = 'none';
+                const s = selectContainer.querySelector('select');
+                if (s) { s.required = false; if (!isInitial) s.value = ''; }
+            }
+            if (textContainer) {
+                textContainer.style.display = 'block';
+                const i = textContainer.querySelector('input');
+                if (i) i.required = true;
+            }
+            if (section) section.style.display = 'block';
+            if (inputNo) inputNo.required = true;
+            if (inputDate) inputDate.required = true;
+            if (fileContainer) fileContainer.style.display = 'block';
+            if (fileInput) fileInput.required = true;
         }
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const hsSelect = document.getElementById('input-hsCountry');
+        if (hsSelect) toggleHsCountrySection(hsSelect, true);
+
+        const baSelect = document.getElementById('input-baCountry');
+        if (baSelect) toggleBaCountrySection(baSelect, true);
+
+        const hasExpChk = document.getElementById('input-hasExperience');
+        if (hasExpChk && hasExpChk.checked) {
+            toggleExperienceSection(hasExpChk);
+        } else {
+            checkMasterGrantDateForExperience();
+        }
+    });
 
     function updateSyrianStatus(select) {
         const inputIsSyrian = document.getElementById('input-isSyrian');
@@ -948,7 +923,7 @@
         newSection.classList.add('active');
 
         // If entering final step (review), populate preview fields
-        if (currentStep === 7) {
+        if (currentStep === 6) {
             updateReportPreview();
         }
 
@@ -1096,7 +1071,7 @@
         });
     }
 
-    function toggleCandidateLookup(show) {
+    function toggleCandidateLookupBox(show) {
         const box = document.getElementById('candidate_lookup_box');
         if (box) {
             if (show) {

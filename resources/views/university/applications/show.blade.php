@@ -57,7 +57,7 @@
                 </div>
                 <div class="col-sm-6">
                     <span class="text-muted d-block fs-8">تاريخ الميلاد والوظيفة:</span>
-                    <strong>{{ optional($candidate)->dob ? \Carbon\Carbon::parse(optional($candidate)->dob)->format('Y-m-d') : 'غ/م' }} | {{ optional($candidate)->job_title ?? 'غ/م' }}</strong>
+                    <strong>{{ format_sys_date(optional($candidate)->dob) }} | {{ optional($candidate)->job_title ?? 'غ/م' }}</strong>
                 </div>
                 <div class="col-sm-6">
                     <span class="text-muted d-block fs-8">رقم الهاتف المحمول:</span>
@@ -99,7 +99,7 @@
                 </div>
                 <div class="col-sm-6">
                     <span class="text-muted d-block fs-8">تاريخ تقديم الطلب:</span>
-                    <strong>{{ $application->created_at ? \Carbon\Carbon::parse($application->created_at)->format('Y-m-d H:i') : 'غ/م' }}</strong>
+                    <strong>{{ format_sys_date($application->created_at, true) }}</strong>
                 </div>
             </div>
             
@@ -127,7 +127,7 @@
                 <h6 class="fw-bold text-primary mb-2"><i class="fa-solid fa-school me-1"></i> الثانوية العامة</h6>
                 <div class="fs-8 text-muted">الدولة: <strong>{{ optional($highSchoolEd->country)->name ?? 'غ/م' }}</strong></div>
                 <div class="fs-8 text-muted">الفرع: <strong>{{ $highSchoolEd->hs_type ?? 'علمي' }}</strong></div>
-                <div class="fs-8 text-muted">سنة الحصول: <strong>{{ $highSchoolEd->grant_date ? \Carbon\Carbon::parse($highSchoolEd->grant_date)->format('Y-m-d') : 'غ/م' }}</strong></div>
+                <div class="fs-8 text-muted">سنة الحصول: <strong>{{ format_sys_date($highSchoolEd->grant_date) }}</strong></div>
             </div>
         </div>
         @endif
@@ -138,7 +138,7 @@
                 <h6 class="fw-bold text-success mb-2"><i class="fa-solid fa-graduation-cap me-1"></i> الإجازة الجامعية (البكالوريوس)</h6>
                 <div class="fs-8 text-muted">الكلية والجامعة: <strong>{{ $bachelorEd->faculty }} ({{ optional($bachelorEd->university)->name ?? $bachelorEd->university_other ?? 'غ/م' }})</strong></div>
                 <div class="fs-8 text-muted">التقدير/المرتبة: <strong>{{ $bachelorEd->rank ?? 'غ/م' }}</strong></div>
-                <div class="fs-8 text-muted">سنة التخرج: <strong>{{ $bachelorEd->grant_date ? \Carbon\Carbon::parse($bachelorEd->grant_date)->format('Y-m-d') : 'غ/م' }}</strong></div>
+                <div class="fs-8 text-muted">سنة التخرج: <strong>{{ format_sys_date($bachelorEd->grant_date) }}</strong></div>
             </div>
         </div>
         @endif
@@ -149,7 +149,7 @@
                 <h6 class="fw-bold text-warning mb-2"><i class="fa-solid fa-award me-1"></i> درجة الماجستير</h6>
                 <div class="fs-8 text-muted">الجامعة والكلية: <strong>{{ optional($masterEd->university)->name ?? 'غ/م' }} - {{ $masterEd->faculty }}</strong></div>
                 <div class="fs-8 text-muted">التقدير والمشرف: <strong>{{ $masterEd->rank }} | أشراف: {{ $masterEd->supervisor_name }}</strong></div>
-                <div class="fs-8 text-muted">تاريخ منح الدرجة: <strong>{{ $masterEd->grant_date ? \Carbon\Carbon::parse($masterEd->grant_date)->format('Y-m-d') : 'غ/م' }}</strong></div>
+                <div class="fs-8 text-muted">تاريخ منح الدرجة: <strong>{{ format_sys_date($masterEd->grant_date) }}</strong></div>
                 <div class="fs-8 text-muted mt-1 text-truncate" title="{{ $masterEd->thesis_title }}">العنوان: <strong>{{ $masterEd->thesis_title }}</strong></div>
             </div>
         </div>
@@ -161,7 +161,7 @@
                 <h6 class="fw-bold text-danger mb-2"><i class="fa-solid fa-user-graduate me-1"></i> درجة الدكتوراه</h6>
                 <div class="fs-8 text-muted">الجامعة والكلية: <strong>{{ optional($phdEd->university)->name ?? 'غ/م' }} - {{ $phdEd->faculty }}</strong></div>
                 <div class="fs-8 text-muted">التقدير: <strong>{{ $phdEd->rank }}</strong></div>
-                <div class="fs-8 text-muted">تاريخ منح الدرجة: <strong>{{ $phdEd->grant_date ? \Carbon\Carbon::parse($phdEd->grant_date)->format('Y-m-d') : 'غ/م' }}</strong></div>
+                <div class="fs-8 text-muted">تاريخ منح الدرجة: <strong>{{ format_sys_date($phdEd->grant_date) }}</strong></div>
             </div>
         </div>
         @endif
@@ -189,7 +189,7 @@
                                 <h6 class="mb-0 fs-8 fw-bold text-dark text-truncate" title="{{ optional($att->attachmentType)->name }}">
                                     {{ optional($att->attachmentType)->name ?? 'وثيقة مصدقة' }}
                                 </h6>
-                                <span class="fs-9 text-muted d-block">{{ $att->created_at ? \Carbon\Carbon::parse($att->created_at)->format('Y-m-d') : '' }}</span>
+                                <span class="fs-9 text-muted d-block">{{ format_sys_date($att->created_at) }}</span>
                             </div>
                         </div>
                         <a href="{{ Storage::url($att->file_path) }}" target="_blank" class="btn btn-sm btn-outline-info p-2 shadow-sm" title="استعراض الوثيقة المصدقة (PDF)">

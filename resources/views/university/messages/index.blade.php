@@ -83,7 +83,7 @@
                                             {{ !$isAdminSender ? 'الجامعة (أنت)' : 'مدير التعادل (مجلس التعليم العالي)' }}
                                         </small>
                                         <small class="label-sm opacity-75 {{ !$isAdminSender ? 'text-muted' : 'text-white-50' }}">
-                                            {{ $chat->created_at->format('Y-m-d H:i') }}
+                                            {{ $chat->created_at->format('d/m/Y H:i') }}
                                         </small>
                                     </div>
                                     <p class="mb-0 body-md" style="line-height: 1.6; white-space: pre-line; font-size: 0.92rem;">{{ $chat->message }}</p>

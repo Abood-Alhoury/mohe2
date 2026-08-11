@@ -15,11 +15,16 @@ use App\Models\ApplicationCourse;
 use App\Models\Education;
 use App\Models\EducationAttachment;
 use App\Models\ApplicationMessage;
+use App\Models\SiteSetting;
 
 class ApplicationWizardController extends Controller
 {
     public function showOptions()
     {
+        if (\App\Models\SiteSetting::get('site_locked', '0') === '1') {
+            $notice = \App\Models\SiteSetting::get('site_notice', 'تقديم الطلبات الجديدة مغلق حالياً لجميع الجامعات بقرار من مجلس التعليم العالي.');
+            return redirect()->route('university.dashboard')->with('error', '🔒 عذراً! ' . $notice . ' (يمكنك تصفح البيانات والمعاملات والمراسلة فقط).');
+        }
         // Get unread notifications for header
         $notifications = $this->getUnreadNotifications();
         return view('university.apply.options', compact('notifications'));
@@ -27,6 +32,11 @@ class ApplicationWizardController extends Controller
 
     public function showSyrianMastersWizard(Request $request)
     {
+        if (\App\Models\SiteSetting::get('site_locked', '0') === '1') {
+            $notice = \App\Models\SiteSetting::get('site_notice', 'تقديم الطلبات الجديدة مغلق حالياً لجميع الجامعات بقرار من مجلس التعليم العالي.');
+            return redirect()->route('university.dashboard')->with('error', '🔒 عذراً! ' . $notice . ' (يمكنك تصفح البيانات والمعاملات والمراسلة فقط).');
+        }
+
         $draft = null;
         if ($request->filled('draft_id')) {
             $draft = Application::where('id', $request->draft_id)
@@ -61,6 +71,11 @@ class ApplicationWizardController extends Controller
 
     public function submitSyrianMastersWizard(Request $request)
     {
+        if (\App\Models\SiteSetting::get('site_locked', '0') === '1') {
+            $notice = \App\Models\SiteSetting::get('site_notice', 'تقديم الطلبات الجديدة مغلق حالياً لجميع الجامعات بقرار من مجلس التعليم العالي.');
+            return redirect()->route('university.dashboard')->with('error', '🔒 عذراً! ' . $notice . ' (يمكنك تصفح البيانات والمعاملات والمراسلة فقط).');
+        }
+
         $isDraft = $request->input('action') === 'save_draft';
 
         // 1. Validation of all sections
@@ -106,18 +121,21 @@ class ApplicationWizardController extends Controller
                 'req_date' => 'nullable|date',
                 'courses' => 'nullable|array',
 
-                'file_uni_request' => 'nullable|file|mimes:pdf|max:10240',
-                'file_hs_cert' => 'nullable|file|mimes:pdf|max:10240',
-                'file_ba_cert' => 'nullable|file|mimes:pdf|max:10240',
-                'file_ma_cert' => 'nullable|file|mimes:pdf|max:10240',
-                'file_ma_dates' => 'nullable|file|mimes:pdf|max:10240',
-                'file_thesis_summary' => 'nullable|file|mimes:pdf|max:10240',
-                'file_lang_icdl' => 'nullable|file|mimes:pdf|max:10240',
-                'file_cv' => 'nullable|file|mimes:pdf|max:10240',
-                'file_payment' => 'nullable|file|mimes:pdf|max:10240',
+                'file_uni_request' => 'nullable|file|mimes:pdf|max:2048',
+                'file_hs_cert' => 'nullable|file|mimes:pdf|max:2048',
+                'file_ba_cert' => 'nullable|file|mimes:pdf|max:2048',
+                'file_ma_cert' => 'nullable|file|mimes:pdf|max:2048',
+                'file_ma_dates' => 'nullable|file|mimes:pdf|max:2048',
+                'file_thesis_summary' => 'nullable|file|mimes:pdf|max:2048',
+                'file_lang_icdl' => 'nullable|file|mimes:pdf|max:2048',
+                'file_cv' => 'nullable|file|mimes:pdf|max:2048',
+                'file_payment' => 'nullable|file|mimes:pdf|max:2048',
             ];
             $messages = [];
         } else {
+            $syriaCountry = LookupCountry::where('name', 'سوريا')->first();
+            $syriaId = $syriaCountry ? $syriaCountry->id : null;
+
             $rules = [
                 // Step 1: Personal Info
                 'full_name' => 'required|string|max:255',
@@ -138,8 +156,9 @@ class ApplicationWizardController extends Controller
                 'hs_country_id' => 'required|exists:lookup_countries,id',
                 'hs_type' => 'required|string|in:علمي,أدبي,تجاري,صناعي',
                 'hs_grant_date' => 'required|date',
-                'hs_decision_no' => 'nullable|string|max:100',
-                'hs_decision_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+                'hs_decision_no' => ($request->hs_country_id != $syriaId) ? 'required|string|max:100' : 'nullable|string|max:100',
+                'hs_decision_date' => ($request->hs_country_id != $syriaId) ? 'required|date' : 'nullable|date',
+                'hs_decision_file' => ($request->hs_country_id != $syriaId) ? 'required|file|mimes:pdf|max:2048' : 'nullable|file|mimes:pdf|max:2048',
 
                 // Step 3: Bachelor's Degree Info
                 'ba_country_id' => 'required|exists:lookup_countries,id',
@@ -150,8 +169,9 @@ class ApplicationWizardController extends Controller
                 'ba_registration_date' => 'required|date',
                 'ba_grant_date' => 'required|date|after:ba_registration_date|before_or_equal:today',
                 'ba_rank' => 'required|string|max:100',
-                'ba_decision_no' => 'nullable|string|max:100',
-                'ba_decision_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+                'ba_decision_no' => ($request->ba_country_id != $syriaId) ? 'required|string|max:100' : 'nullable|string|max:100',
+                'ba_decision_date' => ($request->ba_country_id != $syriaId) ? 'required|date' : 'nullable|date',
+                'ba_decision_file' => ($request->ba_country_id != $syriaId) ? 'required|file|mimes:pdf|max:2048' : 'nullable|file|mimes:pdf|max:2048',
 
                 // Step 4: Syrian Master's Degree Info
                 'ma_university_id' => 'required|exists:lookup_universities,id',
@@ -170,37 +190,44 @@ class ApplicationWizardController extends Controller
                 'exp_from_year' => 'nullable|required_if:has_experience,1|date',
                 'exp_to_year' => 'nullable|required_if:has_experience,1|date|after_or_equal:exp_from_year',
 
-                // Step 5: University Request & Courses Details
+                // Step 1: University Request Details
                 'req_no' => 'required|regex:/^[0-9]+$/',
                 'req_date' => 'required|date',
-                'courses' => 'required|array|min:1',
-                'courses.*.name' => 'required|string|max:255',
-                'courses.*.faculty' => 'required|string|max:255',
-                'courses.*.department' => 'required|string|max:255',
+                'courses' => 'nullable|array',
+                'courses.*.name' => 'nullable|string|max:255',
+                'courses.*.faculty' => 'nullable|string|max:255',
+                'courses.*.department' => 'nullable|string|max:255',
 
                 // Step 6: Final Attachments Upload
-                'file_uni_request' => 'required|file|mimes:pdf|max:10240',
-                'file_hs_cert' => 'required|file|mimes:pdf|max:10240',
-                'file_ba_cert' => 'required|file|mimes:pdf|max:10240',
-                'file_ma_cert' => 'required|file|mimes:pdf|max:10240',
-                'file_ma_dates' => 'required|file|mimes:pdf|max:10240',
-                'file_thesis_summary' => 'required|file|mimes:pdf|max:10240',
-                'file_exp_cert' => 'nullable|file|mimes:pdf|max:10240',
-                'file_contracts' => 'nullable|file|mimes:pdf|max:10240',
-                'file_lang_icdl' => 'required|file|mimes:pdf|max:10240',
-                'file_cv' => 'required|file|mimes:pdf|max:10240',
-                'file_payment' => 'required|file|mimes:pdf|max:10240',
+                'file_uni_request' => 'required|file|mimes:pdf|max:2048',
+                'file_hs_cert' => 'required|file|mimes:pdf|max:2048',
+                'file_ba_cert' => 'required|file|mimes:pdf|max:2048',
+                'file_ma_cert' => 'required|file|mimes:pdf|max:2048',
+                'file_ma_dates' => 'required|file|mimes:pdf|max:2048',
+                'file_thesis_summary' => 'required|file|mimes:pdf|max:2048',
+                'file_exp_cert' => 'nullable|file|mimes:pdf|max:2048',
+                'file_contracts' => 'nullable|file|mimes:pdf|max:2048',
+                'file_lang_icdl' => 'required|file|mimes:pdf|max:2048',
+                'file_cv' => 'required|file|mimes:pdf|max:2048',
+                'file_payment' => 'required|file|mimes:pdf|max:2048',
             ];
             $messages = [
                 'mobile.regex' => 'رقم الهاتف المحمول يجب أن يتكون من 10 أرقام.',
                 'phone.regex' => 'رقم الهاتف الأرضي يجب أن يتكون من 10 أرقام.',
                 'email.email' => 'البريد الإلكتروني المدخل غير صحيح.',
+                'hs_decision_no.required' => 'يرجى إدخال رقم قرار معادلة الشهادة الثانوية غير السورية.',
+                'hs_decision_date.required' => 'يرجى إدخال تاريخ قرار معادلة الشهادة الثانوية غير السورية.',
+                'hs_decision_file.required' => 'يرجى رفع صورة عن قرار معادلة الشهادة الثانوية غير السورية (PDF).',
+                'ba_decision_no.required' => 'يرجى إدخال رقم قرار تعادل الإجازة الجامعية غير السورية.',
+                'ba_decision_date.required' => 'يرجى إدخال تاريخ قرار تعادل الإجازة الجامعية غير السورية.',
+                'ba_decision_file.required' => 'يرجى رفع صورة عن قرار معادلة الإجازة الجامعية غير السورية (PDF).',
                 'ba_grant_date.after' => 'تاريخ التخرج من الإجازة يجب أن يكون بعد تاريخ التسجيل بالإجازة.',
                 'ba_grant_date.before_or_equal' => 'تاريخ التخرج من الإجازة يجب أن يكون قبل أو يساوي اليوم الحالي.',
                 'ma_defense_date.after' => 'تاريخ المناقشة يجب أن يكون بعد تاريخ التسجيل بالدرجة.',
                 'ma_grant_date.after' => 'تاريخ منح الدرجة يجب أن يكون بعد تاريخ المناقشة.',
                 'ma_grant_date.before_or_equal' => 'تاريخ منح الدرجة يجب أن يكون قبل أو يساوي اليوم الحالي وليس في المستقبل.',
                 'req_no.regex' => 'رقم كتاب طلب التقويم الصادر عن الجامعة يجب أن يتكون من أرقام فقط.',
+                'max' => 'حجم الملف المرفق يتجاوز الحد الأقصى المسموح به (2 ميغابايت).',
             ];
         }
 
@@ -244,16 +271,22 @@ class ApplicationWizardController extends Controller
                 ->first();
         }
 
+        $isFirstTime = $request->has('is_first_time') ? 1 : 0;
+
         if ($application) {
             $application->update([
                 'candidate_id' => $profile->id,
                 'request_type' => $requestType,
                 'work_faculty' => $request->ma_faculty,
                 'work_department' => $request->ma_department,
+                'new_uni_request_no' => $request->req_no,
+                'new_uni_request_date' => $request->req_date,
+                'is_first_time' => $isFirstTime,
                 'has_previous_degree' => $request->has_experience ? true : false,
                 'status' => $appStatus,
             ]);
             ApplicationCourse::where('application_id', $application->id)->delete();
+            Education::where('application_id', $application->id)->delete();
         } else {
             $application = Application::create([
                 'candidate_id' => $profile->id,
@@ -262,8 +295,11 @@ class ApplicationWizardController extends Controller
                 'work_university_id' => $uniId,
                 'work_faculty' => $request->ma_faculty,
                 'work_department' => $request->ma_department,
+                'new_uni_request_no' => $request->req_no,
+                'new_uni_request_date' => $request->req_date,
+                'is_first_time' => $isFirstTime,
                 'study_system' => 'فصلي',
-                'has_previous_degree' => $request->has_experience ? true : false,
+                'has_previous_degree' => $request->boolean('has_previous_degree'),
                 'status' => $appStatus,
                 'user_id' => Auth::id(),
             ]);
@@ -295,16 +331,32 @@ class ApplicationWizardController extends Controller
 
         // 5. Create Educations records
         // A. High School Education
+        $hsNotes = null;
+        if ($request->hs_decision_no) {
+            $hsNotes = 'رقم قرار المعادلة الثانوية: ' . $request->hs_decision_no;
+            if ($request->hs_decision_date) {
+                $hsNotes .= ' | تاريخ القرار: ' . $request->hs_decision_date;
+            }
+        }
+
         $edHS = Education::create([
             'application_id' => $application->id,
             'education_level_id' => $hsLevelId,
             'country_id' => $request->hs_country_id,
             'section_name' => $request->hs_type,
             'grant_date' => $request->hs_grant_date,
-            'notes' => $request->hs_decision_no ? 'رقم قرار المعادلة الثانوية: ' . $request->hs_decision_no : null,
+            'notes' => $hsNotes,
         ]);
 
         // B. Bachelor's Education
+        $baNotes = null;
+        if ($request->ba_decision_no) {
+            $baNotes = 'رقم قرار معادلة الإجازة: ' . $request->ba_decision_no;
+            if ($request->ba_decision_date) {
+                $baNotes .= ' | تاريخ القرار: ' . $request->ba_decision_date;
+            }
+        }
+
         $edBA = Education::create([
             'application_id' => $application->id,
             'education_level_id' => $baLevelId,
@@ -316,7 +368,7 @@ class ApplicationWizardController extends Controller
             'registration_date' => $request->ba_registration_date,
             'grant_date' => $request->ba_grant_date,
             'rank' => $request->ba_rank,
-            'notes' => $request->ba_decision_no ? 'رقم قرار معادلة الإجازة: ' . $request->ba_decision_no : null,
+            'notes' => $baNotes,
         ]);
 
         // C. Master's Education
@@ -396,481 +448,6 @@ class ApplicationWizardController extends Controller
             ->with('success', 'تم تقديم معاملة (' . $requestType . ') بنجاح للطلب رقم: ' . $appNo)
             ->with('submitted_app_id', $application->id)
             ->with('submitted_app_no', $appNo);
-    }
-
-    public function showSecondTimeSearch(Request $request)
-    {
-        $searchNationalId = trim($request->query('national_id', ''));
-        $candidate = null;
-        $previousApps = collect();
-
-        if (!empty($searchNationalId)) {
-            $candidate = EquivalenceProfile::where('national_id', $searchNationalId)
-                ->with([
-                    'nationality',
-                    'applications.workUniversity',
-                    'applications.latestDecision',
-                    'applications.educations.level'
-                ])
-                ->first();
-
-            if (!$candidate) {
-                $candidate = EquivalenceProfile::where('national_id', 'like', "%{$searchNationalId}%")
-                    ->with([
-                        'nationality',
-                        'applications.workUniversity',
-                        'applications.latestDecision',
-                        'applications.educations.level'
-                    ])
-                    ->first();
-            }
-
-            if ($candidate) {
-                $previousApps = $candidate->applications;
-            }
-        }
-
-        $notifications = $this->getUnreadNotifications();
-
-        return view('university.apply.second_time_search', compact(
-            'searchNationalId',
-            'candidate',
-            'previousApps',
-            'notifications'
-        ));
-    }
-
-    public function lookupCandidate(Request $request)
-    {
-        $nationalId = trim($request->query('national_id', $request->query('search', '')));
-        
-        if (empty($nationalId)) {
-            return response()->json(['success' => false, 'message' => 'يرجى إدخال الرقم الوطني للمرشح.']);
-        }
-
-        $candidate = EquivalenceProfile::where('national_id', $nationalId)
-            ->with([
-                'nationality',
-                'applications.educations.level',
-                'applications.educations.country',
-                'applications.educations.university'
-            ])
-            ->first();
-
-        if (!$candidate) {
-            $candidate = EquivalenceProfile::where('national_id', 'like', "%{$nationalId}%")
-                ->with([
-                    'nationality',
-                    'applications.educations.level',
-                    'applications.educations.country',
-                    'applications.educations.university'
-                ])
-                ->first();
-        }
-
-        if (!$candidate) {
-            return response()->json(['success' => false, 'message' => 'لم يتم العثور على أي مرشح مسجل سابقاً بهذا الرقم الوطني (' . $nationalId . '). يمكنك إدخال البيانات يدوياً.']);
-        }
-
-        // Extract latest education records across candidate's applications
-        $allEducations = $candidate->applications->pluck('educations')->flatten();
-
-        $hsEd = $allEducations->filter(function($e) {
-            return $e->level && str_contains($e->level->name, 'ثانوية');
-        })->last();
-
-        $baEd = $allEducations->filter(function($e) {
-            return $e->level && str_contains($e->level->name, 'إجازة');
-        })->last();
-
-        $maEd = $allEducations->filter(function($e) {
-            return $e->level && str_contains($e->level->name, 'ماجستير');
-        })->last();
-
-        $fatherName = $candidate->father_name;
-        if (empty($fatherName) && !empty($candidate->full_name)) {
-            $cleanName = preg_replace('/^(د\.|م\.|أ\.|أ\.د\.|أستاذ|دكتور|مهندس)\s+/u', '', trim($candidate->full_name));
-            $parts = preg_split('/\s+/u', $cleanName);
-            if (count($parts) >= 3) {
-                $fatherName = $parts[1];
-            } elseif (count($parts) == 2) {
-                $fatherName = $parts[1];
-            }
-        }
-
-        $motherName = $candidate->mother_name;
-
-        return response()->json([
-            'success' => true,
-            'candidate' => [
-                'full_name' => $candidate->full_name,
-                'father_name' => $fatherName,
-                'mother_name' => $motherName,
-                'national_id' => $candidate->national_id,
-                'dob' => $candidate->dob,
-                'job_title' => $candidate->job_title,
-                'gender' => $candidate->gender,
-                'email' => $candidate->email,
-                'mobile' => $candidate->mobile,
-                'phone' => $candidate->phone,
-                'address' => $candidate->address,
-                'nationality_id' => $candidate->nationality_id,
-                'is_syrian' => $candidate->is_syrian,
-            ],
-            'high_school' => $hsEd ? [
-                'country_id' => $hsEd->country_id,
-                'type' => $hsEd->section_name,
-                'grant_date' => $hsEd->grant_date,
-                'decision_no' => preg_replace('/[^0-9]/', '', $hsEd->notes ?? ''),
-            ] : null,
-            'bachelor' => $baEd ? [
-                'country_id' => $baEd->country_id,
-                'university_id' => $baEd->university_id,
-                'university_other' => $baEd->section_name,
-                'faculty' => $baEd->general_specialization,
-                'department' => $baEd->exact_specialization,
-                'registration_date' => $baEd->registration_date,
-                'grant_date' => $baEd->grant_date,
-                'rank' => $baEd->rank,
-                'decision_no' => preg_replace('/[^0-9]/', '', $baEd->notes ?? ''),
-            ] : null,
-            'master' => $maEd ? [
-                'university_id' => $maEd->university_id,
-                'faculty' => $maEd->general_specialization,
-                'department' => $maEd->exact_specialization,
-                'registration_date' => $maEd->registration_date,
-                'defense_date' => $maEd->defense_date,
-                'grant_date' => $maEd->grant_date,
-                'rank' => $maEd->rank,
-                'supervisor' => $maEd->supervisor_name,
-                'thesis_title' => $maEd->thesis_title,
-            ] : null,
-        ]);
-    }
-
-    public function showTransferSearch(Request $request)
-    {
-        $notifications = $this->getUnreadNotifications();
-        $searchId = trim($request->query('national_id', ''));
-        $candidate = null;
-        $issuedApplications = collect();
-        $searched = false;
-
-        if (!empty($searchId)) {
-            $searched = true;
-            $candidate = EquivalenceProfile::where('national_id', $searchId)
-                ->orWhere('national_id', 'like', "%{$searchId}%")
-                ->first();
-
-            if ($candidate) {
-                $issuedApplications = Application::where('candidate_id', $candidate->id)
-                    ->where('status', 'تم الصدور')
-                    ->with(['workUniversity', 'decisions', 'latestDecision', 'educations.level', 'educations.university'])
-                    ->latest()
-                    ->get();
-            }
-        }
-
-        return view('university.apply.transfer_search', compact(
-            'notifications',
-            'searchId',
-            'candidate',
-            'issuedApplications',
-            'searched'
-        ));
-    }
-
-    public function showTransferWizard($appId)
-    {
-        $notifications = $this->getUnreadNotifications();
-
-        $parentApp = Application::where('id', $appId)
-            ->where('status', 'تم الصدور')
-            ->with([
-                'candidate.nationality',
-                'workUniversity',
-                'educations.level',
-                'educations.country',
-                'educations.university',
-                'courses',
-                'latestDecision'
-            ])
-            ->firstOrFail();
-
-        $universities = LookupUniversity::with('country')->orderBy('name', 'asc')->get();
-
-        $initialCourses = $parentApp->courses->map(function($c) {
-            return [
-                'course_name' => $c->course_name,
-            ];
-        })->values();
-
-        return view('university.apply.transfer_form', compact(
-            'notifications',
-            'parentApp',
-            'universities',
-            'initialCourses'
-        ));
-    }
-
-    public function submitTransferWizard(Request $request)
-    {
-        $parentAppId = $request->input('parent_application_id');
-
-        $parentApp = Application::where('id', $parentAppId)
-            ->where('status', 'تم الصدور')
-            ->firstOrFail();
-
-        $rules = [
-            'parent_application_id' => 'required|exists:applications,id',
-            'work_university_id' => 'required|exists:lookup_universities,id',
-            'work_faculty' => 'required|string|max:255',
-            'work_department' => 'required|string|max:255',
-            'new_uni_request_no' => 'required|string|max:100',
-            'new_uni_request_date' => 'required|date',
-            'courses' => 'nullable|array',
-
-            // 3 Mandatory Attachments
-            'file_cancellation' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
-            'file_payment' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
-            'file_new_uni_request' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
-        ];
-
-        $messages = [
-            'work_university_id.required' => 'يرجى اختيار الجامعة الجديدة المكلّف بها المرشح.',
-            'work_faculty.required' => 'يرجى إدخال الكلية الجديدة.',
-            'work_department.required' => 'يرجى إدخال القسم الجديد.',
-            'new_uni_request_no.required' => 'يرجى إدخال رقم كتاب الجامعة الجديدة الصادر للتكليف.',
-            'new_uni_request_date.required' => 'يرجى إدخال تاريخ كتاب الجامعة الجديدة.',
-            'file_cancellation.required' => 'يرجى رفع قرار إنهاء/إلغاء التكليف من الجامعة السابقة.',
-            'file_payment.required' => 'يرجى رفع إشعار/وصل تسديد رسم التعادل للتحويل.',
-            'file_new_uni_request.required' => 'يرجى رفع صورة كتاب الجامعة الجديدة للتكليف.',
-        ];
-
-        $request->validate($rules, $messages);
-
-        $year = date('Y');
-        $randomSeq = str_pad(mt_rand(1, 99999), 5, '0', STR_PAD_LEFT);
-        $appNo = "TR-{$year}-{$randomSeq}";
-
-        $transferApp = Application::create([
-            'candidate_id' => $parentApp->candidate_id,
-            'parent_application_id' => $parentApp->id,
-            'application_no' => $appNo,
-            'request_type' => 'تحويل قرار المعادلة',
-            'work_university_id' => $request->input('work_university_id', Auth::user()->university_id),
-            'work_faculty' => $request->input('work_faculty'),
-            'work_department' => $request->input('work_department'),
-            'new_uni_request_no' => $request->input('new_uni_request_no'),
-            'new_uni_request_date' => $request->input('new_uni_request_date'),
-            'study_system' => $parentApp->study_system,
-            'has_previous_degree' => true,
-            'status' => 'تحت التدقيق الأولي',
-            'user_id' => Auth::id(),
-        ]);
-
-        // Duplicate parent education records
-        foreach ($parentApp->educations as $pEd) {
-            $newEd = $pEd->replicate();
-            $newEd->application_id = $transferApp->id;
-            $newEd->save();
-
-            foreach ($pEd->attachments as $att) {
-                $newAtt = $att->replicate();
-                $newAtt->education_id = $newEd->id;
-                $newAtt->save();
-            }
-        }
-
-        $primaryEd = $transferApp->educations->first();
-        if (!$primaryEd) {
-            $primaryEd = Education::create([
-                'application_id' => $transferApp->id,
-                'education_level_id' => 3,
-            ]);
-        }
-
-        $uploadAndAttach = function ($fileKey, $educationId, $typeId, $notes = null) use ($request) {
-            if ($request->hasFile($fileKey)) {
-                $path = $request->file($fileKey)->store('attachments', 'public');
-                EducationAttachment::create([
-                    'education_id' => $educationId,
-                    'attachment_type_id' => $typeId,
-                    'file_path' => $path,
-                    'notes' => $notes,
-                ]);
-            }
-        };
-
-        // Attach 3 Required Documents
-        $uploadAndAttach('file_cancellation', $primaryEd->id, 1, 'قرار إنهاء/إلغاء التكليف من الجامعة السابقة');
-        $uploadAndAttach('file_payment', $primaryEd->id, 6, 'إيصال/وصل تسديد رسم تعادل تحويل قرار المعادلة');
-        $uploadAndAttach('file_new_uni_request', $primaryEd->id, 5, 'كتاب الجامعة الجديدة المرفق للتكليف الجديد');
-
-        // Save Requested Courses (Simple list of course names)
-        if ($request->has('courses') && is_array($request->courses)) {
-            foreach ($request->courses as $cData) {
-                $courseName = is_array($cData) ? ($cData['course_name'] ?? null) : $cData;
-                if (!empty($courseName)) {
-                    ApplicationCourse::create([
-                        'application_id' => $transferApp->id,
-                        'faculty' => $request->input('work_faculty'),
-                        'department' => $request->input('work_department'),
-                        'course_name' => trim($courseName),
-                        'course_status' => 'مطالب به',
-                    ]);
-                }
-            }
-        }
-
-        $msg = 'تم تقديم طلب تحويل قرار المعادلة بنجاح برقم (#' . $appNo . ') وإشعار مديرية التعادل بمجلس التعليم العالي.';
-
-        return redirect()->route('university.dashboard')
-            ->with('success', $msg)
-            ->with('submitted_app_id', $transferApp->id);
-    }
-
-    // ==========================================
-    // ADD COURSES WIZARD (إضافة مقررات دراسية)
-    // ==========================================
-
-    public function showAddCoursesSearch(Request $request)
-    {
-        $notifications = $this->getUnreadNotifications();
-        $uniId = Auth::user()->university_id;
-        $searchNationalId = trim($request->input('national_id', ''));
-        $applications = collect();
-
-        if (!empty($searchNationalId)) {
-            $applications = Application::where('work_university_id', $uniId)
-                ->where('status', 'تم الصدور')
-                ->whereHas('candidate', function($q) use ($searchNationalId) {
-                    $q->where('national_id', $searchNationalId);
-                })
-                ->with(['candidate', 'latestDecision', 'courses'])
-                ->get();
-        }
-
-        return view('university.apply.add_courses_search', compact(
-            'notifications',
-            'searchNationalId',
-            'applications'
-        ));
-    }
-
-    public function showAddCoursesWizard($appId)
-    {
-        $notifications = $this->getUnreadNotifications();
-        $uniId = Auth::user()->university_id;
-
-        $parentApp = Application::where('id', $appId)
-            ->where('work_university_id', $uniId)
-            ->where('status', 'تم الصدور')
-            ->with(['candidate', 'educations.level', 'educations.country', 'educations.university', 'courses', 'latestDecision'])
-            ->firstOrFail();
-
-        return view('university.apply.add_courses_form', compact(
-            'notifications',
-            'parentApp'
-        ));
-    }
-
-    public function submitAddCoursesWizard(Request $request)
-    {
-        $parentAppId = $request->input('parent_application_id');
-        $uniId = Auth::user()->university_id;
-
-        $parentApp = Application::where('id', $parentAppId)
-            ->where('work_university_id', $uniId)
-            ->where('status', 'تم الصدور')
-            ->firstOrFail();
-
-        $rules = [
-            'parent_application_id' => 'required|exists:applications,id',
-            'courses' => 'required|array|min:1',
-            'courses.*.course_name' => 'required|string|max:255',
-            'file_payment' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
-        ];
-
-        $messages = [
-            'courses.required' => 'يرجى إدخال مادة واحدة جديدة على الأقل لإضافتها للدكتور/المرشح.',
-            'courses.*.course_name.required' => 'يرجى إدخال اسم المقرر الجديد.',
-            'file_payment.required' => 'يرجى رفع صورة إشعار/وصل تسديد رسم إضافة المقررات الدراسية.',
-        ];
-
-        $request->validate($rules, $messages);
-
-        $year = date('Y');
-        $randomSeq = str_pad(mt_rand(1, 99999), 5, '0', STR_PAD_LEFT);
-        $appNo = "AC-{$year}-{$randomSeq}";
-
-        $addCoursesApp = Application::create([
-            'candidate_id' => $parentApp->candidate_id,
-            'parent_application_id' => $parentApp->id,
-            'application_no' => $appNo,
-            'request_type' => 'إضافة مقررات دراسية',
-            'work_university_id' => $uniId,
-            'work_faculty' => $parentApp->work_faculty,
-            'work_department' => $parentApp->work_department,
-            'study_system' => $parentApp->study_system,
-            'has_previous_degree' => true,
-            'status' => 'تحت التدقيق الأولي',
-            'user_id' => Auth::id(),
-        ]);
-
-        // Duplicate parent education records
-        foreach ($parentApp->educations as $pEd) {
-            $newEd = $pEd->replicate();
-            $newEd->application_id = $addCoursesApp->id;
-            $newEd->save();
-
-            foreach ($pEd->attachments as $att) {
-                $newAtt = $att->replicate();
-                $newAtt->education_id = $newEd->id;
-                $newAtt->save();
-            }
-        }
-
-        $primaryEd = $addCoursesApp->educations->first();
-        if (!$primaryEd) {
-            $primaryEd = Education::create([
-                'application_id' => $addCoursesApp->id,
-                'education_level_id' => 3,
-            ]);
-        }
-
-        // Upload single mandatory attachment: file_payment
-        if ($request->hasFile('file_payment')) {
-            $path = $request->file('file_payment')->store('attachments', 'public');
-            EducationAttachment::create([
-                'education_id' => $primaryEd->id,
-                'attachment_type_id' => 6,
-                'file_path' => $path,
-                'notes' => 'صورة وصل/إشعار تسديد رسم إضافة المقررات الدراسية',
-            ]);
-        }
-
-        // Save New Requested Courses
-        if ($request->has('courses') && is_array($request->courses)) {
-            foreach ($request->courses as $cData) {
-                $courseName = is_array($cData) ? ($cData['course_name'] ?? null) : $cData;
-                if (!empty($courseName)) {
-                    ApplicationCourse::create([
-                        'application_id' => $addCoursesApp->id,
-                        'faculty' => $parentApp->work_faculty,
-                        'department' => $parentApp->work_department,
-                        'course_name' => trim($courseName),
-                        'course_status' => 'مطالب به',
-                    ]);
-                }
-            }
-        }
-
-        $msg = 'تم تقديم طلب إضافة المقررات الدراسية بنجاح برقم (#' . $appNo . ') وإشعار مديرية التعادل بمجلس التعليم العالي.';
-
-        return redirect()->route('university.dashboard')
-            ->with('success', $msg)
-            ->with('submitted_app_id', $addCoursesApp->id);
     }
 
     protected function getUnreadNotifications()

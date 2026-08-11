@@ -88,7 +88,7 @@
                                 <td class="fw-bold text-secondary">{{ $adm->id }}</td>
                                 <td class="fw-bold text-dark">{{ $adm->name }}</td>
                                 <td style="color: var(--imperial-navy); font-weight: 600;">{{ $adm->email }}</td>
-                                <td class="fs-7 text-muted">{{ $adm->created_at ? $adm->created_at->format('Y-m-d') : 'قديم' }}</td>
+                                <td class="fs-7 text-muted">{{ $adm->created_at ? $adm->created_at->format('d/m/Y') : 'قديم' }}</td>
                                 <td class="text-center">
                                     <form action="{{ route('admin.settings.delete_user', $adm->id) }}" method="POST" onsubmit="return confirm('هل أنت تأكد من حذف حساب المدير هذا؟');" class="d-inline">
                                         @csrf
@@ -390,28 +390,40 @@
             <div class="col-md-9">
                 <div class="card shadow-sm mb-4" style="border-top: 3px solid var(--heritage-gold) !important;">
                     <div class="card-header text-white font-bold" style="background-color: var(--imperial-navy) !important;">
-                        <i class="fa-solid fa-power-off me-2" style="color: var(--heritage-gold-light);"></i> إعدادات إغلاق / إتاحة الموقع للجامعات السورية
+                        <i class="fa-solid fa-power-off me-2" style="color: var(--heritage-gold-light);"></i> التحكم بحالة تقديم الطلبات لجميع الجامعات (مغلق لجميع الجامعات)
                     </div>
                     <div class="card-body p-4">
                         <form action="{{ route('admin.settings.toggle_site_lock') }}" method="POST">
                             @csrf
-                            <div class="form-check form-switch mb-4 p-3 rounded border" style="background-color: #FBF9FB;">
-                                <input class="form-check-input ms-0 me-3" type="checkbox" name="site_locked" id="siteLockedCheck" value="1" {{ $siteLocked ? 'checked' : '' }} style="width: 3em; height: 1.5em;">
-                                <label class="form-check-label fw-bold text-danger fs-6" for="siteLockedCheck">
-                                    تفعيل حالة إغلاق الموقع أمام الجامعات لتلقي طلبات جديدة (وضع الصيانة والتدقيق)
+                            <div class="form-check form-switch mb-4 p-3.5 rounded border" style="background-color: #FEF2F2; border-color: #FCA5A5 !important;">
+                                <input class="form-check-input ms-0 me-3" type="checkbox" name="site_locked" id="siteLockedCheck" value="1" {{ $siteLocked ? 'checked' : '' }} style="width: 3.2em; height: 1.6em; cursor: pointer;">
+                                <label class="form-check-label fw-bold text-danger fs-6 mb-0" for="siteLockedCheck" style="cursor: pointer;">
+                                    🔒 إغلاق تقديم الطلبات الجديدة أمام جميع الجامعات
                                 </label>
+                                <div class="mt-2 text-muted fs-7">
+                                    عند تفعيل هذا الخيار: تستطيع الجامعات تسجيل الدخول بحرية وتصفح بيانات ومطبوعات مرشحيها وإرسال المراسلات، ولكن يمنع تقديم أي معاملة تعادل جديدة كلياً.
+                                </div>
                             </div>
 
                             <div class="mb-4">
-                                <label class="form-label fw-bold" style="color: var(--imperial-navy);">تنبيه أو رسالة تظهر للجامعات أثناء الإغلاق :</label>
-                                <textarea name="site_notice" class="form-control" rows="3">{{ $siteNotice }}</textarea>
+                                <label class="form-label fw-bold" style="color: var(--imperial-navy);">التنبيه والرسالة التي تظهر للجامعات أثناء فترة الإغلاق :</label>
+                                <textarea name="site_notice" class="form-control" rows="3" placeholder="أدخل سبب إغلاق التقديم أو التعليمات الموجهة للجامعات...">{{ $siteNotice }}</textarea>
                             </div>
 
                             <div class="text-center">
-                                <button type="submit" class="btn btn-danger px-5 py-2 fw-bold"><i class="fa-solid fa-floppy-disk me-1"></i> حفظ إعدادات إغلاق الموقع</button>
+                                <button type="submit" class="btn btn-danger px-5 py-2 fw-bold"><i class="fa-solid fa-floppy-disk me-1"></i> حفظ إعدادات إغلاق التقديم</button>
                             </div>
                         </form>
                     </div>
+                </div>
+
+                <div class="card p-3.5 shadow-sm border-0 bg-light mb-4">
+                    <h6 class="fw-bold text-primary mb-2"><i class="fa-solid fa-circle-info me-1"></i> توضيح الفروق بين حالات التحكم بالجامعات والموقع:</h6>
+                    <ul class="mb-0 fs-7 text-dark ps-3">
+                        <li class="mb-1.5"><strong>❄️ تجميد حساب جامعة (من تبويب حسابات الجامعات):</strong> يمنع هذه الجامعة من تسجيل الدخول إلى النظام نهائياً (لا يستطيع تسجيل الدخول بنوب).</li>
+                        <li class="mb-1.5"><strong>🟨 بطاقة صفراء (من تبويب حسابات الجامعات):</strong> إنذار وتنبيه تحذيري يظهر داخل لوحة تحكم الجامعة مع إتاحة الدخول والعمل.</li>
+                        <li class="mb-1.5"><strong>🔒 مغلق لجميع الجامعات (من هذا التبويب):</strong> يتيح لجميع الجامعات تسجيل الدخول وتصفح المعلومات والمطبوعات والمراسلة، لكن يمنع تقديم أي طلب تعادل جديد كلياً.</li>
+                    </ul>
                 </div>
             </div>
         </div>

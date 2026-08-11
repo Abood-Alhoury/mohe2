@@ -110,64 +110,45 @@
                     $isForbiddenStatus = in_array($app->status, ['بانتظار الوثائق', 'مرفوض', 'معلق']);
                 @endphp
                 <tr>
-                    <!-- 1. ID الطلب & رقم المعاملة & ID المرشح -->
-                    <td class="text-center py-2">
-                        <div class="fw-bold text-dark fs-7" title="معرّف الطلب في النظام (Application ID)">
-                            ID الطلب: {{ $app->id }}
+                    <!-- 1. معرفات الطلب والمرشح (بطاقة موحدة متناسقة الألوان) -->
+                    <td class="text-center align-middle py-2.5 px-2">
+                        <div class="d-flex flex-column gap-1.5 align-items-center justify-content-center p-2 rounded shadow-2xs mx-auto" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; max-width: 175px;">
+                            <!-- Top Horizontal Row: App ID & Candidate ID -->
+                            <div class="d-flex align-items-center justify-content-between w-100 gap-1">
+                                <span class="badge rounded-1" style="background-color: var(--imperial-navy); color: #FFFFFF; font-size: 0.72rem; font-weight: 700; padding: 3.5px 7px;" title="معرّف الطلب في النظام (Application ID)">
+                                    ID: {{ $app->id }}
+                                </span>
+                                <span class="badge rounded-1" style="background-color: #F1F5F9; color: #334155; border: 1px solid #CBD5E1; font-size: 0.70rem; font-weight: 600; padding: 3px 6.5px;" title="معرّف المرشح / الطالب (Candidate ID)">
+                                    <i class="fa-solid fa-user me-0.5" style="color: var(--heritage-gold);"></i> مرشح: {{ $app->candidate_id ?? optional($app->candidate)->id }}
+                                </span>
+                            </div>
+
+                            <!-- Middle: Application Official Code (Golden Heritage Box) -->
+                            <div class="fw-bold font-monospace text-center w-100 rounded py-1 px-1.5" style="background-color: #FAF6EE; color: #8A651E; border: 1px dashed #D9C394; font-size: 0.80rem; letter-spacing: 0.3px;" title="رقم المعاملة / الطلب الرسمي">
+                                <i class="fa-solid fa-barcode me-1 opacity-75" style="color: var(--heritage-gold);"></i>{{ $app->application_no ?? ('TR-' . $app->id) }}
+                            </div>
+
+                            <!-- Bottom: Candidate Total Applications Count -->
+                            @php
+                                $candidateTotalCount = optional($app->candidate)->applications ? optional($app->candidate)->applications->where('status', '!=', 'مسودة')->count() : 1;
+                            @endphp
+                            <div class="d-flex align-items-center justify-content-center gap-1 w-100 rounded py-0.5 px-1.5" style="background-color: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 0.72rem; font-weight: 600;" title="إجمالي طلبات هذا المرشح في النظام">
+                                <i class="fa-solid fa-layer-group fs-9"></i> إجمالي الطلبات: <span class="fw-bold ms-0.5">{{ $candidateTotalCount }}</span>
+                            </div>
                         </div>
-                        <div class="badge bg-light text-primary border font-monospace my-1 px-1.5 py-0.5" style="font-size: 0.72rem; display: block;" title="رقم المعاملة / الطلب الرسمي">
-                            {{ $app->application_no ?? ('TR-' . $app->id) }}
-                        </div>
-                        <div class="badge bg-secondary-subtle text-dark border font-monospace px-1.5 py-0.5" style="font-size: 0.70rem; display: block;" title="معرّف المرشح / الطالب (Candidate ID)">
-                            <i class="fa-solid fa-user me-1 text-secondary"></i> مرشح: {{ $app->candidate_id ?? optional($app->candidate)->id }}
-                        </div>
-                        @php
-                            $candidateTotalCount = optional($app->candidate)->applications ? optional($app->candidate)->applications->count() : 1;
-                        @endphp
-                        @if($candidateTotalCount > 1)
-                            <a href="{{ route('admin.applications.index') }}?search={{ urlencode($app->candidate->full_name ?? '') }}" class="badge bg-info-subtle text-info border border-info font-monospace mt-1 px-1.5 py-0.5 text-decoration-none" style="font-size: 0.68rem; display: block;" title="انقر لفلترة واستعراض جميع طلبات هذا المرشح الـ ({{ $candidateTotalCount }})">
-                                <i class="fa-solid fa-layer-group me-1"></i> إجمالي الطلبات: {{ $candidateTotalCount }}
-                            </a>
-                        @endif
                     </td>
 
                     <!-- 2. Request Type -->
                     <td>
-                        @if($app->request_type == 'تحويل قرار المعادلة')
-                            <span class="badge bg-primary-subtle text-primary border border-primary px-2 py-1 fw-bold fs-8">
-                                <i class="fa-solid fa-right-left me-1"></i> تحويل قرار معادلة
-                            </span>
-                        @elseif($app->request_type == 'إضافة مقررات دراسية')
-                            <span class="badge bg-success-subtle text-success border border-success px-2 py-1 fw-bold fs-8">
-                                <i class="fa-solid fa-book-medical me-1"></i> إضافة مقررات دراسية
-                            </span>
-                        @else
-                            <span class="badge-academic-tag">{{ $app->request_type ?? 'تعادل' }}</span>
-                        @endif
+                        <span class="badge-academic-tag">{{ $app->request_type ?? 'تعادل جديد' }}</span>
                     </td>
 
                     <!-- 3. University -->
                     <td class="fw-bold" style="color: var(--imperial-navy);">{{ $app->workUniversity->name ?? 'غير محددة' }}</td>
 
-                    <!-- 4. Candidate Name & Total Applications Count -->
+                    <!-- 4. Candidate Name -->
                     <td>
-                        <div class="d-flex align-items-center flex-wrap gap-1">
-                            <a href="{{ route('admin.applications.index') }}?search={{ urlencode($app->candidate->full_name ?? '') }}" class="fw-bold text-decoration-none" style="color: #1d4ed8;" title="انقر للبحث واستعراض جميع طلبات هذا المرشح">
-                                {{ $app->candidate->full_name ?? 'غ/م' }}
-                            </a>
-                            @php
-                                $candidateTotalApps = optional($app->candidate)->applications ? optional($app->candidate)->applications->count() : 1;
-                            @endphp
-                            @if($candidateTotalApps > 1)
-                                <a href="{{ route('admin.applications.index') }}?search={{ urlencode($app->candidate->full_name ?? '') }}" class="badge bg-primary-subtle text-primary border border-primary font-monospace px-1.5 py-0.5 fs-8 text-decoration-none" title="المرشح لديه {{ $candidateTotalApps }} طلبات مقدمة في النظام - انقر لاستعراضها">
-                                    <i class="fa-solid fa-layer-group me-1"></i> {{ $candidateTotalApps }} طلبات
-                                </a>
-                            @else
-                                <span class="badge bg-light text-muted border font-monospace px-1.5 py-0.5 fs-8" title="طلب واحد للمرشح في النظام">
-                                    1 طلب
-                                </span>
-                            @endif
-                        </div>
+                        <span class="fw-bold text-dark fs-6">{{ $app->candidate->full_name ?? 'غ/م' }}</span>
                     </td>
 
                     <!-- 5. Faculty / Branch -->
@@ -312,7 +293,7 @@
                                         {{ $msg->sender->name ?? 'مدير التعادل' }}
                                     </div>
                                     <div>{{ $msg->message }}</div>
-                                    <div class="fs-8 mt-1 text-end opacity-75">{{ $msg->created_at ? $msg->created_at->format('Y-m-d H:i') : '' }}</div>
+                                    <div class="fs-8 mt-1 text-end opacity-75">{{ $msg->created_at ? $msg->created_at->format('d/m/Y H:i') : '' }}</div>
                                 </div>
                             </div>
                         @empty
