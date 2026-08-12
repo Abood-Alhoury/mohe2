@@ -74,57 +74,58 @@
                 </div>
             </div>
         </div>
+    </form>
 
-        <!-- SEARCH AND FILTER BAR -->
-        <div class="bg-white p-3 rounded shadow-xs border mb-4">
-            <div class="row g-2 align-items-center">
-                <div class="col-md-6">
-                    <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
-                        <input type="text" name="search" form="filterForm" class="form-control border-start-0" placeholder="إبحث باسم المرشح، الرقم الوطني، أو رقم الطلب..." value="{{ $searchQuery ?? '' }}">
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <select name="university_id" form="filterForm" class="form-select" onchange="document.getElementById('filterForm').submit()">
-                        <option value="">-- كافة الجامعات --</option>
-                        @foreach($universities as $u)
-                            <option value="{{ $u->id }}" {{ $universityFilter == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button type="submit" form="filterForm" class="btn btn-outline-navy w-100 fw-bold">تصفية</button>
+    <!-- SEARCH AND FILTER BAR -->
+    <div class="bg-white p-3 rounded shadow-xs border mb-4">
+        <div class="row g-2 align-items-center">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                    <input type="text" name="search" form="filterForm" class="form-control border-start-0" placeholder="إبحث باسم المرشح، الرقم الوطني، أو رقم الطلب..." value="{{ $searchQuery ?? '' }}">
                 </div>
             </div>
+            <div class="col-md-4">
+                <select name="university_id" form="filterForm" class="form-select" onchange="document.getElementById('filterForm').submit()">
+                    <option value="">-- كافة الجامعات --</option>
+                    @foreach($universities as $u)
+                        <option value="{{ $u->id }}" {{ $universityFilter == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" form="filterForm" class="btn btn-outline-navy w-100 fw-bold">تصفية</button>
+            </div>
         </div>
+    </div>
 
-        <!-- CANDIDATES AWAITING INTERVIEWS TABLE -->
-        <div class="card border-0 shadow-sm overflow-hidden mb-4">
-            <div class="table-responsive">
-                <table class="table mohe-table align-middle text-center mb-0">
-                    <thead style="background-color: var(--imperial-navy); color: #ffffff;">
-                        <tr>
-                            <th style="width: 40px;">
-                                <input type="checkbox" id="selectAll" class="form-check-input" onclick="toggleSelectAll(this)">
-                            </th>
-                            <th>معرف الطلب والكلمة</th>
-                            <th>المرشح والمعلومات</th>
-                            <th>الجامعة والكلية</th>
-                            <th>المؤهل العلمي</th>
-                            <th>موعد المقابلة المعتمد</th>
-                            <th>الإجراءات وقرار الأهلية</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($applications as $app)
-                        @php
-                            $lastEd = $app->educations->last();
-                        @endphp
-                        <tr>
-                            <!-- Checkbox -->
-                            <td>
-                                <input type="checkbox" name="application_ids[]" value="{{ $app->id }}" class="form-check-input app-checkbox">
-                            </td>
+    <!-- CANDIDATES AWAITING INTERVIEWS TABLE -->
+    <div class="card border-0 shadow-sm overflow-hidden mb-4">
+        <div class="table-responsive">
+            <table class="table mohe-table align-middle text-center mb-0">
+                <thead style="background-color: var(--imperial-navy); color: #ffffff;">
+                    <tr>
+                        <th style="width: 40px;">
+                            <input type="checkbox" id="selectAll" class="form-check-input" onclick="toggleSelectAll(this)">
+                        </th>
+                        <th>معرف الطلب والكلمة</th>
+                        <th>المرشح والمعلومات</th>
+                        <th>الجامعة والكلية</th>
+                        <th>المؤهل العلمي</th>
+                        <th>موعد المقابلة المعتمد</th>
+                        <th>الإجراءات وقرار الأهلية</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($applications as $app)
+                    @php
+                        $lastEd = $app->educations->last();
+                    @endphp
+                    <tr>
+                        <!-- Checkbox -->
+                        <td>
+                            <input type="checkbox" name="application_ids[]" value="{{ $app->id }}" form="batchInterviewForm" class="form-check-input app-checkbox">
+                        </td>
 
                             <!-- Application ID & Code -->
                             <td>
@@ -211,7 +212,6 @@
             </div>
             @endif
         </div>
-    </form>
 
 </div>
 

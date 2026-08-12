@@ -90,8 +90,8 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
 
     // Interviews Management & Scheduling ('بانتظار المقابلة')
     Route::get('/interviews', [InterviewsController::class, 'index'])->name('admin.interviews.index');
-    Route::post('/interviews/batch-schedule', [InterviewsController::class, 'batchSchedule'])->name('admin.interviews.batch_schedule');
-    Route::patch('/interviews/{id}/outcome', [InterviewsController::class, 'decideOutcome'])->name('admin.interviews.decide_outcome');
+    Route::match(['post', 'patch'], '/interviews/batch-schedule', [InterviewsController::class, 'batchSchedule'])->name('admin.interviews.batch_schedule');
+    Route::match(['post', 'patch'], '/interviews/{id}/outcome', [InterviewsController::class, 'decideOutcome'])->name('admin.interviews.decide_outcome');
 
     // Official Decision Generator Routes
     Route::get('/reports/{id}/generate-decision', [GeneratedDecisionController::class, 'show'])->name('admin.reports.generate_decision');
