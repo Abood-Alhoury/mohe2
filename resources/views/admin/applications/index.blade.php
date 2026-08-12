@@ -207,11 +207,13 @@
                     </td>
 
                     <!-- 9. Messages -->
-                    <td class="text-center">
-                        <button type="button" class="btn btn-sm btn-outline-navy" data-bs-toggle="modal" data-bs-target="#messageModal{{ $app->id }}">
-                            <i class="fa-solid fa-comments me-1"></i> Messages
+                    <td class="text-center align-middle">
+                        <button type="button" class="btn btn-sm btn-outline-navy position-relative px-3 py-1.5 fw-bold" data-bs-toggle="modal" data-bs-target="#messageModal{{ $app->id }}" title="محادثات ورسائل هذا الطلب">
+                            <i class="fa-solid fa-comments me-1"></i> المحادثات
                             @if($app->messages->count() > 0)
-                                <span class="badge rounded-pill bg-danger ms-1" style="font-size: 0.7rem;">{{ $app->messages->count() }}</span>
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger shadow-xs" style="font-size: 0.68rem; padding: 3px 6px; border: 1.5px solid #ffffff;">
+                                    {{ $app->messages->count() }}
+                                </span>
                             @endif
                         </button>
                     </td>

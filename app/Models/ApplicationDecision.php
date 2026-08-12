@@ -10,6 +10,9 @@ class ApplicationDecision extends Model
 
     protected $fillable = [
         'application_id',
+        'eligibility_decision_no',
+        'eligibility_decision_date',
+        'eligibility_file_path',
         'decision_no',
         'decision_date',
         'file_path',
