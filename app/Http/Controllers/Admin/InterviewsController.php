@@ -89,62 +89,7 @@ class InterviewsController extends Controller
         return redirect()->back()->with('success', "تم تحديد وتثبيت موعد المقابلة بنجاح لـ {$count} مرشحين في تاريخ {$formattedDate} الساعة {$time}.");
     }
 
-    /**
-     * Generate Official Qualification Decision for Interview Candidate.
-     */
-    public function generateEligibilityDecision(Request $request, $id)
-    {
-        $application = Application::with([
-            'candidate.nationality',
-            'workUniversity',
-            'educations.level',
-            'educations.university',
-        ])->findOrFail($id);
 
-        $candidate = $application->candidate;
-        $bachelorEd = $application->educations->where('level.name', 'إجازة جامعية')->first();
-        $masterEd = $application->educations->where('level.name', 'ماجستير')->first();
-
-        $candidateName = $candidate->full_name ?? 'غ/م';
-        $uniName = $application->workUniversity->name ?? 'الجامعة الخاصة المعنية';
-        $uniReqNo = $application->new_uni_request_no ?? '---';
-        $uniReqDate = $application->new_uni_request_date ? format_sys_date($application->new_uni_request_date) : format_sys_date(now());
-
-        $masterSpec = $masterEd->exact_specialization ?? ($masterEd->general_specialization ?? ($masterEd->section_name ?? 'الماجستير'));
-        $masterYear = $masterEd && $masterEd->grant_date ? Carbon::parse($masterEd->grant_date)->format('Y') : date('Y');
-        $masterUniRaw = $masterEd->university->name ?? ($masterEd->university_other ?? 'جامعة معترف بها');
-        $masterUni = preg_replace('/^(جامعة|جامعه)\s+/u', '', trim($masterUniRaw));
-
-        $baSpec = $bachelorEd->exact_specialization ?? ($bachelorEd->general_specialization ?? ($bachelorEd->section_name ?? 'الإجازة الجامعية'));
-        $baYear = $bachelorEd && $bachelorEd->grant_date ? Carbon::parse($bachelorEd->grant_date)->format('Y') : (date('Y') - 5);
-        $baUniRaw = $bachelorEd->university->name ?? ($bachelorEd->university_other ?? 'جامعة معترف بها');
-        $baUni = preg_replace('/^(جامعة|جامعه)\s+/u', '', trim($baUniRaw));
-
-        $teachingDept = $application->work_department ?: ($application->work_faculty ?: $masterSpec);
-
-        $interviewDate = $application->interview_date ? format_sys_date($application->interview_date) : 'يحدد لاحقاً';
-        $interviewTime = $application->interview_time ?: '10:00 صباحاً';
-
-        return view('admin.interviews.eligibility_decision', compact(
-            'application',
-            'candidate',
-            'bachelorEd',
-            'masterEd',
-            'candidateName',
-            'uniName',
-            'uniReqNo',
-            'uniReqDate',
-            'masterSpec',
-            'masterYear',
-            'masterUni',
-            'baSpec',
-            'baYear',
-            'baUni',
-            'teachingDept',
-            'interviewDate',
-            'interviewTime'
-        ));
-    }
 
     /**
      * Update candidate interview outcome (Pass -> 'بانتظار إصدار القرار' or Fail -> 'مرفوض').

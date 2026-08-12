@@ -186,11 +186,6 @@
                                         <i class="fa-solid fa-circle-xmark text-danger fs-9"></i> رفض (لم يجتز)
                                     </button>
 
-                                    <!-- Eligibility Decision Generator -->
-                                    <a href="{{ route('admin.interviews.eligibility_decision', $app->id) }}" target="_blank" class="btn btn-xs fw-bold shadow-2xs py-1 px-2.5 text-decoration-none w-100 d-inline-flex align-items-center justify-content-center gap-1 mt-0.5" style="font-size: 0.75rem; border: 1px solid #93c5fd; color: #1d4ed8; background-color: #eff6ff;" title="توليد وتنزيل قرار الأهلية لتقديم المقابلة للمرشح">
-                                        <i class="fa-solid fa-award text-primary fs-8"></i> قرار الأهلية
-                                    </a>
-
                                     <!-- Quick Individual Schedule Button -->
                                     <button type="button" class="btn btn-xs btn-link text-decoration-none py-0.5 text-secondary w-100" style="font-size: 0.72rem;" data-bs-toggle="modal" data-bs-target="#singleScheduleModal{{ $app->id }}">
                                         <i class="fa-solid fa-pen-to-square me-1"></i> تعديل الموعد
