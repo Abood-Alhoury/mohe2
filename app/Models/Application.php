@@ -22,6 +22,9 @@ class Application extends Model
         'study_system',
         'has_previous_degree',
         'status',
+        'interview_date',
+        'interview_time',
+        'interview_notes',
         'user_id',
     ];
 

@@ -328,6 +328,21 @@
                     <span class="sidebar-text-label">سجل طلبات التعادل</span>
                 </a>
 
+                <a href="{{ route('admin.interviews.index') }}" 
+                   class="sidebar-link {{ request()->routeIs('admin.interviews*') ? 'active' : '' }}"
+                   :title="!isExpanded ? 'بانتظار المقابلات' : ''">
+                    <div class="sidebar-icon-tile" style="background: #ecfeff; color: #0891b2; border: 1px solid #cff4fc;">
+                        <i class="fa-solid fa-calendar-check"></i>
+                    </div>
+                    <span class="sidebar-text-label">بانتظار المقابلات</span>
+                    @php
+                        $awaitingInterviewsBadge = \App\Models\Application::where('status', 'بانتظار المقابلة')->count();
+                    @endphp
+                    @if($awaitingInterviewsBadge > 0)
+                        <span class="badge rounded-pill ms-auto" style="font-size: 0.72rem; background-color: #0891b2 !important; color: #ffffff !important;">{{ $awaitingInterviewsBadge }}</span>
+                    @endif
+                </a>
+
                 <a href="{{ route('admin.messages.index') }}" 
                    class="sidebar-link {{ request()->routeIs('admin.messages*') ? 'active' : '' }}"
                    :title="!isExpanded ? 'سجل الرسائل والمحادثات' : ''">
