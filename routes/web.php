@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\SearchController;
 use App\Http\Controllers\Admin\ReportsController;
 use App\Http\Controllers\Admin\PdfReportController;
 use App\Http\Controllers\Admin\DecisionsController;
+use App\Http\Controllers\Admin\GeneratedDecisionController;
 use App\Http\Controllers\University\DashboardController as UniDashboardController;
 use App\Http\Controllers\University\ApplicationWizardController;
 use App\Http\Controllers\PageController;
@@ -85,6 +86,11 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     // Equivalence Decisions Upload & Issue
     Route::get('/decisions', [DecisionsController::class, 'index'])->name('admin.decisions.index');
     Route::post('/decisions', [DecisionsController::class, 'store'])->name('admin.decisions.store');
+
+    // Official Decision Generator Routes
+    Route::get('/reports/{id}/generate-decision', [GeneratedDecisionController::class, 'show'])->name('admin.reports.generate_decision');
+    Route::post('/reports/{id}/adopt-generated-decision', [GeneratedDecisionController::class, 'adopt'])->name('admin.reports.adopt_generated_decision');
+    Route::get('/reports/{id}/download-generated-decision-pdf', [GeneratedDecisionController::class, 'downloadPdf'])->name('admin.reports.download_generated_decision_pdf');
 });
 
 // 4. University Area (Protected by role:university)
