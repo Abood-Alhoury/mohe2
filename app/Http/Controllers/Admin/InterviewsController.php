@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Application;
+use App\Models\ApplicationMessage;
 use App\Models\LookupUniversity;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -77,16 +78,32 @@ class InterviewsController extends Controller
         $time = $request->input('interview_time');
         $notes = $request->input('interview_notes');
 
-        Application::whereIn('id', $ids)->update([
-            'interview_date' => $date,
-            'interview_time' => $time,
-            'interview_notes' => $notes,
-        ]);
+        $apps = Application::with('candidate')->whereIn('id', $ids)->get();
+
+        foreach ($apps as $app) {
+            $app->update([
+                'interview_date' => $date,
+                'interview_time' => $time,
+                'interview_notes' => $notes,
+            ]);
+
+            $formattedDate = format_sys_date($date);
+            $candidateName = $app->candidate->full_name ?? 'المرشح';
+            $locationText = $notes ?: 'مبنى وزارة التعليم العالي والبحث العلمي - القاعة الرئيسية للمقابلات';
+
+            // Send Automated Notification Message to University
+            ApplicationMessage::create([
+                'application_id' => $app->id,
+                'sender_type'    => 'admin',
+                'message'        => "تنبيه رسمي: تم تحديد موعد المقابلة الشفهية والعملية للمرشح ({$candidateName}) بتاريخ {$formattedDate} - الساعة ({$time}) - المكان/الملاحظات: {$locationText}.",
+                'is_read'        => false,
+            ]);
+        }
 
         $formattedDate = format_sys_date($date);
         $count = count($ids);
 
-        return redirect()->back()->with('success', "تم تحديد وتثبيت موعد المقابلة بنجاح لـ {$count} مرشحين في تاريخ {$formattedDate} الساعة {$time}.");
+        return redirect()->back()->with('success', "تم تحديد وتثبيت موعد المقابلة بنجاح لـ {$count} مرشحين وإرسال إشعارات رسمية إلى جامعاتهم عبر نظام المحادثات.");
     }
 
 
