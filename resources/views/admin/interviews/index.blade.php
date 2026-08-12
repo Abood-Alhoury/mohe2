@@ -168,16 +168,31 @@
                                 @endif
                             </td>
 
-                            <!-- Actions & Eligibility Decision -->
+                            <!-- Actions, Outcome (Pass / Fail) & Eligibility Decision -->
                             <td>
-                                <div class="d-flex flex-column gap-1.5 align-items-center justify-content-center">
+                                <div class="d-flex flex-column gap-1.5 align-items-center justify-content-center" style="max-width: 140px; margin: 0 auto;">
+                                    <!-- PASS BUTTON FORM -->
+                                    <form action="{{ route('admin.interviews.decide_outcome', $app->id) }}" method="POST" class="w-100" onsubmit="return confirm('هل أنت تأكد من اعتماد نجاح المرشح بالمقابلة وترحيل الطلب إلى حالة (بانتظار إصدار القرار)؟');">
+                                        @csrf
+                                        @method('PATCH')
+                                        <input type="hidden" name="outcome" value="pass">
+                                        <button type="submit" class="btn btn-xs btn-success fw-bold py-1 px-2 shadow-2xs w-100 d-inline-flex align-items-center justify-content-center gap-1" style="font-size: 0.76rem;" title="اعتماد نجاح المرشح بالمقابلة وتحويل الحالة إلى (بانتظار إصدار القرار)">
+                                            <i class="fa-solid fa-circle-check text-white fs-9"></i> موافقة (اجتياز)
+                                        </button>
+                                    </form>
+
+                                    <!-- REJECT BUTTON -->
+                                    <button type="button" class="btn btn-xs btn-outline-danger fw-bold py-1 px-2 shadow-2xs w-100 d-inline-flex align-items-center justify-content-center gap-1" style="font-size: 0.76rem;" data-bs-toggle="modal" data-bs-target="#rejectModal{{ $app->id }}" title="اعتماد عدم اجتياز المرشح للمقابلة وتحويل الحالة إلى (مرفوض)">
+                                        <i class="fa-solid fa-circle-xmark text-danger fs-9"></i> رفض (لم يجتز)
+                                    </button>
+
                                     <!-- Eligibility Decision Generator -->
-                                    <a href="{{ route('admin.interviews.eligibility_decision', $app->id) }}" target="_blank" class="btn btn-xs fw-bold shadow-2xs py-1 px-2.5 text-decoration-none w-100 d-inline-flex align-items-center justify-content-center gap-1" style="font-size: 0.78rem; border: 1px solid #93c5fd; color: #1d4ed8; background-color: #eff6ff;" title="توليد وتنزيل قرار الأهلية لتقديم المقابلة للمرشح">
+                                    <a href="{{ route('admin.interviews.eligibility_decision', $app->id) }}" target="_blank" class="btn btn-xs fw-bold shadow-2xs py-1 px-2.5 text-decoration-none w-100 d-inline-flex align-items-center justify-content-center gap-1 mt-0.5" style="font-size: 0.75rem; border: 1px solid #93c5fd; color: #1d4ed8; background-color: #eff6ff;" title="توليد وتنزيل قرار الأهلية لتقديم المقابلة للمرشح">
                                         <i class="fa-solid fa-award text-primary fs-8"></i> قرار الأهلية
                                     </a>
 
                                     <!-- Quick Individual Schedule Button -->
-                                    <button type="button" class="btn btn-xs btn-outline-navy py-1 px-2 w-100" data-bs-toggle="modal" data-bs-target="#singleScheduleModal{{ $app->id }}">
+                                    <button type="button" class="btn btn-xs btn-link text-decoration-none py-0.5 text-secondary w-100" style="font-size: 0.72rem;" data-bs-toggle="modal" data-bs-target="#singleScheduleModal{{ $app->id }}">
                                         <i class="fa-solid fa-pen-to-square me-1"></i> تعديل الموعد
                                     </button>
                                 </div>
@@ -245,6 +260,43 @@
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal">إلغاء</button>
                     <button type="submit" class="btn btn-solid-navy px-4 fw-bold">حفظ الموعد</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endforeach
+
+<!-- REJECTION CONFIRMATION MODALS -->
+@foreach($applications as $app)
+<div class="modal fade" id="rejectModal{{ $app->id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-top: 4px solid #dc2626 !important; border-radius: 6px;">
+            <form action="{{ route('admin.interviews.decide_outcome', $app->id) }}" method="POST">
+                @csrf
+                @method('PATCH')
+                <input type="hidden" name="outcome" value="fail">
+                
+                <div class="modal-header bg-light">
+                    <h6 class="modal-title fw-bold text-danger">
+                        <i class="fa-solid fa-circle-xmark me-1.5"></i>
+                        تأكيد عدم اجتياز المقابلة للمرشح: {{ $app->candidate->full_name ?? '' }}
+                    </h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                
+                <div class="modal-body p-4 text-start">
+                    <p class="small text-muted mb-3">سيتم تغيير حالة الطلب رسمياً إلى <strong class="text-danger">(مرفوض)</strong> بناءً على نتيجة المقابلة الشفهية/العملية.</p>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-dark">ملاحظات / سبب عدم الاجتياز (اختياري) :</label>
+                        <textarea name="notes" class="form-control" rows="3" placeholder="أدخل أسباب عدم اجتياز المقابلة الشفهية..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-danger px-4 fw-bold">تأكيد الرفض</button>
                 </div>
             </form>
         </div>

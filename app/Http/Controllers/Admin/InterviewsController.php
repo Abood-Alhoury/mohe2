@@ -145,4 +145,33 @@ class InterviewsController extends Controller
             'interviewTime'
         ));
     }
+
+    /**
+     * Update candidate interview outcome (Pass -> 'بانتظار إصدار القرار' or Fail -> 'مرفوض').
+     */
+    public function decideOutcome(Request $request, $id)
+    {
+        $request->validate([
+            'outcome' => 'required|in:pass,fail',
+            'notes'   => 'nullable|string',
+        ]);
+
+        $app = Application::findOrFail($id);
+
+        if ($request->outcome === 'pass') {
+            $app->status = 'بانتظار إصدار القرار';
+            $message = 'تم رصد نجاح المرشح (' . ($app->candidate->full_name ?? '') . ') في المقابلة بنجاح، وتحويل حالة الطلب تلقائياً إلى (بانتظار إصدار القرار).';
+        } else {
+            $app->status = 'مرفوض';
+            $message = 'تم رصد عدم اجتياز المرشح (' . ($app->candidate->full_name ?? '') . ') للمقابلة، وتحويل حالة الطلب إلى (مرفوض).';
+        }
+
+        if ($request->filled('notes')) {
+            $app->interview_notes = $request->notes;
+        }
+
+        $app->save();
+
+        return redirect()->back()->with('success', $message);
+    }
 }
