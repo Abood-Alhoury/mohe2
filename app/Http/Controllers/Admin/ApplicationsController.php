@@ -56,7 +56,7 @@ class ApplicationsController extends Controller
             'لجنة عامة',
             'بانتظار لجنة إنتاج علمي',
             'بانتظار المقابلة',
-            'تم الصدور',
+            'بانتظار إصدار القرار',
         ];
 
         return view('admin.applications.index', compact(

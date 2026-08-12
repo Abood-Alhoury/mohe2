@@ -159,39 +159,46 @@
 
                     <!-- 7. Application Status -->
                     <td class="text-center">
-                        <!-- Quick Status Update Form -->
-                        <form action="{{ route('admin.applications.update_status', $app->id) }}" method="POST" class="d-inline">
-                            @csrf
-                            @method('PATCH')
-                            <select name="status" onchange="this.form.submit()" class="form-select form-select-sm fw-bold text-center" style="font-size: 0.82rem; min-width: 130px; border-color: var(--outline-variant);">
-                                @foreach($statusesList as $st)
-                                    <option value="{{ $st }}" {{ $app->status == $st ? 'selected' : '' }}>{{ $st }}</option>
-                                @endforeach
-                            </select>
-                        </form>
+                        @if($app->status === 'تم الصدور')
+                            <span class="badge bg-success-subtle text-success border border-success-subtle fw-bold px-2.5 py-1.5 fs-7">
+                                <i class="fa-solid fa-circle-check me-1 text-success"></i> تم الصدور
+                            </span>
+                        @else
+                            <!-- Quick Status Update Form -->
+                            <form action="{{ route('admin.applications.update_status', $app->id) }}" method="POST" class="d-inline">
+                                @csrf
+                                @method('PATCH')
+                                <select name="status" onchange="this.form.submit()" class="form-select form-select-sm fw-bold text-center" style="font-size: 0.82rem; min-width: 135px; border-color: var(--outline-variant);">
+                                    @foreach($statusesList as $st)
+                                        <option value="{{ $st }}" {{ $app->status == $st ? 'selected' : '' }}>{{ $st }}</option>
+                                    @endforeach
+                                </select>
+                            </form>
+                        @endif
                     </td>
 
                     <!-- 8. Decision Attachment & Decision Generation -->
                     <td class="text-center align-middle">
                         @php
                             $canGenerateDecision = str_contains($app->request_type, 'ماجستير تطبيقي') || str_contains($app->request_type, 'ماجستير سوري');
+                            $canAttachDecision = ($app->status === 'بانتظار إصدار القرار');
                         @endphp
                         <div class="d-flex flex-column align-items-center gap-1.5 justify-content-center mx-auto" style="max-width: 125px;">
-                            @if($app->latestDecision)
-                                <a href="{{ asset('storage/' . $app->latestDecision->file_path) }}" target="_blank" class="btn btn-xs btn-gold-cta py-1 px-2 text-decoration-none shadow-xs w-100">
-                                    <i class="fa-solid fa-file-pdf me-1 text-danger"></i> تحميل القرار
-                                </a>
-                            @elseif($isForbiddenStatus)
-                                <button type="button" class="btn btn-xs btn-secondary py-1 px-2 opacity-75 w-100" disabled title="لا يمكن رفع أو توليد قرار لطلب حالته ({{ $app->status }})">
-                                    <i class="fa-solid fa-ban me-1"></i> غير متاح ({{ $app->status }})
-                                </button>
-                            @else
+                            @if($canAttachDecision)
                                 <button type="button" class="btn btn-xs btn-solid-navy py-1 px-2 shadow-xs w-100" data-bs-toggle="modal" data-bs-target="#decisionModal{{ $app->id }}">
-                                    <i class="fa-solid fa-cloud-arrow-up me-1" style="color: var(--heritage-gold-light);"></i> إرفاق قرار
+                                    <i class="fa-solid fa-cloud-arrow-up me-1" style="color: var(--heritage-gold-light);"></i> إرفاق القرار
+                                </button>
+                            @elseif($app->status === 'تم الصدور')
+                                <span class="badge bg-light text-muted border px-2 py-1 fs-8 w-100 mb-1">
+                                    <i class="fa-solid fa-stamp me-1 text-success"></i> تم رصد القرار
+                                </span>
+                            @else
+                                <button type="button" class="btn btn-xs btn-secondary py-1 px-2 opacity-50 w-100" disabled title="إرفاق القرار متاح فقط عندما تكون الحالة (بانتظار إصدار القرار)">
+                                    <i class="fa-solid fa-lock me-1"></i> إرفاق القرار
                                 </button>
                             @endif
 
-                            @if($canGenerateDecision && !$isForbiddenStatus)
+                            @if($canGenerateDecision && ($app->status === 'بانتظار إصدار القرار' || $app->status === 'تم الصدور'))
                                 <a href="{{ route('admin.reports.generate_decision', $app->id) }}" class="btn btn-xs fw-bold shadow-2xs py-1 px-2 text-decoration-none w-100 d-inline-flex align-items-center justify-content-center gap-1" style="font-size: 0.75rem; border: 1px solid #93c5fd; color: #1d4ed8; background-color: #eff6ff;" title="توليد نموذج قرار التعادل تلقائياً من بيانات المتقدم">
                                     <i class="fa-solid fa-wand-magic-sparkles text-primary fs-9"></i> توليد قرار
                                 </a>
