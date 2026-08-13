@@ -8,6 +8,43 @@
     $hsEd = $draft ? $draft->educations->first(function($e) { return $e->education_level_id == 6 || (optional($e->level)->name && str_contains(optional($e->level)->name, 'ثانوية')); }) : null;
     $baEd = $draft ? $draft->educations->first(function($e) { return $e->education_level_id == 1 || (optional($e->level)->name && str_contains(optional($e->level)->name, 'إجازة')); }) : null;
     $maEd = $draft ? $draft->educations->first(function($e) { return $e->education_level_id == 3 || (optional($e->level)->name && str_contains(optional($e->level)->name, 'ماجستير')); }) : null;
+
+    $existingFiles = [];
+    if ($draft) {
+        foreach ($draft->educations as $ed) {
+            foreach ($ed->attachments as $att) {
+                if ($att->notes) {
+                    if (str_contains($att->notes, 'ثانوية') && !str_contains($att->notes, 'قرار')) {
+                        $existingFiles['file_hs_cert'] = $att->file_path;
+                    } elseif (str_contains($att->notes, 'قرار معادلة الشهادة الثانوية')) {
+                        $existingFiles['hs_decision_file'] = $att->file_path;
+                    } elseif (str_contains($att->notes, 'الإجازة') && !str_contains($att->notes, 'قرار')) {
+                        $existingFiles['file_ba_cert'] = $att->file_path;
+                    } elseif (str_contains($att->notes, 'قرار معادلة الشهادة الجامعية')) {
+                        $existingFiles['ba_decision_file'] = $att->file_path;
+                    } elseif (str_contains($att->notes, 'شهادة الماجستير')) {
+                        $existingFiles['file_ma_cert'] = $att->file_path;
+                    } elseif (str_contains($att->notes, 'تواريخ')) {
+                        $existingFiles['file_ma_dates'] = $att->file_path;
+                    } elseif (str_contains($att->notes, 'ملخص')) {
+                        $existingFiles['file_thesis_summary'] = $att->file_path;
+                    } elseif (str_contains($att->notes, 'كتاب الجامعة')) {
+                        $existingFiles['file_uni_request'] = $att->file_path;
+                    } elseif (str_contains($att->notes, 'اللغة')) {
+                        $existingFiles['file_lang_icdl'] = $att->file_path;
+                    } elseif (str_contains($att->notes, 'السيرة')) {
+                        $existingFiles['file_cv'] = $att->file_path;
+                    } elseif (str_contains($att->notes, 'إيصال')) {
+                        $existingFiles['file_payment'] = $att->file_path;
+                    } elseif (str_contains($att->notes, 'خبرة')) {
+                        $existingFiles['file_exp_cert'] = $att->file_path;
+                    } elseif (str_contains($att->notes, 'العقود')) {
+                        $existingFiles['file_contracts'] = $att->file_path;
+                    }
+                }
+            }
+        }
+    }
 @endphp
 
 <!-- BREADCRUMBS & PAGE HEADER -->
@@ -398,79 +435,183 @@
                     <!-- High School Cert -->
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">نسخة مصدقة أصولاً عن شهادة الدراسة الثانوية *</label>
-                        <input type="file" name="file_hs_cert" class="form-control academic-input" accept=".pdf" required>
+                        <input type="file" name="file_hs_cert" class="form-control academic-input" accept=".pdf" {{ isset($existingFiles['file_hs_cert']) ? '' : 'required' }}>
+                        @if(isset($existingFiles['file_hs_cert']))
+                            <div class="mt-1 d-flex align-items-center gap-2">
+                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                <a href="{{ asset('storage/' . $existingFiles['file_hs_cert']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                </a>
+                            </div>
+                        @endif
                     </div>
 
                     <!-- HS Equivalence Decision File (Conditional) -->
                     <div class="col-md-6" id="hs-decision-file-container" style="display: none;">
                         <label class="form-label label-md fw-medium text-dark">صورة عن قرار معادلة الشهادة الثانوية (وزارة التربية) *</label>
                         <input type="file" name="hs_decision_file" id="input-hsDecisionFile" class="form-control academic-input" accept=".pdf">
+                        @if(isset($existingFiles['hs_decision_file']))
+                            <div class="mt-1 d-flex align-items-center gap-2">
+                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                <a href="{{ asset('storage/' . $existingFiles['hs_decision_file']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                </a>
+                            </div>
+                        @endif
                     </div>
 
                     <!-- Bachelor Cert -->
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">نسخة مصدقة أصولاً عن الإجازة الجامعية الأولى *</label>
-                        <input type="file" name="file_ba_cert" class="form-control academic-input" accept=".pdf" required>
+                        <input type="file" name="file_ba_cert" class="form-control academic-input" accept=".pdf" {{ isset($existingFiles['file_ba_cert']) ? '' : 'required' }}>
+                        @if(isset($existingFiles['file_ba_cert']))
+                            <div class="mt-1 d-flex align-items-center gap-2">
+                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                <a href="{{ asset('storage/' . $existingFiles['file_ba_cert']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                </a>
+                            </div>
+                        @endif
                     </div>
 
                     <!-- Bachelor Equivalence Decision File (Conditional) -->
                     <div class="col-md-6" id="ba-decision-file-container" style="display: none;">
                         <label class="form-label label-md fw-medium text-dark">صورة عن قرار معادلة الشهادة الجامعية الأولى *</label>
                         <input type="file" name="ba_decision_file" id="input-baDecisionFile" class="form-control academic-input" accept=".pdf">
+                        @if(isset($existingFiles['ba_decision_file']))
+                            <div class="mt-1 d-flex align-items-center gap-2">
+                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                <a href="{{ asset('storage/' . $existingFiles['ba_decision_file']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                </a>
+                            </div>
+                        @endif
                     </div>
 
                     <!-- Master Cert -->
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">نسخة مصدقة أصولاً عن شهادة الماجستير *</label>
-                        <input type="file" name="file_ma_cert" class="form-control academic-input" accept=".pdf" required>
+                        <input type="file" name="file_ma_cert" class="form-control academic-input" accept=".pdf" {{ isset($existingFiles['file_ma_cert']) ? '' : 'required' }}>
+                        @if(isset($existingFiles['file_ma_cert']))
+                            <div class="mt-1 d-flex align-items-center gap-2">
+                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                <a href="{{ asset('storage/' . $existingFiles['file_ma_cert']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                </a>
+                            </div>
+                        @endif
                     </div>
 
                     <!-- Master Registration / Defense dates doc -->
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">وثيقة تواريخ التسجيل والمناقشة والمنح بالماجستير *</label>
-                        <input type="file" name="file_ma_dates" class="form-control academic-input" accept=".pdf" required>
+                        <input type="file" name="file_ma_dates" class="form-control academic-input" accept=".pdf" {{ isset($existingFiles['file_ma_dates']) ? '' : 'required' }}>
+                        @if(isset($existingFiles['file_ma_dates']))
+                            <div class="mt-1 d-flex align-items-center gap-2">
+                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                <a href="{{ asset('storage/' . $existingFiles['file_ma_dates']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                </a>
+                            </div>
+                        @endif
                     </div>
 
                     <!-- Arabic Thesis Summary -->
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">ملخص باللغة العربية عن رسالة الماجستير إلكترونياً *</label>
-                        <input type="file" name="file_thesis_summary" class="form-control academic-input" accept=".pdf" required>
+                        <input type="file" name="file_thesis_summary" class="form-control academic-input" accept=".pdf" {{ isset($existingFiles['file_thesis_summary']) ? '' : 'required' }}>
+                        @if(isset($existingFiles['file_thesis_summary']))
+                            <div class="mt-1 d-flex align-items-center gap-2">
+                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                <a href="{{ asset('storage/' . $existingFiles['file_thesis_summary']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                </a>
+                            </div>
+                        @endif
                     </div>
 
                     <!-- University Request Doc -->
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">كتاب صادر عن الجامعة يتضمن طلب تقويم درجاته العلمية *</label>
-                        <input type="file" name="file_uni_request" class="form-control academic-input" accept=".pdf" required>
+                        <input type="file" name="file_uni_request" class="form-control academic-input" accept=".pdf" {{ isset($existingFiles['file_uni_request']) ? '' : 'required' }}>
+                        @if(isset($existingFiles['file_uni_request']))
+                            <div class="mt-1 d-flex align-items-center gap-2">
+                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                <a href="{{ asset('storage/' . $existingFiles['file_uni_request']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                </a>
+                            </div>
+                        @endif
                     </div>
 
                     <!-- Language & ICDL Certificates -->
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">شهادة اللغة الإنكليزية + شهادة ICDL معتمدة *</label>
-                        <input type="file" name="file_lang_icdl" class="form-control academic-input" accept=".pdf" required>
+                        <input type="file" name="file_lang_icdl" class="form-control academic-input" accept=".pdf" {{ isset($existingFiles['file_lang_icdl']) ? '' : 'required' }}>
+                        @if(isset($existingFiles['file_lang_icdl']))
+                            <div class="mt-1 d-flex align-items-center gap-2">
+                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                <a href="{{ asset('storage/' . $existingFiles['file_lang_icdl']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                </a>
+                            </div>
+                        @endif
                     </div>
 
                     <!-- CV -->
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">السيرة الذاتية للمرشح كاملة *</label>
-                        <input type="file" name="file_cv" class="form-control academic-input" accept=".pdf" required>
+                        <input type="file" name="file_cv" class="form-control academic-input" accept=".pdf" {{ isset($existingFiles['file_cv']) ? '' : 'required' }}>
+                        @if(isset($existingFiles['file_cv']))
+                            <div class="mt-1 d-flex align-items-center gap-2">
+                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                <a href="{{ asset('storage/' . $existingFiles['file_cv']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                </a>
+                            </div>
+                        @endif
                     </div>
 
                     <!-- Payment Receipt -->
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">إيصال تسديد رسم تعادل 100,000 ل.س *</label>
-                        <input type="file" name="file_payment" class="form-control academic-input" accept=".pdf" required>
+                        <input type="file" name="file_payment" class="form-control academic-input" accept=".pdf" {{ isset($existingFiles['file_payment']) ? '' : 'required' }}>
+                        @if(isset($existingFiles['file_payment']))
+                            <div class="mt-1 d-flex align-items-center gap-2">
+                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                <a href="{{ asset('storage/' . $existingFiles['file_payment']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                </a>
+                            </div>
+                        @endif
                     </div>
 
                     <!-- Experience Certificate (Conditional) -->
                     <div class="col-md-6 exp-conditional-file" style="display: none;">
                         <label class="form-label label-md fw-medium text-dark">شهادة خبرة لا تقل عن سنتين ما بعد الدرجة *</label>
                         <input type="file" name="file_exp_cert" id="input-fileExpCert" class="form-control academic-input" accept=".pdf">
+                        @if(isset($existingFiles['file_exp_cert']))
+                            <div class="mt-1 d-flex align-items-center gap-2">
+                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                <a href="{{ asset('storage/' . $existingFiles['file_exp_cert']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                </a>
+                            </div>
+                        @endif
                     </div>
 
                     <!-- Contracts & Salary Slips (Conditional) -->
                     <div class="col-md-6 exp-conditional-file" style="display: none;">
                         <label class="form-label label-md fw-medium text-dark">العقود وإيصالات الرواتب مصدقة أصولاً *</label>
                         <input type="file" name="file_contracts" id="input-fileContracts" class="form-control academic-input" accept=".pdf">
+                        @if(isset($existingFiles['file_contracts']))
+                            <div class="mt-1 d-flex align-items-center gap-2">
+                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                <a href="{{ asset('storage/' . $existingFiles['file_contracts']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                </a>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -669,12 +810,24 @@
         const inputs = expSection.querySelectorAll('input');
         const fileInputs = document.querySelectorAll('.exp-conditional-file');
 
+        const hasExistingExpCert = {{ isset($existingFiles['file_exp_cert']) ? 'true' : 'false' }};
+        const hasExistingContracts = {{ isset($existingFiles['file_contracts']) ? 'true' : 'false' }};
+
         if (checkbox.checked) {
             expSection.style.display = 'flex';
             inputs.forEach(input => input.required = true);
             fileInputs.forEach(div => {
                 div.style.display = 'block';
-                div.querySelector('input').required = true;
+                const fileInp = div.querySelector('input');
+                if (fileInp) {
+                    if (fileInp.name === 'file_exp_cert') {
+                        fileInp.required = !hasExistingExpCert;
+                    } else if (fileInp.name === 'file_contracts') {
+                        fileInp.required = !hasExistingContracts;
+                    } else {
+                        fileInp.required = true;
+                    }
+                }
             });
         } else {
             expSection.style.display = 'none';
@@ -684,7 +837,8 @@
             });
             fileInputs.forEach(div => {
                 div.style.display = 'none';
-                div.querySelector('input').required = false;
+                const fileInp = div.querySelector('input');
+                if (fileInp) fileInp.required = false;
             });
         }
     }
@@ -696,13 +850,14 @@
         const inputDate = document.getElementById('input-hsDecisionDate');
         const fileContainer = document.getElementById('hs-decision-file-container');
         const fileInput = fileContainer ? fileContainer.querySelector('input') : null;
+        const hasExistingHsFile = {{ isset($existingFiles['hs_decision_file']) ? 'true' : 'false' }};
 
         if (select && select.value != syriaCountryId) {
             if (section) section.style.display = 'block';
             if (inputNo) inputNo.required = true;
             if (inputDate) inputDate.required = true;
             if (fileContainer) fileContainer.style.display = 'block';
-            if (fileInput) fileInput.required = true;
+            if (fileInput) fileInput.required = !hasExistingHsFile;
         } else {
             if (section) section.style.display = 'none';
             if (inputNo) { inputNo.required = false; if (!isInitial) inputNo.value = ''; }
@@ -721,6 +876,7 @@
         const inputDate = document.getElementById('input-baDecisionDate');
         const fileContainer = document.getElementById('ba-decision-file-container');
         const fileInput = fileContainer ? fileContainer.querySelector('input') : null;
+        const hasExistingBaFile = {{ isset($existingFiles['ba_decision_file']) ? 'true' : 'false' }};
 
         if (select && select.value == syriaCountryId) {
             if (selectContainer) {
@@ -753,7 +909,7 @@
             if (inputNo) inputNo.required = true;
             if (inputDate) inputDate.required = true;
             if (fileContainer) fileContainer.style.display = 'block';
-            if (fileInput) fileInput.required = true;
+            if (fileInput) fileInput.required = !hasExistingBaFile;
         }
     }
 

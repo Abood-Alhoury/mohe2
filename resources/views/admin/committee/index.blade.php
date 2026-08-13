@@ -1,15 +1,15 @@
 @extends('layouts.admin')
 
-@section('title', 'مواضيع اللجنة العامة - دراسة الطلبات المعلقة')
+@section('title', 'مواضيع اللجنة العامة - دراسة قرارات اللجنة')
 
 @section('content')
 <div class="mohe-card">
     <div class="mohe-card-header bg-light">
-        <h5 class="mohe-card-title text-warning"><i class="fa-solid fa-users-rectangle me-2"></i> مواضيع وشؤون اللجنة العامة (الطلبات المعلقة المخصصة للدراسة)</h5>
+        <h5 class="mohe-card-title text-warning"><i class="fa-solid fa-users-rectangle me-2"></i> شؤون وقرارات اللجنة العامة</h5>
     </div>
     <div class="card-body p-0">
         <div class="p-3 bg-warning-subtle text-dark border-bottom fw-bold">
-            <i class="fa-solid fa-circle-info me-2"></i> تعرض هذه الصفحة فقط طلبات التعادل ذات الحالة (معلق) التي تتطلب انقاد جلسة اللجنة العامة لبت القرار فيها.
+            <i class="fa-solid fa-circle-info me-2"></i> تعرض هذه الصفحة طلبات التعادل المرفوعة إلى (لجنة عامة). عند إقرار الموافقة تتحول المعاملة تلقائياً إلى <strong>(بانتظار إصدار القرار)</strong>، وعند الإقرار بالرفض تتحول المعاملة إلى <strong>(مرفوض)</strong>.
         </div>
 
         <div class="table-responsive">
@@ -39,15 +39,21 @@
                         <td class="text-primary fw-bold">{{ $app->candidate->full_name ?? 'غ/م' }}</td>
                         <td>{{ $app->work_faculty ?? 'إدارة جامعة' }}</td>
                         <td>{{ $lastEducation->level->name ?? 'إجازة جامعية' }}</td>
-                        <td><span class="badge badge-status badge-suspended fs-7">معلق</span></td>
+                        <td>
+                            @if($app->status === 'لجنة عامة')
+                                <span class="badge bg-warning text-dark border border-warning fs-7"><i class="fa-solid fa-users-rectangle me-1"></i> لجنة عامة</span>
+                            @else
+                                <span class="badge bg-secondary text-white fs-7">{{ $app->status }}</span>
+                            @endif
+                        </td>
                         <td>
                             <form action="{{ route('admin.committee.decide', $app->id) }}" method="POST" class="d-flex gap-1 justify-content-center">
                                 @csrf
                                 @method('PATCH')
-                                <button type="submit" name="decision" value="تم الصدور" class="btn btn-sm btn-success fw-bold" onclick="return confirm('إقرار موافقة اللجنة والصدور؟');">
+                                <button type="submit" name="decision" value="موافقة" class="btn btn-sm btn-success fw-bold px-3" onclick="return confirm('إقرار موافقة اللجنة العامة وتحويل الطلب إلى (بانتظار إصدار القرار)؟');">
                                     <i class="fa-solid fa-check me-1"></i> موافقة
                                 </button>
-                                <button type="submit" name="decision" value="مرفوض" class="btn btn-sm btn-danger fw-bold" onclick="return confirm('إقرار رفض الطلب من قبل اللجنة؟');">
+                                <button type="submit" name="decision" value="رفض" class="btn btn-sm btn-danger fw-bold px-3" onclick="return confirm('إقرار رفض الطلب من قبل اللجنة العامة وتحويله إلى (مرفوض)؟');">
                                     <i class="fa-solid fa-xmark me-1"></i> رفض
                                 </button>
                             </form>
@@ -60,7 +66,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="9" class="text-center py-5 text-muted">لا توجد طلبات معلقة بانتظار اللجنة العامة حالياً.</td>
+                        <td colspan="9" class="text-center py-5 text-muted">لا توجد طلبات محالة إلى اللجنة العامة حالياً.</td>
                     </tr>
                     @endforelse
                 </tbody>

@@ -97,32 +97,6 @@
         <tr><td class="l">الجامعة المعنية :</td><td style="font-weight:bold; color: var(--imperial-navy);">{{ optional($application->workUniversity)->name }}</td><td class="l">الكلية والفرع :</td><td>{{ $application->work_faculty }} - {{ $application->work_department }}</td></tr>
     </table>
 
-    {{-- 8. المقررات الدراسية المطلوبة --}}
-    <div class="moz-section"><i class="fa-solid fa-book-open me-1"></i> المقررات الدراسية المكلّف بتدريسها :</div>
-    @if($application->courses && $application->courses->count() > 0)
-    <table class="ct">
-        <thead>
-            <tr>
-                <th style="width: 40px;">#</th>
-                <th>اسم المقرر الدراسي</th>
-                <th>الكلية والفرع</th>
-                <th style="width: 120px;">حالة المقرر</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($application->courses as $idx => $c)
-            <tr>
-                <td class="text-center font-monospace">{{ $idx + 1 }}</td>
-                <td style="font-weight: bold;">{{ $c->course_name }}</td>
-                <td>{{ $c->faculty_name }} - {{ $c->department_name }}</td>
-                <td class="text-center">{{ $c->course_status ?? 'مستوفى' }}</td>
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
-    @else
-    <div class="wblock text-muted">لا توجد مقررات دراسية مسجلة في هذا الطلب.</div>
-    @endif
 
     <!-- OFFICIAL FOOTER: CANDIDATE SIGNATURE (RIGHT) & SUBMISSION DATE (LEFT) -->
     <div style="margin-top: 30px; border-top: 2px solid var(--heritage-gold); padding-top: 15px;">

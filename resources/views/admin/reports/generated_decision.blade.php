@@ -1,5 +1,5 @@
 @extends('layouts.admin')
-@section('title', 'توليد قرار تعادل رسمي - ' . ($candidateName ?? ''))
+@section('title', ($docType === 'eligibility' ? 'توليد قرار أهلية رسمي - ' : 'توليد قرار معادلة رسمي - ') . ($candidateName ?? ''))
 
 @push('styles')
 <style>
@@ -77,20 +77,34 @@
 <div class="container-fluid px-4 py-3">
     <div class="d-flex flex-column align-items-center w-100">
         
-        <!-- SYSTEM ACTION BAR (ONLY PRINT BUTTON & BACK BUTTON) -->
+        <!-- SYSTEM ACTION BAR (DOCUMENT TYPE TOGGLE + PRINT & DOWNLOAD) -->
         <div class="w-100 mb-4 no-print p-3.5 bg-white shadow-sm rounded border d-flex flex-wrap justify-content-between align-items-center gap-3" style="max-width: 850px;">
-            <a href="{{ route('admin.applications.index') }}" class="btn btn-outline-navy fw-bold px-3">
-                <i class="fa-solid fa-arrow-right me-1.5"></i> العودة لجدول الطلبات
-            </a>
+            <div class="d-flex align-items-center gap-2">
+                <a href="{{ route('admin.applications.index') }}" class="btn btn-outline-navy fw-bold px-3">
+                    <i class="fa-solid fa-arrow-right me-1.5"></i> عودة
+                </a>
+
+                <!-- TOGGLE DECISION TYPES: EQUIVALENCE vs ELIGIBILITY -->
+                <div class="btn-group shadow-2xs rounded" role="group">
+                    <a href="{{ route('admin.reports.generate_decision', ['id' => $application->id, 'type' => 'equivalence']) }}" 
+                       class="btn btn-sm fw-bold px-3 py-2 {{ $docType === 'equivalence' ? 'btn-solid-navy' : 'btn-outline-navy' }}">
+                        <i class="fa-solid fa-file-signature me-1.5"></i> 1. قرار المعادلة
+                    </a>
+                    <a href="{{ route('admin.reports.generate_decision', ['id' => $application->id, 'type' => 'eligibility']) }}" 
+                       class="btn btn-sm fw-bold px-3 py-2 {{ $docType === 'eligibility' ? 'btn-solid-navy' : 'btn-outline-navy' }}">
+                        <i class="fa-solid fa-award me-1.5"></i> 2. قرار الأهلية
+                    </a>
+                </div>
+            </div>
 
             <div class="d-flex align-items-center gap-2.5 flex-wrap">
                 <button onclick="printCleanDocument()" class="btn btn-solid-navy fw-bold px-4 py-2 shadow-xs">
                     <i class="fa-solid fa-print me-1.5"></i> طباعة القرار
                 </button>
 
-                <button onclick="printCleanDocument()" class="btn btn-gold-cta fw-bold px-4 py-2 shadow-xs">
+                <a href="{{ route('admin.reports.download_generated_decision_pdf', ['id' => $application->id, 'type' => $docType]) }}" target="_blank" class="btn btn-gold-cta fw-bold px-4 py-2 shadow-xs">
                     <i class="fa-solid fa-file-pdf me-1.5"></i> تنزيل PDF
-                </button>
+                </a>
             </div>
         </div>
 
@@ -100,7 +114,7 @@
                 <i class="fa-solid fa-wand-magic-sparkles fs-4" style="color: #0284c7;"></i>
                 <div>
                     <h6 class="fw-bold mb-0.5" style="color: #0369a1;">{{ $decisionTitle }}</h6>
-                    <p class="mb-0 small text-secondary">معاينة نموذج القرار المتولد ديناميكياً بحجم ورقة A4 حقيقية. يمكنك تعديل المادة الأولى أو رقم القرار مباشرة، ثم الضغط على "طباعة القرار" أو "تنزيل PDF".</p>
+                    <p class="mb-0 small text-secondary">معاينة القرار بحجم A4 الحقيقي. يمكن التبديل بين (قرار المعادلة) و(قرار الأهلية) من الأزرار بالأعلى، وتعديل النصوص مباشرة قبل الطباعة أو التحميل.</p>
                 </div>
             </div>
         </div>
@@ -117,7 +131,8 @@
 function printCleanDocument() {
     const originalTitle = document.title;
     const rawName = "{{ $candidateName }}".replace(/[/\\?%*:|"<>]/g, '').trim();
-    document.title = "قرار_تعادل_رسمي_" + (rawName || "المتقدم");
+    const docPrefix = "{{ $docType === 'eligibility' ? 'قرار_أهلية_رسمي_' : 'قرار_معادلة_رسمي_' }}";
+    document.title = docPrefix + (rawName || "المتقدم");
     
     window.print();
     

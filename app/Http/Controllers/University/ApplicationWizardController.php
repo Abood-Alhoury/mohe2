@@ -41,8 +41,7 @@ class ApplicationWizardController extends Controller
         if ($request->filled('draft_id')) {
             $draft = Application::where('id', $request->draft_id)
                 ->where('work_university_id', Auth::user()->university_id)
-                ->where('status', 'مسودة')
-                ->with(['candidate', 'educations.level', 'educations.country', 'educations.university', 'courses'])
+                ->with(['candidate', 'educations.level', 'educations.country', 'educations.university', 'educations.attachments.attachmentType', 'courses'])
                 ->first();
         }
 
@@ -75,6 +74,17 @@ class ApplicationWizardController extends Controller
             $notice = \App\Models\SiteSetting::get('site_notice', 'تقديم الطلبات الجديدة مغلق حالياً لجميع الجامعات بقرار من مجلس التعليم العالي.');
             return redirect()->route('university.dashboard')->with('error', '🔒 عذراً! ' . $notice . ' (يمكنك تصفح البيانات والمعاملات والمراسلة فقط).');
         }
+
+        $uniId = Auth::user()->university_id;
+        $existingApp = null;
+        if ($request->filled('draft_id')) {
+            $existingApp = Application::where('id', $request->draft_id)
+                ->where('work_university_id', $uniId)
+                ->with(['educations.attachments'])
+                ->first();
+        }
+        $isExisting = ($existingApp !== null);
+        $fileRule = $isExisting ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048';
 
         $isDraft = $request->input('action') === 'save_draft';
 
@@ -158,7 +168,7 @@ class ApplicationWizardController extends Controller
                 'hs_grant_date' => 'required|date',
                 'hs_decision_no' => ($request->hs_country_id != $syriaId) ? 'required|string|max:100' : 'nullable|string|max:100',
                 'hs_decision_date' => ($request->hs_country_id != $syriaId) ? 'required|date' : 'nullable|date',
-                'hs_decision_file' => ($request->hs_country_id != $syriaId) ? 'required|file|mimes:pdf|max:2048' : 'nullable|file|mimes:pdf|max:2048',
+                'hs_decision_file' => ($request->hs_country_id != $syriaId && !$isExisting) ? 'required|file|mimes:pdf|max:2048' : 'nullable|file|mimes:pdf|max:2048',
 
                 // Step 3: Bachelor's Degree Info
                 'ba_country_id' => 'required|exists:lookup_countries,id',
@@ -171,7 +181,7 @@ class ApplicationWizardController extends Controller
                 'ba_rank' => 'required|string|max:100',
                 'ba_decision_no' => ($request->ba_country_id != $syriaId) ? 'required|string|max:100' : 'nullable|string|max:100',
                 'ba_decision_date' => ($request->ba_country_id != $syriaId) ? 'required|date' : 'nullable|date',
-                'ba_decision_file' => ($request->ba_country_id != $syriaId) ? 'required|file|mimes:pdf|max:2048' : 'nullable|file|mimes:pdf|max:2048',
+                'ba_decision_file' => ($request->ba_country_id != $syriaId && !$isExisting) ? 'required|file|mimes:pdf|max:2048' : 'nullable|file|mimes:pdf|max:2048',
 
                 // Step 4: Syrian Master's Degree Info
                 'ma_university_id' => 'required|exists:lookup_universities,id',
@@ -199,17 +209,17 @@ class ApplicationWizardController extends Controller
                 'courses.*.department' => 'nullable|string|max:255',
 
                 // Step 6: Final Attachments Upload
-                'file_uni_request' => 'required|file|mimes:pdf|max:2048',
-                'file_hs_cert' => 'required|file|mimes:pdf|max:2048',
-                'file_ba_cert' => 'required|file|mimes:pdf|max:2048',
-                'file_ma_cert' => 'required|file|mimes:pdf|max:2048',
-                'file_ma_dates' => 'required|file|mimes:pdf|max:2048',
-                'file_thesis_summary' => 'required|file|mimes:pdf|max:2048',
+                'file_uni_request' => $fileRule,
+                'file_hs_cert' => $fileRule,
+                'file_ba_cert' => $fileRule,
+                'file_ma_cert' => $fileRule,
+                'file_ma_dates' => $fileRule,
+                'file_thesis_summary' => $fileRule,
                 'file_exp_cert' => 'nullable|file|mimes:pdf|max:2048',
                 'file_contracts' => 'nullable|file|mimes:pdf|max:2048',
-                'file_lang_icdl' => 'required|file|mimes:pdf|max:2048',
-                'file_cv' => 'required|file|mimes:pdf|max:2048',
-                'file_payment' => 'required|file|mimes:pdf|max:2048',
+                'file_lang_icdl' => $fileRule,
+                'file_cv' => $fileRule,
+                'file_payment' => $fileRule,
             ];
             $messages = [
                 'mobile.regex' => 'رقم الهاتف المحمول يجب أن يتكون من 10 أرقام.',
@@ -253,27 +263,61 @@ class ApplicationWizardController extends Controller
         );
 
         // 3. Save Application
-        $uniId = Auth::user()->university_id;
-        $appNo = 'MA-SY-' . rand(100000, 999999); // Generate a unique application number
+        $appNo = 'MA-SY-' . rand(100000, 999999);
 
         $frequency = $request->input('equivalence_frequency', 'تعادل للمرة الأولى');
         $hasExp = $request->boolean('has_experience') && !empty($request->input('exp_place'));
         $trackName = $hasExp ? 'ماجستير سوري' : 'ماجستير تطبيقي';
         $requestType = $frequency . ' - ' . $trackName;
 
-        $isDraft = $request->input('action') === 'save_draft';
-        $appStatus = $isDraft ? 'مسودة' : 'تحت التدقيق الأولي';
-
-        $application = null;
-        if ($request->filled('draft_id')) {
-            $application = Application::where('id', $request->draft_id)
-                ->where('work_university_id', $uniId)
-                ->first();
+        if ($isDraft) {
+            $appStatus = 'مسودة';
+        } else {
+            $appStatus = 'تحت التدقيق الأولي';
         }
 
-        $isFirstTime = $request->has('is_first_time') ? 1 : 0;
+        $application = $existingApp;
+        $existingAttachments = [];
 
         if ($application) {
+            // Collect existing attachment file paths before updating Educations
+            foreach ($application->educations as $ed) {
+                foreach ($ed->attachments as $att) {
+                    if ($att->notes) {
+                        $existingAttachments[$att->notes] = $att->file_path;
+                    }
+                    if (str_contains($att->notes, 'ثانوية') && !str_contains($att->notes, 'قرار')) {
+                        $existingAttachments['hs_cert'] = $att->file_path;
+                    } elseif (str_contains($att->notes, 'قرار معادلة الشهادة الثانوية')) {
+                        $existingAttachments['hs_decision'] = $att->file_path;
+                    } elseif (str_contains($att->notes, 'الإجازة') && !str_contains($att->notes, 'قرار')) {
+                        $existingAttachments['ba_cert'] = $att->file_path;
+                    } elseif (str_contains($att->notes, 'قرار معادلة الشهادة الجامعية')) {
+                        $existingAttachments['ba_decision'] = $att->file_path;
+                    } elseif (str_contains($att->notes, 'شهادة الماجستير')) {
+                        $existingAttachments['ma_cert'] = $att->file_path;
+                    } elseif (str_contains($att->notes, 'تواريخ')) {
+                        $existingAttachments['ma_dates'] = $att->file_path;
+                    } elseif (str_contains($att->notes, 'ملخص')) {
+                        $existingAttachments['thesis_summary'] = $att->file_path;
+                    } elseif (str_contains($att->notes, 'كتاب الجامعة')) {
+                        $existingAttachments['uni_request'] = $att->file_path;
+                    } elseif (str_contains($att->notes, 'اللغة')) {
+                        $existingAttachments['lang_icdl'] = $att->file_path;
+                    } elseif (str_contains($att->notes, 'السيرة')) {
+                        $existingAttachments['cv'] = $att->file_path;
+                    } elseif (str_contains($att->notes, 'إيصال')) {
+                        $existingAttachments['payment'] = $att->file_path;
+                    } elseif (str_contains($att->notes, 'خبرة')) {
+                        $existingAttachments['exp_cert'] = $att->file_path;
+                    } elseif (str_contains($att->notes, 'العقود')) {
+                        $existingAttachments['contracts'] = $att->file_path;
+                    }
+                }
+            }
+
+            $isFirstTime = $request->has('is_first_time') ? 1 : 0;
+
             $application->update([
                 'candidate_id' => $profile->id,
                 'request_type' => $requestType,
@@ -287,7 +331,9 @@ class ApplicationWizardController extends Controller
             ]);
             ApplicationCourse::where('application_id', $application->id)->delete();
             Education::where('application_id', $application->id)->delete();
+            $appNo = $application->application_no ?? $appNo;
         } else {
+            $isFirstTime = $request->has('is_first_time') ? 1 : 0;
             $application = Application::create([
                 'candidate_id' => $profile->id,
                 'application_no' => $appNo,
@@ -394,11 +440,9 @@ class ApplicationWizardController extends Controller
         ]);
 
         // 6. Handle File Uploads & Attachments
-        // Storage Directory: public/attachments/{app_id}
         $folder = 'attachments/' . $application->id;
 
-        // Helper function for uploading and creating attachment
-        $uploadAndAttach = function($fileKey, $educationId, $typeId, $notes = null) use ($request, $folder) {
+        $uploadAndAttach = function($fileKey, $educationId, $typeId, $notes, $existingKey = null) use ($request, $folder, $existingAttachments) {
             if ($request->hasFile($fileKey)) {
                 $file = $request->file($fileKey);
                 $path = $file->store($folder, 'public');
@@ -408,35 +452,45 @@ class ApplicationWizardController extends Controller
                     'file_path' => $path,
                     'notes' => $notes,
                 ]);
+            } else {
+                $oldPath = $existingAttachments[$notes] ?? ($existingKey && isset($existingAttachments[$existingKey]) ? $existingAttachments[$existingKey] : null);
+                if ($oldPath) {
+                    EducationAttachment::create([
+                        'education_id' => $educationId,
+                        'attachment_type_id' => $typeId,
+                        'file_path' => $oldPath,
+                        'notes' => $notes,
+                    ]);
+                }
             }
         };
 
         // High School Attachments
-        $uploadAndAttach('file_hs_cert', $edHS->id, 1, 'شهادة الدراسة الثانوية');
-        if ($request->hasFile('hs_decision_file')) {
-            $uploadAndAttach('hs_decision_file', $edHS->id, 1, 'قرار معادلة الشهادة الثانوية');
+        $uploadAndAttach('file_hs_cert', $edHS->id, 1, 'شهادة الدراسة الثانوية', 'hs_cert');
+        if ($request->hasFile('hs_decision_file') || isset($existingAttachments['hs_decision'])) {
+            $uploadAndAttach('hs_decision_file', $edHS->id, 1, 'قرار معادلة الشهادة الثانوية', 'hs_decision');
         }
 
         // Bachelor's Attachments
-        $uploadAndAttach('file_ba_cert', $edBA->id, 2, 'مصدقة الإجازة الجامعية الأولى');
-        if ($request->hasFile('ba_decision_file')) {
-            $uploadAndAttach('ba_decision_file', $edBA->id, 2, 'قرار معادلة الشهادة الجامعية الأولى');
+        $uploadAndAttach('file_ba_cert', $edBA->id, 2, 'مصدقة الإجازة الجامعية الأولى', 'ba_cert');
+        if ($request->hasFile('ba_decision_file') || isset($existingAttachments['ba_decision'])) {
+            $uploadAndAttach('ba_decision_file', $edBA->id, 2, 'قرار معادلة الشهادة الجامعية الأولى', 'ba_decision');
         }
 
         // Master's Attachments
-        $uploadAndAttach('file_ma_cert', $edMA->id, 3, 'نسخة مصدقة عن شهادة الماجستير');
-        $uploadAndAttach('file_ma_dates', $edMA->id, 3, 'وثيقة تواريخ التسجيل والمناقشة والمنح');
-        $uploadAndAttach('file_thesis_summary', $edMA->id, 3, 'ملخص رسالة الماجستير باللغة العربية');
-        $uploadAndAttach('file_lang_icdl', $edMA->id, 6, 'شهادة اللغة الإنكليزية + شهادة ICDL');
-        $uploadAndAttach('file_cv', $edMA->id, 3, 'السيرة الذاتية للمرشح');
-        $uploadAndAttach('file_payment', $edMA->id, 4, 'إيصال تسديد رسم تعادل 100,000 ل.س');
-        $uploadAndAttach('file_uni_request', $edMA->id, 3, 'كتاب الجامعة رقم ' . $request->req_no . ' تاريخ ' . $request->req_date);
+        $uploadAndAttach('file_ma_cert', $edMA->id, 3, 'نسخة مصدقة عن شهادة الماجستير', 'ma_cert');
+        $uploadAndAttach('file_ma_dates', $edMA->id, 3, 'وثيقة تواريخ التسجيل والمناقشة والمنح', 'ma_dates');
+        $uploadAndAttach('file_thesis_summary', $edMA->id, 3, 'ملخص رسالة الماجستير باللغة العربية', 'thesis_summary');
+        $uploadAndAttach('file_lang_icdl', $edMA->id, 6, 'شهادة اللغة الإنكليزية + شهادة ICDL', 'lang_icdl');
+        $uploadAndAttach('file_cv', $edMA->id, 3, 'السيرة الذاتية للمرشح', 'cv');
+        $uploadAndAttach('file_payment', $edMA->id, 4, 'إيصال تسديد رسم تعادل 100,000 ل.س', 'payment');
+        $uploadAndAttach('file_uni_request', $edMA->id, 3, 'كتاب الجامعة رقم ' . $request->req_no . ' تاريخ ' . $request->req_date, 'uni_request');
 
-        if ($request->hasFile('file_exp_cert')) {
-            $uploadAndAttach('file_exp_cert', $edMA->id, 3, 'شهادة خبرة تدريسية لا تقل عن سنتين');
+        if ($request->hasFile('file_exp_cert') || isset($existingAttachments['exp_cert'])) {
+            $uploadAndAttach('file_exp_cert', $edMA->id, 3, 'شهادة خبرة تدريسية لا تقل عن سنتين', 'exp_cert');
         }
-        if ($request->hasFile('file_contracts')) {
-            $uploadAndAttach('file_contracts', $edMA->id, 3, 'العقود وإيصالات الرواتب المصدقة');
+        if ($request->hasFile('file_contracts') || isset($existingAttachments['contracts'])) {
+            $uploadAndAttach('file_contracts', $edMA->id, 3, 'العقود وإيصالات الرواتب المصدقة', 'contracts');
         }
 
         if ($isDraft) {
@@ -445,7 +499,7 @@ class ApplicationWizardController extends Controller
         }
 
         return redirect()->route('university.dashboard')
-            ->with('success', 'تم تقديم معاملة (' . $requestType . ') بنجاح للطلب رقم: ' . $appNo)
+            ->with('success', ($isExisting ? 'تم إعادة تعديل وحفظ بيانات ومرفقات الطلب رقم: ' : 'تم تقديم معاملة (' . $requestType . ') بنجاح للطلب رقم: ') . $appNo)
             ->with('submitted_app_id', $application->id)
             ->with('submitted_app_no', $appNo);
     }

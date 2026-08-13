@@ -101,8 +101,9 @@ class PdfReportController extends Controller
             }
         } catch (\Throwable $e) {}
 
-        // 3. Load the pre-processed HTML into DomPDF
+        // 3. Load the pre-processed HTML into DomPDF and output with explicit Content-Length
         $pdf = Pdf::loadHtml($html)->setPaper('a4', 'portrait');
+        $pdfContent = $pdf->output();
 
         $safeAppNo = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $application->application_no ?? ('App_' . $application->id));
         $candidateName = $candidate ? preg_replace('/[^\p{L}\p{N}\s\-_]/u', '', $candidate->full_name) : '';
@@ -110,8 +111,10 @@ class PdfReportController extends Controller
 
         $fileName = 'Mozhakkara_' . $safeAppNo . ($cleanCandidateName ? '_' . $cleanCandidateName : '') . '.pdf';
 
-        return $pdf->stream($fileName, [
-            'Attachment' => 0
+        return response($pdfContent, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Length' => strlen($pdfContent),
+            'Content-Disposition' => 'inline; filename="' . $fileName . '"',
         ]);
     }
 

@@ -113,26 +113,6 @@ body { direction: ltr; text-align: right; font-size: 13px; color: #111C2C; margi
     </div>
 </div>
 
-<div class="sec">المقررات التي يدرسها بموجب قرار لجنة التأهيل ومعادلة الدرجات العلمية :</div>
-<table class="ct">
-    <thead>
-        <tr>
-            <th>اسم المقرر</th><th>القسم</th><th>الكلية</th><th>حالة المقرر</th>
-        </tr>
-    </thead>
-    <tbody>
-        @forelse($application->courses as $c)
-        <tr>
-            <td style="font-weight:bold;color:#1A2A44;">{{ $c->course_name }}</td>
-            <td>{{ $c->department }}</td>
-            <td>{{ $c->faculty }}</td>
-            <td>{{ $c->course_status }}</td>
-        </tr>
-        @empty
-        <tr><td colspan="4" style="color:#b91c1c;font-weight:bold;text-align:center;">لا توجد مقررات</td></tr>
-        @endforelse
-    </tbody>
-</table>
 
 <div class="sec">الشهادات التي يحملها المرشح :</div>
 

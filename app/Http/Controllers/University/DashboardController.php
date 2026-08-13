@@ -252,12 +252,18 @@ class DashboardController extends Controller
             ->setPaper('a4', 'portrait')
             ->setWarnings(false);
 
+        $pdfContent = $pdf->output();
+
         $safeAppNo = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $application->application_no ?? ('App_' . $application->id));
         $candidateName = $candidate ? preg_replace('/[^\p{L}\p{N}\s\-_]/u', '', $candidate->full_name) : '';
         $cleanCandidateName = trim(preg_replace('/\s+/', '_', $candidateName));
 
         $fileName = 'Mozhakkara_' . $safeAppNo . ($cleanCandidateName ? '_' . $cleanCandidateName : '') . '.pdf';
-        return $pdf->download($fileName);
+        return response($pdfContent, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Length' => strlen($pdfContent),
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+        ]);
     }
 
     public function downloadConsolidatedPdf($appId)
@@ -395,52 +401,7 @@ class DashboardController extends Controller
             ->where('work_university_id', $user->university_id)
             ->firstOrFail();
 
-        if ($application->status === 'مسودة') {
-            return redirect()->route('university.apply.syrian_masters', ['draft_id' => $application->id]);
-        }
-
-        $application->load([
-                'candidate',
-                'workUniversity',
-                'courses',
-                'educations.level',
-                'educations.country',
-                'educations.university',
-                'educations.attachments.attachmentType'
-            ])->firstOrFail();
-
-        $candidate = $application->candidate;
-
-        $highSchoolEd = $application->educations->first(function($e) {
-            return $e->level && str_contains($e->level->name, 'ثانوية');
-        });
-        $bachelorEd = $application->educations->first(function($e) {
-            return $e->level && str_contains($e->level->name, 'إجازة');
-        });
-        $diplomaEd = $application->educations->first(function($e) {
-            return $e->level && str_contains($e->level->name, 'دبلوم');
-        });
-        $masterEd = $application->educations->first(function($e) {
-            return $e->level && str_contains($e->level->name, 'ماجستير');
-        });
-        $phdEd = $application->educations->first(function($e) {
-            return $e->level && str_contains($e->level->name, 'دكتوراه');
-        });
-
-        $countries = \App\Models\LookupCountry::all();
-        $universities = \App\Models\LookupUniversity::all();
-
-        return view('university.applications.edit', compact(
-            'application',
-            'candidate',
-            'highSchoolEd',
-            'bachelorEd',
-            'diplomaEd',
-            'masterEd',
-            'phdEd',
-            'countries',
-            'universities'
-        ));
+        return redirect()->route('university.apply.syrian_masters', ['draft_id' => $application->id]);
     }
 
     public function updateApplication(Request $request, $appId)

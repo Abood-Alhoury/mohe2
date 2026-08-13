@@ -13,9 +13,9 @@ class DecisionsController extends Controller
 {
     public function index(Request $request)
     {
-        // Applications ready for decision issuing (Requirement 4: Exclude 'بانتظار الوثائق', 'مرفوض', 'معلق')
+        // Applications ready for decision issuing (Only status 'بانتظار إصدار القرار' / 'بانتظار صدور القرار')
         $approvedApps = Application::with(['candidate', 'workUniversity', 'latestDecision'])
-            ->whereNotIn('status', ['بانتظار الوثائق', 'مرفوض', 'معلق'])
+            ->whereIn('status', ['بانتظار إصدار القرار', 'بانتظار صدور القرار'])
             ->latest()
             ->get();
 
@@ -49,10 +49,9 @@ class DecisionsController extends Controller
         ]);
 
         $app = Application::findOrFail($request->application_id);
-        $forbiddenStatuses = ['بانتظار الوثائق', 'مرفوض', 'معلق'];
 
-        if (in_array($app->status, $forbiddenStatuses)) {
-            return redirect()->back()->with('error', 'لا يمكن إرفاق قرار تعادل لطلب حالته حالياً (' . $app->status . ').');
+        if (!in_array($app->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار'])) {
+            return redirect()->back()->with('error', 'لا يمكن إرفاق قرار لطلب حالته حالياً (' . $app->status . '). إصدار القرارات متاح فقط للطلبات بحالة (بانتظار إصدار القرار).');
         }
 
         $safeAppNo = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $app->application_no ?? ('App_' . $app->id));

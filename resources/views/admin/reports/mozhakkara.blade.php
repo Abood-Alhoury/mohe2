@@ -1,35 +1,71 @@
 @extends('layouts.admin')
-@section('title', 'مذكرة العرض - ' . ($candidate->full_name ?? ''))
+@section('title', 'مذكرة العرض (A4) - ' . ($candidate->full_name ?? ''))
 
 @push('styles')
 <style>
 @media print { 
-    .no-print, .mohe-header, .mohe-nav, header, footer { display:none!important; } 
-    .moz-wrapper { box-shadow:none!important; border:none!important; margin:0!important; width:100%!important; max-width:100%!important; padding:0!important; } 
-    body { background:#fff!important; margin:0!important; padding:0!important; } 
+    @page {
+        size: A4 portrait;
+        margin: 5mm 8mm !important;
+    }
+    
+    .no-print, .mohe-header, .mohe-nav, header, footer, nav { 
+        display: none !important; 
+    } 
+    
+    body * {
+        visibility: hidden !important;
+    }
+    
+    .moz-wrapper, .moz-wrapper * {
+        visibility: visible !important;
+    }
+    
+    .moz-wrapper { 
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 5mm 8mm !important;
+        box-shadow: none !important;
+        border: none !important;
+        background: #ffffff !important;
+        box-sizing: border-box !important;
+        min-height: 285mm !important;
+    } 
+    
+    body { 
+        background: #ffffff !important; 
+        margin: 0 !important; 
+        padding: 0 !important; 
+    } 
 }
 
 .moz-wrapper { 
     direction: rtl; 
-    font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif; 
-    font-size: 13.5px; 
+    font-family: 'Traditional Arabic', 'IBM Plex Sans Arabic', 'Segoe UI', system-ui, sans-serif; 
+    font-size: 14px; 
+    line-height: 1.75;
     background: #ffffff; 
-    width: 100%;
-    max-width: 920px; 
+    width: 210mm;
+    min-height: 297mm; 
     margin: 0 auto 30px !important; 
-    padding: 30px 40px; 
-    box-shadow: 0px 4px 25px rgba(26, 42, 68, 0.08); 
-    border: 1px solid var(--outline-variant); 
+    padding: 18mm 20mm; 
+    box-shadow: 0px 10px 35px rgba(26, 42, 68, 0.12); 
+    border: 1px solid #e2e8f0; 
     border-top: 4px solid var(--heritage-gold) !important;
-    border-radius: 4px;
+    border-radius: 2px;
     color: #111C2C; 
+    box-sizing: border-box;
 }
 
 .moz-header { 
     display: flex; 
     align-items: center; 
     justify-content: space-between; 
-    margin-bottom: 8px; 
+    margin-bottom: 12px; 
     padding-bottom: 12px; 
     border-bottom: 3px double var(--heritage-gold); 
 }
@@ -51,7 +87,7 @@
     font-size: 19px; 
     font-weight: 700; 
     color: var(--imperial-navy); 
-    margin: 12px 0 16px; 
+    margin: 14px 0 18px; 
 }
 
 .moz-section { 
@@ -118,25 +154,25 @@
 <div class="container-fluid px-4 py-3">
     <div class="d-flex flex-column align-items-center w-100">
         <!-- SYSTEM ACTION BAR -->
-        <div class="w-100 mb-4 no-print p-3 bg-white shadow-sm rounded border border-secondary-subtle d-flex justify-content-between align-items-center" style="max-width: 920px;">
+        <div class="w-100 mb-4 no-print p-3.5 bg-white shadow-sm rounded border d-flex flex-wrap justify-content-between align-items-center gap-3" style="max-width: 210mm;">
             <a href="{{ route('admin.applications.index') }}" class="btn btn-outline-navy fw-bold px-3">
-                <i class="fa-solid fa-arrow-right me-1"></i> العودة لجدول الطلبات
+                <i class="fa-solid fa-arrow-right me-1.5"></i> العودة لجدول الطلبات
             </a>
             <div class="d-flex gap-2">
-                <button onclick="window.print()" class="btn btn-solid-navy fw-bold px-3">
-                    <i class="fa-solid fa-print me-1"></i> طباعة
+                <button onclick="window.print()" class="btn btn-solid-navy fw-bold px-4 py-2 shadow-xs">
+                    <i class="fa-solid fa-print me-1.5"></i> طباعة A4
                 </button>
-                <a href="{{ route('admin.reports.download_pdf', $application->id) }}" target="_blank" class="btn btn-gold-cta fw-bold px-3">
-                    <i class="fa-solid fa-file-pdf me-1"></i> تنزيل PDF
+                <a href="{{ route('admin.reports.download_pdf', $application->id) }}" target="_blank" class="btn btn-gold-cta fw-bold px-3 py-2 shadow-xs">
+                    <i class="fa-solid fa-file-pdf me-1.5"></i> تنزيل PDF
                 </a>
-                <a href="{{ route('admin.reports.download_consolidated_pdf', $application->id) }}" target="_blank" class="btn btn-outline-gold fw-bold px-3" title="تنزيل حزمة الملف المدموج (مذكرة العرض + كافـة المرفقات والشهادات كملف PDF واحد)">
-                    <i class="fa-solid fa-layer-group me-1"></i> المرفقات المدمجة (PDF مدموج)
+                <a href="{{ route('admin.reports.download_consolidated_pdf', $application->id) }}" target="_blank" class="btn btn-outline-gold fw-bold px-3 py-2" title="تنزيل حزمة الملف المدموج (مذكرة العرض + كافـة المرفقات والشهادات كملف PDF واحد)">
+                    <i class="fa-solid fa-layer-group me-1.5"></i> المرفقات المدمجة (PDF)
                 </a>
             </div>
         </div>
 
-        <!-- MOZHAKKARA DOCUMENT PAPER -->
-        <div class="w-100" style="max-width: 920px;">
+        <!-- MOZHAKKARA DOCUMENT PAPER (EXACT A4 PAPER DIMENSIONS 210mm x 297mm) -->
+        <div class="d-flex justify-content-center w-100 overflow-auto py-2">
             @include('admin.reports.mozhakkara_paper_snippet')
         </div>
     </div>

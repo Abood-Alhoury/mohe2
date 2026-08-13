@@ -209,35 +209,6 @@
     </div>
 </div>
 
-<!-- Proposed Teaching Courses Table Section -->
-@if($application->courses && $application->courses->count() > 0)
-<div class="card p-4 shadow-sm border-0 mb-4" style="background-color: #ffffff;">
-    <h5 class="fw-bold mb-3 pb-2 border-bottom" style="color: var(--imperial-navy);">
-        <i class="fa-solid fa-book-bookmark me-2" style="color: var(--heritage-gold);"></i>5. المقررات الدراسية المرشح لتدريسها بالجامعة
-    </h5>
-    <div class="table-responsive">
-        <table class="table table-bordered align-middle text-center m-0">
-            <thead class="table-light">
-                <tr>
-                    <th>#</th>
-                    <th>اسم المقرر الدراسي</th>
-                    <th>الكلية</th>
-                    <th>القسم</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($application->courses as $index => $course)
-                <tr>
-                    <td>{{ $index + 1 }}</td>
-                    <td class="fw-bold text-dark">{{ $course->name }}</td>
-                    <td>{{ $course->faculty }}</td>
-                    <td>{{ $course->department }}</td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
-</div>
-@endif
+
 
 @endsection

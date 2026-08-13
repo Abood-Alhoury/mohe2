@@ -8,6 +8,7 @@ use App\Models\ApplicationMessage;
 use App\Models\LookupUniversity;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class InterviewsController extends Controller
 {
@@ -94,7 +95,7 @@ class InterviewsController extends Controller
             // Send Automated Notification Message to University
             ApplicationMessage::create([
                 'application_id' => $app->id,
-                'sender_type'    => 'admin',
+                'sender_id'      => Auth::id() ?? 1,
                 'message'        => "تنبيه رسمي: تم تحديد موعد المقابلة الشفهية والعملية للمرشح ({$candidateName}) بتاريخ {$formattedDate} - الساعة ({$time}) - المكان/الملاحظات: {$locationText}.",
                 'is_read'        => false,
             ]);

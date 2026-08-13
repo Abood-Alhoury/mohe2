@@ -177,30 +177,33 @@
                         @endif
                     </td>
 
-                    <!-- 8. Decision Attachment & Decision Generation -->
+                    <!-- 8. Decision Attachment & Decision Generation (PURE ICONS ONLY) -->
                     <td class="text-center align-middle">
                         @php
-                            $canGenerateDecision = str_contains($app->request_type, 'ماجستير تطبيقي') || str_contains($app->request_type, 'ماجستير سوري');
-                            $canAttachDecision = ($app->status === 'بانتظار إصدار القرار');
+                            $canGenerateDecision = in_array($app->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 'تم الصدور']);
+                            $canAttachDecision = in_array($app->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار']);
                         @endphp
-                        <div class="d-flex flex-column align-items-center gap-1.5 justify-content-center mx-auto" style="max-width: 125px;">
+                        <div class="d-flex align-items-center justify-content-center gap-1.5 mx-auto">
                             @if($canAttachDecision)
-                                <button type="button" class="btn btn-xs btn-solid-navy py-1 px-2 shadow-xs w-100" data-bs-toggle="modal" data-bs-target="#decisionModal{{ $app->id }}">
-                                    <i class="fa-solid fa-cloud-arrow-up me-1" style="color: var(--heritage-gold-light);"></i> إرفاق القرار
+                                <button type="button" class="btn btn-sm btn-solid-navy p-0 d-inline-flex align-items-center justify-content-center rounded shadow-2xs" style="width: 36px; height: 36px;" data-bs-toggle="modal" data-bs-target="#decisionModal{{ $app->id }}" title="إرفاق القرار">
+                                    <i class="fa-solid fa-cloud-arrow-up fs-6" style="color: var(--heritage-gold-light);"></i>
                                 </button>
                             @elseif($app->status === 'تم الصدور')
-                                <span class="badge bg-light text-muted border px-2 py-1 fs-8 w-100 mb-1">
-                                    <i class="fa-solid fa-stamp me-1 text-success"></i> تم رصد القرار
+                                <span class="d-inline-flex align-items-center justify-content-center rounded bg-success-subtle border border-success-subtle text-success" style="width: 36px; height: 36px;" title="تم رصد القرار">
+                                    <i class="fa-solid fa-stamp fs-6"></i>
                                 </span>
                             @else
-                                <button type="button" class="btn btn-xs btn-secondary py-1 px-2 opacity-50 w-100" disabled title="إرفاق القرار متاح فقط عندما تكون الحالة (بانتظار إصدار القرار)">
-                                    <i class="fa-solid fa-lock me-1"></i> إرفاق القرار
+                                <button type="button" class="btn btn-sm btn-secondary opacity-50 p-0 d-inline-flex align-items-center justify-content-center rounded" style="width: 36px; height: 36px;" disabled title="إرفاق القرار متاح فقط عندما تكون الحالة (بانتظار إصدار القرار)">
+                                    <i class="fa-solid fa-lock fs-6"></i>
                                 </button>
                             @endif
 
-                            @if($canGenerateDecision && ($app->status === 'بانتظار إصدار القرار' || $app->status === 'تم الصدور'))
-                                <a href="{{ route('admin.reports.generate_decision', $app->id) }}" class="btn btn-xs fw-bold shadow-2xs py-1 px-2 text-decoration-none w-100 d-inline-flex align-items-center justify-content-center gap-1" style="font-size: 0.75rem; border: 1px solid #93c5fd; color: #1d4ed8; background-color: #eff6ff;" title="توليد نموذج قرار التعادل تلقائياً من بيانات المتقدم">
-                                    <i class="fa-solid fa-wand-magic-sparkles text-primary fs-9"></i> توليد قرار
+                            @if($canGenerateDecision)
+                                <a href="{{ route('admin.reports.generate_decision', ['id' => $app->id, 'type' => 'equivalence']) }}" class="btn btn-sm p-0 d-inline-flex align-items-center justify-content-center rounded shadow-2xs text-decoration-none" style="width: 34px; height: 34px; border: 1px solid #93c5fd; color: #1d4ed8; background-color: #eff6ff;" title="توليد قرار المعادلة (التكليف)">
+                                    <i class="fa-solid fa-file-signature fs-6" style="color: #1d4ed8;"></i>
+                                </a>
+                                <a href="{{ route('admin.reports.generate_decision', ['id' => $app->id, 'type' => 'eligibility']) }}" class="btn btn-sm p-0 d-inline-flex align-items-center justify-content-center rounded shadow-2xs text-decoration-none" style="width: 34px; height: 34px; border: 1px solid #c084fc; color: #7e22ce; background-color: #f3e8ff;" title="توليد قرار الأهلية (الكليشيه الجديد)">
+                                    <i class="fa-solid fa-award fs-6" style="color: #7e22ce;"></i>
                                 </a>
                             @endif
                         </div>
