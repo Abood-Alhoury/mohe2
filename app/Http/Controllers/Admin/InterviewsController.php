@@ -135,6 +135,9 @@ class InterviewsController extends Controller
 
         $app->save();
 
+        // Notify university of status change
+        $app->notifyUniversityOfStatusChange($app->status, $request->notes);
+
         return redirect()->back()->with('success', $message);
     }
 }

@@ -43,22 +43,7 @@ class CommitteeController extends Controller
         $app->save();
 
         // Automated notification to university
-        $candidateName = $app->candidate ? $app->candidate->full_name : '';
-        if ($app->status === 'بانتظار إصدار القرار') {
-            ApplicationMessage::create([
-                'application_id' => $app->id,
-                'sender_id' => Auth::id() ?? 1,
-                'message' => "✅ [إشعار اللجنة العامة]: تمت موافقة اللجنة العامة على طلب تعادل الشهادة العلمية رقم (#{$app->application_no}) للمرشح ({$candidateName})، وتحويل المعاملة إلى (بانتظار إصدار القرار).",
-                'is_read' => false,
-            ]);
-        } elseif ($app->status === 'مرفوض') {
-            ApplicationMessage::create([
-                'application_id' => $app->id,
-                'sender_id' => Auth::id() ?? 1,
-                'message' => "❌ [إشعار اللجنة العامة]: صدر قرار اللجنة العامة برفض طلب التعادل رقم (#{$app->application_no}) للمرشح ({$candidateName}).",
-                'is_read' => false,
-            ]);
-        }
+        $app->notifyUniversityOfStatusChange($app->status);
 
         return redirect()->route('admin.committee.index')->with('success', $msg);
     }

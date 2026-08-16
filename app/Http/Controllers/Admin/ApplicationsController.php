@@ -116,24 +116,8 @@ class ApplicationsController extends Controller
             ]);
         }
 
-        // Requirement 3: Send automated message to university when decision is issued or status is updated to awaiting documents
-        if ($app->status === 'تم الصدور' || $request->hasFile('decision_file')) {
-            $candidateName = $app->candidate ? $app->candidate->full_name : '';
-            ApplicationMessage::create([
-                'application_id' => $app->id,
-                'sender_id' => Auth::id() ?? 1,
-                'message' => "📜 [إشعار رسمي - صدور قرار التعادل]: تم صدور قرار معادلة الشهادة العلمية رسمياً للطلب رقم (#{$app->application_no}) للمرشح ({$candidateName}). يمكنك الاطلاع على نسخة القرار وتحميلها أصولاً.",
-                'is_read' => false,
-            ]);
-        } elseif ($app->status === 'بانتظار الوثائق') {
-            $candidateName = $app->candidate ? $app->candidate->full_name : '';
-            ApplicationMessage::create([
-                'application_id' => $app->id,
-                'sender_id' => Auth::id() ?? 1,
-                'message' => "⚠️ [إشعار رسمي - بانتظار الوثائق والتعديل]: تم تحويل حالة المعاملة رقم (#{$app->application_no}) للمرشح ({$candidateName}) إلى (بانتظار الوثائق). يرجى الضغط على زر التعديل واستكمال الوثائق والمستندات المطلوب تعديلها، ثم إرسال الطلب مجدداً للوزارة.",
-                'is_read' => false,
-            ]);
-        }
+        // Send automated notification message to university for any status update
+        $app->notifyUniversityOfStatusChange($app->status, $request->notes);
 
         return redirect()->back()->with('success', 'تم تحديث حالة الطلب إلى (' . $app->status . ') بنجاح وإشعار الجامعة.');
     }
