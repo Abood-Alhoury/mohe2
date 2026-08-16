@@ -121,7 +121,65 @@
          2. FORMAT B: EQUIVALENCE DECISION (قرار المعادلة والتعادل)
     ========================================================================= --}}
 
-    @if(!empty($isDoctorate))
+    @if(!empty($isFacultyPermission))
+        {{-- =========================================================================
+             2. FORMAT B0: FACULTY MEMBER TEACHING PERMISSION (قرار السماح بالتدريس)
+        ========================================================================= --}}
+
+        <!-- TOP HEADER -->
+        <table class="header-table" style="width: 100%; border-collapse: collapse; margin-bottom: 22px;" border="0">
+            <tr>
+                <!-- Right: Arabic Header -->
+                <td style="width: 40%; text-align: right; vertical-align: middle; font-weight: bold; font-size: 15px; line-height: 1.5; color: #000000;">
+                    الجمهورية العربية السورية<br>
+                    مجلس التعليم العالي<br>
+                    لجنة التأهيل ومعادلة الدرجات العلمية
+                </td>
+
+                <!-- Center: Official Emblem Logo -->
+                <td style="width: 20%; text-align: center; vertical-align: middle;">
+                    <img src="{{ asset('assets/logo.jpg') }}" alt="شعار مجلس التعليم العالي" style="width: 88px; height: 88px; object-fit: contain; border-radius: 50%;">
+                </td>
+
+                <!-- Left: English Header -->
+                <td dir="ltr" style="width: 40%; text-align: left; vertical-align: middle; font-weight: bold; font-size: 13px; line-height: 1.4; color: #000000;">
+                    Syrian Arab Republic<br>
+                    council of Higher Education
+                </td>
+            </tr>
+        </table>
+
+        <!-- DECISION TITLE & NUMBER -->
+        <div class="decision-title-div" style="text-align: center; font-size: 20px; font-weight: bold; margin: 20px 0 22px; color: #000000;">
+            القرار رقم / &nbsp;<span contenteditable="true" title="انقر هنا لكتابة أو تعديل رقم القرار" style="display: inline-block; min-width: 60px; text-align: center; color: #000000; border: none; outline: none; padding: 0 4px;">{{ ($decisionNo && $decisionNo !== '---') ? $decisionNo : '' }}</span>&nbsp; / ل . م
+        </div>
+
+        <!-- PREAMBLE -->
+        <div class="preamble-div" style="font-size: 15.5px; margin-bottom: 18px; text-align: justify; line-height: 1.85; color: #000000;">
+            <div style="font-weight: bold; margin-bottom: 8px;">رئيس لجنة التأهيل ومعادلة الدرجات العلمية</div>
+            <div>بناءً على أحكام قانون تنظيم الجامعات رقم 6 لعام 2006 ولائحته التنفيذية وتعديلاتهما.</div>
+            <div>وعلى قرار مجلس التعليم العالي رقم /236/ تاريخ 2007/7/15.</div>
+            <div>وعلى قرار مجلس التعليم العالي رقم /175/ تاريخ 2022/6/16 وتعديلاته.</div>
+            <div>وعلى كتاب {{ $uniName }} رقم /<span contenteditable="true" style="outline:none;">{!! $uniReqNo ?: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' !!}</span>/ تاريخ <span contenteditable="true" style="outline:none;">{!! $uniReqDate ?: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' !!}</span></div>
+        </div>
+
+        <!-- DECISION DECREE HEADER -->
+        <div class="decree-header-div" style="text-align: center; font-size: 18px; font-weight: bold; margin: 16px 0 20px; text-decoration: underline; color: #000000;">
+            يقرر ما يأتي:
+        </div>
+
+        <!-- ARTICLE 1 -->
+        <div class="article-div" contenteditable="true" title="انقر هنا لتعديل نص القرار مباشرة" style="font-size: 16.5px; margin-bottom: 22px; text-align: justify; line-height: 2.15; color: #000000; outline: none;">
+            <strong>المادة 1-</strong> السماح {{ $candidateTitlePrep ?? 'للسيد الدكتور' }} <strong>{{ $candidateName }}</strong> (عضو الهيئة التدريسية في {{ $govFaculty }} بجامعة {{ $govUni }}) بالتدريس باختصاص <strong>{{ $teachingDept }}</strong> في الجامعات الخاصة السورية.
+        </div>
+
+        <!-- ARTICLE 2 -->
+        <div class="article-div" style="font-size: 16.5px; margin-bottom: 25px; color: #000000;">
+            <strong>المادة 2-</strong> يبلغ هذا القرار من يلزم لتنفيذه.
+            <div style="margin-top: 15px; margin-right: 40px; color: #000000;">دمشق في <span contenteditable="true" style="outline: none;">{{ $decisionDate }}</span></div>
+        </div>
+
+    @elseif(!empty($isDoctorate))
         {{-- =========================================================================
              2. FORMAT B1: DOCTORATE EQUIVALENCE DECISION (قرار تعادل الدكتوراه السورية)
         ========================================================================= --}}

@@ -24,21 +24,32 @@ class GeneratedDecisionController extends Controller
             'educations.university',
         ])->findOrFail($id);
 
+        $requestType = $application->request_type ?? '';
+        $isFacultyPermission = str_contains($requestType, 'سماح') || str_contains($requestType, 'هيئة تدريسية');
+
         $docType = $request->query('type', $request->input('doc_type', 'equivalence'));
-        if (!in_array($docType, ['equivalence', 'eligibility'])) {
+        if ($isFacultyPermission) {
+            $docType = 'equivalence';
+            if (!in_array($application->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 'تم الصدور'])) {
+                return redirect()->route('admin.applications.index')
+                    ->with('error', '⚠️ توليد قرار السماح بالتدريس متاح فقط للطلبات التي حالتها (بانتظار إصدار القرار).');
+            }
+        } elseif (!in_array($docType, ['equivalence', 'eligibility'])) {
             $docType = 'equivalence';
         }
 
-        if ($docType === 'eligibility') {
-            if (!in_array($application->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 'تم الصدور'])) {
-                return redirect()->route('admin.applications.index')
-                    ->with('error', '⚠️ قرار الأهلية متاح فقط للطلبات التي حالتها (بانتظار إصدار القرار) بعد اجتياز المقابلة بنجاح.');
-            }
-        } else {
-            // Equivalence decision: allowed for all operational statuses
-            if (in_array($application->status, ['مسودة', 'مرفوض', 'بانتظار الوثائق'])) {
-                return redirect()->route('admin.applications.index')
-                    ->with('error', '⚠️ قرار التعادل غير متاح للطلبات المرفوضة أو المسودات أو التي بانتظار استكمال الوثائق.');
+        if (!$isFacultyPermission) {
+            if ($docType === 'eligibility') {
+                if (!in_array($application->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 'تم الصدور'])) {
+                    return redirect()->route('admin.applications.index')
+                        ->with('error', '⚠️ قرار الأهلية متاح فقط للطلبات التي حالتها (بانتظار إصدار القرار) بعد اجتياز المقابلة بنجاح.');
+                }
+            } else {
+                // Equivalence decision: allowed for all operational statuses
+                if (in_array($application->status, ['مسودة', 'مرفوض', 'بانتظار الوثائق'])) {
+                    return redirect()->route('admin.applications.index')
+                        ->with('error', '⚠️ قرار التعادل غير متاح للطلبات المرفوضة أو المسودات أو التي بانتظار استكمال الوثائق.');
+                }
             }
         }
 
@@ -47,11 +58,13 @@ class GeneratedDecisionController extends Controller
         $masterEd = $application->educations->where('level.name', 'ماجستير')->first() ?? $application->educations->where('education_level_id', 2)->first();
         $phdEd = $application->educations->where('level.name', 'دكتوراه')->first() ?? $application->educations->where('education_level_id', 3)->first();
 
-        $requestType = $application->request_type ?? '';
-        $isDoctorate = str_contains($requestType, 'دكتوراه') || ($phdEd !== null);
+        $isDoctorate = !$isFacultyPermission && (str_contains($requestType, 'دكتوراه') || ($phdEd !== null));
         $isApplied = str_contains($requestType, 'تطبيقي');
 
-        if ($isDoctorate) {
+        if ($isFacultyPermission) {
+            $decisionType = 'faculty_permission';
+            $decisionTitle = 'قرار السماح بالتدريس (أعضاء الهيئة التدريسية)';
+        } elseif ($isDoctorate) {
             $decisionType = 'syrian_doctorate';
             $decisionTitle = ($docType === 'eligibility')
                 ? 'قرار أهلية للدكتوراه'
@@ -70,7 +83,7 @@ class GeneratedDecisionController extends Controller
 
         // Prepare Dynamic Data & Gender Attributes
         $candidateName = $this->formatCandidateFullName($candidate);
-        $genderAttrs = $this->getGenderAttributes($candidate, $isDoctorate);
+        $genderAttrs = $this->getGenderAttributes($candidate, ($isDoctorate || $isFacultyPermission));
         $titlePrefix = $genderAttrs['titlePrefix'];
         $candidateTitle = $genderAttrs['candidateTitle'];
         $candidateTitlePrep = $genderAttrs['candidateTitlePrep'];
@@ -84,6 +97,16 @@ class GeneratedDecisionController extends Controller
         $uniReqDate = $application->new_uni_request_date ? format_sys_date($application->new_uni_request_date) : '';
         $decisionDate = format_sys_date(now());
         $eligibilityDate = $application->interview_date ? format_sys_date($application->interview_date) : $decisionDate;
+
+        // Gov Uni / Faculty Member Info
+        $govEd = $application->educations->first(function($e) {
+            return $e->thesis_title === 'عضو هيئة تدريسية في جامعة حكومية' || (optional($e->level)->name && str_contains(optional($e->level)->name, 'حكومية'));
+        }) ?? $application->educations->first();
+
+        $govUniRaw = $govEd->university->name ?? ($govEd->university_other ?? 'جامعة الفرات');
+        $govUni = preg_replace('/^(جامعة|جامعه)\s+/u', '', trim($govUniRaw));
+        $govFaculty = $govEd->faculty ?? ($application->work_faculty ?: 'كلية التربية');
+        $govDepartment = $govEd->department ?? ($application->work_department ?: 'أصول التربية');
 
         // PhD info
         $phdGeneral = $phdEd->general_specialization ?? 'الكلية';
@@ -110,7 +133,7 @@ class GeneratedDecisionController extends Controller
         $baUni = preg_replace('/^(جامعة|جامعه)\s+/u', '', trim($baUniRaw));
 
         // Teaching spec
-        $teachingDept = $application->work_department ?: ($application->work_faculty ?: ($isDoctorate ? $phdSpec : $masterExact));
+        $teachingDept = $application->work_department ?: ($application->work_faculty ?: ($isDoctorate ? $phdSpec : ($isFacultyPermission ? $govDepartment : $masterExact)));
 
         $decisionNo = $request->query('decision_no', '');
         $decisionDate = format_sys_date(now());
@@ -123,6 +146,10 @@ class GeneratedDecisionController extends Controller
             'masterEd',
             'phdEd',
             'isDoctorate',
+            'isFacultyPermission',
+            'govUni',
+            'govFaculty',
+            'govDepartment',
             'docType',
             'decisionType',
             'decisionTitle',
@@ -168,21 +195,32 @@ class GeneratedDecisionController extends Controller
             'educations.university',
         ])->findOrFail($id);
 
+        $requestType = $application->request_type ?? '';
+        $isFacultyPermission = str_contains($requestType, 'سماح') || str_contains($requestType, 'هيئة تدريسية');
+
         $docType = $request->query('type', $request->input('doc_type', 'equivalence'));
-        if (!in_array($docType, ['equivalence', 'eligibility'])) {
+        if ($isFacultyPermission) {
+            $docType = 'equivalence';
+            if (!in_array($application->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 'تم الصدور'])) {
+                return redirect()->route('admin.applications.index')
+                    ->with('error', '⚠️ توليد قرار السماح بالتدريس متاح فقط للطلبات التي حالتها (بانتظار إصدار القرار).');
+            }
+        } elseif (!in_array($docType, ['equivalence', 'eligibility'])) {
             $docType = 'equivalence';
         }
 
-        if ($docType === 'eligibility') {
-            if (!in_array($application->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 'تم الصدور'])) {
-                return redirect()->route('admin.applications.index')
-                    ->with('error', '⚠️ قرار الأهلية متاح فقط للطلبات التي حالتها (بانتظار إصدار القرار) بعد اجتياز المقابلة بنجاح.');
-            }
-        } else {
-            // Equivalence decision: allowed for all operational statuses
-            if (in_array($application->status, ['مسودة', 'مرفوض', 'بانتظار الوثائق'])) {
-                return redirect()->route('admin.applications.index')
-                    ->with('error', '⚠️ قرار التعادل غير متاح للطلبات المرفوضة أو المسودات أو التي بانتظار استكمال الوثائق.');
+        if (!$isFacultyPermission) {
+            if ($docType === 'eligibility') {
+                if (!in_array($application->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 'تم الصدور'])) {
+                    return redirect()->route('admin.applications.index')
+                        ->with('error', '⚠️ قرار الأهلية متاح فقط للطلبات التي حالتها (بانتظار إصدار القرار) بعد اجتياز المقابلة بنجاح.');
+                }
+            } else {
+                // Equivalence decision: allowed for all operational statuses
+                if (in_array($application->status, ['مسودة', 'مرفوض', 'بانتظار الوثائق'])) {
+                    return redirect()->route('admin.applications.index')
+                        ->with('error', '⚠️ قرار التعادل غير متاح للطلبات المرفوضة أو المسودات أو التي بانتظار استكمال الوثائق.');
+                }
             }
         }
 
@@ -191,11 +229,13 @@ class GeneratedDecisionController extends Controller
         $masterEd = $application->educations->where('level.name', 'ماجستير')->first() ?? $application->educations->where('education_level_id', 2)->first();
         $phdEd = $application->educations->where('level.name', 'دكتوراه')->first() ?? $application->educations->where('education_level_id', 3)->first();
 
-        $requestType = $application->request_type ?? '';
-        $isDoctorate = str_contains($requestType, 'دكتوراه') || ($phdEd !== null);
+        $isDoctorate = !$isFacultyPermission && (str_contains($requestType, 'دكتوراه') || ($phdEd !== null));
         $isApplied = str_contains($requestType, 'تطبيقي');
 
-        if ($isDoctorate) {
+        if ($isFacultyPermission) {
+            $decisionType = 'faculty_permission';
+            $decisionTitle = 'قرار السماح بالتدريس (أعضاء الهيئة التدريسية)';
+        } elseif ($isDoctorate) {
             $decisionType = 'syrian_doctorate';
             $decisionTitle = ($docType === 'eligibility')
                 ? 'قرار أهلية للدكتوراه'
@@ -213,7 +253,7 @@ class GeneratedDecisionController extends Controller
         }
 
         $candidateName = $this->formatCandidateFullName($candidate);
-        $genderAttrs = $this->getGenderAttributes($candidate, $isDoctorate);
+        $genderAttrs = $this->getGenderAttributes($candidate, ($isDoctorate || $isFacultyPermission));
         $titlePrefix = $genderAttrs['titlePrefix'];
         $candidateTitle = $genderAttrs['candidateTitle'];
         $candidateTitlePrep = $genderAttrs['candidateTitlePrep'];
@@ -222,10 +262,21 @@ class GeneratedDecisionController extends Controller
 
         $rawUniName = trim($application->workUniversity->name ?? 'الجامعة الخاصة المعنية');
         $uniName = preg_match('/^(جامعة|الجامعة)\s+/u', $rawUniName) ? $rawUniName : 'جامعة ' . $rawUniName;
-        $uniReqNo = $application->new_uni_request_no ?? '---';
-        $uniReqDate = $application->new_uni_request_date ? format_sys_date($application->new_uni_request_date) : format_sys_date(now());
+        $rawReqNo = $application->new_uni_request_no ?: ($application->parentApplication->new_uni_request_no ?? null);
+        $uniReqNo = ($rawReqNo && $rawReqNo !== '---') ? $rawReqNo : '';
+        $uniReqDate = $application->new_uni_request_date ? format_sys_date($application->new_uni_request_date) : '';
         $decisionDate = format_sys_date(now());
         $eligibilityDate = $application->interview_date ? format_sys_date($application->interview_date) : $decisionDate;
+
+        // Gov Uni / Faculty Member Info
+        $govEd = $application->educations->first(function($e) {
+            return $e->thesis_title === 'عضو هيئة تدريسية في جامعة حكومية' || (optional($e->level)->name && str_contains(optional($e->level)->name, 'حكومية'));
+        }) ?? $application->educations->first();
+
+        $govUniRaw = $govEd->university->name ?? ($govEd->university_other ?? 'جامعة الفرات');
+        $govUni = preg_replace('/^(جامعة|جامعه)\s+/u', '', trim($govUniRaw));
+        $govFaculty = $govEd->faculty ?? ($application->work_faculty ?: 'كلية التربية');
+        $govDepartment = $govEd->department ?? ($application->work_department ?: 'أصول التربية');
 
         // PhD info
         $phdGeneral = $phdEd->general_specialization ?? 'الكلية';
@@ -251,7 +302,7 @@ class GeneratedDecisionController extends Controller
         $baUniRaw = $bachelorEd->university->name ?? ($bachelorEd->university_other ?? 'جامعة معترف بها');
         $baUni = preg_replace('/^(جامعة|جامعه)\s+/u', '', trim($baUniRaw));
 
-        $teachingDept = $application->work_department ?: ($application->work_faculty ?: ($isDoctorate ? $phdSpec : $masterSpec));
+        $teachingDept = $application->work_department ?: ($application->work_faculty ?: ($isDoctorate ? $phdSpec : ($isFacultyPermission ? $govDepartment : $masterSpec)));
 
         $decisionNo = $request->query('decision_no', '');
         $decisionDate = format_sys_date(now());
@@ -263,6 +314,10 @@ class GeneratedDecisionController extends Controller
             'masterEd',
             'phdEd',
             'isDoctorate',
+            'isFacultyPermission',
+            'govUni',
+            'govFaculty',
+            'govDepartment',
             'docType',
             'decisionType',
             'decisionTitle',
@@ -293,7 +348,8 @@ class GeneratedDecisionController extends Controller
             'baUni',
             'teachingDept',
             'decisionNo',
-            'decisionDate'
+            'decisionDate',
+            'genderAttrs'
         ))->render();
 
         try {
@@ -351,18 +407,37 @@ class GeneratedDecisionController extends Controller
 
         $decisionNo = $request->input('decision_no', rand(100, 999) . '/' . date('Y'));
         $candidate = $application->candidate;
-        $bachelorEd = $application->educations->where('level.name', 'إجازة جامعية')->first();
-        $masterEd = $application->educations->where('level.name', 'ماجستير')->first();
+        $bachelorEd = $application->educations->where('level.name', 'إجازة جامعية')->first() ?? $application->educations->where('education_level_id', 1)->first();
+        $masterEd = $application->educations->where('level.name', 'ماجستير')->first() ?? $application->educations->where('education_level_id', 2)->first();
+        $phdEd = $application->educations->where('level.name', 'دكتوراه')->first() ?? $application->educations->where('education_level_id', 3)->first();
 
         $requestType = $application->request_type ?? '';
+        $isFacultyPermission = str_contains($requestType, 'سماح') || str_contains($requestType, 'هيئة تدريسية');
+        $isDoctorate = !$isFacultyPermission && (str_contains($requestType, 'دكتوراه') || ($phdEd !== null));
         $isApplied = str_contains($requestType, 'تطبيقي');
-        $decisionType = $isApplied ? 'applied_master' : 'syrian_master';
-        $decisionTitle = ($docType === 'eligibility')
-            ? 'قرار أهلية للماجستير'
-            : ($isApplied ? 'قرار تعادل ماجستير تطبيقي (أقل من سنتين)' : 'قرار تكليف ماجستير سوري (داخلي نظري)');
+
+        if ($isFacultyPermission) {
+            $decisionType = 'faculty_permission';
+            $decisionTitle = 'قرار السماح بالتدريس (أعضاء الهيئة التدريسية)';
+        } elseif ($isDoctorate) {
+            $decisionType = 'syrian_doctorate';
+            $decisionTitle = ($docType === 'eligibility')
+                ? 'قرار أهلية للدكتوراه'
+                : 'قرار تكليف دكتوراه سورية (داخلي)';
+        } elseif ($isApplied) {
+            $decisionType = 'applied_master';
+            $decisionTitle = ($docType === 'eligibility')
+                ? 'قرار أهلية للماجستير'
+                : 'قرار تعادل ماجستير تطبيقي (أقل من سنتين)';
+        } else {
+            $decisionType = 'syrian_master';
+            $decisionTitle = ($docType === 'eligibility')
+                ? 'قرار أهلية للماجستير'
+                : 'قرار تكليف ماجستير سوري (داخلي نظري)';
+        }
 
         $candidateName = $this->formatCandidateFullName($candidate);
-        $genderAttrs = $this->getGenderAttributes($candidate, $isDoctorate);
+        $genderAttrs = $this->getGenderAttributes($candidate, ($isDoctorate || $isFacultyPermission));
         $titlePrefix = $genderAttrs['titlePrefix'];
         $candidateTitle = $genderAttrs['candidateTitle'];
         $candidateTitlePrep = $genderAttrs['candidateTitlePrep'];
@@ -375,6 +450,16 @@ class GeneratedDecisionController extends Controller
         $uniReqDate = $application->new_uni_request_date ? format_sys_date($application->new_uni_request_date) : format_sys_date(now());
         $decisionDate = format_sys_date(now());
         $eligibilityDate = $application->interview_date ? format_sys_date($application->interview_date) : $decisionDate;
+
+        // Gov Uni / Faculty Member Info
+        $govEd = $application->educations->first(function($e) {
+            return $e->thesis_title === 'عضو هيئة تدريسية في جامعة حكومية' || (optional($e->level)->name && str_contains(optional($e->level)->name, 'حكومية'));
+        }) ?? $application->educations->first();
+
+        $govUniRaw = $govEd->university->name ?? ($govEd->university_other ?? 'جامعة الفرات');
+        $govUni = preg_replace('/^(جامعة|جامعه)\s+/u', '', trim($govUniRaw));
+        $govFaculty = $govEd->faculty ?? ($application->work_faculty ?: 'كلية التربية');
+        $govDepartment = $govEd->department ?? ($application->work_department ?: 'أصول التربية');
 
         // PhD info
         $phdGeneral = $phdEd->general_specialization ?? 'الكلية';
@@ -400,7 +485,7 @@ class GeneratedDecisionController extends Controller
         $baUniRaw = $bachelorEd->university->name ?? ($bachelorEd->university_other ?? 'جامعة معترف بها');
         $baUni = preg_replace('/^(جامعة|جامعه)\s+/u', '', trim($baUniRaw));
 
-        $teachingDept = $application->work_department ?: ($application->work_faculty ?: ($isDoctorate ? $phdSpec : $masterSpec));
+        $teachingDept = $application->work_department ?: ($application->work_faculty ?: ($isDoctorate ? $phdSpec : ($isFacultyPermission ? $govDepartment : $masterSpec)));
         $decisionDate = format_sys_date(now());
 
         // 1. Render PDF HTML
@@ -411,6 +496,10 @@ class GeneratedDecisionController extends Controller
             'masterEd',
             'phdEd',
             'isDoctorate',
+            'isFacultyPermission',
+            'govUni',
+            'govFaculty',
+            'govDepartment',
             'docType',
             'decisionType',
             'decisionTitle',
@@ -441,7 +530,8 @@ class GeneratedDecisionController extends Controller
             'baUni',
             'teachingDept',
             'decisionNo',
-            'decisionDate'
+            'decisionDate',
+            'genderAttrs'
         ))->render();
 
         try {

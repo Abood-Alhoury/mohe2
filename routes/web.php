@@ -68,6 +68,7 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/applications/{id}/edit', [EditApplicationController::class, 'edit'])->name('admin.applications.edit');
     Route::patch('/applications/{id}/candidate', [EditApplicationController::class, 'updateCandidate'])->name('admin.applications.update_candidate');
     Route::patch('/applications/{id}/education', [EditApplicationController::class, 'updateEducation'])->name('admin.applications.update_education');
+    Route::patch('/applications/{id}/details', [EditApplicationController::class, 'updateApplicationDetails'])->name('admin.applications.update_details');
 
     // General Committee Topics
     Route::get('/committee', [CommitteeController::class, 'index'])->name('admin.committee.index');
@@ -87,6 +88,10 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     // Equivalence Decisions Upload & Issue
     Route::get('/decisions', [DecisionsController::class, 'index'])->name('admin.decisions.index');
     Route::post('/decisions', [DecisionsController::class, 'store'])->name('admin.decisions.store');
+
+    // Faculty Teaching Permission Decisions Upload & Issue
+    Route::get('/faculty-decisions', [DecisionsController::class, 'facultyIndex'])->name('admin.faculty_decisions.index');
+    Route::post('/faculty-decisions', [DecisionsController::class, 'facultyStore'])->name('admin.faculty_decisions.store');
 
     // Interviews Management & Scheduling ('بانتظار المقابلة')
     Route::get('/interviews', [InterviewsController::class, 'index'])->name('admin.interviews.index');
@@ -121,6 +126,10 @@ Route::prefix('university')->middleware(['auth', 'role:university'])->group(func
     Route::get('/apply/syrian-doctorate', [ApplicationWizardController::class, 'showSyrianDoctorateWizard'])->name('university.apply.syrian_doctorate');
     Route::post('/apply/syrian-doctorate', [ApplicationWizardController::class, 'submitSyrianDoctorateWizard'])->name('university.apply.syrian_doctorate.submit');
     
+    // Wizard: Faculty Permission step-by-step (معاملة السماح لأعضاء الهيئة التدريسية)
+    Route::get('/apply/faculty-permission', [ApplicationWizardController::class, 'showFacultyPermissionWizard'])->name('university.apply.faculty_permission');
+    Route::post('/apply/faculty-permission', [ApplicationWizardController::class, 'submitFacultyPermissionWizard'])->name('university.apply.faculty_permission.submit');
+
     // Candidate Lookup API (for candidate info auto-fill)
     Route::get('/candidate/lookup', [ApplicationWizardController::class, 'lookupCandidate'])->name('university.candidate.lookup');
 

@@ -50,6 +50,17 @@ class ApplicationsController extends Controller
         $applications = $query->latest()->paginate(15);
         $universities = LookupUniversity::all();
 
+        $filterStatusesList = [
+            'تحت التدقيق الأولي',
+            'بانتظار الوثائق',
+            'لجنة عامة',
+            'بانتظار لجنة إنتاج علمي',
+            'بانتظار المقابلة',
+            'بانتظار إصدار القرار',
+            'تم الصدور',
+            'مرفوض',
+        ];
+
         $statusesList = [
             'تحت التدقيق الأولي',
             'بانتظار الوثائق',
@@ -57,12 +68,14 @@ class ApplicationsController extends Controller
             'بانتظار لجنة إنتاج علمي',
             'بانتظار المقابلة',
             'بانتظار إصدار القرار',
+            'مرفوض',
         ];
 
         return view('admin.applications.index', compact(
             'applications',
             'universities',
             'statusesList',
+            'filterStatusesList',
             'statusFilter',
             'universityFilter',
             'searchQuery'

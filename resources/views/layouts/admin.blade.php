@@ -381,11 +381,20 @@
 
                 <a href="{{ route('admin.decisions.index') }}" 
                    class="sidebar-link {{ request()->routeIs('admin.decisions*') ? 'active' : '' }}"
-                   :title="!isExpanded ? 'إصدار القرارات الرسمية' : ''">
+                   :title="!isExpanded ? 'قرارات التعادل والأهلية' : ''">
                     <div class="sidebar-icon-tile tile-amber">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <span class="sidebar-text-label">قرارات التعادل والأهلية</span>
+                </a>
+
+                <a href="{{ route('admin.faculty_decisions.index') }}" 
+                   class="sidebar-link {{ request()->routeIs('admin.faculty_decisions*') ? 'active' : '' }}"
+                   :title="!isExpanded ? 'قرارات السماح بالتدريس' : ''">
+                    <div class="sidebar-icon-tile tile-teal">
                         <i class="fa-solid fa-stamp"></i>
                     </div>
-                    <span class="sidebar-text-label">إصدار القرارات الرسمية</span>
+                    <span class="sidebar-text-label">قرارات السماح بالتدريس</span>
                 </a>
 
             </nav>

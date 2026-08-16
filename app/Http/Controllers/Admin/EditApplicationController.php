@@ -33,25 +33,37 @@ class EditApplicationController extends Controller
         // Categorize Educations for Form
         $candidate = $application->candidate;
 
-        $highSchoolEd = $application->educations->first(function($e) {
-            return $e->level && str_contains($e->level->name, 'ثانوية');
+        $isFacultyPermission = str_contains($application->request_type ?? '', 'سماح') || str_contains($application->request_type ?? '', 'تدريسية');
+
+        $govEd = $application->educations->first(function($e) {
+            return $e->thesis_title === 'عضو هيئة تدريسية في جامعة حكومية' || (optional($e->level)->name && str_contains(optional($e->level)->name, 'حكومية'));
         });
-        $bachelorEd = $application->educations->first(function($e) {
-            return $e->level && str_contains($e->level->name, 'إجازة');
-        });
-        $diplomaEd = $application->educations->first(function($e) {
-            return $e->level && str_contains($e->level->name, 'دبلوم');
-        });
-        $masterEd = $application->educations->first(function($e) {
-            return $e->level && str_contains($e->level->name, 'ماجستير');
-        });
+
         $phdEd = $application->educations->first(function($e) {
-            return $e->level && str_contains($e->level->name, 'دكتوراه');
+            return $e->thesis_title === 'شهادة الدكتوراه' || (optional($e->level)->name == 'دكتوراه' && $e->thesis_title !== 'عضو هيئة تدريسية في جامعة حكومية');
+        });
+
+        $masterEd = $application->educations->first(function($e) {
+            return $e->thesis_title === 'شهادة الماجستير' || (optional($e->level)->name == 'ماجستير' && $e->thesis_title !== 'عضو هيئة تدريسية في جامعة حكومية');
+        });
+
+        $highSchoolEd = $application->educations->first(function($e) {
+            return optional($e->level)->name && str_contains(optional($e->level)->name, 'ثانوية');
+        });
+
+        $bachelorEd = $application->educations->first(function($e) {
+            return optional($e->level)->name && str_contains(optional($e->level)->name, 'إجازة');
+        });
+
+        $diplomaEd = $application->educations->first(function($e) {
+            return optional($e->level)->name && str_contains(optional($e->level)->name, 'دبلوم');
         });
 
         return view('admin.applications.edit', compact(
             'application',
             'candidate',
+            'isFacultyPermission',
+            'govEd',
             'highSchoolEd',
             'bachelorEd',
             'diplomaEd',
@@ -61,6 +73,22 @@ class EditApplicationController extends Controller
             'universities',
             'educationLevels'
         ));
+    }
+
+    // Update Application & Private University Request Info
+    public function updateApplicationDetails(Request $request, $id)
+    {
+        $app = Application::findOrFail($id);
+        $app->update($request->only([
+            'new_uni_request_no',
+            'new_uni_request_date',
+            'work_university_id',
+            'work_faculty',
+            'work_department',
+            'study_system'
+        ]));
+
+        return redirect()->back()->with('success', 'تم تحديث بيانات كتاب الجامعة والطلب بنجاح');
     }
 
     // Update Personal Info Section
@@ -86,7 +114,7 @@ class EditApplicationController extends Controller
         return redirect()->back()->with('success', 'تم تحديث البيانات الشخصية للمرشح بنجاح');
     }
 
-    // Update or Create Education Section (Secondary, Master, PhD, etc.)
+    // Update or Create Education Section (Secondary, Master, PhD, Public Uni, etc.)
     public function updateEducation(Request $request, $appId)
     {
         $app = Application::findOrFail($appId);
@@ -96,13 +124,17 @@ class EditApplicationController extends Controller
         $data = array_filter($request->only([
             'country_id',
             'university_id',
+            'faculty',
+            'department',
             'section_name',
             'general_specialization',
             'exact_specialization',
             'registration_date',
+            'graduation_date',
             'grant_date',
             'defense_date',
             'rank',
+            'supervisor',
             'supervisor_name',
             'thesis_title',
             'envoy_decision',
@@ -133,6 +165,6 @@ class EditApplicationController extends Controller
             ]);
         }
 
-        return redirect()->back()->with('success', 'تم تحديث البيانات والمؤهل العلمي للشهادة بنجاح');
+        return redirect()->back()->with('success', 'تم تحديث البيانات والمؤهل العلمي بنجاح');
     }
 }

@@ -59,126 +59,216 @@ body { direction: ltr; text-align: right; font-size: 13px; color: #111C2C; margi
 </tr>
 </table>
 
-<div class="moz-title">(مذكرة العرض المدمجة)</div>
+@php
+    $isFacultyPermission = str_contains($application->request_type ?? '', 'سماح') || str_contains($application->request_type ?? '', 'تدريسية');
+    $govEd = $govEd ?? ($application->educations ? $application->educations->first(function($e) {
+        return $e->thesis_title === 'عضو هيئة تدريسية في جامعة حكومية' || (optional($e->level)->name && str_contains(optional($e->level)->name, 'حكومية'));
+    }) : null);
+    $phdEd = $phdEd ?? ($application->educations ? $application->educations->first(function($e) {
+        return $e->thesis_title === 'شهادة الدكتوراه' || (optional($e->level)->name == 'دكتوراه' && $e->thesis_title !== 'عضو هيئة تدريسية في جامعة حكومية');
+    }) : null);
+@endphp
 
-<div class="sec">البيانات الشخصية للمرشح :</div>
-<table class="mt">
-    <tr>
-        <td class="l">نوع الطلب :</td>
-        <td style="font-weight:bold;color:#1A2A44;">{{ $application->request_type ?? 'تعادل' }}</td>
-        <td class="l">ID :</td>
-        <td style="font-weight:bold;">{{ $candidate->id }}</td>
-    </tr>
-</table>
-<div class="cname">اسم المرشح : {{ $candidate->full_name }}</div>
-<table class="mt">
-    <tr>
-        <td class="l">الرقم الوطني :</td><td style="font-weight:bold;">{{ $candidate->national_id }}</td>
-        <td class="l">الجنسية :</td><td>{{ $candidate->is_syrian ? 'سورية' : 'غير سورية' }}</td>
-    </tr>
-    <tr>
-        <td class="l">تاريخ الميلاد :</td><td>{{ $candidate->dob }}</td>
-        <td class="l">الوظيفة :</td><td>{{ $candidate->job_title }}</td>
-    </tr>
-    <tr>
-        <td class="l">رقم الهاتف :</td><td>{{ $candidate->phone }}</td>
-        <td class="l">رقم الجوال :</td><td>{{ $candidate->mobile }}</td>
-    </tr>
-    <tr>
-        <td class="l">البريد الالكتروني :</td>
-        <td colspan="3" style="color:#1A2A44;font-weight:600;">{{ $candidate->email }}</td>
-    </tr>
-    <tr>
-        <td class="l">العنوان :</td>
-        <td colspan="3">{{ $candidate->address }}</td>
-    </tr>
-</table>
+@if($isFacultyPermission)
+    <div class="moz-title">(مذكرة العرض المدمجة - سماح بالتدريس)</div>
 
-<div class="wblock" style="background-color: #f8fafc; border: 1px solid #cbd5e1; padding: 8px 12px; border-radius: 4px; margin-bottom: 12px;">
-    <table style="width: 100%; border-collapse: collapse; border: none; font-size: 13px; direction: rtl;">
+    <div class="sec">البيانات الشخصية للمرشح :</div>
+    <table class="mt">
         <tr>
-            <td style="width: 34%; border: none; padding: 2px; text-align: right;">
-                <b>المرشح للعمل في قسم:</b> {{ $application->work_department ?? '---' }}
-            </td>
-            <td style="width: 33%; border: none; padding: 2px; text-align: right;">
-                <b>في كلية:</b> {{ $application->work_faculty ?? '---' }}
-            </td>
-            <td style="width: 33%; border: none; padding: 2px; text-align: right;">
-                <b>في جامعة:</b> {{ optional($application->workUniversity)->name ?? '---' }}
-            </td>
+            <td class="l">نوع المعاملة :</td>
+            <td style="font-weight:bold;color:#1A2A44;">{{ $application->request_type ?? 'عضو هيئة تدريسية - سماح بالتدريس' }}</td>
+            <td class="l">رقم المعاملة :</td>
+            <td style="font-weight:bold;">{{ $application->application_no ?? $candidate->id }}</td>
         </tr>
     </table>
-    <div style="color: #64748B; font-size: 11px; margin-top: 4px; text-align: right;">
-        التي تطلب الجامعة تكليفه بتدريسها استناداً إلى قرار معادلة شهادته العلمية.
+    <div class="cname">اسم المرشح : {{ $candidate->full_name }}</div>
+    <table class="mt">
+        <tr>
+            <td class="l">الرقم الوطني :</td><td style="font-weight:bold;">{{ $candidate->national_id }}</td>
+            <td class="l">الجنسية :</td><td>{{ $candidate->is_syrian ? 'سورية' : (optional($candidate->nationality)->name ?? 'سورية') }}</td>
+        </tr>
+        <tr>
+            <td class="l">تاريخ الميلاد :</td><td>{{ $candidate->dob }}</td>
+            <td class="l">الصفة الأكاديمية :</td><td>{{ optional($govEd)->rank ?? $candidate->job_title ?? 'عضو هيئة تدريسية' }}</td>
+        </tr>
+        <tr>
+            <td class="l">رقم الهاتف :</td><td>{{ $candidate->phone ?? '---' }}</td>
+            <td class="l">رقم الجوال :</td><td>{{ $candidate->mobile }}</td>
+        </tr>
+        <tr>
+            <td class="l">البريد الالكتروني :</td>
+            <td colspan="3" style="color:#1A2A44;font-weight:600;">{{ $candidate->email }}</td>
+        </tr>
+        <tr>
+            <td class="l">العنوان :</td>
+            <td colspan="3">{{ $candidate->address }}</td>
+        </tr>
+    </table>
+
+    <div class="sec">بيانات كتاب طلب التقييم الصادر عن الجامعة :</div>
+    <table class="mt">
+        <tr>
+            <td class="l">الجامعة الطالبة :</td>
+            <td style="font-weight:bold;color:#1A2A44;">{{ optional($application->workUniversity)->name ?? '---' }}</td>
+            <td class="l">رقم وتاريخ الكتاب :</td>
+            <td><strong>رقم:</strong> {{ $application->new_uni_request_no ?? '---' }} | <strong>بتاريخ:</strong> {{ $application->new_uni_request_date ?? '---' }}</td>
+        </tr>
+    </table>
+
+    <div class="sec">بيانات التعيين والصفة بالجامعة الحكومية السورية :</div>
+    <table class="mt">
+        <tr>
+            <td class="l">الجامعة الحكومية :</td>
+            <td style="font-weight:bold;color:#1A2A44;">{{ optional($govEd->university)->name ?? optional($govEd)->university_other ?? '---' }}</td>
+            <td class="l">الرتبة الأكاديمية :</td>
+            <td style="font-weight:bold;">{{ optional($govEd)->rank ?? 'مدرس' }}</td>
+        </tr>
+        <tr>
+            <td class="l">الكلية التابع لها :</td>
+            <td>{{ optional($govEd)->faculty ?: optional($govEd)->general_specialization ?: '---' }}</td>
+            <td class="l">القسم التابع له :</td>
+            <td>{{ optional($govEd)->department ?: optional($govEd)->exact_specialization ?: '---' }}</td>
+        </tr>
+    </table>
+
+    <div class="sec">بيانات شهادة الدكتوراه (المؤهل العلمي الأساسي) :</div>
+    <table class="mt">
+        <tr>
+            <td class="l">الجامعة المانحة :</td>
+            <td style="font-weight:bold;color:#1A2A44;">{{ optional($phdEd->university)->name ?? optional($phdEd)->university_other ?? '---' }}</td>
+            <td class="l">تاريخ / سنة المنح :</td>
+            <td>{{ optional($phdEd)->grant_date ?? '---' }}</td>
+        </tr>
+        <tr>
+            <td class="l">الكلية المانحة :</td>
+            <td>{{ optional($phdEd)->faculty ?: optional($phdEd)->general_specialization ?: '---' }}</td>
+            <td class="l">القسم / الاختصاص :</td>
+            <td>{{ optional($phdEd)->department ?: optional($phdEd)->exact_specialization ?: '---' }}</td>
+        </tr>
+    </table>
+
+@else
+    <div class="moz-title">(مذكرة العرض المدمجة)</div>
+
+    <div class="sec">البيانات الشخصية للمرشح :</div>
+    <table class="mt">
+        <tr>
+            <td class="l">نوع الطلب :</td>
+            <td style="font-weight:bold;color:#1A2A44;">{{ $application->request_type ?? 'تعادل' }}</td>
+            <td class="l">ID :</td>
+            <td style="font-weight:bold;">{{ $candidate->id }}</td>
+        </tr>
+    </table>
+    <div class="cname">اسم المرشح : {{ $candidate->full_name }}</div>
+    <table class="mt">
+        <tr>
+            <td class="l">الرقم الوطني :</td><td style="font-weight:bold;">{{ $candidate->national_id }}</td>
+            <td class="l">الجنسية :</td><td>{{ $candidate->is_syrian ? 'سورية' : 'غير سورية' }}</td>
+        </tr>
+        <tr>
+            <td class="l">تاريخ الميلاد :</td><td>{{ $candidate->dob }}</td>
+            <td class="l">الوظيفة :</td><td>{{ $candidate->job_title }}</td>
+        </tr>
+        <tr>
+            <td class="l">رقم الهاتف :</td><td>{{ $candidate->phone }}</td>
+            <td class="l">رقم الجوال :</td><td>{{ $candidate->mobile }}</td>
+        </tr>
+        <tr>
+            <td class="l">البريد الالكتروني :</td>
+            <td colspan="3" style="color:#1A2A44;font-weight:600;">{{ $candidate->email }}</td>
+        </tr>
+        <tr>
+            <td class="l">العنوان :</td>
+            <td colspan="3">{{ $candidate->address }}</td>
+        </tr>
+    </table>
+
+    <div class="wblock" style="background-color: #f8fafc; border: 1px solid #cbd5e1; padding: 8px 12px; border-radius: 4px; margin-bottom: 12px;">
+        <table style="width: 100%; border-collapse: collapse; border: none; font-size: 13px; direction: rtl;">
+            <tr>
+                <td style="width: 34%; border: none; padding: 2px; text-align: right;">
+                    <b>المرشح للعمل في قسم:</b> {{ $application->work_department ?? '---' }}
+                </td>
+                <td style="width: 33%; border: none; padding: 2px; text-align: right;">
+                    <b>في كلية:</b> {{ $application->work_faculty ?? '---' }}
+                </td>
+                <td style="width: 33%; border: none; padding: 2px; text-align: right;">
+                    <b>في جامعة:</b> {{ optional($application->workUniversity)->name ?? '---' }}
+                </td>
+            </tr>
+        </table>
+        <div style="color: #64748B; font-size: 11px; margin-top: 4px; text-align: right;">
+            التي تطلب الجامعة تكليفه بتدريسها استناداً إلى قرار معادلة شهادته العلمية.
+        </div>
     </div>
-</div>
 
 
-<div class="sec">الشهادات التي يحملها المرشح :</div>
+    <div class="sec">الشهادات التي يحملها المرشح :</div>
 
-<div class="dblock">
-    <div class="dblock-h">الشهادة الثانوية :</div>
-    <table class="mt">
-        <tr>
-            <td class="l">الدولة المانحة :</td><td>{{ optional(optional($highSchoolEd)->country)->name ?? '---' }}</td>
-            <td class="l">القسم :</td><td>{{ optional($highSchoolEd)->section_name ?? '---' }}</td>
-            <td class="l">تاريخ المنح :</td><td>{{ optional($highSchoolEd)->grant_date ?? '---' }}</td>
-        </tr>
-    </table>
-</div>
+    <div class="dblock">
+        <div class="dblock-h">الشهادة الثانوية :</div>
+        <table class="mt">
+            <tr>
+                <td class="l">الدولة المانحة :</td><td>{{ optional(optional($highSchoolEd)->country)->name ?? '---' }}</td>
+                <td class="l">القسم :</td><td>{{ optional($highSchoolEd)->section_name ?? '---' }}</td>
+                <td class="l">تاريخ المنح :</td><td>{{ optional($highSchoolEd)->grant_date ?? '---' }}</td>
+            </tr>
+        </table>
+    </div>
 
-@if($bachelorEd)
-<div class="dblock">
-    <div class="dblock-h">شهادة الاجازة الجامعية :</div>
-    <table class="mt">
-        <tr>
-            <td class="l">الدولة المانحة :</td><td>{{ optional($bachelorEd->country)->name ?? '---' }}</td>
-            <td class="l">الجهة المانحة :</td><td colspan="3">{{ optional($bachelorEd->university)->name ?? '---' }}</td>
-        </tr>
-        <tr>
-            <td class="l">التخصص العام :</td><td>{{ $bachelorEd->general_specialization ?? '---' }}</td>
-            <td class="l">التخصص الدقيق :</td><td>{{ $bachelorEd->exact_specialization ?? '---' }}</td>
-            <td class="l">المرتبة :</td><td>{{ $bachelorEd->rank ?? '---' }}</td>
-        </tr>
-        <tr>
-            <td class="l">تاريخ التسجيل :</td><td>{{ $bachelorEd->registration_date ?? '---' }}</td>
-            <td class="l">تاريخ المنح :</td><td colspan="3">{{ $bachelorEd->grant_date ?? '---' }}</td>
-        </tr>
-    </table>
-</div>
+    @if($bachelorEd)
+    <div class="dblock">
+        <div class="dblock-h">شهادة الاجازة الجامعية :</div>
+        <table class="mt">
+            <tr>
+                <td class="l">الدولة المانحة :</td><td>{{ optional($bachelorEd->country)->name ?? '---' }}</td>
+                <td class="l">الجهة المانحة :</td><td colspan="3">{{ optional($bachelorEd->university)->name ?? '---' }}</td>
+            </tr>
+            <tr>
+                <td class="l">التخصص العام :</td><td>{{ $bachelorEd->general_specialization ?? '---' }}</td>
+                <td class="l">التخصص الدقيق :</td><td>{{ $bachelorEd->exact_specialization ?? '---' }}</td>
+                <td class="l">المرتبة :</td><td>{{ $bachelorEd->rank ?? '---' }}</td>
+            </tr>
+            <tr>
+                <td class="l">تاريخ التسجيل :</td><td>{{ $bachelorEd->registration_date ?? '---' }}</td>
+                <td class="l">تاريخ المنح :</td><td colspan="3">{{ $bachelorEd->grant_date ?? '---' }}</td>
+            </tr>
+        </table>
+    </div>
+    @endif
+
+    @if($masterEd)
+    <div class="dblock">
+        <div class="dblock-h">شهادة ماجستير {{ optional(optional($masterEd)->country)->name == 'سوريا' ? 'سوريا' : 'غير سورية' }} :</div>
+        <table class="mt">
+            <tr>
+                <td class="l">الدولة المانحة :</td><td>{{ optional($masterEd->country)->name ?? '---' }}</td>
+                <td class="l">الجهة المانحة :</td><td colspan="3">{{ optional($masterEd->university)->name ?? '---' }}</td>
+            </tr>
+            <tr>
+                <td class="l">التخصص العام :</td><td>{{ $masterEd->general_specialization ?? '---' }}</td>
+                <td class="l">التخصص الدقيق :</td><td>{{ $masterEd->exact_specialization ?? '---' }}</td>
+                <td class="l">المرتبة :</td><td>{{ $masterEd->rank ?? '---' }}</td>
+            </tr>
+            <tr>
+                <td class="l">تاريخ التسجيل :</td><td>{{ $masterEd->registration_date ?? '---' }}</td>
+                <td class="l">تاريخ المنح :</td><td>{{ $masterEd->grant_date ?? '---' }}</td>
+                <td class="l">اسم المشرف :</td><td>{{ $masterEd->supervisor_name ?? '---' }}</td>
+            </tr>
+            <tr>
+                <td class="l">عنوان الاطروحة :</td><td colspan="5">{{ $masterEd->thesis_title ?? '---' }}</td>
+            </tr>
+        </table>
+    </div>
+    @endif
+
+    <div class="sec">معلومات اضافية :</div>
+    <div class="ebox">
+        <div><b>هل المرشح جنسيته السورية :</b> {{ $candidate->is_syrian ? 'نعم' : 'لا' }}</div>
+        <div><b>هل المرشح حاصل على مؤهل علمي قبل المؤهل الاخير :</b> {{ $application->has_previous_degree ? 'نعم' : 'لا' }}</div>
+        <div><b>نظام دراسة المرشح :</b> {{ $application->study_system ?? '---' }}</div>
+    </div>
 @endif
-
-@if($masterEd)
-<div class="dblock">
-    <div class="dblock-h">شهادة ماجستير {{ optional(optional($masterEd)->country)->name == 'سوريا' ? 'سوريا' : 'غير سورية' }} :</div>
-    <table class="mt">
-        <tr>
-            <td class="l">الدولة المانحة :</td><td>{{ optional($masterEd->country)->name ?? '---' }}</td>
-            <td class="l">الجهة المانحة :</td><td colspan="3">{{ optional($masterEd->university)->name ?? '---' }}</td>
-        </tr>
-        <tr>
-            <td class="l">التخصص العام :</td><td>{{ $masterEd->general_specialization ?? '---' }}</td>
-            <td class="l">التخصص الدقيق :</td><td>{{ $masterEd->exact_specialization ?? '---' }}</td>
-            <td class="l">المرتبة :</td><td>{{ $masterEd->rank ?? '---' }}</td>
-        </tr>
-        <tr>
-            <td class="l">تاريخ التسجيل :</td><td>{{ $masterEd->registration_date ?? '---' }}</td>
-            <td class="l">تاريخ المنح :</td><td>{{ $masterEd->grant_date ?? '---' }}</td>
-            <td class="l">اسم المشرف :</td><td>{{ $masterEd->supervisor_name ?? '---' }}</td>
-        </tr>
-        <tr>
-            <td class="l">عنوان الاطروحة :</td><td colspan="5">{{ $masterEd->thesis_title ?? '---' }}</td>
-        </tr>
-    </table>
-</div>
-@endif
-
-<div class="sec">معلومات اضافية :</div>
-<div class="ebox">
-    <div><b>هل المرشح جنسيته السورية :</b> {{ $candidate->is_syrian ? 'نعم' : 'لا' }}</div>
-    <div><b>هل المرشح حاصل على مؤهل علمي قبل المؤهل الاخير :</b> {{ $application->has_previous_degree ? 'نعم' : 'لا' }}</div>
-    <div><b>نظام دراسة المرشح :</b> {{ $application->study_system ?? '---' }}</div>
-</div>
 
 <!-- PAGES 2+: CONSOLIDATED ATTACHMENTS (IN EXACT ORDER: HS -> BA -> MA -> OTHERS) -->
 @php

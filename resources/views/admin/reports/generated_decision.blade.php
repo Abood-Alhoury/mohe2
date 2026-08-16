@@ -84,23 +84,29 @@
                     <i class="fa-solid fa-arrow-right me-1.5"></i> عودة
                 </a>
 
-                <!-- TOGGLE DECISION TYPES: EQUIVALENCE vs ELIGIBILITY -->
-                <div class="btn-group shadow-2xs rounded" role="group">
-                    <a href="{{ route('admin.reports.generate_decision', ['id' => $application->id, 'type' => 'equivalence']) }}" 
-                       class="btn btn-sm fw-bold px-3 py-2 {{ $docType === 'equivalence' ? 'btn-solid-navy' : 'btn-outline-navy' }}">
-                        <i class="fa-solid fa-file-signature me-1.5"></i> 1. قرار التعادل (المعادلة)
-                    </a>
-                    @if($canEligibility)
-                        <a href="{{ route('admin.reports.generate_decision', ['id' => $application->id, 'type' => 'eligibility']) }}" 
-                           class="btn btn-sm fw-bold px-3 py-2 {{ $docType === 'eligibility' ? 'btn-solid-navy' : 'btn-outline-navy' }}">
-                            <i class="fa-solid fa-award me-1.5"></i> 2. قرار الأهلية
+                <!-- TOGGLE DECISION TYPES: EQUIVALENCE vs ELIGIBILITY (HIDDEN FOR FACULTY PERMISSION) -->
+                @if(!$isFacultyPermission)
+                    <div class="btn-group shadow-2xs rounded" role="group">
+                        <a href="{{ route('admin.reports.generate_decision', ['id' => $application->id, 'type' => 'equivalence']) }}" 
+                           class="btn btn-sm fw-bold px-3 py-2 {{ $docType === 'equivalence' ? 'btn-solid-navy' : 'btn-outline-navy' }}">
+                            <i class="fa-solid fa-file-signature me-1.5"></i> 1. قرار التعادل (المعادلة)
                         </a>
-                    @else
-                        <button type="button" class="btn btn-sm btn-outline-secondary fw-bold px-3 py-2 opacity-60" disabled title="قرار الأهلية متاح فقط عندما تكون حالة الطلب (بانتظار إصدار القرار) بعد اجتياز المقابلة">
-                            <i class="fa-solid fa-lock me-1.5"></i> 2. قرار الأهلية (بانتظار إصدار القرار فقط)
-                        </button>
-                    @endif
-                </div>
+                        @if($canEligibility)
+                            <a href="{{ route('admin.reports.generate_decision', ['id' => $application->id, 'type' => 'eligibility']) }}" 
+                               class="btn btn-sm fw-bold px-3 py-2 {{ $docType === 'eligibility' ? 'btn-solid-navy' : 'btn-outline-navy' }}">
+                                <i class="fa-solid fa-award me-1.5"></i> 2. قرار الأهلية
+                            </a>
+                        @else
+                            <button type="button" class="btn btn-sm btn-outline-secondary fw-bold px-3 py-2 opacity-60" disabled title="قرار الأهلية متاح فقط عندما تكون حالة الطلب (بانتظار إصدار القرار) بعد اجتياز المقابلة">
+                                <i class="fa-solid fa-lock me-1.5"></i> 2. قرار الأهلية (بانتظار إصدار القرار فقط)
+                            </button>
+                        @endif
+                    </div>
+                @else
+                    <span class="badge bg-success-subtle text-success border border-success px-3 py-2 fs-7 fw-bold">
+                        <i class="fa-solid fa-stamp me-1.5"></i> قرار السماح بالتدريس (رسمي)
+                    </span>
+                @endif
             </div>
 
             <div class="d-flex align-items-center gap-2.5 flex-wrap">
@@ -120,7 +126,13 @@
                 <i class="fa-solid fa-wand-magic-sparkles fs-4" style="color: #0284c7;"></i>
                 <div>
                     <h6 class="fw-bold mb-0.5" style="color: #0369a1;">{{ $decisionTitle }}</h6>
-                    <p class="mb-0 small text-secondary">معاينة القرار بحجم A4 الحقيقي. يمكن التبديل بين (قرار المعادلة) و(قرار الأهلية) من الأزرار بالأعلى، وتعديل النصوص مباشرة قبل الطباعة أو التحميل.</p>
+                    <p class="mb-0 small text-secondary">
+                        @if($isFacultyPermission)
+                            معاينة قرار السماح بالتدريس بحجم A4 الحقيقي. يمكنك تعديل النصوص والتواريخ مباشرة على الورقة قبل الطباعة أو التحميل.
+                        @else
+                            معاينة القرار بحجم A4 الحقيقي. يمكن التبديل بين (قرار المعادلة) و(قرار الأهلية) من الأزرار بالأعلى، وتعديل النصوص مباشرة قبل الطباعة أو التحميل.
+                        @endif
+                    </p>
                 </div>
             </div>
         </div>

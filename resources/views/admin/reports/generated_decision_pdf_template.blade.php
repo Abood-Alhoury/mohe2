@@ -223,7 +223,65 @@ body {
          2. PDF FORMAT B: EQUIVALENCE DECISION (قرار المعادلة والتعادل)
     ========================================================================= --}}
 
-    @if(!empty($isDoctorate))
+    @if(!empty($isFacultyPermission))
+        {{-- =========================================================================
+             2. PDF FORMAT B0: FACULTY MEMBER TEACHING PERMISSION (قرار السماح بالتدريس)
+        ========================================================================= --}}
+
+        <!-- TOP HEADER TABLE -->
+        <table class="pdf-header" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+                <!-- Left in DomPDF = Visual Left: English Header -->
+                <td style="width: 40%; text-align: left; font-weight: bold; font-size: 11.5px; line-height: 1.35; direction: ltr; color: #000000;">
+                    Syrian Arab Republic<br>
+                    council of Higher Education
+                </td>
+
+                <!-- Center: Official Logo -->
+                <td style="width: 20%; text-align: center; vertical-align: middle;">
+                    <img src="{{ public_path('assets/logo.jpg') }}" alt="شعار المجلس" style="width: 75px; height: 75px; object-fit: contain;">
+                </td>
+
+                <!-- Right in DomPDF = Visual Right: Arabic Header -->
+                <td style="width: 40%; text-align: right; font-weight: bold; font-size: 13.5px; line-height: 1.45; color: #000000;">
+                    الجمهورية العربية السورية<br>
+                    مجلس التعليم العالي<br>
+                    لجنة التأهيل ومعادلة الدرجات العلمية
+                </td>
+            </tr>
+        </table>
+
+        <!-- DECISION NUMBER & TITLE -->
+        <div class="pdf-title">
+            القرار رقم / {{ ($decisionNo && $decisionNo !== '---') ? $decisionNo : '          ' }} / ل . م
+        </div>
+
+        <!-- PREAMBLE -->
+        <div class="pdf-preamble">
+            <div style="font-weight: bold; margin-bottom: 5px;">رئيس لجنة التأهيل ومعادلة الدرجات العلمية</div>
+            <div>بناءً على أحكام قانون تنظيم الجامعات رقم 6 لعام 2006 ولائحته التنفيذية وتعديلاتهما.</div>
+            <div>وعلى قرار مجلس التعليم العالي رقم /236/ تاريخ 2007/7/15.</div>
+            <div>وعلى قرار مجلس التعليم العالي رقم /175/ تاريخ 2022/6/16 وتعديلاته.</div>
+            <div>وعلى كتاب {{ $uniName }} رقم /{{ ($uniReqNo && $uniReqNo !== '---') ? $uniReqNo : '          ' }}/ تاريخ {{ $uniReqDate }}</div>
+        </div>
+
+        <!-- DECREE HEADER -->
+        <div class="pdf-decree-header">
+            يقرر ما يأتي:
+        </div>
+
+        <!-- ARTICLE 1 -->
+        <div class="pdf-article">
+            المادة 1- السماح {{ $candidateTitlePrep ?? 'للسيد الدكتور' }} {{ $candidateName }} (عضو الهيئة التدريسية في {{ $govFaculty }} بجامعة {{ $govUni }}) بالتدريس باختصاص {{ $teachingDept }} في الجامعات الخاصة السورية.
+        </div>
+
+        <!-- ARTICLE 2 -->
+        <div class="pdf-article">
+            المادة 2- يبلغ هذا القرار من يلزم لتنفيذه.
+            <div style="margin-top: 15px; margin-right: 40px;">دمشق في {{ $decisionDate }}</div>
+        </div>
+
+    @elseif(!empty($isDoctorate))
         {{-- =========================================================================
              2. PDF FORMAT B1: DOCTORATE EQUIVALENCE DECISION (قرار تعادل الدكتوراه السورية)
         ========================================================================= --}}

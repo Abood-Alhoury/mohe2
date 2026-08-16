@@ -64,17 +64,17 @@
         </div>
     </div>
 
-    <!-- Option 5: Faculty Member (Disabled Placeholder) -->
+    <!-- Option 5: Faculty Member Teaching Permission (ACTIVE) -->
     <div class="col-md-4">
-        <div class="card text-center p-4 h-100 text-decoration-none mohe-card disabled-option-card position-relative" style="border-radius: 8px;">
-            <div class="card-option-badge bg-secondary text-white border-0">قريباً</div>
-            <div class="option-icon-wrapper bg-light mx-auto mb-3">
-                <i class="fa-solid fa-users-rectangle fs-1 text-muted"></i>
+        <a href="{{ route('university.apply.faculty_permission') }}" class="card text-center p-4 h-100 text-decoration-none mohe-card active-option-card position-relative" style="border-radius: 8px; border-top: 3.5px solid var(--heritage-gold) !important;">
+            <div class="card-option-badge">متاح للتقديم</div>
+            <div class="option-icon-wrapper mx-auto mb-3">
+                <i class="fa-solid fa-chalkboard-user fs-1" style="color: var(--heritage-gold);"></i>
             </div>
-            <h5 class="fw-bold text-muted mb-1">عضو هيئة تدريسية</h5>
-            <span class="label-sm text-muted d-block mb-3">Faculty Member</span>
-            <p class="body-md small text-muted mb-0">خاص بأعضاء الهيئة التدريسية المنقولين أو المعينين في الجامعات الحكومية السورية.</p>
-        </div>
+            <h5 class="fw-bold mb-1" style="color: var(--primary-container);">عضو هيئة تدريسية (معاملة السماح)</h5>
+            <span class="label-sm text-muted d-block mb-3">Faculty Member Permission</span>
+            <p class="body-md small text-muted mb-0">خاص بأعضاء الهيئة التدريسية في الجامعات الحكومية السورية لطلب السماح بالتدريس في الجامعات الخاصة.</p>
+        </a>
     </div>
 
     <!-- Option 6: Research Centers Scientist (Disabled Placeholder) -->

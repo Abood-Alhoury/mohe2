@@ -64,7 +64,7 @@
                 <label class="form-label fw-bold" style="color: var(--imperial-navy);">تصفية حسب حالة الطلب :</label>
                 <select name="status" class="form-select" onchange="this.form.submit()">
                     <option value="">-- كافة الحالات --</option>
-                    @foreach($statusesList as $st)
+                    @foreach(($filterStatusesList ?? $statusesList) as $st)
                         <option value="{{ $st }}" {{ $statusFilter == $st ? 'selected' : '' }}>{{ $st }}</option>
                     @endforeach
                 </select>
@@ -164,12 +164,18 @@
                                 <i class="fa-solid fa-circle-check me-1 text-success"></i> تم الصدور
                             </span>
                         @else
+                            @php
+                                $isFacultyPermRow = str_contains($app->request_type, 'سماح') || str_contains($app->request_type, 'هيئة تدريسية');
+                                $rowStatuses = $isFacultyPermRow 
+                                    ? ['تحت التدقيق الأولي', 'بانتظار الوثائق', 'مرفوض', 'بانتظار إصدار القرار']
+                                    : $statusesList;
+                            @endphp
                             <!-- Quick Status Update Form -->
                             <form action="{{ route('admin.applications.update_status', $app->id) }}" method="POST" class="d-inline">
                                 @csrf
                                 @method('PATCH')
                                 <select name="status" onchange="this.form.submit()" class="form-select form-select-sm fw-bold text-center" style="font-size: 0.82rem; min-width: 135px; border-color: var(--outline-variant);">
-                                    @foreach($statusesList as $st)
+                                    @foreach($rowStatuses as $st)
                                         <option value="{{ $st }}" {{ $app->status == $st ? 'selected' : '' }}>{{ $st }}</option>
                                     @endforeach
                                 </select>
@@ -180,8 +186,10 @@
                     <!-- 8. Decision Attachment & Decision Generation (PURE ICONS ONLY) -->
                     <td class="text-center align-middle">
                         @php
-                            $canGenerateEquivalence = !in_array($app->status, ['مسودة', 'مرفوض', 'بانتظار الوثائق']);
-                            $canGenerateEligibility = in_array($app->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 'تم الصدور']);
+                            $isFacultyPermission = str_contains($app->request_type, 'سماح') || str_contains($app->request_type, 'هيئة تدريسية');
+                            $canGenerateFacultyPermission = $isFacultyPermission && in_array($app->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 'تم الصدور']);
+                            $canGenerateEquivalence = !$isFacultyPermission && !in_array($app->status, ['مسودة', 'مرفوض', 'بانتظار الوثائق']);
+                            $canGenerateEligibility = !$isFacultyPermission && in_array($app->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 'تم الصدور']);
                             $canAttachDecision = in_array($app->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار']);
                         @endphp
                         <div class="d-flex align-items-center justify-content-center gap-1.5 mx-auto">
@@ -199,16 +207,28 @@
                                 </button>
                             @endif
 
-                            @if($canGenerateEquivalence)
-                                <a href="{{ route('admin.reports.generate_decision', ['id' => $app->id, 'type' => 'equivalence']) }}" class="btn btn-sm p-0 d-inline-flex align-items-center justify-content-center rounded shadow-2xs text-decoration-none" style="width: 34px; height: 34px; border: 1px solid #93c5fd; color: #1d4ed8; background-color: #eff6ff;" title="توليد قرار التعادل (التكليف)">
-                                    <i class="fa-solid fa-file-signature fs-6" style="color: #1d4ed8;"></i>
-                                </a>
-                            @endif
+                            @if($isFacultyPermission)
+                                @if($canGenerateFacultyPermission)
+                                    <a href="{{ route('admin.reports.generate_decision', ['id' => $app->id, 'type' => 'equivalence']) }}" class="btn btn-sm p-0 d-inline-flex align-items-center justify-content-center rounded shadow-2xs text-decoration-none" style="width: 34px; height: 34px; border: 1px solid #10b981; color: #047857; background-color: #ecfdf5;" title="توليد قرار السماح بالتدريس (أعضاء الهيئة التدريسية)">
+                                        <i class="fa-solid fa-chalkboard-user fs-6" style="color: #047857;"></i>
+                                    </a>
+                                @else
+                                    <button type="button" class="btn btn-sm btn-secondary opacity-50 p-0 d-inline-flex align-items-center justify-content-center rounded" style="width: 34px; height: 34px;" disabled title="توليد قرار السماح متاح فقط عندما تكون الحالة (بانتظار إصدار القرار)">
+                                        <i class="fa-solid fa-chalkboard-user fs-6 text-muted"></i>
+                                    </button>
+                                @endif
+                            @else
+                                @if($canGenerateEquivalence)
+                                    <a href="{{ route('admin.reports.generate_decision', ['id' => $app->id, 'type' => 'equivalence']) }}" class="btn btn-sm p-0 d-inline-flex align-items-center justify-content-center rounded shadow-2xs text-decoration-none" style="width: 34px; height: 34px; border: 1px solid #93c5fd; color: #1d4ed8; background-color: #eff6ff;" title="توليد قرار التعادل (التكليف)">
+                                        <i class="fa-solid fa-file-signature fs-6" style="color: #1d4ed8;"></i>
+                                    </a>
+                                @endif
 
-                            @if($canGenerateEligibility)
-                                <a href="{{ route('admin.reports.generate_decision', ['id' => $app->id, 'type' => 'eligibility']) }}" class="btn btn-sm p-0 d-inline-flex align-items-center justify-content-center rounded shadow-2xs text-decoration-none" style="width: 34px; height: 34px; border: 1px solid #c084fc; color: #7e22ce; background-color: #f3e8ff;" title="توليد قرار الأهلية (متاح بحالة بانتظار إصدار القرار فقط)">
-                                    <i class="fa-solid fa-award fs-6" style="color: #7e22ce;"></i>
-                                </a>
+                                @if($canGenerateEligibility)
+                                    <a href="{{ route('admin.reports.generate_decision', ['id' => $app->id, 'type' => 'eligibility']) }}" class="btn btn-sm p-0 d-inline-flex align-items-center justify-content-center rounded shadow-2xs text-decoration-none" style="width: 34px; height: 34px; border: 1px solid #c084fc; color: #7e22ce; background-color: #f3e8ff;" title="توليد قرار الأهلية (متاح بحالة بانتظار إصدار القرار فقط)">
+                                        <i class="fa-solid fa-award fs-6" style="color: #7e22ce;"></i>
+                                    </a>
+                                @endif
                             @endif
                         </div>
                     </td>
