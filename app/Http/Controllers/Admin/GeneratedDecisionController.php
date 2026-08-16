@@ -70,7 +70,7 @@ class GeneratedDecisionController extends Controller
 
         // Prepare Dynamic Data & Gender Attributes
         $candidateName = $this->formatCandidateFullName($candidate);
-        $genderAttrs = $this->getGenderAttributes($candidate);
+        $genderAttrs = $this->getGenderAttributes($candidate, $isDoctorate);
         $titlePrefix = $genderAttrs['titlePrefix'];
         $candidateTitle = $genderAttrs['candidateTitle'];
         $candidateTitlePrep = $genderAttrs['candidateTitlePrep'];
@@ -213,7 +213,7 @@ class GeneratedDecisionController extends Controller
         }
 
         $candidateName = $this->formatCandidateFullName($candidate);
-        $genderAttrs = $this->getGenderAttributes($candidate);
+        $genderAttrs = $this->getGenderAttributes($candidate, $isDoctorate);
         $titlePrefix = $genderAttrs['titlePrefix'];
         $candidateTitle = $genderAttrs['candidateTitle'];
         $candidateTitlePrep = $genderAttrs['candidateTitlePrep'];
@@ -540,7 +540,11 @@ class GeneratedDecisionController extends Controller
     {
         if (!$candidate) return 'غ/م';
         $fullName = trim($candidate->full_name ?? '');
+        // Strip doctor/honorific prefixes if already entered by user to avoid duplicate titles (e.g. "للدكتور د. فلان")
+        $fullName = preg_replace('/^(أ\.د\.?|د\.?|دكتور\/ة?|دكتورة|الدكتور|الدكتورة|السيد|السيدة|الآنسة)\s+/u', '', $fullName);
+        
         $fatherName = trim($candidate->father_name ?? '');
+        $fatherName = preg_replace('/^(أ\.د\.?|د\.?|دكتور\/ة?|دكتورة|الدكتور|الدكتورة|السيد|السيدة|الآنسة)\s+/u', '', $fatherName);
 
         if (empty($fatherName) || empty($fullName)) {
             return $fullName ?: 'غ/م';
