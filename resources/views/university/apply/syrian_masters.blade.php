@@ -5,9 +5,10 @@
 @section('content')
 
 @php
-    $hsEd = $draft ? $draft->educations->first(function($e) { return $e->education_level_id == 6 || (optional($e->level)->name && str_contains(optional($e->level)->name, 'ثانوية')); }) : null;
-    $baEd = $draft ? $draft->educations->first(function($e) { return $e->education_level_id == 1 || (optional($e->level)->name && str_contains(optional($e->level)->name, 'إجازة')); }) : null;
-    $maEd = $draft ? $draft->educations->first(function($e) { return $e->education_level_id == 3 || (optional($e->level)->name && str_contains(optional($e->level)->name, 'ماجستير')); }) : null;
+    $candidate = $draft ? $draft->candidate : null;
+    $hsEd = $draft ? $draft->educations->first(function($e) { return (optional($e->level)->name && str_contains(optional($e->level)->name, 'ثانوية')) || $e->education_level_id == 4 || $e->education_level_id == 6 || ($e->section_name && in_array($e->section_name, ['علمي', 'أدبي', 'تجاري', 'صناعي'])); }) : null;
+    $baEd = $draft ? $draft->educations->first(function($e) { return (optional($e->level)->name && str_contains(optional($e->level)->name, 'إجازة')) || $e->education_level_id == 1; }) : null;
+    $maEd = $draft ? $draft->educations->first(function($e) { return (optional($e->level)->name && str_contains(optional($e->level)->name, 'ماجستير')) || $e->education_level_id == 2 || $e->education_level_id == 3; }) : null;
 
     $existingFiles = [];
     if ($draft) {
@@ -40,6 +41,8 @@
                         $existingFiles['file_exp_cert'] = $att->file_path;
                     } elseif (str_contains($att->notes, 'العقود')) {
                         $existingFiles['file_contracts'] = $att->file_path;
+                    } elseif (str_contains($att->notes, 'أخرى') || str_contains($att->notes, 'اخرى')) {
+                        $existingFiles['file_other_attachments'] = $att->file_path;
                     }
                 }
             }
@@ -435,7 +438,7 @@
                     <!-- High School Cert -->
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">نسخة مصدقة أصولاً عن شهادة الدراسة الثانوية *</label>
-                        <input type="file" name="file_hs_cert" class="form-control academic-input" accept=".pdf" {{ isset($existingFiles['file_hs_cert']) ? '' : 'required' }}>
+                        <input type="file" name="file_hs_cert" id="input-fileHsCert" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['file_hs_cert']))
                             <div class="mt-1 d-flex align-items-center gap-2">
                                 <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
@@ -463,7 +466,7 @@
                     <!-- Bachelor Cert -->
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">نسخة مصدقة أصولاً عن الإجازة الجامعية الأولى *</label>
-                        <input type="file" name="file_ba_cert" class="form-control academic-input" accept=".pdf" {{ isset($existingFiles['file_ba_cert']) ? '' : 'required' }}>
+                        <input type="file" name="file_ba_cert" id="input-fileBaCert" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['file_ba_cert']))
                             <div class="mt-1 d-flex align-items-center gap-2">
                                 <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
@@ -491,7 +494,7 @@
                     <!-- Master Cert -->
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">نسخة مصدقة أصولاً عن شهادة الماجستير *</label>
-                        <input type="file" name="file_ma_cert" class="form-control academic-input" accept=".pdf" {{ isset($existingFiles['file_ma_cert']) ? '' : 'required' }}>
+                        <input type="file" name="file_ma_cert" id="input-fileMaCert" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['file_ma_cert']))
                             <div class="mt-1 d-flex align-items-center gap-2">
                                 <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
@@ -505,7 +508,7 @@
                     <!-- Master Registration / Defense dates doc -->
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">وثيقة تواريخ التسجيل والمناقشة والمنح بالماجستير *</label>
-                        <input type="file" name="file_ma_dates" class="form-control academic-input" accept=".pdf" {{ isset($existingFiles['file_ma_dates']) ? '' : 'required' }}>
+                        <input type="file" name="file_ma_dates" id="input-fileMaDates" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['file_ma_dates']))
                             <div class="mt-1 d-flex align-items-center gap-2">
                                 <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
@@ -519,7 +522,7 @@
                     <!-- Arabic Thesis Summary -->
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">ملخص باللغة العربية عن رسالة الماجستير إلكترونياً *</label>
-                        <input type="file" name="file_thesis_summary" class="form-control academic-input" accept=".pdf" {{ isset($existingFiles['file_thesis_summary']) ? '' : 'required' }}>
+                        <input type="file" name="file_thesis_summary" id="input-fileThesisSummary" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['file_thesis_summary']))
                             <div class="mt-1 d-flex align-items-center gap-2">
                                 <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
@@ -533,7 +536,7 @@
                     <!-- University Request Doc -->
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">كتاب صادر عن الجامعة يتضمن طلب تقويم درجاته العلمية *</label>
-                        <input type="file" name="file_uni_request" class="form-control academic-input" accept=".pdf" {{ isset($existingFiles['file_uni_request']) ? '' : 'required' }}>
+                        <input type="file" name="file_uni_request" id="input-fileUniRequest" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['file_uni_request']))
                             <div class="mt-1 d-flex align-items-center gap-2">
                                 <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
@@ -547,7 +550,7 @@
                     <!-- Language & ICDL Certificates -->
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">شهادة اللغة الإنكليزية + شهادة ICDL معتمدة *</label>
-                        <input type="file" name="file_lang_icdl" class="form-control academic-input" accept=".pdf" {{ isset($existingFiles['file_lang_icdl']) ? '' : 'required' }}>
+                        <input type="file" name="file_lang_icdl" id="input-fileLangIcdl" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['file_lang_icdl']))
                             <div class="mt-1 d-flex align-items-center gap-2">
                                 <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
@@ -561,7 +564,7 @@
                     <!-- CV -->
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">السيرة الذاتية للمرشح كاملة *</label>
-                        <input type="file" name="file_cv" class="form-control academic-input" accept=".pdf" {{ isset($existingFiles['file_cv']) ? '' : 'required' }}>
+                        <input type="file" name="file_cv" id="input-fileCv" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['file_cv']))
                             <div class="mt-1 d-flex align-items-center gap-2">
                                 <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
@@ -575,7 +578,7 @@
                     <!-- Payment Receipt -->
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">إيصال تسديد رسم تعادل 100,000 ل.س *</label>
-                        <input type="file" name="file_payment" class="form-control academic-input" accept=".pdf" {{ isset($existingFiles['file_payment']) ? '' : 'required' }}>
+                        <input type="file" name="file_payment" id="input-filePayment" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['file_payment']))
                             <div class="mt-1 d-flex align-items-center gap-2">
                                 <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
@@ -613,6 +616,21 @@
                             </div>
                         @endif
                     </div>
+
+                    <!-- Other Attachments (Optional) -->
+                    <div class="col-12 mt-3">
+                        <label class="form-label label-md fw-medium text-dark">مرفقات أخرى (اختياري)</label>
+                        <input type="file" name="file_other_attachments" id="input-fileOtherAttachments" class="form-control academic-input" accept=".pdf">
+                        <span class="fs-8 text-muted d-block mt-1">يمكنك رفع أي وثائق أو مستندات داعمة إضافية بصيغة (PDF - حتى 2 ميغابايت).</span>
+                        @if(isset($existingFiles['file_other_attachments']))
+                            <div class="mt-1 d-flex align-items-center gap-2">
+                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                <a href="{{ asset('storage/' . $existingFiles['file_other_attachments']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                </a>
+                            </div>
+                        @endif
+                    </div>
                 </div>
             </div>
 
@@ -633,8 +651,11 @@
                     
                     <div class="row g-4 text-dark text-start" dir="rtl" style="text-align: right;">
                         <!-- Group 1: Personal Details -->
-                        <div class="col-12 border-bottom pb-2" style="border-bottom-color: var(--outline-variant) !important;">
-                            <h6 class="fw-bold mb-3" style="color: var(--primary-container);"><i class="fa-solid fa-user me-1" style="color: var(--heritage-gold);"></i> 1. البيانات الشخصية للمرشح:</h6>
+                        <div class="col-12 border-bottom pb-3" style="border-bottom-color: var(--outline-variant) !important;">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold mb-0" style="color: var(--primary-container);"><i class="fa-solid fa-user me-1" style="color: var(--heritage-gold);"></i> 1. البيانات الشخصية للمرشح:</h6>
+                                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2.5 fs-8 fw-bold" onclick="goToStep(1)"><i class="fa-solid fa-pen-to-square me-1"></i> تعديل</button>
+                            </div>
                             <div class="row g-2">
                                 <div class="col-md-6"><strong>الاسم والكنية:</strong> <span id="preview-fullName"></span></div>
                                 <div class="col-md-6"><strong>اسم الأب:</strong> <span id="preview-fatherName"></span></div>
@@ -650,8 +671,11 @@
                         </div>
 
                         <!-- Group 2: High School -->
-                        <div class="col-12 border-bottom pb-2" style="border-bottom-color: var(--outline-variant) !important;">
-                            <h6 class="fw-bold mb-3" style="color: var(--primary-container);"><i class="fa-solid fa-graduation-cap me-1" style="color: var(--heritage-gold);"></i> 2. بيانات الشهادة الثانوية:</h6>
+                        <div class="col-12 border-bottom pb-3" style="border-bottom-color: var(--outline-variant) !important;">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold mb-0" style="color: var(--primary-container);"><i class="fa-solid fa-graduation-cap me-1" style="color: var(--heritage-gold);"></i> 2. بيانات الشهادة الثانوية:</h6>
+                                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2.5 fs-8 fw-bold" onclick="goToStep(2)"><i class="fa-solid fa-pen-to-square me-1"></i> تعديل</button>
+                            </div>
                             <div class="row g-2">
                                 <div class="col-md-6"><strong>الدولة المانحة:</strong> <span id="preview-hsCountry"></span></div>
                                 <div class="col-md-6"><strong>نوع البكالوريا:</strong> <span id="preview-hsType"></span></div>
@@ -661,8 +685,11 @@
                         </div>
 
                         <!-- Group 3: Bachelor's -->
-                        <div class="col-12 border-bottom pb-2" style="border-bottom-color: var(--outline-variant) !important;">
-                            <h6 class="fw-bold mb-3" style="color: var(--primary-container);"><i class="fa-solid fa-building-columns me-1" style="color: var(--heritage-gold);"></i> 3. بيانات الإجازة الجامعية الأولى (البكالوريوس):</h6>
+                        <div class="col-12 border-bottom pb-3" style="border-bottom-color: var(--outline-variant) !important;">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold mb-0" style="color: var(--primary-container);"><i class="fa-solid fa-building-columns me-1" style="color: var(--heritage-gold);"></i> 3. بيانات الإجازة الجامعية الأولى (البكالوريوس):</h6>
+                                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2.5 fs-8 fw-bold" onclick="goToStep(3)"><i class="fa-solid fa-pen-to-square me-1"></i> تعديل</button>
+                            </div>
                             <div class="row g-2">
                                 <div class="col-md-6"><strong>الدولة المانحة:</strong> <span id="preview-baCountry"></span></div>
                                 <div class="col-md-6"><strong>الجامعة المانحة / الجهة المانحة:</strong> <span id="preview-baUni"></span></div>
@@ -676,8 +703,11 @@
                         </div>
 
                         <!-- Group 4: Master's -->
-                        <div class="col-12 border-bottom pb-2" style="border-bottom-color: var(--outline-variant) !important;">
-                            <h6 class="fw-bold mb-3" style="color: var(--primary-container);"><i class="fa-solid fa-graduation-cap me-1" style="color: var(--heritage-gold);"></i> 4. بيانات درجة الماجستير والخبرة التدريسية:</h6>
+                        <div class="col-12 border-bottom pb-3" style="border-bottom-color: var(--outline-variant) !important;">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold mb-0" style="color: var(--primary-container);"><i class="fa-solid fa-graduation-cap me-1" style="color: var(--heritage-gold);"></i> 4. بيانات درجة الماجستير والخبرة التدريسية:</h6>
+                                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2.5 fs-8 fw-bold" onclick="goToStep(4)"><i class="fa-solid fa-pen-to-square me-1"></i> تعديل</button>
+                            </div>
                             <div class="row g-2">
                                 <div class="col-md-6"><strong>الجامعة المانحة (سورية):</strong> <span id="preview-maUni"></span></div>
                                 <div class="col-md-6"><strong>التخصص العام:</strong> <span id="preview-maFaculty"></span></div>
@@ -699,27 +729,15 @@
                             </div>
                         </div>
 
-                        <!-- Group 5: Request & Courses -->
+                        <!-- Group 5: University Evaluation Request -->
                         <div class="col-12">
-                            <h6 class="fw-bold mb-3" style="color: var(--primary-container);"><i class="fa-solid fa-file-signature me-1" style="color: var(--heritage-gold);"></i> 5. كتاب طلب الجامعة والمقررات المرشح لتدريسها:</h6>
-                            <div class="row g-2 mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold mb-0" style="color: var(--primary-container);"><i class="fa-solid fa-file-signature me-1" style="color: var(--heritage-gold);"></i> 5. كتاب طلب التقويم الصادر عن الجامعة:</h6>
+                                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2.5 fs-8 fw-bold" onclick="goToStep(1)"><i class="fa-solid fa-pen-to-square me-1"></i> تعديل</button>
+                            </div>
+                            <div class="row g-2">
                                 <div class="col-md-6"><strong>رقم كتاب الجامعة:</strong> <span id="preview-reqNo"></span></div>
                                 <div class="col-md-6"><strong>تاريخ كتاب الجامعة:</strong> <span id="preview-reqDate"></span></div>
-                            </div>
-                            <strong>المقررات المقترحة لتدريسها:</strong>
-                            <div class="table-responsive mt-2">
-                                <table class="table mohe-table text-center align-middle">
-                                    <thead>
-                                        <tr>
-                                            <th>اسم المقرر الدراسي</th>
-                                            <th>الكلية</th>
-                                            <th>القسم</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="preview-courses-tbody">
-                                        <!-- Will be dynamically populated via JS -->
-                                    </tbody>
-                                </table>
                             </div>
                         </div>
                     </div>
@@ -770,39 +788,6 @@
     let currentStep = 1;
     const totalSteps = 6;
     const syriaCountryId = "{{ $syriaId }}";
-
-    // Initialize course row counter
-    let courseCount = 1;
-
-    function addCourseRow() {
-        const tbody = document.getElementById('courses-tbody');
-        const newRow = document.createElement('tr');
-        newRow.innerHTML = `
-            <td>
-                <input type="text" name="courses[${courseCount}][name]" class="form-control form-control-sm academic-input course-name-input" placeholder="مثال: معمارية الحاسب" required>
-            </td>
-            <td>
-                <input type="text" name="courses[${courseCount}][faculty]" class="form-control form-control-sm academic-input course-faculty-input" placeholder="مثال: هندسة المعلوماتية" required>
-            </td>
-            <td>
-                <input type="text" name="courses[${courseCount}][department]" class="form-control form-control-sm academic-input course-dept-input" placeholder="مثال: قسم البرمجيات" required>
-            </td>
-            <td class="text-center">
-                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeCourseRow(this)">
-                    <i class="fa-solid fa-trash"></i>
-                </button>
-            </td>
-        `;
-        tbody.appendChild(newRow);
-        courseCount++;
-    }
-
-    function removeCourseRow(btn) {
-        const tbody = document.getElementById('courses-tbody');
-        if (tbody.rows.length > 1) {
-            btn.closest('tr').remove();
-        }
-    }
 
     // Toggle experience details
     function toggleExperienceSection(checkbox) {
@@ -994,8 +979,81 @@
                         emailInput.setCustomValidity('');
                     }
                 }
+            } else if (currentStep === 2) {
+                // Step 2: High School Info Validation
+                const hsCountry = document.getElementById('input-hsCountry');
+                if (hsCountry && hsCountry.value != syriaCountryId) {
+                    const decNo = document.getElementById('input-hsDecisionNo');
+                    const decDate = document.getElementById('input-hsDecisionDate');
+                    if (decNo && !decNo.value.trim()) {
+                        decNo.setCustomValidity('يرجى إدخال رقم قرار معادلة الشهادة الثانوية غير السورية للمتابعة.');
+                        decNo.reportValidity();
+                        decNo.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        decNo.focus();
+                        return;
+                    } else if (decNo) {
+                        decNo.setCustomValidity('');
+                    }
+
+                    if (decDate && !decDate.value) {
+                        decDate.setCustomValidity('يرجى إدخال تاريخ قرار معادلة الشهادة الثانوية غير السورية للمتابعة.');
+                        decDate.reportValidity();
+                        decDate.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        decDate.focus();
+                        return;
+                    } else if (decDate) {
+                        decDate.setCustomValidity('');
+                    }
+                }
             } else if (currentStep === 3) {
                 // Step 3: Bachelor's Degree Info Validation
+                const baCountry = document.getElementById('input-baCountry');
+                if (baCountry && baCountry.value != syriaCountryId) {
+                    const uniOther = document.getElementById('input-baUniOther');
+                    if (uniOther && !uniOther.value.trim()) {
+                        uniOther.setCustomValidity('يرجى إدخال اسم الجامعة الأجنبية / الجهة المانحة.');
+                        uniOther.reportValidity();
+                        uniOther.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        uniOther.focus();
+                        return;
+                    } else if (uniOther) {
+                        uniOther.setCustomValidity('');
+                    }
+
+                    const decNo = document.getElementById('input-baDecisionNo');
+                    const decDate = document.getElementById('input-baDecisionDate');
+                    if (decNo && !decNo.value.trim()) {
+                        decNo.setCustomValidity('يرجى إدخال رقم قرار تعادل الإجازة الجامعية الأولى غير السورية للمتابعة.');
+                        decNo.reportValidity();
+                        decNo.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        decNo.focus();
+                        return;
+                    } else if (decNo) {
+                        decNo.setCustomValidity('');
+                    }
+
+                    if (decDate && !decDate.value) {
+                        decDate.setCustomValidity('يرجى إدخال تاريخ قرار تعادل الإجازة الجامعية الأولى غير السورية للمتابعة.');
+                        decDate.reportValidity();
+                        decDate.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        decDate.focus();
+                        return;
+                    } else if (decDate) {
+                        decDate.setCustomValidity('');
+                    }
+                } else if (baCountry) {
+                    const uniId = document.getElementById('input-baUniId');
+                    if (uniId && !uniId.value) {
+                        uniId.setCustomValidity('يرجى اختيار الجامعة المانحة للإجازة.');
+                        uniId.reportValidity();
+                        uniId.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        uniId.focus();
+                        return;
+                    } else if (uniId) {
+                        uniId.setCustomValidity('');
+                    }
+                }
+
                 const baRegInput = document.getElementById('input-baRegDate');
                 const baGrantInput = document.getElementById('input-baGrantDate');
 
@@ -1006,10 +1064,14 @@
                     if (grantDate <= regDate) {
                         baGrantInput.setCustomValidity('تاريخ التخرج من الإجازة يجب أن يكون بعد تاريخ التسجيل بالإجازة.');
                         baGrantInput.reportValidity();
+                        baGrantInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        baGrantInput.focus();
                         return;
                     } else if (grantDate > todayStr) {
                         baGrantInput.setCustomValidity('تاريخ التخرج من الإجازة يجب أن يكون قبل أو يساوي اليوم الحالي وليس في المستقبل.');
                         baGrantInput.reportValidity();
+                        baGrantInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        baGrantInput.focus();
                         return;
                     } else {
                         baGrantInput.setCustomValidity('');
@@ -1051,16 +1113,57 @@
                     }
                 }
             } else if (currentStep === 5) {
-                // Step 5: University Request Details Validation
-                const reqNoInput = document.getElementById('input-reqNo');
-                if (reqNoInput) {
-                    const reqNoVal = reqNoInput.value.trim();
-                    if (!/^[0-9]+$/.test(reqNoVal)) {
-                        reqNoInput.setCustomValidity('رقم كتاب طلب التقويم الصادر عن الجامعة يجب أن يحتوي على أرقام فقط.');
-                        reqNoInput.reportValidity();
-                        return;
-                    } else {
-                        reqNoInput.setCustomValidity('');
+                // Step 5: Attachments Validation for Syrian Masters
+                const requiredAttachments = [
+                    { id: 'input-fileHsCert', name: 'شهادة الدراسة الثانوية' },
+                    { id: 'input-fileBaCert', name: 'شهادة الإجازة الجامعة (البكالوريوس)' },
+                    { id: 'input-fileMaCert', name: 'شهادة الماجستير السورية المصدقة أصولاً' },
+                    { id: 'input-fileMaDates', name: 'وثيقة تواريخ التسجيل والمناقشة والمنح بالماجستير' },
+                    { id: 'input-fileThesisSummary', name: 'ملخص عن رسالة الماجستير باللغة العربية' },
+                    { id: 'input-fileLangIcdl', name: 'شهادة اللغة الإنكليزية + شهادة ICDL معتمدة' },
+                    { id: 'input-filePayment', name: 'إيصال تسديد رسم تعادل 100,000 ل.س للماجستير' },
+                    { id: 'input-fileUniRequest', name: 'كتاب طلب التقويم الصادر عن الجامعة' },
+                    { id: 'input-fileCv', name: 'السيرة الذاتية للمرشح' }
+                ];
+
+                // Check non-syrian high school decision
+                const hsCountry = document.getElementById('input-hsCountry');
+                const hsDecisionNo = document.getElementById('input-hsDecisionNo');
+                const hsDecisionDate = document.getElementById('input-hsDecisionDate');
+                if ((hsCountry && hsCountry.value != syriaCountryId) || (hsDecisionNo && hsDecisionNo.value.trim() !== '') || (hsDecisionDate && hsDecisionDate.value !== '')) {
+                    requiredAttachments.push({ id: 'input-hsDecisionFile', name: 'قرار معادلة الشهادة الثانوية غير السورية' });
+                }
+
+                // Check non-syrian bachelor decision
+                const baCountry = document.getElementById('input-baCountry');
+                const baDecisionNo = document.getElementById('input-baDecisionNo');
+                const baDecisionDate = document.getElementById('input-baDecisionDate');
+                if ((baCountry && baCountry.value != syriaCountryId) || (baDecisionNo && baDecisionNo.value.trim() !== '') || (baDecisionDate && baDecisionDate.value !== '')) {
+                    requiredAttachments.push({ id: 'input-baDecisionFile', name: 'قرار معادلة الإجازة الجامعية غير السورية' });
+                }
+
+                // Check experience certificate if has_experience is checked
+                const hasExp = document.getElementById('input-hasExperience');
+                if (hasExp && hasExp.checked) {
+                    requiredAttachments.push({ id: 'input-fileExpCert', name: 'شهادة خبرة لا تقل عن سنتين ما بعد الدرجة' });
+                }
+
+                for (const att of requiredAttachments) {
+                    const inputEl = document.getElementById(att.id);
+                    if (inputEl) {
+                        const hasFile = inputEl.files && inputEl.files.length > 0;
+                        const parentContainer = inputEl.closest('.col-md-6, .col-12');
+                        const isAlreadyUploaded = parentContainer && parentContainer.querySelector('.badge.bg-success-subtle');
+
+                        if (!hasFile && !isAlreadyUploaded) {
+                            inputEl.setCustomValidity(`يرجى رفع ملف (${att.name}) بصيغة PDF للمتابعة.`);
+                            inputEl.reportValidity();
+                            inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            inputEl.focus();
+                            return;
+                        } else {
+                            inputEl.setCustomValidity('');
+                        }
                     }
                 }
             }
@@ -1130,6 +1233,23 @@
         }
     }
 
+    function goToStep(step) {
+        if (step >= 1 && step <= totalSteps) {
+            currentStep = step;
+            showStep(currentStep);
+            window.scrollTo({ top: 150, behavior: 'smooth' });
+        }
+    }
+
+    function formatDateDisplay(val) {
+        if (!val || val === '-') return '-';
+        const match = String(val).match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (match) {
+            return `${match[3]}/${match[2]}/${match[1]}`;
+        }
+        return val;
+    }
+
     function updateReportPreview() {
         // Personal details
         document.getElementById('preview-fullName').innerText = document.getElementById('input-fullName').value;
@@ -1138,7 +1258,7 @@
         
         const nationalitySelect = document.getElementById('input-nationality');
         document.getElementById('preview-nationalId').innerText = document.getElementById('input-nationalId').value;
-        document.getElementById('preview-dob').innerText = document.getElementById('input-dob').value;
+        document.getElementById('preview-dob').innerText = formatDateDisplay(document.getElementById('input-dob').value);
         document.getElementById('preview-jobTitle').innerText = document.getElementById('input-jobTitle').value;
         document.getElementById('preview-gender').innerText = document.getElementById('input-gender').value;
         document.getElementById('preview-email').innerText = document.getElementById('input-email').value;
@@ -1149,7 +1269,7 @@
         const hsCountrySelect = document.getElementById('input-hsCountry');
         document.getElementById('preview-hsCountry').innerText = hsCountrySelect.options[hsCountrySelect.selectedIndex].text;
         document.getElementById('preview-hsType').innerText = document.getElementById('input-hsType').value;
-        document.getElementById('preview-hsDate').innerText = document.getElementById('input-hsDate').value;
+        document.getElementById('preview-hsDate').innerText = formatDateDisplay(document.getElementById('input-hsDate').value);
         
         if (hsCountrySelect.value != syriaCountryId) {
             document.getElementById('preview-hsDecisionContainer').style.display = 'block';
@@ -1174,8 +1294,8 @@
         document.getElementById('preview-baFaculty').innerText = document.getElementById('input-baFaculty').value;
         document.getElementById('preview-baDept').innerText = document.getElementById('input-baDept').value;
         document.getElementById('preview-baRank').innerText = document.getElementById('input-baRank').value;
-        document.getElementById('preview-baRegDate').innerText = document.getElementById('input-baRegDate').value;
-        document.getElementById('preview-baGrantDate').innerText = document.getElementById('input-baGrantDate').value;
+        document.getElementById('preview-baRegDate').innerText = formatDateDisplay(document.getElementById('input-baRegDate').value);
+        document.getElementById('preview-baGrantDate').innerText = formatDateDisplay(document.getElementById('input-baGrantDate').value);
 
         // MA details
         const maUniSelect = document.getElementById('input-maUniId');
@@ -1184,9 +1304,9 @@
         document.getElementById('preview-maDept').innerText = document.getElementById('input-maDept').value;
         document.getElementById('preview-maRank').innerText = document.getElementById('input-maRank').value;
         document.getElementById('preview-maSupervisor').innerText = document.getElementById('input-maSupervisor').value;
-        document.getElementById('preview-maRegDate').innerText = document.getElementById('input-maRegDate').value;
-        document.getElementById('preview-maDefDate').innerText = document.getElementById('input-maDefDate').value;
-        document.getElementById('preview-maGrantDate').innerText = document.getElementById('input-maGrantDate').value;
+        document.getElementById('preview-maRegDate').innerText = formatDateDisplay(document.getElementById('input-maRegDate').value);
+        document.getElementById('preview-maDefDate').innerText = formatDateDisplay(document.getElementById('input-maDefDate').value);
+        document.getElementById('preview-maGrantDate').innerText = formatDateDisplay(document.getElementById('input-maGrantDate').value);
         document.getElementById('preview-maThesisTitle').innerText = document.getElementById('input-maThesisTitle').value;
 
         // Experience
@@ -1194,37 +1314,15 @@
         if (hasExp) {
             document.getElementById('preview-experience-container').style.display = 'block';
             document.getElementById('preview-expPlace').innerText = document.getElementById('input-expPlace').value;
-            document.getElementById('preview-expFrom').innerText = document.getElementById('input-expFrom').value;
-            document.getElementById('preview-expTo').innerText = document.getElementById('input-expTo').value;
+            document.getElementById('preview-expFrom').innerText = formatDateDisplay(document.getElementById('input-expFrom').value);
+            document.getElementById('preview-expTo').innerText = formatDateDisplay(document.getElementById('input-expTo').value);
         } else {
             document.getElementById('preview-experience-container').style.display = 'none';
         }
 
-        // Request & Courses
+        // Request
         document.getElementById('preview-reqNo').innerText = document.getElementById('input-reqNo').value;
-        document.getElementById('preview-reqDate').innerText = document.getElementById('input-reqDate').value;
-
-        // Populate course preview table
-        const previewCoursesTbody = document.getElementById('preview-courses-tbody');
-        previewCoursesTbody.innerHTML = '';
-        
-        const names = document.querySelectorAll('.course-name-input');
-        const faculties = document.querySelectorAll('.course-faculty-input');
-        const departments = document.querySelectorAll('.course-dept-input');
-
-        names.forEach((nameInput, index) => {
-            const nameVal = nameInput.value;
-            const facVal = faculties[index] ? faculties[index].value : '';
-            const deptVal = departments[index] ? departments[index].value : '';
-
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${nameVal}</td>
-                <td>${facVal}</td>
-                <td>${deptVal}</td>
-            `;
-            previewCoursesTbody.appendChild(row);
-        });
+        document.getElementById('preview-reqDate').innerText = formatDateDisplay(document.getElementById('input-reqDate').value);
     }
 
     function toggleCandidateLookupBox(show) {
@@ -1375,14 +1473,22 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+        const hsCountry = document.getElementById('input-hsCountry');
+        if (hsCountry) toggleHsCountrySection(hsCountry);
+
+        const baCountry = document.getElementById('input-baCountry');
+        if (baCountry) toggleBaCountrySection(baCountry);
+
         checkMasterGrantDateForExperience();
-        @if(isset($candidate) && $candidate)
-            const lookupInput = document.getElementById('candidate_search_input');
-            if (lookupInput) {
-                lookupInput.value = '{{ $candidate->national_id }}';
-                performCandidateLookup();
-            }
-        @endif
+
+        const initialStep = {{ request('step', 1) }};
+        showStep(initialStep);
+
+        document.querySelectorAll('input[type="file"]').forEach(input => {
+            input.addEventListener('change', function() {
+                this.setCustomValidity('');
+            });
+        });
     });
 </script>
 @endpush

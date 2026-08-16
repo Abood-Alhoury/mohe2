@@ -447,6 +447,29 @@
         });
     </script>
 
+    <!-- Native System Calendar & DD/MM/YYYY Format & Alert Dismissal -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('input[type="date"]').forEach(function(input) {
+                input.setAttribute('lang', 'en-GB'); // Renders day/month/year order natively in browser
+                input.style.direction = 'ltr';
+                input.style.textAlign = 'right';
+            });
+        });
+
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('[data-bs-dismiss="alert"]');
+            if (btn) {
+                const alertEl = btn.closest('.alert');
+                if (alertEl) {
+                    alertEl.style.transition = 'opacity 0.2s ease';
+                    alertEl.style.opacity = '0';
+                    setTimeout(() => alertEl.remove(), 200);
+                }
+            }
+        });
+    </script>
+
     @stack('scripts')
 </body>
 </html>

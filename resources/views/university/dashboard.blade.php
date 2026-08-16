@@ -124,34 +124,6 @@
             </div>
         </div>
     </div>
-<!-- Success Flash Alert with Direct PDF Download Link & Auto-dismiss -->
-@if(session('success'))
-<div x-data="{ showAlert: true }" 
-     x-show="showAlert" 
-     x-init="setTimeout(() => showAlert = false, 2500)" 
-     x-transition:leave="transition ease-in duration-400"
-     x-transition:leave-start="opacity-100"
-     x-transition:leave-end="opacity-0"
-     class="alert alert-dismissible fade show border-0 shadow-sm d-flex flex-wrap align-items-center justify-content-between mb-4 p-3.5 position-relative" 
-     role="alert" 
-     style="background-color: #E6F4EA; border-right: 4px solid #137333 !important; border-radius: 6px;">
-    <div class="d-flex align-items-center gap-3 pe-4">
-        <i class="fa-solid fa-circle-check fs-2" style="color: #137333;"></i>
-        <div>
-            <h6 class="fw-bold mb-1" style="color: #137333; font-size: 1.05rem;">{{ session('success') }}</h6>
-            <p class="mb-0 small text-muted">يمكنك الآن متابعة المعاملة في جدول الطلبات أسفله أو تحميل وطباعة تقرير الطلب.</p>
-        </div>
-    </div>
-    <div class="d-flex align-items-center gap-2 mt-2 mt-md-0">
-        @if(session('submitted_app_id'))
-        <a href="{{ route('university.applications.download_pdf', session('submitted_app_id')) }}" target="_blank" class="btn btn-gold-cta px-3 py-2 fw-bold text-decoration-none shadow-sm">
-            <i class="fa-solid fa-file-pdf me-1 fs-5"></i> 📥 تحميل وطباعة تقرير الطلب (PDF)
-        </a>
-        @endif
-        <button type="button" @click="showAlert = false" class="btn-close ms-2" aria-label="Close"></button>
-    </div>
-</div>
-@endif
 
 <!-- Site Closed Alert Notice -->
 @if(!empty($siteLocked) && $siteLocked)

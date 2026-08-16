@@ -88,12 +88,18 @@
                 <div class="btn-group shadow-2xs rounded" role="group">
                     <a href="{{ route('admin.reports.generate_decision', ['id' => $application->id, 'type' => 'equivalence']) }}" 
                        class="btn btn-sm fw-bold px-3 py-2 {{ $docType === 'equivalence' ? 'btn-solid-navy' : 'btn-outline-navy' }}">
-                        <i class="fa-solid fa-file-signature me-1.5"></i> 1. قرار المعادلة
+                        <i class="fa-solid fa-file-signature me-1.5"></i> 1. قرار التعادل (المعادلة)
                     </a>
-                    <a href="{{ route('admin.reports.generate_decision', ['id' => $application->id, 'type' => 'eligibility']) }}" 
-                       class="btn btn-sm fw-bold px-3 py-2 {{ $docType === 'eligibility' ? 'btn-solid-navy' : 'btn-outline-navy' }}">
-                        <i class="fa-solid fa-award me-1.5"></i> 2. قرار الأهلية
-                    </a>
+                    @if($canEligibility)
+                        <a href="{{ route('admin.reports.generate_decision', ['id' => $application->id, 'type' => 'eligibility']) }}" 
+                           class="btn btn-sm fw-bold px-3 py-2 {{ $docType === 'eligibility' ? 'btn-solid-navy' : 'btn-outline-navy' }}">
+                            <i class="fa-solid fa-award me-1.5"></i> 2. قرار الأهلية
+                        </a>
+                    @else
+                        <button type="button" class="btn btn-sm btn-outline-secondary fw-bold px-3 py-2 opacity-60" disabled title="قرار الأهلية متاح فقط عندما تكون حالة الطلب (بانتظار إصدار القرار) بعد اجتياز المقابلة">
+                            <i class="fa-solid fa-lock me-1.5"></i> 2. قرار الأهلية (بانتظار إصدار القرار فقط)
+                        </button>
+                    @endif
                 </div>
             </div>
 

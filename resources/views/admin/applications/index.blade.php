@@ -180,7 +180,8 @@
                     <!-- 8. Decision Attachment & Decision Generation (PURE ICONS ONLY) -->
                     <td class="text-center align-middle">
                         @php
-                            $canGenerateDecision = in_array($app->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 'تم الصدور']);
+                            $canGenerateEquivalence = !in_array($app->status, ['مسودة', 'مرفوض', 'بانتظار الوثائق']);
+                            $canGenerateEligibility = in_array($app->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 'تم الصدور']);
                             $canAttachDecision = in_array($app->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار']);
                         @endphp
                         <div class="d-flex align-items-center justify-content-center gap-1.5 mx-auto">
@@ -198,11 +199,14 @@
                                 </button>
                             @endif
 
-                            @if($canGenerateDecision)
-                                <a href="{{ route('admin.reports.generate_decision', ['id' => $app->id, 'type' => 'equivalence']) }}" class="btn btn-sm p-0 d-inline-flex align-items-center justify-content-center rounded shadow-2xs text-decoration-none" style="width: 34px; height: 34px; border: 1px solid #93c5fd; color: #1d4ed8; background-color: #eff6ff;" title="توليد قرار المعادلة (التكليف)">
+                            @if($canGenerateEquivalence)
+                                <a href="{{ route('admin.reports.generate_decision', ['id' => $app->id, 'type' => 'equivalence']) }}" class="btn btn-sm p-0 d-inline-flex align-items-center justify-content-center rounded shadow-2xs text-decoration-none" style="width: 34px; height: 34px; border: 1px solid #93c5fd; color: #1d4ed8; background-color: #eff6ff;" title="توليد قرار التعادل (التكليف)">
                                     <i class="fa-solid fa-file-signature fs-6" style="color: #1d4ed8;"></i>
                                 </a>
-                                <a href="{{ route('admin.reports.generate_decision', ['id' => $app->id, 'type' => 'eligibility']) }}" class="btn btn-sm p-0 d-inline-flex align-items-center justify-content-center rounded shadow-2xs text-decoration-none" style="width: 34px; height: 34px; border: 1px solid #c084fc; color: #7e22ce; background-color: #f3e8ff;" title="توليد قرار الأهلية (الكليشيه الجديد)">
+                            @endif
+
+                            @if($canGenerateEligibility)
+                                <a href="{{ route('admin.reports.generate_decision', ['id' => $app->id, 'type' => 'eligibility']) }}" class="btn btn-sm p-0 d-inline-flex align-items-center justify-content-center rounded shadow-2xs text-decoration-none" style="width: 34px; height: 34px; border: 1px solid #c084fc; color: #7e22ce; background-color: #f3e8ff;" title="توليد قرار الأهلية (متاح بحالة بانتظار إصدار القرار فقط)">
                                     <i class="fa-solid fa-award fs-6" style="color: #7e22ce;"></i>
                                 </a>
                             @endif

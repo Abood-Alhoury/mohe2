@@ -35,7 +35,7 @@
             </div>
             <div class="col-6 col-md-3">
                 <span class="text-muted fs-8 d-block fw-bold">تاريخ تقديم الطلب</span>
-                <span class="fw-bold fs-6 text-secondary">{{ $application->created_at ? $application->created_at->format('Y-m-d H:i') : '' }}</span>
+                <span class="fw-bold fs-6 text-secondary">{{ $application->created_at ? $application->created_at->format('d/m/Y H:i') : '' }}</span>
             </div>
             <div class="col-6 col-md-3">
                 <span class="text-muted fs-8 d-block fw-bold">حالة الطلب الحالية</span>

@@ -401,6 +401,10 @@ class DashboardController extends Controller
             ->where('work_university_id', $user->university_id)
             ->firstOrFail();
 
+        if (str_contains($application->request_type, 'دكتوراه') || $application->educations()->whereHas('level', function($q) { $q->where('name', 'like', '%دكتوراه%'); })->exists()) {
+            return redirect()->route('university.apply.syrian_doctorate', ['draft_id' => $application->id]);
+        }
+
         return redirect()->route('university.apply.syrian_masters', ['draft_id' => $application->id]);
     }
 

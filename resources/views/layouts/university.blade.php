@@ -369,18 +369,14 @@
         <main class="flex-grow-1 p-4">
             <!-- Flash Alert Messages -->
             @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 mb-4" id="autoDismissAlert" role="alert" style="border-right: 4px solid #059669 !important;">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div>
-                            <i class="fa-solid fa-circle-check me-2 fs-5 text-success"></i> {{ session('success') }}
-                        </div>
-                        <button type="button" class="btn-close ms-2" data-bs-dismiss="alert" aria-label="إغلاق"></button>
-                    </div>
+                <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 mb-4" id="autoDismissAlertUni" role="alert" style="border-right: 4px solid #059669 !important;">
+                    <i class="fa-solid fa-circle-check me-2"></i> {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="إغلاق"></button>
                 </div>
                 <script>
                     document.addEventListener('DOMContentLoaded', function() {
                         setTimeout(function() {
-                            var alertEl = document.getElementById('autoDismissAlert');
+                            var alertEl = document.getElementById('autoDismissAlertUni');
                             if (alertEl) {
                                 alertEl.style.transition = 'opacity 0.6s ease';
                                 alertEl.style.opacity = '0';
@@ -394,7 +390,7 @@
             @if(session('error'))
                 <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 mb-4" role="alert" style="border-right: 4px solid #ba1a1a !important;">
                     <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ session('error') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="إغلاق"></button>
                 </div>
             @endif
 
@@ -420,6 +416,29 @@
                         alert('⚠️ عذراً! حجم الملف المرفق (' + fileSizeMB + ' ميغابايت) يتجاوز الحد الأقصى المسموح به (2 ميغابايت).\nيرجى اختيار ملف بحجم أصغر لضمان عدم امتلاء السيرفر.');
                         e.target.value = '';
                     }
+                }
+            }
+        });
+    </script>
+
+    <!-- Native System Calendar & DD/MM/YYYY Format & Alert Dismissal -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('input[type="date"]').forEach(function(input) {
+                input.setAttribute('lang', 'en-GB'); // Renders day/month/year order natively in browser
+                input.style.direction = 'ltr';
+                input.style.textAlign = 'right';
+            });
+        });
+
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('[data-bs-dismiss="alert"]');
+            if (btn) {
+                const alertEl = btn.closest('.alert');
+                if (alertEl) {
+                    alertEl.style.transition = 'opacity 0.2s ease';
+                    alertEl.style.opacity = '0';
+                    setTimeout(() => alertEl.remove(), 200);
                 }
             }
         });

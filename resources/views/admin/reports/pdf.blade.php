@@ -112,7 +112,7 @@
                 </div>
             </div>
             <div class="text-end">
-                <div class="fw-bold" style="color: var(--imperial-navy);">التاريخ: {{ date('Y-m-d') }}</div>
+                <div class="fw-bold" style="color: var(--imperial-navy);">التاريخ: {{ date('d/m/Y') }}</div>
                 <div class="text-muted fs-7">التقرير الإحصائي العام</div>
             </div>
         </div>

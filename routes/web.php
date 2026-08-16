@@ -116,6 +116,10 @@ Route::prefix('university')->middleware(['auth', 'role:university'])->group(func
     // Wizard: Syrian Master's step-by-step
     Route::get('/apply/syrian-masters', [ApplicationWizardController::class, 'showSyrianMastersWizard'])->name('university.apply.syrian_masters');
     Route::post('/apply/syrian-masters', [ApplicationWizardController::class, 'submitSyrianMastersWizard'])->name('university.apply.syrian_masters.submit');
+
+    // Wizard: Syrian Doctorate step-by-step
+    Route::get('/apply/syrian-doctorate', [ApplicationWizardController::class, 'showSyrianDoctorateWizard'])->name('university.apply.syrian_doctorate');
+    Route::post('/apply/syrian-doctorate', [ApplicationWizardController::class, 'submitSyrianDoctorateWizard'])->name('university.apply.syrian_doctorate.submit');
     
     // Candidate Lookup API (for candidate info auto-fill)
     Route::get('/candidate/lookup', [ApplicationWizardController::class, 'lookupCandidate'])->name('university.candidate.lookup');

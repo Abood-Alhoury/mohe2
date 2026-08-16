@@ -25,17 +25,17 @@
         </a>
     </div>
 
-    <!-- Option 2: Syrian Doctorate (Disabled Placeholder) -->
+    <!-- Option 2: Syrian Doctorate (ACTIVE) -->
     <div class="col-md-4">
-        <div class="card text-center p-4 h-100 text-decoration-none mohe-card disabled-option-card position-relative" style="border-radius: 8px;">
-            <div class="card-option-badge bg-secondary text-white border-0">قريباً</div>
-            <div class="option-icon-wrapper bg-light mx-auto mb-3">
-                <i class="fa-solid fa-user-graduate fs-1 text-muted"></i>
+        <a href="{{ route('university.apply.syrian_doctorate') }}" class="card text-center p-4 h-100 text-decoration-none mohe-card active-option-card position-relative" style="border-radius: 8px; border-top: 3.5px solid var(--heritage-gold) !important;">
+            <div class="card-option-badge">متاح للتقديم</div>
+            <div class="option-icon-wrapper mx-auto mb-3">
+                <i class="fa-solid fa-user-graduate fs-1" style="color: var(--heritage-gold);"></i>
             </div>
-            <h5 class="fw-bold text-muted mb-1">دكتوراه سورية</h5>
+            <h5 class="fw-bold mb-1" style="color: var(--primary-container);">دكتوراه سورية</h5>
             <span class="label-sm text-muted d-block mb-3">Syrian Doctorate</span>
             <p class="body-md small text-muted mb-0">لتعادل درجة الدكتوراه الصادرة عن إحدى الجامعات السورية الحكومية أو الخاصة.</p>
-        </div>
+        </a>
     </div>
 
     <!-- Option 3: Non-Syrian Master's (Disabled Placeholder) -->

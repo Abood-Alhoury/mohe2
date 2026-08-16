@@ -382,7 +382,7 @@
                     <i class="fa-solid fa-shield-halved me-1"></i> بوابة حكومية رسمية
                 </span>
                 <span class="text-white-50 d-none d-md-inline" style="font-size: 0.8rem;">
-                    <i class="fa-regular fa-clock me-1"></i> {{ date('Y-m-d') }}
+                    <i class="fa-regular fa-clock me-1"></i> {{ date('d/m/Y') }}
                 </span>
             </div>
         </div>
