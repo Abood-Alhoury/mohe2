@@ -67,7 +67,7 @@
         <div class="card-body p-4 bg-white">
             <div class="row g-3">
                 <div class="col-md-4">
-                    <label class="form-label fw-bold" style="color: var(--primary-container);">الاسم الكامل للمرشح :</label>
+                    <label class="form-label fw-bold" style="color: var(--primary-container);">اسم المرشح :</label>
                     <input type="text" name="candidate[full_name]" class="form-control" value="{{ $candidate->full_name }}" required>
                 </div>
                 <div class="col-md-4">

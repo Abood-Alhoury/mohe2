@@ -5,25 +5,28 @@
 @section('content')
 
 <!-- NAV TABS FOR DECISION TYPES -->
-<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
-    <div class="btn-group shadow-2xs rounded" role="group">
-        <a href="{{ route('admin.decisions.index') }}" class="btn btn-outline-navy fw-bold px-3.5 py-2">
-            <i class="fa-solid fa-graduation-cap me-1.5"></i> 1. قرارات التعادل والأهلية (ماجستير / دكتوراه)
-        </a>
-        <a href="{{ route('admin.faculty_decisions.index') }}" class="btn btn-solid-navy fw-bold px-3.5 py-2">
-            <i class="fa-solid fa-stamp me-1.5" style="color: var(--heritage-gold-light);"></i> 2. قرارات السماح بالتدريس (الهيئة التدريسية)
-        </a>
-    </div>
-    <span class="fs-8 text-muted fw-bold">صفحة مستقلة لإدارة وإصدار قرارات السماح بالتدريس الخاصة بأعضاء الهيئة التدريسية</span>
+<div class="d-flex align-items-center justify-content-start mb-4 flex-wrap gap-2.5" role="tablist">
+    <a href="{{ route('admin.decisions.index') }}" class="btn btn-outline-navy fw-bold px-3.5 py-2 rounded shadow-2xs">
+        <i class="fa-solid fa-graduation-cap me-1"></i> 1. تعادل الماجستير والدكتوراه
+    </a>
+    <a href="{{ route('admin.applied_decisions.index') }}" class="btn btn-outline-navy fw-bold px-3.5 py-2 rounded shadow-2xs">
+        <i class="fa-solid fa-briefcase me-1"></i> 2. تعادل الماجستير التطبيقي
+    </a>
+    <a href="{{ route('admin.faculty_decisions.index') }}" class="btn btn-solid-navy fw-bold px-3.5 py-2 rounded shadow-2xs">
+        <i class="fa-solid fa-chalkboard-user me-1" style="color: var(--heritage-gold-light);"></i> 3. قرارات السماح بالتدريس
+    </a>
+    <a href="{{ route('admin.research_decisions.index') }}" class="btn btn-outline-navy fw-bold px-3.5 py-2 rounded shadow-2xs">
+        <i class="fa-solid fa-microscope me-1"></i> 4. قرارات مراكز البحوث
+    </a>
 </div>
 
 <div class="row g-3" dir="rtl">
 
     {{-- ============================================================
-         العمود الأيمن: نموذج إصدار قرارات السماح بالتدريس (حقول فارغة افتراضياً)
+         العمود الأيمن: نموذج إصدار قرارات السماح بالتدريس
     ============================================================ --}}
     <div class="col-xl-4 col-lg-5 col-md-12">
-        <div class="card border-0 shadow-sm overflow-hidden h-100" style="border-top: 3.5px solid #0D9488 !important; border-radius: 4px;">
+        <div class="card border-0 shadow-sm overflow-hidden h-100" style="border-top: 3.5px solid var(--heritage-gold) !important; border-radius: 4px;">
             <!-- Header -->
             <div class="card-header py-2.5 px-3 text-white" style="background-color: var(--imperial-navy) !important;">
                 <h5 class="mb-0 fs-6 fw-bold text-white d-flex align-items-center gap-2 text-start" dir="rtl">
@@ -35,24 +38,106 @@
                 <form action="{{ route('admin.faculty_decisions.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
 
-                    {{-- اختر طلب السماح --}}
-                    <div class="mb-3 text-start">
+                    {{-- اختر طلب السماح (البحث الذكي المباشر عن المرشح) --}}
+                    <div class="mb-3 text-start" x-data="{
+                        open: false,
+                        search: '',
+                        selectedId: '',
+                        selectedName: '',
+                        items: [
+                            @foreach($approvedApps as $ap)
+                            {
+                                id: '{{ $ap->id }}',
+                                name: '{{ addslashes($ap->candidate->full_name ?? '') }}',
+                                appNo: '{{ addslashes($ap->application_no ?? '') }}',
+                                university: '{{ addslashes($ap->workUniversity->name ?? '') }}'
+                            },
+                            @endforeach
+                        ],
+                        get filteredItems() {
+                            if (!this.search || this.search === this.selectedName) {
+                                return this.items;
+                            }
+                            const q = this.search.toLowerCase().trim();
+                            return this.items.filter(i => 
+                                i.name.toLowerCase().includes(q) || 
+                                i.appNo.toLowerCase().includes(q) || 
+                                i.university.toLowerCase().includes(q)
+                            );
+                        },
+                        select(item) {
+                            this.selectedId = item.id;
+                            this.selectedName = item.name + ' (' + item.appNo + ' - ' + item.university + ')';
+                            this.search = this.selectedName;
+                            this.open = false;
+                        },
+                        clear() {
+                            this.selectedId = '';
+                            this.selectedName = '';
+                            this.search = '';
+                        }
+                    }" @click.outside="open = false; if(!selectedId) { search = ''; } else { search = selectedName; }">
+
                         <label class="form-label fw-bold small d-block text-start mb-1" style="color: var(--imperial-navy);">
                             اختر طلب السماح بالتدريس الموافق عليه :
                         </label>
-                        <select name="application_id" class="form-select form-select-sm text-start fw-bold" style="direction: rtl; text-align: right !important; text-align-last: right !important;" required>
-                            <option value="">-- اختر المرشح المعني --</option>
-                            @foreach($approvedApps as $ap)
-                                <option value="{{ $ap->id }}">
-                                    طلب {{ $ap->application_no }} - {{ $ap->candidate->full_name ?? '' }} ({{ $ap->workUniversity->name ?? '' }})
-                                </option>
-                            @endforeach
-                        </select>
+
+                        <input type="hidden" name="application_id" :value="selectedId" required>
+
+                        <div class="position-relative">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white border-end-0 text-muted ps-2.5">
+                                    <i class="fa-solid fa-magnifying-glass" style="color: var(--heritage-gold); font-size: 0.8rem;"></i>
+                                </span>
+                                <input type="text" 
+                                       x-model="search" 
+                                       @focus="open = true" 
+                                       @input="open = true; if(search !== selectedName) { selectedId = ''; }"
+                                       class="form-control form-control-sm border-start-0 text-start shadow-none" 
+                                       style="direction: rtl; text-align: right !important; font-size: 0.85rem;" 
+                                       placeholder="اكتب اسم المرشح أو رقم المعاملة للبحث..." 
+                                       autocomplete="off">
+                                <template x-if="selectedId">
+                                    <button type="button" @click="clear()" class="btn btn-sm btn-outline-secondary border-0 px-2" title="إلغاء الاختيار">
+                                        <i class="fa-solid fa-xmark text-danger"></i>
+                                    </button>
+                                </template>
+                            </div>
+
+                            <!-- Dropdown list -->
+                            <div x-show="open" 
+                                 x-transition 
+                                 class="position-absolute start-0 end-0 bg-white border rounded shadow-lg mt-1 overflow-auto" 
+                                 style="max-height: 220px; z-index: 1050; border-color: var(--outline-variant) !important; display: none;">
+                                
+                                <template x-for="item in filteredItems" :key="item.id">
+                                    <div @click="select(item)" 
+                                         class="p-2 border-bottom d-flex flex-column text-start"
+                                         style="cursor: pointer; border-color: #F1F5F9 !important;"
+                                         :style="selectedId === item.id ? 'background-color: #FAF6EE; border-right: 3px solid var(--heritage-gold);' : ''"
+                                         onmouseover="this.style.backgroundColor='#F8FAFC'" 
+                                         onmouseout="this.style.backgroundColor=(selectedId === item.id ? '#FAF6EE' : '#FFFFFF')">
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <span class="fw-bold text-dark fs-7" x-text="item.name"></span>
+                                            <span class="badge bg-light text-secondary border fs-9 font-monospace" x-text="item.appNo"></span>
+                                        </div>
+                                        <div class="fs-9 text-muted mt-0.5 d-flex align-items-center gap-1">
+                                            <i class="fa-solid fa-building-columns fs-10 text-secondary opacity-75"></i>
+                                            <span x-text="item.university"></span>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <div x-show="filteredItems.length === 0" class="p-3 text-center text-muted fs-8">
+                                    <i class="fa-solid fa-circle-exclamation me-1 text-warning"></i> لا يوجد مرشح مطابق للبحث
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <hr class="my-2 text-muted opacity-25">
 
-                    {{-- رقم وتاريخ قرار السماح (تفريغ الحقول افتراضياً) --}}
+                    {{-- رقم وتاريخ قرار السماح --}}
                     <div class="row g-2 mb-2.5">
                         <div class="col-6 text-start">
                             <label class="form-label fw-bold small d-block text-start mb-1" style="color: var(--imperial-navy);">
@@ -61,7 +146,7 @@
                             <input
                                 type="text"
                                 name="decision_no"
-                                class="form-control form-control-sm text-start fw-bold"
+                                class="form-control form-control-sm text-start"
                                 style="direction: rtl; text-align: right !important;"
                                 placeholder="أدخل رقم القرار..."
                                 value=""
@@ -75,7 +160,7 @@
                             <input
                                 type="date"
                                 name="decision_date"
-                                class="form-control form-control-sm text-start fw-bold"
+                                class="form-control form-control-sm text-start"
                                 style="direction: rtl; text-align: right !important;"
                                 value=""
                                 required
@@ -129,7 +214,7 @@
          العمود الأيسر: أرشيف قرارات السماح بالتدريس الصادرة
     ============================================================ --}}
     <div class="col-xl-8 col-lg-7 col-md-12">
-        <div class="card border-0 shadow-sm overflow-hidden h-100" style="border-top: 3.5px solid #0D9488 !important; border-radius: 4px;">
+        <div class="card border-0 shadow-sm overflow-hidden h-100" style="border-top: 3.5px solid var(--heritage-gold) !important; border-radius: 4px;">
             <!-- Header -->
             <div class="card-header py-2.5 px-3 text-white d-flex align-items-center justify-content-between flex-wrap gap-2" style="background-color: var(--imperial-navy) !important;">
                 <h5 class="mb-0 fs-6 fw-bold text-white d-flex align-items-center gap-2 text-start" dir="rtl">
@@ -141,27 +226,27 @@
                 </span>
             </div>
 
-            {{-- شريط البحث --}}
+            {{-- شريط البحث الأكاديمي الموحد --}}
             <div class="p-3 bg-white border-bottom" dir="rtl">
-                <form action="{{ route('admin.faculty_decisions.index') }}" method="GET">
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-gold-cta fw-bold px-4 white-space-nowrap">
-                            <i class="fa-solid fa-magnifying-glass me-1"></i> بحث
-                        </button>
-                        <input
-                            type="text"
-                            name="search"
-                            class="form-control text-start"
-                            style="direction: rtl; text-align: right !important;"
-                            placeholder="ابحث باسم عضو الهيئة التدريسية، رقم القرار، أو اسم الجامعة..."
-                            value="{{ $search ?? '' }}"
-                            autocomplete="off"
-                        >
-                        @if($search ?? null)
-                        <a href="{{ route('admin.faculty_decisions.index') }}" class="btn btn-outline-navy d-flex align-items-center px-3" title="مسح البحث">
-                            <i class="fa-solid fa-xmark"></i>
-                        </a>
+                <form action="{{ route('admin.faculty_decisions.index') }}" method="GET" class="position-relative m-0">
+                    <div class="input-group input-group-sm shadow-sm" style="border-radius: 20px; overflow: hidden; border: 1.5px solid var(--outline-variant);">
+                        <span class="input-group-text bg-white border-0 ps-3 pe-2 text-muted">
+                            <i class="fa-solid fa-magnifying-glass" style="color: var(--heritage-gold);"></i>
+                        </span>
+                        <input type="text" 
+                               name="search" 
+                               value="{{ $search ?? '' }}" 
+                               class="form-control border-0 bg-white shadow-none ps-1" 
+                               placeholder="البحث باسم المرشح أو رقم القرار أو اسم الجامعة..." 
+                               style="font-size: 0.88rem;"
+                               autocomplete="off">
+                        @if(!empty($search))
+                            <a href="{{ route('admin.faculty_decisions.index') }}" 
+                               class="input-group-text bg-white border-0 text-muted px-2 text-decoration-none" title="مسح البحث">
+                                <i class="fa-solid fa-xmark"></i>
+                            </a>
                         @endif
+                        <button type="submit" class="btn btn-gold-cta px-4 fw-bold border-0">بحث</button>
                     </div>
                 </form>
             </div>
@@ -174,7 +259,7 @@
                             <tr>
                                 <th>رقم قرار السماح</th>
                                 <th>تاريخ الصدور</th>
-                                <th>اسم عضو الهيئة التدريسية</th>
+                                <th>اسم المرشح</th>
                                 <th>الجامعة الخاصة المعنية</th>
                                 <th style="min-width: 90px;">القرار (PDF)</th>
                             </tr>
@@ -187,12 +272,22 @@
                                 <td class="fw-bold text-dark">{{ $dec->application->candidate->full_name ?? '-' }}</td>
                                 <td class="text-secondary fw-semibold fs-7">{{ $dec->application->workUniversity->name ?? '-' }}</td>
                                 <td>
-                                    <a href="{{ asset('storage/' . $dec->file_path) }}" target="_blank" 
-                                       class="btn btn-sm btn-light border border-success text-success p-1.5 rounded shadow-2xs d-inline-flex align-items-center justify-content-center" 
-                                       style="width: 32px; height: 32px;"
-                                       title="تحميل واستعراض قرار السماح بالتدريس (PDF)">
-                                        <i class="fa-solid fa-file-pdf fs-6"></i>
-                                    </a>
+                                    <div class="d-flex align-items-center justify-content-center gap-1.5">
+                                        @if($dec->file_path)
+                                            <a href="{{ asset('storage/' . $dec->file_path) }}" target="_blank" 
+                                               class="btn btn-sm btn-light border border-success text-success p-1.5 rounded shadow-2xs d-inline-flex align-items-center justify-content-center" 
+                                               style="width: 32px; height: 32px;"
+                                               title="تحميل واستعراض قرار السماح بالتدريس (PDF)">
+                                                <i class="fa-solid fa-file-pdf fs-6"></i>
+                                            </a>
+                                        @endif
+                                        <a href="{{ route('admin.reports.generate_decision', ['id' => $dec->application_id, 'type' => 'equivalence']) }}" 
+                                           class="btn btn-sm btn-light border border-primary text-primary p-1.5 rounded shadow-2xs d-inline-flex align-items-center justify-content-center" 
+                                           style="width: 32px; height: 32px;"
+                                           title="توليد ومعاينة نص القرار">
+                                            <i class="fa-solid fa-eye fs-7"></i>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                             @empty

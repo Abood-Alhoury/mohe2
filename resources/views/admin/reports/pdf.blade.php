@@ -107,8 +107,8 @@
                 <small class="text-secondary">مجلس التعليم العالي - مديرية تعادل الشهادات</small>
             </div>
             <div>
-                <div class="logo-emblem-ring">
-                    <img src="{{ asset('assets/logo.jpg') }}" alt="Logo" onerror="this.onerror=null; this.src='{{ asset('images/mohe_logo.jpg') }}';">
+                <div class="logo-emblem-ring" style="border: none; background: transparent; box-shadow: none;">
+                    <img src="{{ asset('assets/report_logo.png') }}" alt="Logo" style="width: 75px; height: 75px; object-fit: contain;">
                 </div>
             </div>
             <div class="text-end">

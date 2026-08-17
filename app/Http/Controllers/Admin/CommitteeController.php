@@ -12,9 +12,13 @@ class CommitteeController extends Controller
 {
     public function index()
     {
-        // Applications requiring General Committee decision (status 'لجنة عامة' or 'معلق')
+        // Applications requiring General Committee decision (status 'لجنة عامة' or 'معلق') - only for allowed full equivalence types
         $committeeApps = Application::with(['candidate', 'workUniversity', 'educations.level'])
             ->whereIn('status', ['لجنة عامة', 'معلق'])
+            ->where('request_type', 'not like', '%تطبيقي%')
+            ->where('request_type', 'not like', '%سماح%')
+            ->where('request_type', 'not like', '%تدريسية%')
+            ->where('request_type', 'not like', '%بحوث%')
             ->latest()
             ->get();
 

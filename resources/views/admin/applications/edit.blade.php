@@ -116,7 +116,7 @@
             @method('PATCH')
             <div class="row g-3 mb-3">
                 <div class="col-md-4">
-                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">اسم المرشح الكامل :</label>
+                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">اسم المرشح :</label>
                     <input type="text" name="full_name" class="form-control fw-bold" value="{{ $candidate->full_name }}" required>
                 </div>
                 <div class="col-md-4">
@@ -517,9 +517,9 @@
                             <div class="mb-2">
                                 <div class="fw-bold text-dark fs-7 mb-1">
                                     <i class="fa-solid fa-file-pdf text-danger me-1"></i>
-                                    {{ optional($attObj->attachmentType)->name ?? 'وثيقة مرفقة' }}
+                                    {{ $attObj->notes ?: (optional($attObj->attachmentType)->name ?? 'وثيقة مرفقة') }}
                                 </div>
-                                <div class="fs-8 text-muted">{{ $attObj->notes ?? 'لا توجد ملاحظات إضافية' }}</div>
+                                <div class="fs-8 text-muted">{{ optional($attObj->attachmentType)->name ?? 'وثيقة رسمية' }}</div>
                             </div>
                             <div class="pt-2 border-top text-end">
                                 <a href="{{ asset('storage/' . $attObj->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-8 fw-bold">

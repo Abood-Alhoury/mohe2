@@ -124,7 +124,7 @@ body {
 
                 <!-- Center: Official Logo -->
                 <td style="width: 20%; text-align: center; vertical-align: top;">
-                    <img src="{{ public_path('assets/logo.jpg') }}" alt="شعار المجلس" style="width: 75px; height: 75px; object-fit: contain;">
+                    <img src="{{ public_path('assets/report_logo.png') }}" alt="شعار الجمهورية العربية السورية" style="width: 80px; height: 80px; object-fit: contain;">
                 </td>
 
                 <!-- Right in DomPDF = Visual Right: Arabic Header -->
@@ -178,7 +178,7 @@ body {
 
                 <!-- Center: Official Logo -->
                 <td style="width: 20%; text-align: center; vertical-align: top;">
-                    <img src="{{ public_path('assets/logo.jpg') }}" alt="شعار المجلس" style="width: 75px; height: 75px; object-fit: contain;">
+                    <img src="{{ public_path('assets/report_logo.png') }}" alt="شعار الجمهورية العربية السورية" style="width: 80px; height: 80px; object-fit: contain;">
                 </td>
 
                 <!-- Right in DomPDF = Visual Right: Arabic Header -->
@@ -239,7 +239,7 @@ body {
 
                 <!-- Center: Official Logo -->
                 <td style="width: 20%; text-align: center; vertical-align: middle;">
-                    <img src="{{ public_path('assets/logo.jpg') }}" alt="شعار المجلس" style="width: 75px; height: 75px; object-fit: contain;">
+                    <img src="{{ public_path('assets/report_logo.png') }}" alt="شعار الجمهورية العربية السورية" style="width: 80px; height: 80px; object-fit: contain;">
                 </td>
 
                 <!-- Right in DomPDF = Visual Right: Arabic Header -->
@@ -281,6 +281,64 @@ body {
             <div style="margin-top: 15px; margin-right: 40px;">دمشق في {{ $decisionDate }}</div>
         </div>
 
+    @elseif(!empty($isResearchCenter))
+        {{-- =========================================================================
+             2. PDF FORMAT B-RES: RESEARCH CENTER SCIENTIST DECISION (قرار باحث في مراكز البحوث)
+        ========================================================================= --}}
+
+        <!-- TOP HEADER TABLE -->
+        <table class="pdf-header" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+                <!-- Left in DomPDF = Visual Left: English Header -->
+                <td style="width: 40%; text-align: left; font-weight: bold; font-size: 11.5px; line-height: 1.35; direction: ltr; color: #000000;">
+                    Syrian Arab Republic<br>
+                    council of Higher Education
+                </td>
+
+                <!-- Center: Official Logo -->
+                <td style="width: 20%; text-align: center; vertical-align: middle;">
+                    <img src="{{ public_path('assets/report_logo.png') }}" alt="شعار الجمهورية العربية السورية" style="width: 80px; height: 80px; object-fit: contain;">
+                </td>
+
+                <!-- Right in DomPDF = Visual Right: Arabic Header -->
+                <td style="width: 40%; text-align: right; font-weight: bold; font-size: 13.5px; line-height: 1.45; color: #000000;">
+                    الجمهورية العربية السورية<br>
+                    مجلس التعليم العالي<br>
+                    لجنة التأهيل ومعادلة الدرجات العلمية
+                </td>
+            </tr>
+        </table>
+
+        <!-- DECISION NUMBER & TITLE -->
+        <div class="pdf-title">
+            القرار رقم / {{ ($decisionNo && $decisionNo !== '---') ? $decisionNo : '          ' }} / ل . م
+        </div>
+
+        <!-- PREAMBLE -->
+        <div class="pdf-preamble">
+            <div style="font-weight: bold; margin-bottom: 5px;">رئيس لجنة التأهيل ومعادلة الدرجات العلمية</div>
+            <div>بناءً على أحكام قانون تنظيم الجامعات رقم 6 لعام 2006 ولائحته التنفيذية وتعديلاتهما.</div>
+            <div>وعلى قرار مجلس التعليم العالي رقم /236/ تاريخ 2007/7/15.</div>
+            <div>وعلى قرار مجلس التعليم العالي رقم /175/ تاريخ 2022/6/16 وتعديلاته.</div>
+            <div>وعلى كتاب {{ $uniName }} رقم /{{ ($uniReqNo && $uniReqNo !== '---') ? $uniReqNo : '          ' }}/ تاريخ {{ $uniReqDate }}</div>
+        </div>
+
+        <!-- DECREE HEADER -->
+        <div class="pdf-decree-header">
+            يقرر ما يأتي:
+        </div>
+
+        <!-- ARTICLE 1 -->
+        <div class="pdf-article">
+            المادة 1- تعدّ درجة الدكتوراه في {{ $phdSpec }} الممنوحة {{ $candidateTitlePrep ?? 'للدكتور' }} {{ $candidateName }} ({{ $appointedResearcherWord ?? 'والمعين باحث' }} لدى {{ $rcCenterName ?? 'مركز الدراسات والبحوث العلمية' }}) عام {{ $phdYear }} من {{ $phdUni }}، مؤهلة للتدريس باختصاص {{ $teachingDept }} بالجامعات الخاصة السورية.
+        </div>
+
+        <!-- ARTICLE 2 -->
+        <div class="pdf-article">
+            المادة 2- يبلغ هذا القرار من يلزم لتنفيذه.
+            <div style="margin-top: 10px; margin-right: 30px;">دمشق في {{ $decisionDate }}</div>
+        </div>
+
     @elseif(!empty($isDoctorate))
         {{-- =========================================================================
              2. PDF FORMAT B1: DOCTORATE EQUIVALENCE DECISION (قرار تعادل الدكتوراه السورية)
@@ -297,7 +355,7 @@ body {
 
                 <!-- Center: Official Logo -->
                 <td style="width: 20%; text-align: center; vertical-align: middle;">
-                    <img src="{{ public_path('assets/logo.jpg') }}" alt="شعار المجلس" style="width: 75px; height: 75px; object-fit: contain;">
+                    <img src="{{ public_path('assets/report_logo.png') }}" alt="شعار الجمهورية العربية السورية" style="width: 80px; height: 80px; object-fit: contain;">
                 </td>
 
                 <!-- Right in DomPDF = Visual Right: Arabic Header -->
@@ -355,7 +413,7 @@ body {
 
                 <!-- Center: Official Logo -->
                 <td style="width: 20%; text-align: center; vertical-align: middle;">
-                    <img src="{{ public_path('assets/logo.jpg') }}" alt="شعار المجلس" style="width: 75px; height: 75px; object-fit: contain;">
+                    <img src="{{ public_path('assets/report_logo.png') }}" alt="شعار الجمهورية العربية السورية" style="width: 80px; height: 80px; object-fit: contain;">
                 </td>
 
                 <!-- Right in DomPDF = Visual Right: Arabic Header -->
@@ -391,7 +449,7 @@ body {
             @if($decisionType === 'applied_master')
                 المادة -1 تعد درجة الماجستير في {{ $masterSpec }} الممنوحة عام {{ $masterYear }} {{ $candidateTitlePrep ?? 'للسيد' }} {{ $candidateName }} من جامعة {{ $masterUni }}، والمسبوقة بدرجة الإجازة في {{ $baSpec }} الممنوحة عام {{ $baYear }} من جامعة {{ $baUni }}، محققةً لشروط الشهادة والاختصاص من أجل تدريس الجوانب التطبيقية في اختصاص {{ $teachingDept }} بالجامعات الخاصة السورية.
             @else
-                المادة -1 الموافقة على تكليف {{ $candidateTitle ?? 'السيد' }} {{ $candidateName }}، {{ $qualifierHolderWord ?? 'الحائز' }} درجة الماجستير في {{ $masterGeneral }} اختصاص {{ $masterExact }} الممنوحة عام {{ $masterYear }} من جامعة {{ $masterUni }}، والمسبوقة بدرجة الإجازة في {{ $baGeneral }} قسم {{ $baSection }} الممنوحة عام {{ $baYear }} من جامعة {{ $baUni }}، بتدريس المقررات النظرية في اختصاص {{ $teachingDept }} في الجامعات الخاصة السورية على أن يكون تفرغه فيها كلياً، وألا يقل نصابه التدريسي عن /12/ ساعة أسبوعياً.
+                المادة -1 الموافقة على {{ $assignWord ?? 'تكليف' }} {{ $candidateTitle ?? 'السيد' }} {{ $candidateName }}، {{ $qualifierHolderWord ?? 'الحائز' }} درجة الماجستير في {{ $masterGeneral }}{{ $masterExact ? ' اختصاص ' . $masterExact : '' }} الممنوحة عام {{ $masterYear }} من جامعة {{ $masterUni }}، والمسبوقة بدرجة الإجازة في {{ $baGeneral }}{{ $baSection ? ' قسم ' . $baSection : '' }} الممنوحة عام {{ $baYear }} من جامعة {{ $baUni }}، بتدريس المقررات النظرية في اختصاص {{ $teachingDept }} في الجامعات الخاصة السورية على أن يكون {{ $fullTimeWord ?? 'تفرغه' }} فيها كلياً، وألا يقل {{ $quotaWord ?? 'نصابه' }} التدريسي عن /12/ ساعة أسبوعياً.
             @endif
         </div>
 
@@ -412,20 +470,23 @@ body {
             <td style="width: 50%; text-align: right; vertical-align: top; padding-right: 25px; font-size: 13px; font-weight: bold; line-height: 1.6;">
                 <div>
                     <div>أمين مجلس التعليم العالي</div>
-                    <div style="margin-top: 8px; font-size: 13.5px;">الدكتور علي الجاسم</div>
+                    <div style="height: 35px; margin: 8px 0;"></div>
+                    <div style="font-size: 13.5px;">الدكتور علي الجاسم</div>
                 </div>
 
                 <div style="margin-top: 25px; line-height: 1.4;">
                     <div>رئيس لجنة التأهيل ومعادلة الدرجات العلمية</div>
                     <div style="margin-top: 2px;">معاون وزير التعليم العالي والبحث العلمي</div>
-                    <div style="margin-top: 8px; font-size: 14px;">الدكتور عبد الحميد الخالد</div>
+                    <div style="height: 35px; margin: 8px 0;"></div>
+                    <div style="font-size: 14px;">الدكتور عبد الحميد الخالد</div>
                 </div>
             </td>
 
             <!-- Right in DomPDF = Visual Right: Director of Equivalence -->
             <td style="width: 50%; text-align: right; vertical-align: top; padding-right: 15px; font-size: 13px; font-weight: bold; line-height: 1.6;">
                 <div>مدير التعادل والإنتاج العلمي</div>
-                <div style="margin-top: 8px; font-size: 13.5px;">المهندس عمار هلال</div>
+                <div style="height: 35px; margin: 8px 0;"></div>
+                <div style="font-size: 13.5px;">المهندس عمار هلال</div>
             </td>
         </tr>
     </table>
@@ -433,19 +494,9 @@ body {
     <!-- COPIES TO -->
     <div class="pdf-copies">
         <div style="font-weight: bold; text-decoration: underline; margin-bottom: 3px;">صورة إلى:</div>
-        @if(($docType ?? 'equivalence') === 'eligibility')
-            <div>مكتب التعادل – الديوان</div>
-            <div>أمانة سر المجلس (للتعميم على الجامعة المعنية عبر البريد الالكتروني)</div>
-        @else
-            @if(!empty($isDoctorate))
-                <div>مكتب التعادل – الديوان</div>
-                <div>المؤسسات التعليمية الخاصة</div>
-                <div>أمانة سر المجلس (للتعميم على الجامعة المعنية عبر البريد الالكتروني)</div>
-            @else
-                <div>- مجلس التعليم العالي: مكتب التعادل – الديوان</div>
-                <div>- أمانة سر المجلس (للتعميم على الجامعة المعنية عبر البريد الالكتروني)</div>
-            @endif
-        @endif
+        <div>- مجلس التعليم العالي: مكتب التعادل – الديوان.</div>
+        <div>- المؤسسات التعليمية الخاصة.</div>
+        <div>- أمانة سر المجلس (للتعميم على الجامعة المعنية عبر البريد الالكتروني).</div>
     </div>
 
 </body>

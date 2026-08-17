@@ -77,17 +77,17 @@
         </a>
     </div>
 
-    <!-- Option 6: Research Centers Scientist (Disabled Placeholder) -->
+    <!-- Option 6: Research Centers Scientist (ACTIVE) -->
     <div class="col-md-4">
-        <div class="card text-center p-4 h-100 text-decoration-none mohe-card disabled-option-card position-relative" style="border-radius: 8px;">
-            <div class="card-option-badge bg-secondary text-white border-0">قريباً</div>
-            <div class="option-icon-wrapper bg-light mx-auto mb-3">
-                <i class="fa-solid fa-microscope fs-1 text-muted"></i>
+        <a href="{{ route('university.apply.research_scientist') }}" class="card text-center p-4 h-100 text-decoration-none mohe-card active-option-card position-relative" style="border-radius: 8px; border-top: 3.5px solid var(--heritage-gold) !important;">
+            <div class="card-option-badge">متاح للتقديم</div>
+            <div class="option-icon-wrapper mx-auto mb-3">
+                <i class="fa-solid fa-microscope fs-1" style="color: var(--heritage-gold);"></i>
             </div>
-            <h5 class="fw-bold text-muted mb-1">باحث في مراكز البحوث</h5>
+            <h5 class="fw-bold mb-1" style="color: var(--primary-container);">باحث في مراكز البحوث</h5>
             <span class="label-sm text-muted d-block mb-3">Research Center Scientist</span>
-            <p class="body-md small text-muted mb-0">لمعادلة وتقويم الدرجات العلمية للباحثين العاملين في مراكز البحوث السورية.</p>
-        </div>
+            <p class="body-md small text-muted mb-0">لمعادلة وتقويم شهادات الدكتوراه للباحثين في مراكز البحوث السورية لطلب التدريس في الجامعات الخاصة.</p>
+        </a>
     </div>
 </div>
 

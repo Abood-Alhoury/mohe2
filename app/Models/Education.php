@@ -64,4 +64,40 @@ class Education extends Model
     {
         return $this->hasMany(EducationResidence::class, 'education_id');
     }
+
+    public function getTypeOrFacultyAttribute()
+    {
+        // For High school: section_name holds 'علمي'/'أدبي'/'شرعي' etc.
+        return $this->general_specialization 
+            ?: ($this->faculty 
+            ?: ($this->section_name 
+            ?: ($this->attributes['type_or_faculty'] ?? '')));
+    }
+
+    public function getSpecializationOrDeptAttribute()
+    {
+        return $this->exact_specialization 
+            ?: ($this->department 
+            ?: ($this->section_name 
+            ?: ($this->attributes['specialization_or_dept'] ?? '')));
+    }
+
+    public function getRankOrGradeAttribute()
+    {
+        return $this->rank 
+            ?: ($this->attributes['rank_or_grade'] ?? '---');
+    }
+
+    public function getDecisionNoAttribute()
+    {
+        if (!empty($this->attributes['decision_no'])) {
+            return $this->attributes['decision_no'];
+        }
+        if (!empty($this->notes)) {
+            if (preg_match('/قرار[^:]*:\s*([^\|]+)/u', $this->notes, $m)) {
+                return trim($m[1]);
+            }
+        }
+        return 'لا يوجد';
+    }
 }

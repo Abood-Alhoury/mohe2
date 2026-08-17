@@ -510,7 +510,7 @@
                                             </h6>
                                             <div class="row g-3 fs-7">
                                                 <div class="col-md-4">
-                                                    <span class="text-muted d-block fs-8">الاسم الكامل:</span>
+                                                    <span class="text-muted d-block fs-8">اسم المرشح:</span>
                                                     <span class="fw-bold text-dark">{{ optional($app->candidate)->full_name ?? 'غ/م' }}</span>
                                                 </div>
                                                 <div class="col-md-4">
@@ -569,7 +569,7 @@
                                                                 <span class="fs-8 fw-bold text-muted me-1"><i class="fa-solid fa-paperclip"></i> المرفقات والوثائق:</span>
                                                                 @foreach($ed->attachments as $att)
                                                                     <a href="{{ asset('storage/' . $att->file_path) }}" target="_blank" class="btn btn-xs btn-outline-secondary py-0 px-2 fs-8">
-                                                                        <i class="fa-solid fa-file-pdf text-danger me-1"></i> {{ optional($att->attachmentType)->name ?? 'مرفق' }}
+                                                                        <i class="fa-solid fa-file-pdf text-danger me-1"></i> {{ $att->notes ?: (optional($att->attachmentType)->name ?? 'مرفق') }}
                                                                     </a>
                                                                 @endforeach
                                                             </div>

@@ -25,6 +25,10 @@ class ApplicationsController extends Controller
             $query->where('status', $statusFilter);
         }
 
+        if ($request->filled('request_type')) {
+            $query->where('request_type', 'like', '%' . $request->query('request_type') . '%');
+        }
+
         if ($universityFilter) {
             $query->where('work_university_id', $universityFilter);
         }

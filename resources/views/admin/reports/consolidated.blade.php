@@ -68,9 +68,9 @@
     <div class="card-header bg-light d-flex justify-content-between align-items-center">
         <span class="fw-bold text-dark">
             <i class="fa-solid fa-file-pdf me-2 text-danger"></i> 
-            المرفق رقم {{ $index + 2 }} : {{ $attachment->attachmentType->name ?? 'وثيقة رسمية' }}
-            @if($attachment->notes)
-                <small class="text-muted ms-2">({{ $attachment->notes }})</small>
+            المرفق رقم {{ $index + 2 }} : {{ $attachment->notes ?: ($attachment->attachmentType->name ?? 'وثيقة رسمية') }}
+            @if($attachment->notes && $attachment->attachmentType)
+                <small class="text-muted ms-2">({{ $attachment->attachmentType->name }})</small>
             @endif
         </span>
         <a href="{{ asset('storage/' . $attachment->file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary">

@@ -32,7 +32,9 @@
                     } elseif (str_contains($att->notes, 'كتاب الجامعة')) {
                         $existingFiles['file_uni_request'] = $att->file_path;
                     } elseif (str_contains($att->notes, 'اللغة')) {
-                        $existingFiles['file_lang_icdl'] = $att->file_path;
+                        $existingFiles['file_lang_cert'] = $att->file_path;
+                    } elseif (str_contains($att->notes, 'ICDL') || str_contains($att->notes, 'الحاسوب')) {
+                        $existingFiles['file_icdl_cert'] = $att->file_path;
                     } elseif (str_contains($att->notes, 'السيرة')) {
                         $existingFiles['file_cv'] = $att->file_path;
                     } elseif (str_contains($att->notes, 'إيصال')) {
@@ -71,6 +73,17 @@
 <div class="card border-0 shadow-sm" style="border-radius: 8px; border-top: 3px solid var(--heritage-gold) !important; border: 1px solid var(--outline-variant) !important; background-color: #ffffff;">
     <div class="card-body p-4 p-md-5">
         
+        @if ($errors->any())
+            <div class="alert alert-danger mb-4 shadow-sm border-0 rounded" style="border-right: 4px solid #ba1a1a !important;">
+                <h6 class="fw-bold mb-2 text-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i> يرجى تصحيح الملاحظات التالية لإرسال الطلب:</h6>
+                <ul class="mb-0 ps-3">
+                    @foreach ($errors->all() as $error)
+                        <li class="fs-7">{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <!-- Multi-Step Progress Indicators (6 STEPS TOTAL) -->
         <div class="wizard-steps" id="wizard-steps-container">
             <div class="wizard-progress" id="wizard-progress-bar" style="width: 0%;"></div>
@@ -112,13 +125,9 @@
                     <i class="fa-solid fa-user fs-5" style="color: var(--heritage-gold);"></i> الخطوة 1: المعلومات الشخصية وبيانات كتاب طلب التقييم الصادر عن الجامعة
                 </h5>
                 
-                <!-- DEFAULT EQUIVALENCE FREQUENCY: FIRST TIME -->
-                <input type="hidden" name="equivalence_frequency" value="تعادل للمرة الأولى">
-                <input type="hidden" name="has_previous_degree" value="0">
-
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">اسم المرشح الكامل *</label>
+                        <label class="form-label label-md fw-medium text-dark">اسم المرشح *</label>
                         <input type="text" name="full_name" id="input-fullName" class="form-control academic-input" placeholder="الاسم والنسبة" value="{{ old('full_name', optional(optional($draft)->candidate)->full_name) }}" required>
                     </div>
                     <div class="col-md-4">
@@ -141,7 +150,13 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">الرقم الوطني / رقم جواز السفر *</label>
-                        <input type="text" name="national_id" id="input-nationalId" class="form-control academic-input" placeholder="الرقم الوطني المكون من 11 خانة" value="{{ old('national_id', optional(optional($draft)->candidate)->national_id) }}" required>
+                        @php
+                            $draftNatId = optional(optional($draft)->candidate)->national_id;
+                            if ($draftNatId && str_starts_with($draftNatId, 'TMP-')) {
+                                $draftNatId = '';
+                            }
+                        @endphp
+                        <input type="text" name="national_id" id="input-nationalId" class="form-control academic-input" placeholder="الرقم الوطني المكون من 11 خانة" value="{{ old('national_id', $draftNatId) }}" required>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">تاريخ الميلاد *</label>
@@ -161,7 +176,7 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">البريد الإلكتروني *</label>
-                        <input type="email" name="email" id="input-email" class="form-control academic-input" placeholder="name@example.com" value="{{ old('email', optional(optional($draft)->candidate)->email) }}" oninput="this.setCustomValidity('')" required>
+                        <input type="email" name="email" id="input-email" class="form-control academic-input" placeholder="name@example.com" value="{{ old('email', optional(optional($draft)->candidate)->email ?: (Auth::user()->university->email ?? Auth::user()->email)) }}" oninput="this.setCustomValidity('')" required>
                     </div>
 
                     <div class="col-md-6">
@@ -178,28 +193,40 @@
                         <textarea name="address" id="input-address" class="form-control academic-input" rows="2" placeholder="المحافظة - المدينة - الشارع - البناء" required>{{ old('address', optional(optional($draft)->candidate)->address) }}</textarea>
                     </div>
 
-                    <!-- UNIVERSITY EVALUATION REQUEST LETTER DETAILS -->
-                    <div class="col-12 mt-4">
-                        <div class="card p-3.5 shadow-sm border-0" style="background-color: var(--surface-container-low); border-right: 4px solid var(--heritage-gold) !important; border-radius: 4px;">
-                            <h6 class="fw-bold mb-3" style="color: var(--primary-container);">
-                                <i class="fa-solid fa-file-signature me-1.5" style="color: var(--heritage-gold);"></i> بيانات كتاب طلب التقييم الصادر عن الجامعة
-                            </h6>
+                    <div class="col-md-4">
+                        <label class="form-label label-md fw-medium text-dark">رقم كتاب طلب التقييم الصادر عن الجامعة *</label>
+                        <input type="text" name="req_no" id="input-reqNo" class="form-control academic-input" placeholder="مثال: 123/ص" value="{{ old('req_no', optional($draft)->new_uni_request_no) }}" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label label-md fw-medium text-dark">تاريخ كتاب طلب التقييم *</label>
+                        <input type="date" name="req_date" id="input-reqDate" class="form-control academic-input" value="{{ old('req_date', optional($draft)->new_uni_request_date) }}" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label label-md fw-medium text-dark">تكرار طلب التعادل *</label>
+                        <select name="is_first_time" id="input-isFirstTime" class="form-select academic-input" onchange="togglePreviousDegree(this)" required>
+                            <option value="1" {{ old('is_first_time', optional($draft)->parent_application_id ? '0' : '1') == '1' ? 'selected' : '' }}>تعادل للمرة الأولى</option>
+                            <option value="0" {{ old('is_first_time', optional($draft)->parent_application_id ? '0' : '1') == '0' ? 'selected' : '' }}>سبق التقدم بتعادل لشهادة أخرى</option>
+                        </select>
+                    </div>
+
+                    <!-- Hidden by default: previous degree info if not first time -->
+                    <div class="col-12 mt-3" id="previous-degree-section" style="display: none;">
+                        <div class="card p-3 shadow-sm border-0" style="background-color: var(--surface-container-low); border-right: 4px solid var(--primary-container) !important; border-radius: 4px;">
+                            <h6 class="fw-bold mb-2" style="color: var(--primary-container);"><i class="fa-solid fa-clock-rotate-left me-1"></i> بيانات شهادة التعادل السابقة</h6>
+                            <p class="label-sm text-muted mb-3">يرجى تحديد المعاملة السابقة لربط الطلب الجديد بالملف المحفوظ:</p>
                             <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label label-md fw-medium text-dark">رقم كتاب طلب التقييم الصادر عن الجامعة *</label>
-                                    <input type="text" name="req_no" id="input-reqNo" class="form-control academic-input" placeholder="أدخل أرقام كتاب الجامعة فقط" pattern="[0-9]+" value="{{ old('req_no', optional($draft)->new_uni_request_no) }}" oninput="this.setCustomValidity(''); this.value = this.value.replace(/[^0-9]/g, '')" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label label-md fw-medium text-dark">تاريخ كتاب طلب التقييم الصادر عن الجامعة *</label>
-                                    <input type="date" name="req_date" id="input-reqDate" class="form-control academic-input" value="{{ old('req_date', optional($draft)->new_uni_request_date) }}" required>
-                                </div>
-                                <div class="col-12 mt-3">
-                                    <div class="form-check form-switch p-3 border rounded d-flex align-items-center gap-3" style="background-color: #f0f7ff; border-color: #93c5fd !important; border-right: 4px solid #1D4ED8 !important;">
-                                        <input class="form-check-input ms-0 me-2" type="checkbox" id="input-isFirstTime" name="is_first_time" value="1" {{ old('is_first_time', optional($draft)->is_first_time ?? 1) ? 'checked' : '' }} style="width: 2.4em; height: 1.3em; cursor: pointer;">
-                                        <label class="form-check-label fw-bold text-dark mb-0 label-md" for="input-isFirstTime" style="cursor: pointer;">
-                                            هل يقدم المرشح معاملة التعادل للمرة الأولى؟
-                                        </label>
-                                    </div>
+                                <div class="col-md-12">
+                                    <label class="form-label label-md fw-medium text-dark">اختر المعاملة السابقة للمرشح *</label>
+                                    <select name="parent_application_id" id="input-parentAppId" class="form-select academic-input">
+                                        <option value="">-- اختر من المعاملات السابقة المسجلة --</option>
+                                        @if(isset($previousApplications))
+                                            @foreach($previousApplications as $prevApp)
+                                                <option value="{{ $prevApp->id }}" {{ old('parent_application_id', optional($draft)->parent_application_id) == $prevApp->id ? 'selected' : '' }}>
+                                                    معاملة رقم: {{ $prevApp->application_no }} ({{ optional($prevApp->candidate)->full_name }})
+                                                </option>
+                                            @endforeach
+                                        @endif
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -207,16 +234,16 @@
                 </div>
             </div>
 
-            <!-- ================= STEP 2: HIGH SCHOOL INFO ================= -->
+            <!-- ================= STEP 2: HIGH SCHOOL ================= -->
             <div class="form-section" id="step-2" style="display: none;">
                 <h5 class="fw-bold border-bottom pb-2 mb-4 d-flex align-items-center gap-2" style="color: var(--primary-container); border-bottom-color: var(--outline-variant) !important;">
-                    <i class="fa-solid fa-graduation-cap fs-5" style="color: var(--heritage-gold);"></i> الخطوة 2: بيانات الشهادة الثانوية للمرشح
+                    <i class="fa-solid fa-graduation-cap fs-5" style="color: var(--heritage-gold);"></i> الخطوة 2: بيانات الشهادة الثانوية (البكالوريا)
                 </h5>
                 
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">الدولة المانحة للثانوية *</label>
-                        <select name="hs_country_id" id="input-hsCountry" class="form-select academic-input" onchange="toggleHsCountrySection(this)" required>
+                        <label class="form-label label-md fw-medium text-dark">دولة الحصول على الشهادة الثانوية *</label>
+                        <select name="hs_country_id" id="input-hsCountry" class="form-select academic-input" onchange="toggleHsEquivalence(this)" required>
                             @foreach($countries as $c)
                                 <option value="{{ $c->id }}" {{ old('hs_country_id', optional($hsEd)->country_id ?? $syriaId) == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
                             @endforeach
@@ -228,13 +255,14 @@
                             @php $oldHsType = old('hs_type', optional($hsEd)->section_name); @endphp
                             <option value="علمي" {{ $oldHsType == 'علمي' ? 'selected' : '' }}>علمي</option>
                             <option value="أدبي" {{ $oldHsType == 'أدبي' ? 'selected' : '' }}>أدبي</option>
+                            <option value="شرعي" {{ $oldHsType == 'شرعي' ? 'selected' : '' }}>شرعي</option>
                             <option value="تجاري" {{ $oldHsType == 'تجاري' ? 'selected' : '' }}>تجاري</option>
                             <option value="صناعي" {{ $oldHsType == 'صناعي' ? 'selected' : '' }}>صناعي</option>
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">تاريخ الحصول على الشهادة *</label>
-                        <input type="date" name="hs_grant_date" id="input-hsDate" class="form-control academic-input" value="{{ old('hs_grant_date', optional($hsEd)->grant_date) }}" required>
+                        <label class="form-label label-md fw-medium text-dark">تاريخ الحصول على الشهادة (العام فقط) *</label>
+                        <input type="number" name="hs_grant_date" id="input-hsDate" class="form-control academic-input" min="1950" max="{{ date('Y') }}" placeholder="مثال: 2015" value="{{ old('hs_grant_date', optional($hsEd)->grant_date ? (strlen($hsEd->grant_date) > 4 ? substr($hsEd->grant_date, 0, 4) : $hsEd->grant_date) : '') }}" required>
                     </div>
 
                     <!-- Conditional high school equivalence if country is not Syria -->
@@ -302,12 +330,12 @@
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">الكلية والفرع (التخصص العام) *</label>
+                        <label class="form-label label-md fw-medium text-dark">الفرع (التخصص العام) *</label>
                         <input type="text" name="ba_faculty" id="input-baFaculty" class="form-control academic-input" placeholder="مثال: هندسة المعلوماتية" value="{{ old('ba_faculty', optional($baEd)->general_specialization) }}" required>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">القسم (التخصص الدقيق) *</label>
-                        <input type="text" name="ba_department" id="input-baDept" class="form-control academic-input" placeholder="مثال: هندسة البرمجيات ونظم المعلومات" value="{{ old('ba_department', optional($baEd)->exact_specialization) }}" required>
+                        <label class="form-label label-md fw-medium text-dark">القسم (التخصص الدقيق) <span class="text-muted fw-normal fs-8">(اختياري)</span></label>
+                        <input type="text" name="ba_department" id="input-baDept" class="form-control academic-input" placeholder="مثال: هندسة البرمجيات ونظم المعلومات" value="{{ old('ba_department', optional($baEd)->exact_specialization) }}">
                     </div>
 
                     <div class="col-md-6">
@@ -372,12 +400,12 @@
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">الكلية والفرع (التخصص العام للماجستير) *</label>
+                        <label class="form-label label-md fw-medium text-dark">الفرع (التخصص العام للماجستير) *</label>
                         <input type="text" name="ma_faculty" id="input-maFaculty" class="form-control academic-input" placeholder="كلية الهندسة المدنية" value="{{ old('ma_faculty', optional($maEd)->general_specialization) }}" required>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">القسم (التخصص الدقيق للماجستير) *</label>
-                        <input type="text" name="ma_department" id="input-maDept" class="form-control academic-input" placeholder="إدارة المشاريع" value="{{ old('ma_department', optional($maEd)->exact_specialization) }}" required>
+                        <label class="form-label label-md fw-medium text-dark">القسم (التخصص الدقيق للماجستير) <span class="text-muted fw-normal fs-8">(اختياري)</span></label>
+                        <input type="text" name="ma_department" id="input-maDept" class="form-control academic-input" placeholder="إدارة المشاريع" value="{{ old('ma_department', optional($maEd)->exact_specialization) }}">
                     </div>
 
                     <div class="col-md-4">
@@ -547,14 +575,28 @@
                         @endif
                     </div>
 
-                    <!-- Language & ICDL Certificates -->
+                    <!-- Language Certificate -->
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">شهادة اللغة الإنكليزية + شهادة ICDL معتمدة *</label>
-                        <input type="file" name="file_lang_icdl" id="input-fileLangIcdl" class="form-control academic-input" accept=".pdf">
-                        @if(isset($existingFiles['file_lang_icdl']))
+                        <label class="form-label label-md fw-medium text-dark">شهادة اللغة الإنكليزية المعتمدة *</label>
+                        <input type="file" name="file_lang_cert" id="input-fileLangCert" class="form-control academic-input" accept=".pdf">
+                        @if(isset($existingFiles['file_lang_cert']))
                             <div class="mt-1 d-flex align-items-center gap-2">
                                 <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
-                                <a href="{{ asset('storage/' . $existingFiles['file_lang_icdl']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                <a href="{{ asset('storage/' . $existingFiles['file_lang_cert']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                </a>
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- ICDL Certificate -->
+                    <div class="col-md-6">
+                        <label class="form-label label-md fw-medium text-dark">شهادة مهارات الحاسوب (ICDL) المعتمدة *</label>
+                        <input type="file" name="file_icdl_cert" id="input-fileIcdlCert" class="form-control academic-input" accept=".pdf">
+                        @if(isset($existingFiles['file_icdl_cert']))
+                            <div class="mt-1 d-flex align-items-center gap-2">
+                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                <a href="{{ asset('storage/' . $existingFiles['file_icdl_cert']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
                                     <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
                                 </a>
                             </div>
@@ -730,7 +772,7 @@
                         </div>
 
                         <!-- Group 5: University Evaluation Request -->
-                        <div class="col-12">
+                        <div class="col-12 border-bottom pb-3" style="border-bottom-color: var(--outline-variant) !important;">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h6 class="fw-bold mb-0" style="color: var(--primary-container);"><i class="fa-solid fa-file-signature me-1" style="color: var(--heritage-gold);"></i> 5. كتاب طلب التقويم الصادر عن الجامعة:</h6>
                                 <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2.5 fs-8 fw-bold" onclick="goToStep(1)"><i class="fa-solid fa-pen-to-square me-1"></i> تعديل</button>
@@ -739,6 +781,15 @@
                                 <div class="col-md-6"><strong>رقم كتاب الجامعة:</strong> <span id="preview-reqNo"></span></div>
                                 <div class="col-md-6"><strong>تاريخ كتاب الجامعة:</strong> <span id="preview-reqDate"></span></div>
                             </div>
+                        </div>
+
+                        <!-- Group 6: Uploaded Documents -->
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold mb-0" style="color: var(--primary-container);"><i class="fa-solid fa-folder-open me-1" style="color: var(--heritage-gold);"></i> 6. الوثائق والمستندات المرفقة:</h6>
+                                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2.5 fs-8 fw-bold" onclick="goToStep(5)"><i class="fa-solid fa-pen-to-square me-1"></i> تعديل المرفقات</button>
+                            </div>
+                            <p class="text-muted fs-8 mb-0"><i class="fa-solid fa-circle-check text-success me-1"></i> تم إرفاق الوثائق المطلوبة بصيغة PDF. يمكنك النقر على زر التعديل للعودة لخطوة المرفقات.</p>
                         </div>
                     </div>
                 </div>
@@ -1120,7 +1171,8 @@
                     { id: 'input-fileMaCert', name: 'شهادة الماجستير السورية المصدقة أصولاً' },
                     { id: 'input-fileMaDates', name: 'وثيقة تواريخ التسجيل والمناقشة والمنح بالماجستير' },
                     { id: 'input-fileThesisSummary', name: 'ملخص عن رسالة الماجستير باللغة العربية' },
-                    { id: 'input-fileLangIcdl', name: 'شهادة اللغة الإنكليزية + شهادة ICDL معتمدة' },
+                    { id: 'input-fileLangCert', name: 'شهادة اللغة الإنكليزية المعتمدة' },
+                    { id: 'input-fileIcdlCert', name: 'شهادة مهارات الحاسوب (ICDL) المعتمدة' },
                     { id: 'input-filePayment', name: 'إيصال تسديد رسم تعادل 100,000 ل.س للماجستير' },
                     { id: 'input-fileUniRequest', name: 'كتاب طلب التقويم الصادر عن الجامعة' },
                     { id: 'input-fileCv', name: 'السيرة الذاتية للمرشح' }
@@ -1235,11 +1287,37 @@
 
     function goToStep(step) {
         if (step >= 1 && step <= totalSteps) {
+            // Hide all steps
+            for (let i = 1; i <= totalSteps; i++) {
+                const sec = document.getElementById(`step-${i}`);
+                if (sec) {
+                    sec.style.display = 'none';
+                    sec.classList.remove('active');
+                }
+            }
+
             currentStep = step;
-            showStep(currentStep);
-            window.scrollTo({ top: 150, behavior: 'smooth' });
+
+            // Show target step
+            const targetSec = document.getElementById(`step-${currentStep}`);
+            if (targetSec) {
+                targetSec.style.display = 'block';
+                targetSec.classList.add('active');
+            }
+
+            // If entering final review step, update preview
+            if (currentStep === totalSteps) {
+                updateReportPreview();
+            }
+
+            // Update indicators and buttons
+            updateWizardProgress();
+
+            // Scroll smooth to wizard top
+            window.scrollTo({ top: 120, behavior: 'smooth' });
         }
     }
+    window.goToStep = goToStep;
 
     function formatDateDisplay(val) {
         if (!val || val === '-') return '-';
@@ -1481,8 +1559,26 @@
 
         checkMasterGrantDateForExperience();
 
-        const initialStep = {{ request('step', 1) }};
-        showStep(initialStep);
+        @php
+            $initialStep = 1;
+            if ($errors->any()) {
+                $firstErrorKey = $errors->keys()[0] ?? '';
+                if (str_starts_with($firstErrorKey, 'hs_')) {
+                    $initialStep = 2;
+                } elseif (str_starts_with($firstErrorKey, 'ba_')) {
+                    $initialStep = 3;
+                } elseif (str_starts_with($firstErrorKey, 'ma_') || str_starts_with($firstErrorKey, 'exp_') || $firstErrorKey === 'has_experience') {
+                    $initialStep = 4;
+                } elseif (str_starts_with($firstErrorKey, 'file_') || str_ends_with($firstErrorKey, '_file')) {
+                    $initialStep = 5;
+                }
+            } elseif (request()->filled('step')) {
+                $initialStep = (int)request('step');
+            }
+        @endphp
+
+        const initialStep = {{ $initialStep }};
+        goToStep(initialStep);
 
         document.querySelectorAll('input[type="file"]').forEach(input => {
             input.addEventListener('change', function() {

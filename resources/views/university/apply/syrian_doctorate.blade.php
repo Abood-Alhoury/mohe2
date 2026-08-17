@@ -79,6 +79,17 @@
 <div class="card border-0 shadow-sm" style="border-radius: 8px; border-top: 3px solid var(--heritage-gold) !important; border: 1px solid var(--outline-variant) !important; background-color: #ffffff;">
     <div class="card-body p-4 p-md-5">
         
+        @if ($errors->any())
+            <div class="alert alert-danger mb-4 shadow-sm border-0 rounded" style="border-right: 4px solid #ba1a1a !important;">
+                <h6 class="fw-bold mb-2 text-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i> يرجى تصحيح الملاحظات التالية لإرسال الطلب:</h6>
+                <ul class="mb-0 ps-3">
+                    @foreach ($errors->all() as $error)
+                        <li class="fs-7">{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <!-- Multi-Step Progress Indicators (7 STEPS TOTAL) -->
         <div class="wizard-steps" id="wizard-steps-container">
             <div class="wizard-progress" id="wizard-progress-bar" style="width: 0%;"></div>
@@ -129,7 +140,7 @@
 
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">اسم المرشح الكامل *</label>
+                        <label class="form-label label-md fw-medium text-dark">اسم المرشح *</label>
                         <input type="text" name="full_name" id="input-fullName" class="form-control academic-input" placeholder="الاسم والنسبة" value="{{ old('full_name', optional(optional($draft)->candidate)->full_name) }}" required>
                     </div>
                     <div class="col-md-4">
@@ -152,7 +163,13 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">الرقم الوطني / رقم جواز السفر *</label>
-                        <input type="text" name="national_id" id="input-nationalId" class="form-control academic-input" placeholder="الرقم الوطني المكون من 11 خانة" value="{{ old('national_id', optional(optional($draft)->candidate)->national_id) }}" required>
+                        @php
+                            $draftNatId = optional(optional($draft)->candidate)->national_id;
+                            if ($draftNatId && str_starts_with($draftNatId, 'TMP-')) {
+                                $draftNatId = '';
+                            }
+                        @endphp
+                        <input type="text" name="national_id" id="input-nationalId" class="form-control academic-input" placeholder="الرقم الوطني المكون من 11 خانة" value="{{ old('national_id', $draftNatId) }}" required>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">تاريخ الميلاد *</label>
@@ -172,7 +189,7 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">البريد الإلكتروني *</label>
-                        <input type="email" name="email" id="input-email" class="form-control academic-input" placeholder="name@example.com" value="{{ old('email', optional(optional($draft)->candidate)->email) }}" oninput="this.setCustomValidity('')" required>
+                        <input type="email" name="email" id="input-email" class="form-control academic-input" placeholder="name@example.com" value="{{ old('email', optional(optional($draft)->candidate)->email ?: (Auth::user()->university->email ?? Auth::user()->email)) }}" oninput="this.setCustomValidity('')" required>
                     </div>
 
                     <div class="col-md-6">
@@ -239,13 +256,14 @@
                             @php $oldHsType = old('hs_type', optional($hsEd)->section_name); @endphp
                             <option value="علمي" {{ $oldHsType == 'علمي' ? 'selected' : '' }}>علمي</option>
                             <option value="أدبي" {{ $oldHsType == 'أدبي' ? 'selected' : '' }}>أدبي</option>
-                            <option value="تجاري" {{ $oldHsType == 'تجاري' ? 'selected' : '' }}>تجاري</option>
+                            <option value="شرعي" {{ $oldHsType == 'شرعي' ? 'selected' : '' }}>شرعي</option>
                             <option value="صناعي" {{ $oldHsType == 'صناعي' ? 'selected' : '' }}>صناعي</option>
+                            <option value="تجاري" {{ $oldHsType == 'تجاري' ? 'selected' : '' }}>تجاري</option>
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">تاريخ الحصول على الشهادة *</label>
-                        <input type="date" name="hs_grant_date" id="input-hsDate" class="form-control academic-input" value="{{ old('hs_grant_date', optional($hsEd)->grant_date) }}" required>
+                        <label class="form-label label-md fw-medium text-dark">تاريخ الحصول على الشهادة (العام فقط) *</label>
+                        <input type="number" name="hs_grant_date" id="input-hsDate" class="form-control academic-input" min="1950" max="{{ date('Y') }}" placeholder="مثال: 2012" value="{{ old('hs_grant_date', optional($hsEd)->grant_date ? (strlen($hsEd->grant_date) > 4 ? substr($hsEd->grant_date, 0, 4) : $hsEd->grant_date) : '') }}" required>
                     </div>
 
                     <!-- Conditional high school equivalence if country is not Syria -->
@@ -312,13 +330,17 @@
                         </select>
                     </div>
 
-                    <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">الكلية والفرع (التخصص العام) *</label>
-                        <input type="text" name="ba_faculty" id="input-baFaculty" class="form-control academic-input" placeholder="مثال: كلية العلوم" value="{{ old('ba_faculty', optional($baEd)->general_specialization) }}" required>
+                    <div class="col-md-4">
+                        <label class="form-label label-md fw-medium text-dark">الكلية (التخصص العام) *</label>
+                        <input type="text" name="ba_faculty" id="input-baFaculty" class="form-control academic-input" placeholder="مثال: كلية الهندسة الميكانيكية والكهربائية" value="{{ old('ba_faculty', optional($baEd)->general_specialization) }}" required>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">القسم (التخصص الدقيق) *</label>
-                        <input type="text" name="ba_department" id="input-baDept" class="form-control academic-input" placeholder="مثال: قسم الكيمياء الحيوية" value="{{ old('ba_department', optional($baEd)->exact_specialization) }}" required>
+                    <div class="col-md-4">
+                        <label class="form-label label-md fw-medium text-dark">القسم / الفرع (التخصص الدقيق) *</label>
+                        <input type="text" name="ba_department" id="input-baDept" class="form-control academic-input" placeholder="مثال: قسم هندسة الحواسيب" value="{{ old('ba_department', optional($baEd)->exact_specialization) }}" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label label-md fw-medium text-dark">الاختصاص <span class="text-muted fw-normal">(اختياري)</span></label>
+                        <input type="text" name="ba_specialization" id="input-baSpec" class="form-control academic-input" placeholder="مثال: شبكات ونظم تشغيل" value="{{ old('ba_specialization', optional($baEd)->section_name) }}">
                     </div>
 
                     <div class="col-md-6">
@@ -394,13 +416,17 @@
                         </select>
                     </div>
 
-                    <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">الكلية (التخصص العام للماجستير) *</label>
+                    <div class="col-md-4">
+                        <label class="form-label label-md fw-medium text-dark">الكلية (التخصص العام) *</label>
                         <input type="text" name="ma_faculty" id="input-maFaculty" class="form-control academic-input" placeholder="مثال: كلية الهندسة الميكانيكية والكهربائية" value="{{ old('ma_faculty', optional($maEd)->general_specialization) }}" required>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">القسم (التخصص الدقيق للماجستير) *</label>
-                        <input type="text" name="ma_department" id="input-maDept" class="form-control academic-input" placeholder="مثال: هندسة الحواسيب والأتمتة" value="{{ old('ma_department', optional($maEd)->exact_specialization) }}" required>
+                    <div class="col-md-4">
+                        <label class="form-label label-md fw-medium text-dark">القسم / الفرع (التخصص الدقيق) *</label>
+                        <input type="text" name="ma_department" id="input-maDept" class="form-control academic-input" placeholder="مثال: قسم هندسة الحواسيب والأتمتة" value="{{ old('ma_department', optional($maEd)->exact_specialization) }}" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label label-md fw-medium text-dark">الاختصاص <span class="text-muted fw-normal">(اختياري)</span></label>
+                        <input type="text" name="ma_specialization" id="input-maSpec" class="form-control academic-input" placeholder="مثال: ذكاء صنعي" value="{{ old('ma_specialization', optional($maEd)->section_name) }}">
                     </div>
 
                     <div class="col-md-4">
@@ -511,13 +537,17 @@
                         </select>
                     </div>
 
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">الكلية (التخصص العام) *</label>
                         <input type="text" name="phd_faculty" id="input-phdFaculty" class="form-control academic-input" placeholder="مثال: كلية الهندسة الميكانيكية والكهربائية" value="{{ old('phd_faculty', optional($phdEd)->general_specialization) }}" required>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">القسم (التخصص الدقيق) *</label>
+                    <div class="col-md-4">
+                        <label class="form-label label-md fw-medium text-dark">القسم / الفرع (التخصص الدقيق) *</label>
                         <input type="text" name="phd_department" id="input-phdDept" class="form-control academic-input" placeholder="مثال: قسم هندسة الحواسيب والأتمتة" value="{{ old('phd_department', optional($phdEd)->exact_specialization) }}" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label label-md fw-medium text-dark">الاختصاص <span class="text-muted fw-normal">(اختياري)</span></label>
+                        <input type="text" name="phd_specialization" id="input-phdSpec" class="form-control academic-input" placeholder="مثال: معالجة الإشارات الرقمية" value="{{ old('phd_specialization', optional($phdEd)->section_name) }}">
                     </div>
 
                     <div class="col-md-4">
@@ -584,6 +614,20 @@
                 </div>
 
                 <div class="row g-3">
+                    <!-- 0. صورة الهوية الشخصية -->
+                    <div class="col-md-6">
+                        <label class="form-label label-md fw-medium text-dark">صورة عن الهوية الشخصية (أو جواز السفر) *</label>
+                        <input type="file" name="file_national_id" id="input-fileNationalId" class="form-control academic-input" accept=".pdf">
+                        @if(isset($existingFiles['file_national_id']))
+                            <div class="mt-1 d-flex align-items-center gap-2">
+                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                <a href="{{ asset('storage/' . $existingFiles['file_national_id']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                </a>
+                            </div>
+                        @endif
+                    </div>
+
                     <!-- 1. شهادة الثانوية -->
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">1. شهادة الثانوية العامة *</label>
@@ -1435,6 +1479,7 @@
             showStep(currentStep);
         }
     }
+    window.goToStep = goToStep;
 
     function formatDateDisplay(val) {
         if (!val || val === '-') return '-';
@@ -1584,7 +1629,27 @@
 
         updateMaDecisionAttachmentLabel();
 
-        const initialStep = {{ request('step', 1) }};
+        @php
+            $initialStep = 1;
+            if ($errors->any()) {
+                $firstErrorKey = $errors->keys()[0] ?? '';
+                if (str_starts_with($firstErrorKey, 'hs_')) {
+                    $initialStep = 2;
+                } elseif (str_starts_with($firstErrorKey, 'ba_')) {
+                    $initialStep = 3;
+                } elseif (str_starts_with($firstErrorKey, 'ma_')) {
+                    $initialStep = 4;
+                } elseif (str_starts_with($firstErrorKey, 'phd_') || str_starts_with($firstErrorKey, 'exp_') || $firstErrorKey === 'has_experience') {
+                    $initialStep = 5;
+                } elseif (str_starts_with($firstErrorKey, 'file_') || str_ends_with($firstErrorKey, '_file')) {
+                    $initialStep = 6;
+                }
+            } elseif (request()->filled('step')) {
+                $initialStep = (int)request('step');
+            }
+        @endphp
+
+        const initialStep = {{ $initialStep }};
         showStep(initialStep);
 
         document.querySelectorAll('input[type="file"]').forEach(input => {

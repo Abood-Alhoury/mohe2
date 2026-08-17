@@ -74,8 +74,10 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/committee', [CommitteeController::class, 'index'])->name('admin.committee.index');
     Route::patch('/committee/{id}', [CommitteeController::class, 'decide'])->name('admin.committee.decide');
 
-    // Advanced Search
-    Route::get('/search', [SearchController::class, 'index'])->name('admin.search.index');
+    // Advanced Search (Redirected to applications index)
+    Route::get('/search', function() {
+        return redirect()->route('admin.applications.index');
+    })->name('admin.search.index');
 
     // Reports & Statistics
     Route::get('/reports', [ReportsController::class, 'index'])->name('admin.reports.index');
@@ -85,13 +87,21 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/reports/{id}/consolidated', [PdfReportController::class, 'consolidatedView'])->name('admin.reports.consolidated');
     Route::get('/reports/{id}/consolidated-pdf', [PdfReportController::class, 'downloadConsolidatedPdf'])->name('admin.reports.download_consolidated_pdf');
 
-    // Equivalence Decisions Upload & Issue
+    // Equivalence Decisions Upload & Issue (Academic Master & Doctorate)
     Route::get('/decisions', [DecisionsController::class, 'index'])->name('admin.decisions.index');
     Route::post('/decisions', [DecisionsController::class, 'store'])->name('admin.decisions.store');
+
+    // Applied Master Equivalence Decisions Upload & Issue
+    Route::get('/applied-decisions', [DecisionsController::class, 'appliedIndex'])->name('admin.applied_decisions.index');
+    Route::post('/applied-decisions', [DecisionsController::class, 'appliedStore'])->name('admin.applied_decisions.store');
 
     // Faculty Teaching Permission Decisions Upload & Issue
     Route::get('/faculty-decisions', [DecisionsController::class, 'facultyIndex'])->name('admin.faculty_decisions.index');
     Route::post('/faculty-decisions', [DecisionsController::class, 'facultyStore'])->name('admin.faculty_decisions.store');
+
+    // Research Center Decisions Upload & Issue (قرارات باحثي مراكز البحوث)
+    Route::get('/research-decisions', [DecisionsController::class, 'researchIndex'])->name('admin.research_decisions.index');
+    Route::post('/research-decisions', [DecisionsController::class, 'researchStore'])->name('admin.research_decisions.store');
 
     // Interviews Management & Scheduling ('بانتظار المقابلة')
     Route::get('/interviews', [InterviewsController::class, 'index'])->name('admin.interviews.index');
@@ -129,6 +139,10 @@ Route::prefix('university')->middleware(['auth', 'role:university'])->group(func
     // Wizard: Faculty Permission step-by-step (معاملة السماح لأعضاء الهيئة التدريسية)
     Route::get('/apply/faculty-permission', [ApplicationWizardController::class, 'showFacultyPermissionWizard'])->name('university.apply.faculty_permission');
     Route::post('/apply/faculty-permission', [ApplicationWizardController::class, 'submitFacultyPermissionWizard'])->name('university.apply.faculty_permission.submit');
+
+    // Wizard: Research Center Scientist step-by-step (باحث في مراكز البحوث)
+    Route::get('/apply/research-scientist', [ApplicationWizardController::class, 'showResearchScientistWizard'])->name('university.apply.research_scientist');
+    Route::post('/apply/research-scientist', [ApplicationWizardController::class, 'submitResearchScientistWizard'])->name('university.apply.research_scientist.submit');
 
     // Candidate Lookup API (for candidate info auto-fill)
     Route::get('/candidate/lookup', [ApplicationWizardController::class, 'lookupCandidate'])->name('university.candidate.lookup');

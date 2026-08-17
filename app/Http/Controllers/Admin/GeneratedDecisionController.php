@@ -26,19 +26,21 @@ class GeneratedDecisionController extends Controller
 
         $requestType = $application->request_type ?? '';
         $isFacultyPermission = str_contains($requestType, 'سماح') || str_contains($requestType, 'هيئة تدريسية');
+        $isApplied = str_contains($requestType, 'تطبيقي');
+        $isSingleDecisionType = $isFacultyPermission || $isApplied || str_contains($requestType, 'بحوث');
 
         $docType = $request->query('type', $request->input('doc_type', 'equivalence'));
-        if ($isFacultyPermission) {
+        if ($isSingleDecisionType) {
             $docType = 'equivalence';
             if (!in_array($application->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 'تم الصدور'])) {
                 return redirect()->route('admin.applications.index')
-                    ->with('error', '⚠️ توليد قرار السماح بالتدريس متاح فقط للطلبات التي حالتها (بانتظار إصدار القرار).');
+                    ->with('error', '⚠️ توليد القرار الرسمي لهذا النوع من الطلبات متاح فقط عندما تكون حالة الطلب (بانتظار إصدار القرار).');
             }
         } elseif (!in_array($docType, ['equivalence', 'eligibility'])) {
             $docType = 'equivalence';
         }
 
-        if (!$isFacultyPermission) {
+        if (!$isSingleDecisionType) {
             if ($docType === 'eligibility') {
                 if (!in_array($application->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 'تم الصدور'])) {
                     return redirect()->route('admin.applications.index')
@@ -60,10 +62,14 @@ class GeneratedDecisionController extends Controller
 
         $isDoctorate = !$isFacultyPermission && (str_contains($requestType, 'دكتوراه') || ($phdEd !== null));
         $isApplied = str_contains($requestType, 'تطبيقي');
+        $isResearchCenter = str_contains($requestType, 'بحوث') || str_contains($requestType, 'باحث');
 
         if ($isFacultyPermission) {
             $decisionType = 'faculty_permission';
             $decisionTitle = 'قرار السماح بالتدريس (أعضاء الهيئة التدريسية)';
+        } elseif ($isResearchCenter) {
+            $decisionType = 'research_scientist';
+            $decisionTitle = 'قرار معادلة شهادة دكتوراه واعتماد للتدريس (باحث في مراكز البحوث)';
         } elseif ($isDoctorate) {
             $decisionType = 'syrian_doctorate';
             $decisionTitle = ($docType === 'eligibility')
@@ -83,12 +89,16 @@ class GeneratedDecisionController extends Controller
 
         // Prepare Dynamic Data & Gender Attributes
         $candidateName = $this->formatCandidateFullName($candidate);
-        $genderAttrs = $this->getGenderAttributes($candidate, ($isDoctorate || $isFacultyPermission));
+        $genderAttrs = $this->getGenderAttributes($candidate, ($isDoctorate || $isFacultyPermission || $isResearchCenter));
         $titlePrefix = $genderAttrs['titlePrefix'];
         $candidateTitle = $genderAttrs['candidateTitle'];
         $candidateTitlePrep = $genderAttrs['candidateTitlePrep'];
+        $candidateTitleWord = $genderAttrs['candidateTitle'];
         $qualifiedWord = $genderAttrs['qualifiedWord'];
         $qualifierHolderWord = $genderAttrs['qualifierHolderWord'];
+        $fullTimeWord = $genderAttrs['fullTimeWord'];
+        $quotaWord = $genderAttrs['quotaWord'];
+        $appointedResearcherWord = $genderAttrs['appointedResearcherWord'];
 
         $rawUniName = trim($application->workUniversity->name ?? 'الجامعة الخاصة المعنية');
         $uniName = preg_match('/^(جامعة|الجامعة)\s+/u', $rawUniName) ? $rawUniName : 'جامعة ' . $rawUniName;
@@ -108,32 +118,40 @@ class GeneratedDecisionController extends Controller
         $govFaculty = $govEd->faculty ?? ($application->work_faculty ?: 'كلية التربية');
         $govDepartment = $govEd->department ?? ($application->work_department ?: 'أصول التربية');
 
+        // Research Center Info
+        $rcEd = $application->educations->first(function($e) {
+            return $e->thesis_title === 'باحث في مركز بحوث' || (optional($e->level)->name && str_contains(optional($e->level)->name, 'بحوث'));
+        });
+        $rcCenterName = $rcEd ? ($rcEd->faculty ?: 'مركز الدراسات والبحوث العلمية') : 'مركز الدراسات والبحوث العلمية';
+        $rcDepartment = $rcEd ? ($rcEd->department ?: '') : '';
+        $rcRank = $rcEd ? ($rcEd->rank ?: 'باحث') : 'باحث';
+
         // PhD info
-        $phdGeneral = $phdEd->general_specialization ?? 'الكلية';
-        $phdExact = $phdEd->exact_specialization ?? ($phdEd->section_name ?? 'القسم');
+        $phdGeneral = $phdEd ? ($phdEd->general_specialization ?: ($phdEd->faculty ?: '')) : '';
+        $phdExact = $phdEd ? ($phdEd->exact_specialization ?: ($phdEd->department ?: ($phdEd->section_name ?: ''))) : '';
         $phdSpec = $phdExact ?: $phdGeneral;
         $phdYear = $phdEd && $phdEd->grant_date ? Carbon::parse($phdEd->grant_date)->format('Y') : date('Y');
-        $phdUniRaw = $phdEd->university->name ?? ($phdEd->university_other ?? 'جامعة دمشق');
+        $phdUniRaw = $phdEd ? ($phdEd->university->name ?? ($phdEd->university_other ?? '')) : '';
         $phdUni = preg_replace('/^(جامعة|جامعه)\s+/u', '', trim($phdUniRaw));
 
         // Master info
-        $masterGeneral = $masterEd->general_specialization ?? 'الاقتصاد';
-        $masterExact = $masterEd->exact_specialization ?? ($masterEd->section_name ?? 'إدارة الأعمال');
+        $masterGeneral = $masterEd ? ($masterEd->general_specialization ?: ($masterEd->faculty ?: '')) : '';
+        $masterExact = $masterEd ? ($masterEd->exact_specialization ?: ($masterEd->department ?: ($masterEd->section_name ?: ''))) : '';
         $masterSpec = $masterExact ?: $masterGeneral;
         $masterYear = $masterEd && $masterEd->grant_date ? Carbon::parse($masterEd->grant_date)->format('Y') : ($isDoctorate ? date('Y') - 3 : date('Y'));
-        $masterUniRaw = $masterEd->university->name ?? ($masterEd->university_other ?? 'جامعة حلب');
+        $masterUniRaw = $masterEd ? ($masterEd->university->name ?? ($masterEd->university_other ?? '')) : '';
         $masterUni = preg_replace('/^(جامعة|جامعه)\s+/u', '', trim($masterUniRaw));
 
         // Bachelor info
-        $baGeneral = $bachelorEd->general_specialization ?? 'العلوم الإدارية';
-        $baSection = $bachelorEd->section_name ?? ($bachelorEd->exact_specialization ?? 'إدارة الأعمال');
+        $baGeneral = $bachelorEd ? ($bachelorEd->general_specialization ?: ($bachelorEd->faculty ?: '')) : '';
+        $baSection = $bachelorEd ? ($bachelorEd->exact_specialization ?: ($bachelorEd->department ?: ($bachelorEd->section_name ?: ''))) : '';
         $baSpec = $baSection ?: $baGeneral;
         $baYear = $bachelorEd && $bachelorEd->grant_date ? Carbon::parse($bachelorEd->grant_date)->format('Y') : ($isDoctorate ? date('Y') - 7 : date('Y') - 4);
-        $baUniRaw = $bachelorEd->university->name ?? ($bachelorEd->university_other ?? 'جامعة إدلب');
+        $baUniRaw = $bachelorEd ? ($bachelorEd->university->name ?? ($bachelorEd->university_other ?? '')) : '';
         $baUni = preg_replace('/^(جامعة|جامعه)\s+/u', '', trim($baUniRaw));
 
         // Teaching spec
-        $teachingDept = $application->work_department ?: ($application->work_faculty ?: ($isDoctorate ? $phdSpec : ($isFacultyPermission ? $govDepartment : $masterExact)));
+        $teachingDept = $application->work_department ?: ($application->work_faculty ?: ($isDoctorate ? $phdSpec : ($isFacultyPermission ? $govDepartment : ($masterExact ?: $masterGeneral))));
 
         $decisionNo = $request->query('decision_no', '');
         $decisionDate = format_sys_date(now());
@@ -147,6 +165,15 @@ class GeneratedDecisionController extends Controller
             'phdEd',
             'isDoctorate',
             'isFacultyPermission',
+            'isApplied',
+            'isResearchCenter',
+            'rcCenterName',
+            'rcDepartment',
+            'rcRank',
+            'fullTimeWord',
+            'quotaWord',
+            'appointedResearcherWord',
+            'candidateTitleWord',
             'govUni',
             'govFaculty',
             'govDepartment',
@@ -197,19 +224,21 @@ class GeneratedDecisionController extends Controller
 
         $requestType = $application->request_type ?? '';
         $isFacultyPermission = str_contains($requestType, 'سماح') || str_contains($requestType, 'هيئة تدريسية');
+        $isApplied = str_contains($requestType, 'تطبيقي');
+        $isSingleDecisionType = $isFacultyPermission || $isApplied || str_contains($requestType, 'بحوث');
 
         $docType = $request->query('type', $request->input('doc_type', 'equivalence'));
-        if ($isFacultyPermission) {
+        if ($isSingleDecisionType) {
             $docType = 'equivalence';
             if (!in_array($application->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 'تم الصدور'])) {
                 return redirect()->route('admin.applications.index')
-                    ->with('error', '⚠️ توليد قرار السماح بالتدريس متاح فقط للطلبات التي حالتها (بانتظار إصدار القرار).');
+                    ->with('error', '⚠️ توليد القرار الرسمي لهذا النوع من الطلبات متاح فقط عندما تكون حالة الطلب (بانتظار إصدار القرار).');
             }
         } elseif (!in_array($docType, ['equivalence', 'eligibility'])) {
             $docType = 'equivalence';
         }
 
-        if (!$isFacultyPermission) {
+        if (!$isSingleDecisionType) {
             if ($docType === 'eligibility') {
                 if (!in_array($application->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 'تم الصدور'])) {
                     return redirect()->route('admin.applications.index')
@@ -231,10 +260,14 @@ class GeneratedDecisionController extends Controller
 
         $isDoctorate = !$isFacultyPermission && (str_contains($requestType, 'دكتوراه') || ($phdEd !== null));
         $isApplied = str_contains($requestType, 'تطبيقي');
+        $isResearchCenter = str_contains($requestType, 'بحوث') || str_contains($requestType, 'باحث');
 
         if ($isFacultyPermission) {
             $decisionType = 'faculty_permission';
             $decisionTitle = 'قرار السماح بالتدريس (أعضاء الهيئة التدريسية)';
+        } elseif ($isResearchCenter) {
+            $decisionType = 'research_scientist';
+            $decisionTitle = 'قرار معادلة شهادة دكتوراه واعتماد للتدريس (باحث في مراكز البحوث)';
         } elseif ($isDoctorate) {
             $decisionType = 'syrian_doctorate';
             $decisionTitle = ($docType === 'eligibility')
@@ -253,12 +286,16 @@ class GeneratedDecisionController extends Controller
         }
 
         $candidateName = $this->formatCandidateFullName($candidate);
-        $genderAttrs = $this->getGenderAttributes($candidate, ($isDoctorate || $isFacultyPermission));
+        $genderAttrs = $this->getGenderAttributes($candidate, ($isDoctorate || $isFacultyPermission || $isResearchCenter));
         $titlePrefix = $genderAttrs['titlePrefix'];
         $candidateTitle = $genderAttrs['candidateTitle'];
         $candidateTitlePrep = $genderAttrs['candidateTitlePrep'];
+        $candidateTitleWord = $genderAttrs['candidateTitle'];
         $qualifiedWord = $genderAttrs['qualifiedWord'];
         $qualifierHolderWord = $genderAttrs['qualifierHolderWord'];
+        $fullTimeWord = $genderAttrs['fullTimeWord'];
+        $quotaWord = $genderAttrs['quotaWord'];
+        $appointedResearcherWord = $genderAttrs['appointedResearcherWord'];
 
         $rawUniName = trim($application->workUniversity->name ?? 'الجامعة الخاصة المعنية');
         $uniName = preg_match('/^(جامعة|الجامعة)\s+/u', $rawUniName) ? $rawUniName : 'جامعة ' . $rawUniName;
@@ -278,31 +315,39 @@ class GeneratedDecisionController extends Controller
         $govFaculty = $govEd->faculty ?? ($application->work_faculty ?: 'كلية التربية');
         $govDepartment = $govEd->department ?? ($application->work_department ?: 'أصول التربية');
 
+        // Research Center Info
+        $rcEd = $application->educations->first(function($e) {
+            return $e->thesis_title === 'باحث في مركز بحوث' || (optional($e->level)->name && str_contains(optional($e->level)->name, 'بحوث'));
+        });
+        $rcCenterName = $rcEd ? ($rcEd->faculty ?: 'مركز الدراسات والبحوث العلمية') : 'مركز الدراسات والبحوث العلمية';
+        $rcDepartment = $rcEd ? ($rcEd->department ?: '') : '';
+        $rcRank = $rcEd ? ($rcEd->rank ?: 'باحث') : 'باحث';
+
         // PhD info
-        $phdGeneral = $phdEd->general_specialization ?? 'الكلية';
-        $phdExact = $phdEd->exact_specialization ?? ($phdEd->section_name ?? 'القسم');
+        $phdGeneral = $phdEd ? ($phdEd->general_specialization ?: ($phdEd->faculty ?: '')) : '';
+        $phdExact = $phdEd ? ($phdEd->exact_specialization ?: ($phdEd->department ?: ($phdEd->section_name ?: ''))) : '';
         $phdSpec = $phdExact ?: $phdGeneral;
         $phdYear = $phdEd && $phdEd->grant_date ? Carbon::parse($phdEd->grant_date)->format('Y') : date('Y');
-        $phdUniRaw = $phdEd->university->name ?? ($phdEd->university_other ?? 'جامعة دمشق');
+        $phdUniRaw = $phdEd ? ($phdEd->university->name ?? ($phdEd->university_other ?? '')) : '';
         $phdUni = preg_replace('/^(جامعة|جامعه)\s+/u', '', trim($phdUniRaw));
 
         // Master info
-        $masterGeneral = $masterEd->general_specialization ?? 'الاقتصاد';
-        $masterExact = $masterEd->exact_specialization ?? ($masterEd->section_name ?? 'إدارة الأعمال');
+        $masterGeneral = $masterEd ? ($masterEd->general_specialization ?: ($masterEd->faculty ?: '')) : '';
+        $masterExact = $masterEd ? ($masterEd->exact_specialization ?: ($masterEd->department ?: ($masterEd->section_name ?: ''))) : '';
         $masterSpec = $masterExact ?: $masterGeneral;
         $masterYear = $masterEd && $masterEd->grant_date ? Carbon::parse($masterEd->grant_date)->format('Y') : ($isDoctorate ? date('Y') - 3 : date('Y'));
-        $masterUniRaw = $masterEd->university->name ?? ($masterEd->university_other ?? 'جامعة معترف بها');
+        $masterUniRaw = $masterEd ? ($masterEd->university->name ?? ($masterEd->university_other ?? '')) : '';
         $masterUni = preg_replace('/^(جامعة|جامعه)\s+/u', '', trim($masterUniRaw));
 
         // Bachelor info
-        $baGeneral = $bachelorEd->general_specialization ?? 'العلوم الإدارية';
-        $baSection = $bachelorEd->section_name ?? ($bachelorEd->exact_specialization ?? 'إدارة أعمال');
+        $baGeneral = $bachelorEd ? ($bachelorEd->general_specialization ?: ($bachelorEd->faculty ?: '')) : '';
+        $baSection = $bachelorEd ? ($bachelorEd->exact_specialization ?: ($bachelorEd->department ?: ($bachelorEd->section_name ?: ''))) : '';
         $baSpec = $baSection ?: $baGeneral;
-        $baYear = $bachelorEd && $bachelorEd->grant_date ? Carbon::parse($bachelorEd->grant_date)->format('Y') : ($isDoctorate ? date('Y') - 7 : (date('Y') - 5));
-        $baUniRaw = $bachelorEd->university->name ?? ($bachelorEd->university_other ?? 'جامعة معترف بها');
+        $baYear = $bachelorEd && $bachelorEd->grant_date ? Carbon::parse($bachelorEd->grant_date)->format('Y') : ($isDoctorate ? date('Y') - 7 : date('Y') - 4);
+        $baUniRaw = $bachelorEd ? ($bachelorEd->university->name ?? ($bachelorEd->university_other ?? '')) : '';
         $baUni = preg_replace('/^(جامعة|جامعه)\s+/u', '', trim($baUniRaw));
 
-        $teachingDept = $application->work_department ?: ($application->work_faculty ?: ($isDoctorate ? $phdSpec : ($isFacultyPermission ? $govDepartment : $masterSpec)));
+        $teachingDept = $application->work_department ?: ($application->work_faculty ?: ($isDoctorate ? $phdSpec : ($isFacultyPermission ? $govDepartment : ($masterExact ?: $masterGeneral))));
 
         $decisionNo = $request->query('decision_no', '');
         $decisionDate = format_sys_date(now());
@@ -315,6 +360,15 @@ class GeneratedDecisionController extends Controller
             'phdEd',
             'isDoctorate',
             'isFacultyPermission',
+            'isApplied',
+            'isResearchCenter',
+            'rcCenterName',
+            'rcDepartment',
+            'rcRank',
+            'fullTimeWord',
+            'quotaWord',
+            'appointedResearcherWord',
+            'candidateTitleWord',
             'govUni',
             'govFaculty',
             'govDepartment',
@@ -415,10 +469,14 @@ class GeneratedDecisionController extends Controller
         $isFacultyPermission = str_contains($requestType, 'سماح') || str_contains($requestType, 'هيئة تدريسية');
         $isDoctorate = !$isFacultyPermission && (str_contains($requestType, 'دكتوراه') || ($phdEd !== null));
         $isApplied = str_contains($requestType, 'تطبيقي');
+        $isResearchCenter = str_contains($requestType, 'بحوث') || str_contains($requestType, 'باحث');
 
         if ($isFacultyPermission) {
             $decisionType = 'faculty_permission';
             $decisionTitle = 'قرار السماح بالتدريس (أعضاء الهيئة التدريسية)';
+        } elseif ($isResearchCenter) {
+            $decisionType = 'research_scientist';
+            $decisionTitle = 'قرار معادلة شهادة دكتوراه واعتماد للتدريس (باحث في مراكز البحوث)';
         } elseif ($isDoctorate) {
             $decisionType = 'syrian_doctorate';
             $decisionTitle = ($docType === 'eligibility')
@@ -437,12 +495,16 @@ class GeneratedDecisionController extends Controller
         }
 
         $candidateName = $this->formatCandidateFullName($candidate);
-        $genderAttrs = $this->getGenderAttributes($candidate, ($isDoctorate || $isFacultyPermission));
+        $genderAttrs = $this->getGenderAttributes($candidate, ($isDoctorate || $isFacultyPermission || $isResearchCenter));
         $titlePrefix = $genderAttrs['titlePrefix'];
         $candidateTitle = $genderAttrs['candidateTitle'];
         $candidateTitlePrep = $genderAttrs['candidateTitlePrep'];
+        $candidateTitleWord = $genderAttrs['candidateTitle'];
         $qualifiedWord = $genderAttrs['qualifiedWord'];
         $qualifierHolderWord = $genderAttrs['qualifierHolderWord'];
+        $fullTimeWord = $genderAttrs['fullTimeWord'];
+        $quotaWord = $genderAttrs['quotaWord'];
+        $appointedResearcherWord = $genderAttrs['appointedResearcherWord'];
 
         $rawUniName = trim($application->workUniversity->name ?? 'الجامعة الخاصة المعنية');
         $uniName = preg_match('/^(جامعة|الجامعة)\s+/u', $rawUniName) ? $rawUniName : 'جامعة ' . $rawUniName;
@@ -461,31 +523,39 @@ class GeneratedDecisionController extends Controller
         $govFaculty = $govEd->faculty ?? ($application->work_faculty ?: 'كلية التربية');
         $govDepartment = $govEd->department ?? ($application->work_department ?: 'أصول التربية');
 
+        // Research Center Info
+        $rcEd = $application->educations->first(function($e) {
+            return $e->thesis_title === 'باحث في مركز بحوث' || (optional($e->level)->name && str_contains(optional($e->level)->name, 'بحوث'));
+        });
+        $rcCenterName = $rcEd ? ($rcEd->faculty ?: 'مركز الدراسات والبحوث العلمية') : 'مركز الدراسات والبحوث العلمية';
+        $rcDepartment = $rcEd ? ($rcEd->department ?: '') : '';
+        $rcRank = $rcEd ? ($rcEd->rank ?: 'باحث') : 'باحث';
+
         // PhD info
-        $phdGeneral = $phdEd->general_specialization ?? 'الكلية';
-        $phdExact = $phdEd->exact_specialization ?? ($phdEd->section_name ?? 'القسم');
+        $phdGeneral = $phdEd ? ($phdEd->general_specialization ?: ($phdEd->faculty ?: '')) : '';
+        $phdExact = $phdEd ? ($phdEd->exact_specialization ?: ($phdEd->department ?: ($phdEd->section_name ?: ''))) : '';
         $phdSpec = $phdExact ?: $phdGeneral;
         $phdYear = $phdEd && $phdEd->grant_date ? Carbon::parse($phdEd->grant_date)->format('Y') : date('Y');
-        $phdUniRaw = $phdEd->university->name ?? ($phdEd->university_other ?? 'جامعة دمشق');
+        $phdUniRaw = $phdEd ? ($phdEd->university->name ?? ($phdEd->university_other ?? '')) : '';
         $phdUni = preg_replace('/^(جامعة|جامعه)\s+/u', '', trim($phdUniRaw));
 
         // Master info
-        $masterGeneral = $masterEd->general_specialization ?? 'الاقتصاد';
-        $masterExact = $masterEd->exact_specialization ?? ($masterEd->section_name ?? 'إدارة الأعمال');
+        $masterGeneral = $masterEd ? ($masterEd->general_specialization ?: ($masterEd->faculty ?: '')) : '';
+        $masterExact = $masterEd ? ($masterEd->exact_specialization ?: ($masterEd->department ?: ($masterEd->section_name ?: ''))) : '';
         $masterSpec = $masterExact ?: $masterGeneral;
         $masterYear = $masterEd && $masterEd->grant_date ? Carbon::parse($masterEd->grant_date)->format('Y') : ($isDoctorate ? date('Y') - 3 : date('Y'));
-        $masterUniRaw = $masterEd->university->name ?? ($masterEd->university_other ?? 'جامعة معترف بها');
+        $masterUniRaw = $masterEd ? ($masterEd->university->name ?? ($masterEd->university_other ?? '')) : '';
         $masterUni = preg_replace('/^(جامعة|جامعه)\s+/u', '', trim($masterUniRaw));
 
         // Bachelor info
-        $baGeneral = $bachelorEd->general_specialization ?? 'العلوم الإدارية';
-        $baSection = $bachelorEd->section_name ?? ($bachelorEd->exact_specialization ?? 'إدارة أعمال');
+        $baGeneral = $bachelorEd ? ($bachelorEd->general_specialization ?: ($bachelorEd->faculty ?: '')) : '';
+        $baSection = $bachelorEd ? ($bachelorEd->exact_specialization ?: ($bachelorEd->department ?: ($bachelorEd->section_name ?: ''))) : '';
         $baSpec = $baSection ?: $baGeneral;
-        $baYear = $bachelorEd && $bachelorEd->grant_date ? Carbon::parse($bachelorEd->grant_date)->format('Y') : ($isDoctorate ? date('Y') - 7 : (date('Y') - 5));
-        $baUniRaw = $bachelorEd->university->name ?? ($bachelorEd->university_other ?? 'جامعة معترف بها');
+        $baYear = $bachelorEd && $bachelorEd->grant_date ? Carbon::parse($bachelorEd->grant_date)->format('Y') : ($isDoctorate ? date('Y') - 7 : date('Y') - 4);
+        $baUniRaw = $bachelorEd ? ($bachelorEd->university->name ?? ($bachelorEd->university_other ?? '')) : '';
         $baUni = preg_replace('/^(جامعة|جامعه)\s+/u', '', trim($baUniRaw));
 
-        $teachingDept = $application->work_department ?: ($application->work_faculty ?: ($isDoctorate ? $phdSpec : ($isFacultyPermission ? $govDepartment : $masterSpec)));
+        $teachingDept = $application->work_department ?: ($application->work_faculty ?: ($isDoctorate ? $phdSpec : ($isFacultyPermission ? $govDepartment : ($masterExact ?: $masterGeneral))));
         $decisionDate = format_sys_date(now());
 
         // 1. Render PDF HTML
@@ -497,6 +567,15 @@ class GeneratedDecisionController extends Controller
             'phdEd',
             'isDoctorate',
             'isFacultyPermission',
+            'isApplied',
+            'isResearchCenter',
+            'rcCenterName',
+            'rcDepartment',
+            'rcRank',
+            'fullTimeWord',
+            'quotaWord',
+            'appointedResearcherWord',
+            'candidateTitleWord',
             'govUni',
             'govFaculty',
             'govDepartment',
@@ -604,6 +683,10 @@ class GeneratedDecisionController extends Controller
                 'qualifiedWord' => 'مؤهلة',
                 'qualifierHolderWord' => 'الحائزة',
                 'promotionWord' => 'ترقى',
+                'fullTimeWord' => 'تفرغها',
+                'quotaWord' => 'نصابها',
+                'appointedResearcherWord' => 'والمعينة باحثة',
+                'assignWord' => 'تكليفها',
             ];
         } elseif ($gender === 'ذكر') {
             return [
@@ -613,6 +696,10 @@ class GeneratedDecisionController extends Controller
                 'qualifiedWord' => 'مؤهل',
                 'qualifierHolderWord' => 'الحائز',
                 'promotionWord' => 'يرقى',
+                'fullTimeWord' => 'تفرغه',
+                'quotaWord' => 'نصابه',
+                'appointedResearcherWord' => 'والمعين باحث',
+                'assignWord' => 'تكليفه',
             ];
         } else {
             return [
@@ -622,6 +709,10 @@ class GeneratedDecisionController extends Controller
                 'qualifiedWord' => 'مؤهل/ة',
                 'qualifierHolderWord' => 'الحائز/ة',
                 'promotionWord' => 'تـ/يرقى',
+                'fullTimeWord' => 'تفرغه/ا',
+                'quotaWord' => 'نصابه/ا',
+                'appointedResearcherWord' => 'والمعين/ة باحث/ة',
+                'assignWord' => 'تكليفه/ا',
             ];
         }
     }

@@ -84,8 +84,8 @@
                     <i class="fa-solid fa-arrow-right me-1.5"></i> عودة
                 </a>
 
-                <!-- TOGGLE DECISION TYPES: EQUIVALENCE vs ELIGIBILITY (HIDDEN FOR FACULTY PERMISSION) -->
-                @if(!$isFacultyPermission)
+                <!-- TOGGLE DECISION TYPES: EQUIVALENCE vs ELIGIBILITY (ONLY FOR FULL EQUIVALENCE: SYRIAN/FOREIGN MASTER & PHD) -->
+                @if(!$isFacultyPermission && !$isApplied)
                     <div class="btn-group shadow-2xs rounded" role="group">
                         <a href="{{ route('admin.reports.generate_decision', ['id' => $application->id, 'type' => 'equivalence']) }}" 
                            class="btn btn-sm fw-bold px-3 py-2 {{ $docType === 'equivalence' ? 'btn-solid-navy' : 'btn-outline-navy' }}">
@@ -102,6 +102,10 @@
                             </button>
                         @endif
                     </div>
+                @elseif($isApplied)
+                    <span class="badge bg-primary-subtle text-primary border border-primary px-3 py-2 fs-7 fw-bold">
+                        <i class="fa-solid fa-briefcase me-1.5"></i> قرار تعادل ماجستير تطبيقي (تكليف تدريس جوانب تطبيقية)
+                    </span>
                 @else
                     <span class="badge bg-success-subtle text-success border border-success px-3 py-2 fs-7 fw-bold">
                         <i class="fa-solid fa-stamp me-1.5"></i> قرار السماح بالتدريس (رسمي)

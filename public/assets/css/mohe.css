@@ -1056,12 +1056,24 @@ body {
   transform: translateX(-4px);
 }
 
-.mohe-footer-executive .footer-sublink {
-  color: rgba(255, 255, 255, 0.6);
-  text-decoration: none;
-  transition: color 0.18s ease;
-}
-
 .mohe-footer-executive .footer-sublink:hover {
   color: #ffffff;
 }
+
+/* ==========================================================================
+   INPUT PLACEHOLDER & DATE NORMAL WEIGHT REFINEMENT
+   ========================================================================== */
+
+input::placeholder,
+textarea::placeholder,
+.form-control::placeholder {
+  font-weight: 400 !important;
+  color: #94a3b8 !important;
+  opacity: 0.85;
+}
+
+input[type="date"] {
+  font-weight: 400 !important;
+  color: #111C2C;
+}
+

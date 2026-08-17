@@ -54,7 +54,7 @@ body { direction: ltr; text-align: right; font-size: 13px; color: #111C2C; margi
         <div class="en">MINISTRY OF HIGHER EDUCATION AND SCIENTIFIC RESEARCH</div>
     </td>
     <td class="logo-td">
-        <img src="{{ str_replace('\\','/',public_path('logo.jpg')) }}" width="70" height="70" alt="logo"/>
+        <img src="{{ str_replace('\\','/',public_path('assets/report_logo.png')) }}" width="75" height="75" alt="logo" style="object-fit: contain;"/>
     </td>
 </tr>
 </table>
@@ -209,9 +209,9 @@ body { direction: ltr; text-align: right; font-size: 13px; color: #111C2C; margi
         <div class="dblock-h">الشهادة الثانوية :</div>
         <table class="mt">
             <tr>
-                <td class="l">الدولة المانحة :</td><td>{{ optional(optional($highSchoolEd)->country)->name ?? '---' }}</td>
-                <td class="l">القسم :</td><td>{{ optional($highSchoolEd)->section_name ?? '---' }}</td>
-                <td class="l">تاريخ المنح :</td><td>{{ optional($highSchoolEd)->grant_date ?? '---' }}</td>
+                <td class="l">الدولة المانحة :</td><td>{{ optional(optional($highSchoolEd)->country)->name ?? 'سوريا' }}</td>
+                <td class="l">نوع الشهادة :</td><td>{{ optional($highSchoolEd)->section_name ?: (optional($highSchoolEd)->general_specialization ?: 'علمي') }}</td>
+                <td class="l">تاريخ / سنة المنح :</td><td>{{ optional($highSchoolEd)->grant_date ?? '---' }}</td>
             </tr>
         </table>
     </div>
@@ -222,16 +222,16 @@ body { direction: ltr; text-align: right; font-size: 13px; color: #111C2C; margi
         <table class="mt">
             <tr>
                 <td class="l">الدولة المانحة :</td><td>{{ optional($bachelorEd->country)->name ?? '---' }}</td>
-                <td class="l">الجهة المانحة :</td><td colspan="3">{{ optional($bachelorEd->university)->name ?? '---' }}</td>
+                <td class="l">الجهة المانحة :</td><td colspan="3">{{ optional($bachelorEd->university)->name ?? ($bachelorEd->university_other ?? '---') }}</td>
             </tr>
             <tr>
-                <td class="l">التخصص العام :</td><td>{{ $bachelorEd->general_specialization ?? '---' }}</td>
-                <td class="l">التخصص الدقيق :</td><td>{{ $bachelorEd->exact_specialization ?? '---' }}</td>
-                <td class="l">المرتبة :</td><td>{{ $bachelorEd->rank ?? '---' }}</td>
+                <td class="l">الكلية / التخصص العام :</td><td>{{ $bachelorEd->general_specialization ?: ($bachelorEd->faculty ?: '---') }}</td>
+                <td class="l">القسم / التخصص الدقيق :</td><td>{{ $bachelorEd->exact_specialization ?: ($bachelorEd->department ?: ($bachelorEd->section_name ?: '---')) }}</td>
+                <td class="l">المرتبة / المعدل :</td><td>{{ $bachelorEd->rank ?? '---' }}</td>
             </tr>
             <tr>
-                <td class="l">تاريخ التسجيل :</td><td>{{ $bachelorEd->registration_date ?? '---' }}</td>
-                <td class="l">تاريخ المنح :</td><td colspan="3">{{ $bachelorEd->grant_date ?? '---' }}</td>
+                <td class="l">تاريخ التسجيل :</td><td>{{ format_sys_date($bachelorEd->registration_date) }}</td>
+                <td class="l">تاريخ المنح :</td><td colspan="3">{{ format_sys_date($bachelorEd->grant_date) }}</td>
             </tr>
         </table>
     </div>
@@ -239,24 +239,42 @@ body { direction: ltr; text-align: right; font-size: 13px; color: #111C2C; margi
 
     @if($masterEd)
     <div class="dblock">
-        <div class="dblock-h">شهادة ماجستير {{ optional(optional($masterEd)->country)->name == 'سوريا' ? 'سوريا' : 'غير سورية' }} :</div>
+        <div class="dblock-h">درجة الماجستير :</div>
         <table class="mt">
             <tr>
-                <td class="l">الدولة المانحة :</td><td>{{ optional($masterEd->country)->name ?? '---' }}</td>
-                <td class="l">الجهة المانحة :</td><td colspan="3">{{ optional($masterEd->university)->name ?? '---' }}</td>
+                <td class="l">الجامعة المانحة :</td><td colspan="5">{{ optional($masterEd->university)->name ?? ($masterEd->university_other ?? '---') }}</td>
             </tr>
             <tr>
-                <td class="l">التخصص العام :</td><td>{{ $masterEd->general_specialization ?? '---' }}</td>
-                <td class="l">التخصص الدقيق :</td><td>{{ $masterEd->exact_specialization ?? '---' }}</td>
-                <td class="l">المرتبة :</td><td>{{ $masterEd->rank ?? '---' }}</td>
+                <td class="l">الكلية / التخصص العام :</td><td>{{ $masterEd->general_specialization ?: ($masterEd->faculty ?: '---') }}</td>
+                <td class="l">القسم / التخصص الدقيق :</td><td>{{ $masterEd->exact_specialization ?: ($masterEd->department ?: ($masterEd->section_name ?: '---')) }}</td>
+                <td class="l">المرتبة / التقدير :</td><td>{{ $masterEd->rank ?? '---' }}</td>
             </tr>
             <tr>
-                <td class="l">تاريخ التسجيل :</td><td>{{ $masterEd->registration_date ?? '---' }}</td>
-                <td class="l">تاريخ المنح :</td><td>{{ $masterEd->grant_date ?? '---' }}</td>
-                <td class="l">اسم المشرف :</td><td>{{ $masterEd->supervisor_name ?? '---' }}</td>
+                <td class="l">تاريخ التسجيل :</td><td>{{ format_sys_date($masterEd->registration_date) }}</td>
+                <td class="l">تاريخ المناقشة :</td><td>{{ format_sys_date($masterEd->defense_date) }}</td>
+                <td class="l">تاريخ المنح :</td><td>{{ format_sys_date($masterEd->grant_date) }}</td>
             </tr>
             <tr>
-                <td class="l">عنوان الاطروحة :</td><td colspan="5">{{ $masterEd->thesis_title ?? '---' }}</td>
+                <td class="l">عنوان الرسالة :</td><td colspan="5" style="font-weight:bold;color:#1A2A44;">{{ $masterEd->thesis_title ?? '---' }}</td>
+            </tr>
+        </table>
+    </div>
+    @endif
+
+    @if($phdEd)
+    <div class="dblock">
+        <div class="dblock-h">درجة الدكتوراه :</div>
+        <table class="mt">
+            <tr>
+                <td class="l">الجامعة المانحة :</td><td colspan="5">{{ optional($phdEd->university)->name ?? ($phdEd->university_other ?? '---') }}</td>
+            </tr>
+            <tr>
+                <td class="l">الكلية / التخصص العام :</td><td>{{ $phdEd->general_specialization ?: ($phdEd->faculty ?: '---') }}</td>
+                <td class="l">القسم / التخصص الدقيق :</td><td>{{ $phdEd->exact_specialization ?: ($phdEd->department ?: ($phdEd->section_name ?: '---')) }}</td>
+                <td class="l">المرتبة / التقدير :</td><td>{{ $phdEd->rank ?? '---' }}</td>
+            </tr>
+            <tr>
+                <td class="l">تاريخ المنح :</td><td colspan="5">{{ format_sys_date($phdEd->grant_date) }}</td>
             </tr>
         </table>
     </div>
@@ -291,12 +309,12 @@ body { direction: ltr; text-align: right; font-size: 13px; color: #111C2C; margi
         <div class="en">MINISTRY OF HIGHER EDUCATION - CONSOLIDATED ATTACHMENTS</div>
     </td>
     <td class="logo-td">
-        <img src="{{ str_replace('\\','/',public_path('logo.jpg')) }}" width="70" height="70" alt="logo"/>
+        <img src="{{ str_replace('\\','/',public_path('assets/report_logo.png')) }}" width="75" height="75" alt="logo" style="object-fit: contain;"/>
     </td>
 </tr>
 </table>
 
-<div class="sec">المرفق رقم ({{ $index + 2 }}): {{ $attachment->attachmentType->name ?? 'وثيقة ومرفق رسمي' }}</div>
+<div class="sec">المرفق رقم ({{ $index + 2 }}): {{ $attachment->notes ?: ($attachment->attachmentType->name ?? 'وثيقة ومرفق رسمي') }}</div>
 <div class="cname">المرشح: {{ $candidate->full_name }} | الرقم الوطني: {{ $candidate->national_id }} | طلب رقم: #{{ $application->application_no }}</div>
 
 @php
@@ -318,12 +336,12 @@ body { direction: ltr; text-align: right; font-size: 13px; color: #111C2C; margi
     <div class="doc-card">
         <h3 style="color: #1A2A44; margin-bottom: 10px;">📄 وثيقة ومرفق رسمي مدمج (ملف PDF)</h3>
         <p style="font-size: 14px; font-weight: bold; color: #775A19; margin-bottom: 15px;">
-            {{ $attachment->attachmentType->name ?? 'مستند مرفق' }} - {{ $attachment->notes ?? '' }}
+            {{ $attachment->notes ?: ($attachment->attachmentType->name ?? 'مستند مرفق') }}
         </p>
         <table class="mt" style="max-width: 600px; margin: 0 auto; text-align: right;">
             <tr>
                 <td class="l">نوع المستند:</td>
-                <td>{{ $attachment->attachmentType->name ?? 'وثيقة رسمية' }}</td>
+                <td>{{ $attachment->notes ?: ($attachment->attachmentType->name ?? 'وثيقة رسمية') }}</td>
             </tr>
             <tr>
                 <td class="l">مسار الملف المرفق:</td>

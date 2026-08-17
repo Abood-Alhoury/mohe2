@@ -122,7 +122,7 @@
 
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">اسم المرشح الكامل *</label>
+                        <label class="form-label label-md fw-medium text-dark">اسم المرشح *</label>
                         <input type="text" name="full_name" id="input-fullName" class="form-control academic-input" placeholder="الاسم والنسبة" value="{{ old('full_name', optional($candidate)->full_name) }}" required>
                     </div>
                     <div class="col-md-4">
@@ -145,7 +145,13 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">الرقم الوطني *</label>
-                        <input type="text" name="national_id" id="input-nationalId" class="form-control academic-input" placeholder="الرقم الوطني المكون من 11 خانة" value="{{ old('national_id', optional($candidate)->national_id) }}" maxlength="11" required>
+                        @php
+                            $draftNatId = optional($candidate)->national_id;
+                            if ($draftNatId && str_starts_with($draftNatId, 'TMP-')) {
+                                $draftNatId = '';
+                            }
+                        @endphp
+                        <input type="text" name="national_id" id="input-nationalId" class="form-control academic-input" placeholder="الرقم الوطني المكون من 11 خانة" value="{{ old('national_id', $draftNatId) }}" maxlength="11" required>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">تاريخ الميلاد *</label>
@@ -170,7 +176,7 @@
 
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">البريد الإلكتروني *</label>
-                        <input type="email" name="email" id="input-email" class="form-control academic-input" placeholder="name@example.com" value="{{ old('email', optional($candidate)->email) }}" required>
+                        <input type="email" name="email" id="input-email" class="form-control academic-input" placeholder="name@example.com" value="{{ old('email', optional($candidate)->email ?: (Auth::user()->university->email ?? Auth::user()->email)) }}" required>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">عنوان الإقامة الحالي بالتفصيل *</label>
@@ -497,7 +503,7 @@
                                 <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2.5 fs-8 fw-bold" onclick="goToStep(1)"><i class="fa-solid fa-pen-to-square me-1"></i> تعديل</button>
                             </div>
                             <div class="row g-2">
-                                <div class="col-md-4"><strong>الاسم الكامل:</strong> <span id="preview-fullName">---</span></div>
+                                <div class="col-md-4"><strong>اسم المرشح:</strong> <span id="preview-fullName">---</span></div>
                                 <div class="col-md-4"><strong>اسم الأب:</strong> <span id="preview-fatherName">---</span></div>
                                 <div class="col-md-4"><strong>اسم الأم:</strong> <span id="preview-motherName">---</span></div>
                                 <div class="col-md-4"><strong>الجنسية:</strong> <span id="preview-nationality">---</span></div>

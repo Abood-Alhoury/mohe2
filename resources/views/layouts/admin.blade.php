@@ -336,7 +336,12 @@
                     </div>
                     <span class="sidebar-text-label">بانتظار المقابلات</span>
                     @php
-                        $awaitingInterviewsBadge = \App\Models\Application::where('status', 'بانتظار المقابلة')->count();
+                        $awaitingInterviewsBadge = \App\Models\Application::where('status', 'بانتظار المقابلة')
+                            ->where('request_type', 'not like', '%تطبيقي%')
+                            ->where('request_type', 'not like', '%سماح%')
+                            ->where('request_type', 'not like', '%تدريسية%')
+                            ->where('request_type', 'not like', '%بحوث%')
+                            ->count();
                     @endphp
                     @if($awaitingInterviewsBadge > 0)
                         <span class="badge rounded-pill ms-auto" style="font-size: 0.72rem; background-color: #0891b2 !important; color: #ffffff !important;">{{ $awaitingInterviewsBadge }}</span>
@@ -370,31 +375,13 @@
                     <span class="sidebar-text-label">التقارير السنوية</span>
                 </a>
 
-                <a href="{{ route('admin.search.index') }}" 
-                   class="sidebar-link {{ request()->routeIs('admin.search*') ? 'active' : '' }}"
-                   :title="!isExpanded ? 'بحث المتقدمين' : ''">
-                    <div class="sidebar-icon-tile tile-teal">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                    </div>
-                    <span class="sidebar-text-label">بحث المتقدمين</span>
-                </a>
-
                 <a href="{{ route('admin.decisions.index') }}" 
-                   class="sidebar-link {{ request()->routeIs('admin.decisions*') ? 'active' : '' }}"
-                   :title="!isExpanded ? 'قرارات التعادل والأهلية' : ''">
+                   class="sidebar-link {{ request()->routeIs('admin.decisions*') || request()->routeIs('admin.applied_decisions*') || request()->routeIs('admin.faculty_decisions*') || request()->routeIs('admin.research_decisions*') ? 'active' : '' }}"
+                   :title="!isExpanded ? 'إصدار القرارات' : ''">
                     <div class="sidebar-icon-tile tile-amber">
-                        <i class="fa-solid fa-graduation-cap"></i>
-                    </div>
-                    <span class="sidebar-text-label">قرارات التعادل والأهلية</span>
-                </a>
-
-                <a href="{{ route('admin.faculty_decisions.index') }}" 
-                   class="sidebar-link {{ request()->routeIs('admin.faculty_decisions*') ? 'active' : '' }}"
-                   :title="!isExpanded ? 'قرارات السماح بالتدريس' : ''">
-                    <div class="sidebar-icon-tile tile-teal">
                         <i class="fa-solid fa-stamp"></i>
                     </div>
-                    <span class="sidebar-text-label">قرارات السماح بالتدريس</span>
+                    <span class="sidebar-text-label">إصدار القرارات</span>
                 </a>
 
             </nav>

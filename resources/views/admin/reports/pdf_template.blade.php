@@ -64,10 +64,9 @@ body {
     width: 80px; 
 }
 .emblem-img { 
-    width: 65px; 
-    height: 65px; 
-    border-radius: 50%; 
-    border: 2px solid #C5A059; 
+    width: 70px; 
+    height: 70px; 
+    object-fit: contain;
 }
 
 /* DOCUMENT MAIN TITLE */
@@ -170,7 +169,7 @@ body {
                 <div class="en-title">MINISTRY OF HIGHER EDUCATION AND SCIENTIFIC RESEARCH</div>
             </td>
             <td style="width: 70px; vertical-align: middle; text-align: left;">
-                <img src="{{ public_path('assets/logo.jpg') }}" class="emblem-img" alt="شعار الوزارة">
+                <img src="{{ public_path('assets/report_logo.png') }}" class="emblem-img" alt="شعار الجمهورية العربية السورية">
             </td>
         </tr>
     </table>
@@ -288,7 +287,7 @@ body {
         <div class="moz-section">الشهادة الثانوية :</div>
         @if($highSchoolEd)
         <table class="mt">
-            <tr><td>{{ $highSchoolEd->type_or_faculty }}</td><td class="l">نوع الشهادة :</td><td>{{ optional($highSchoolEd->country)->name }}</td><td class="l">بلد المنح :</td></tr>
+            <tr><td>{{ $highSchoolEd->section_name ?: ($highSchoolEd->general_specialization ?: ($highSchoolEd->type_or_faculty ?: 'علمي')) }}</td><td class="l">نوع الشهادة :</td><td>{{ optional($highSchoolEd->country)->name ?? 'سوريا' }}</td><td class="l">بلد المنح :</td></tr>
             <tr><td>{{ $highSchoolEd->decision_no ?? 'لا يوجد' }}</td><td class="l">قرار المعادلة :</td><td>{{ format_sys_date($highSchoolEd->grant_date) }}</td><td class="l">تاريخ المنح :</td></tr>
         </table>
         @else
@@ -300,7 +299,7 @@ body {
         @if($bachelorEd)
         <table class="mt">
             <tr><td>{{ optional($bachelorEd->university)->name ?? $bachelorEd->university_other }}</td><td class="l">الجامعة :</td><td>{{ optional($bachelorEd->country)->name }}</td><td class="l">بلد المنح :</td></tr>
-            <tr><td>{{ format_sys_date($bachelorEd->registration_date) }}</td><td class="l">تاريخ التسجيل :</td><td>{{ $bachelorEd->type_or_faculty }} - {{ $bachelorEd->specialization_or_dept }}</td><td class="l">الكلية والفرع :</td></tr>
+            <tr><td>{{ format_sys_date($bachelorEd->registration_date) }}</td><td class="l">تاريخ التسجيل :</td><td>{{ $bachelorEd->general_specialization ?: ($bachelorEd->faculty ?: '---') }} - {{ $bachelorEd->exact_specialization ?: $bachelorEd->department }} {{ $bachelorEd->section_name ? '(' . $bachelorEd->section_name . ')' : '' }}</td><td class="l">الكلية والفرع :</td></tr>
             <tr><td>{{ $bachelorEd->rank_or_grade }}</td><td class="l">التقدير/المعدل :</td><td>{{ format_sys_date($bachelorEd->grant_date) }}</td><td class="l">تاريخ المنح :</td></tr>
         </table>
         @else
@@ -311,11 +310,11 @@ body {
         @if($masterEd)
         <div class="moz-section">درجة الماجستير المراد تعادلها :</div>
         <table class="mt">
-            <tr><td>{{ $masterEd->specialization_or_dept }}</td><td class="l">القسم :</td><td>{{ optional($masterEd->university)->name }} - {{ $masterEd->type_or_faculty }}</td><td class="l">الجامعة والكلية :</td></tr>
+            <tr><td>{{ $masterEd->exact_specialization ?: ($masterEd->department ?: ($masterEd->section_name ?: '---')) }} {{ $masterEd->section_name && $masterEd->section_name !== ($masterEd->exact_specialization ?: $masterEd->department) ? '(' . $masterEd->section_name . ')' : '' }}</td><td class="l">القسم والفرع :</td><td>{{ optional($masterEd->university)->name ?? ($masterEd->university_other ?? '---') }} - {{ $masterEd->general_specialization ?: $masterEd->faculty }}</td><td class="l">الجامعة والكلية :</td></tr>
             <tr><td>{{ format_sys_date($masterEd->defense_date) }}</td><td class="l">تاريخ المناقشة :</td><td>{{ format_sys_date($masterEd->registration_date) }}</td><td class="l">تاريخ التسجيل :</td></tr>
             <tr><td>{{ $masterEd->rank_or_grade }}</td><td class="l">التقدير :</td><td>{{ format_sys_date($masterEd->grant_date) }}</td><td class="l">تاريخ المنح :</td></tr>
-            <tr><td colspan="3">{{ $masterEd->supervisor_name }}</td><td class="l">الأستاذ المشرف :</td></tr>
-            <tr><td colspan="3" style="font-weight: bold; color: #1A2A44;">{{ $masterEd->thesis_title }}</td><td class="l">عنوان الرسالة :</td></tr>
+            <tr><td colspan="3">{{ $masterEd->supervisor_name ?? '---' }}</td><td class="l">الأستاذ المشرف :</td></tr>
+            <tr><td colspan="3" style="font-weight: bold; color: #1A2A44;">{{ $masterEd->thesis_title ?? '---' }}</td><td class="l">عنوان الرسالة :</td></tr>
         </table>
         @endif
 
@@ -323,7 +322,7 @@ body {
         @if($phdEd)
         <div class="moz-section">درجة الدكتوراه المراد تعادلها :</div>
         <table class="mt">
-            <tr><td>{{ $phdEd->specialization_or_dept }}</td><td class="l">القسم :</td><td>{{ optional($phdEd->university)->name }} - {{ $phdEd->type_or_faculty }}</td><td class="l">الجامعة والكلية :</td></tr>
+            <tr><td>{{ $phdEd->exact_specialization ?: ($phdEd->department ?: ($phdEd->section_name ?: '---')) }} {{ $phdEd->section_name && $phdEd->section_name !== ($phdEd->exact_specialization ?: $phdEd->department) ? '(' . $phdEd->section_name . ')' : '' }}</td><td class="l">القسم والفرع :</td><td>{{ optional($phdEd->university)->name ?? ($phdEd->university_other ?? '---') }} - {{ $phdEd->general_specialization ?: $phdEd->faculty }}</td><td class="l">الجامعة والكلية :</td></tr>
             <tr><td>{{ $phdEd->rank_or_grade }}</td><td class="l">التقدير :</td><td>{{ format_sys_date($phdEd->grant_date) }}</td><td class="l">تاريخ المنح :</td></tr>
         </table>
         @endif

@@ -186,8 +186,8 @@
                         <div class="d-flex align-items-center gap-2 overflow-hidden me-2">
                             <i class="fa-solid fa-file-pdf text-danger fs-3"></i>
                             <div class="overflow-hidden">
-                                <h6 class="mb-0 fs-8 fw-bold text-dark text-truncate" title="{{ optional($att->attachmentType)->name }}">
-                                    {{ optional($att->attachmentType)->name ?? 'وثيقة مصدقة' }}
+                                <h6 class="mb-0 fs-8 fw-bold text-dark text-truncate" title="{{ $att->notes ?: (optional($att->attachmentType)->name ?? 'وثيقة مصدقة') }}">
+                                    {{ $att->notes ?: (optional($att->attachmentType)->name ?? 'وثيقة مصدقة') }}
                                 </h6>
                                 <span class="fs-9 text-muted d-block">{{ format_sys_date($att->created_at) }}</span>
                             </div>
