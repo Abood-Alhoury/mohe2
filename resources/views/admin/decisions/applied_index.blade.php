@@ -5,20 +5,7 @@
 @section('content')
 
 <!-- NAV TABS FOR DECISION TYPES -->
-<div class="d-flex align-items-center justify-content-start mb-4 flex-wrap gap-2.5" role="tablist">
-    <a href="{{ route('admin.decisions.index') }}" class="btn btn-outline-navy fw-bold px-3.5 py-2 rounded shadow-2xs">
-        <i class="fa-solid fa-graduation-cap me-1"></i> 1. تعادل الماجستير والدكتوراه
-    </a>
-    <a href="{{ route('admin.applied_decisions.index') }}" class="btn btn-solid-navy fw-bold px-3.5 py-2 rounded shadow-2xs">
-        <i class="fa-solid fa-briefcase me-1" style="color: var(--heritage-gold-light);"></i> 2. تعادل الماجستير التطبيقي
-    </a>
-    <a href="{{ route('admin.faculty_decisions.index') }}" class="btn btn-outline-navy fw-bold px-3.5 py-2 rounded shadow-2xs">
-        <i class="fa-solid fa-chalkboard-user me-1"></i> 3. قرارات السماح بالتدريس
-    </a>
-    <a href="{{ route('admin.research_decisions.index') }}" class="btn btn-outline-navy fw-bold px-3.5 py-2 rounded shadow-2xs">
-        <i class="fa-solid fa-microscope me-1"></i> 4. قرارات مراكز البحوث
-    </a>
-</div>
+@include('admin.decisions._nav_tabs', ['active' => 'applied'])
 
 <div class="row g-3" dir="rtl">
 

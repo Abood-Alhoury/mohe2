@@ -38,17 +38,17 @@
         </a>
     </div>
 
-    <!-- Option 3: Non-Syrian Master's (Disabled Placeholder) -->
+    <!-- Option 3: Foreign Master's (ACTIVE) -->
     <div class="col-md-4">
-        <div class="card text-center p-4 h-100 text-decoration-none mohe-card disabled-option-card position-relative" style="border-radius: 8px;">
-            <div class="card-option-badge bg-secondary text-white border-0">قريباً</div>
-            <div class="option-icon-wrapper bg-light mx-auto mb-3">
-                <i class="fa-solid fa-earth-americas fs-1 text-muted"></i>
+        <a href="{{ route('university.apply.foreign_masters') }}" class="card text-center p-4 h-100 text-decoration-none mohe-card active-option-card position-relative" style="border-radius: 8px; border-top: 3.5px solid var(--heritage-gold) !important;">
+            <div class="card-option-badge">متاح للتقديم</div>
+            <div class="option-icon-wrapper mx-auto mb-3">
+                <i class="fa-solid fa-earth-americas fs-1" style="color: var(--heritage-gold);"></i>
             </div>
-            <h5 class="fw-bold text-muted mb-1">ماجستير غير سوري</h5>
-            <span class="label-sm text-muted d-block mb-3">Non-Syrian Master's</span>
-            <p class="body-md small text-muted mb-0">لتعادل درجة الماجستير الصادرة عن جامعات عربية أو أجنبية (تتطلب تقويم الإنتاج العلمي).</p>
-        </div>
+            <h5 class="fw-bold mb-1" style="color: var(--primary-container);">ماجستير خارجي (غير سوري)</h5>
+            <span class="label-sm text-muted d-block mb-3">Foreign Master's Degree</span>
+            <p class="body-md small text-muted mb-0">لتعادل درجة الماجستير الصادرة عن جامعات عربية أو أجنبية (مسار تطبيقي / مسار نظري مع إثبات الإقامة).</p>
+        </a>
     </div>
 
     <!-- Option 4: Non-Syrian Doctorate (Disabled Placeholder) -->
@@ -74,19 +74,6 @@
             <h5 class="fw-bold mb-1" style="color: var(--primary-container);">عضو هيئة تدريسية (معاملة السماح)</h5>
             <span class="label-sm text-muted d-block mb-3">Faculty Member Permission</span>
             <p class="body-md small text-muted mb-0">خاص بأعضاء الهيئة التدريسية في الجامعات الحكومية السورية لطلب السماح بالتدريس في الجامعات الخاصة.</p>
-        </a>
-    </div>
-
-    <!-- Option 6: Research Centers Scientist (ACTIVE) -->
-    <div class="col-md-4">
-        <a href="{{ route('university.apply.research_scientist') }}" class="card text-center p-4 h-100 text-decoration-none mohe-card active-option-card position-relative" style="border-radius: 8px; border-top: 3.5px solid var(--heritage-gold) !important;">
-            <div class="card-option-badge">متاح للتقديم</div>
-            <div class="option-icon-wrapper mx-auto mb-3">
-                <i class="fa-solid fa-microscope fs-1" style="color: var(--heritage-gold);"></i>
-            </div>
-            <h5 class="fw-bold mb-1" style="color: var(--primary-container);">باحث في مراكز البحوث</h5>
-            <span class="label-sm text-muted d-block mb-3">Research Center Scientist</span>
-            <p class="body-md small text-muted mb-0">لمعادلة وتقويم شهادات الدكتوراه للباحثين في مراكز البحوث السورية لطلب التدريس في الجامعات الخاصة.</p>
         </a>
     </div>
 </div>

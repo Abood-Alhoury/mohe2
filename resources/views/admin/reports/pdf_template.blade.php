@@ -323,7 +323,16 @@ body {
         <div class="moz-section">درجة الدكتوراه المراد تعادلها :</div>
         <table class="mt">
             <tr><td>{{ $phdEd->exact_specialization ?: ($phdEd->department ?: ($phdEd->section_name ?: '---')) }} {{ $phdEd->section_name && $phdEd->section_name !== ($phdEd->exact_specialization ?: $phdEd->department) ? '(' . $phdEd->section_name . ')' : '' }}</td><td class="l">القسم والفرع :</td><td>{{ optional($phdEd->university)->name ?? ($phdEd->university_other ?? '---') }} - {{ $phdEd->general_specialization ?: $phdEd->faculty }}</td><td class="l">الجامعة والكلية :</td></tr>
+            @if($phdEd->registration_date || $phdEd->defense_date)
+            <tr><td>{{ format_sys_date($phdEd->defense_date) }}</td><td class="l">تاريخ المناقشة :</td><td>{{ format_sys_date($phdEd->registration_date) }}</td><td class="l">تاريخ التسجيل :</td></tr>
+            @endif
             <tr><td>{{ $phdEd->rank_or_grade }}</td><td class="l">التقدير :</td><td>{{ format_sys_date($phdEd->grant_date) }}</td><td class="l">تاريخ المنح :</td></tr>
+            @if($phdEd->supervisor_name)
+            <tr><td colspan="3">{{ $phdEd->supervisor_name }}</td><td class="l">الأستاذ المشرف :</td></tr>
+            @endif
+            @if($phdEd->thesis_title)
+            <tr><td colspan="3" style="font-weight: bold; color: #1A2A44;">{{ $phdEd->thesis_title }}</td><td class="l">عنوان الأطروحة :</td></tr>
+            @endif
         </table>
         @endif
 

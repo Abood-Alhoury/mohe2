@@ -264,12 +264,32 @@
                     @endif
                 </td>
             </tr>
+            @if($phdEd->registration_date || $phdEd->defense_date)
+            <tr>
+                <td class="l">تاريخ التسجيل :</td>
+                <td>{{ format_sys_date($phdEd->registration_date) }}</td>
+                <td class="l">تاريخ المناقشة :</td>
+                <td>{{ format_sys_date($phdEd->defense_date) }}</td>
+            </tr>
+            @endif
             <tr>
                 <td class="l">تاريخ المنح :</td>
                 <td>{{ format_sys_date($phdEd->grant_date) }}</td>
                 <td class="l">التقدير :</td>
                 <td>{{ $phdEd->rank_or_grade }}</td>
             </tr>
+            @if($phdEd->supervisor_name)
+            <tr>
+                <td class="l">الأستاذ المشرف :</td>
+                <td colspan="3">{{ $phdEd->supervisor_name }}</td>
+            </tr>
+            @endif
+            @if($phdEd->thesis_title)
+            <tr>
+                <td class="l">عنوان الأطروحة :</td>
+                <td colspan="3" style="font-weight: 600; color: var(--imperial-navy);">{{ $phdEd->thesis_title }}</td>
+            </tr>
+            @endif
         </table>
         @endif
 

@@ -1,29 +1,16 @@
 @extends('layouts.admin')
 
-@section('title', 'إرسال قرار التعادل والأهلية - إصدار القرارات الرسمية')
+@section('title', 'إصدار قرارات تعادل الماجستير الداخلي والأهلية - وزارة التعليم العالي')
 
 @section('content')
 
 <!-- NAV TABS FOR DECISION TYPES -->
-<div class="d-flex align-items-center justify-content-start mb-4 flex-wrap gap-2.5" role="tablist">
-    <a href="{{ route('admin.decisions.index') }}" class="btn btn-solid-navy fw-bold px-3.5 py-2 rounded shadow-2xs">
-        <i class="fa-solid fa-graduation-cap me-1" style="color: var(--heritage-gold-light);"></i> 1. تعادل الماجستير والدكتوراه
-    </a>
-    <a href="{{ route('admin.applied_decisions.index') }}" class="btn btn-outline-navy fw-bold px-3.5 py-2 rounded shadow-2xs">
-        <i class="fa-solid fa-briefcase me-1"></i> 2. تعادل الماجستير التطبيقي
-    </a>
-    <a href="{{ route('admin.faculty_decisions.index') }}" class="btn btn-outline-navy fw-bold px-3.5 py-2 rounded shadow-2xs">
-        <i class="fa-solid fa-chalkboard-user me-1"></i> 3. قرارات السماح بالتدريس
-    </a>
-    <a href="{{ route('admin.research_decisions.index') }}" class="btn btn-outline-navy fw-bold px-3.5 py-2 rounded shadow-2xs">
-        <i class="fa-solid fa-microscope me-1"></i> 4. قرارات مراكز البحوث
-    </a>
-</div>
+@include('admin.decisions._nav_tabs', ['active' => 'master'])
 
 <div class="row g-3" dir="rtl">
 
     {{-- ============================================================
-         العمود الأيمن: نموذج إصدار قرارات التعادل والأهلية (ماجستير / دكتوراه)
+         العمود الأيمن: نموذج إصدار قرارات تعادل الماجستير والأهلية
     ============================================================ --}}
     <div class="col-xl-4 col-lg-5 col-md-12">
         <div class="card border-0 shadow-sm overflow-hidden h-100" style="border-top: 3.5px solid var(--heritage-gold) !important; border-radius: 4px;">
@@ -31,14 +18,14 @@
             <div class="card-header py-2.5 px-3 text-white" style="background-color: var(--imperial-navy) !important;">
                 <h5 class="mb-0 fs-6 fw-bold text-white d-flex align-items-center gap-2 text-start" dir="rtl">
                     <i class="fa-solid fa-file-signature" style="color: var(--heritage-gold-light);"></i>
-                    <span>إصدار ورصد قرارات التعادل والأهلية</span>
+                    <span>إصدار ورصد قرارات تعادل الماجستير والأهلية</span>
                 </h5>
             </div>
             <div class="card-body p-3.5 bg-white" dir="rtl">
                 <form action="{{ route('admin.decisions.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
 
-                    {{-- اختر طلب التعادل (البحث الذكي المباشر عن المرشح) --}}
+                    {{-- اختر طلب الماجستير (البحث الذكي المباشر عن المرشح) --}}
                     <div class="mb-3 text-start" x-data="{
                         open: false,
                         search: '',
@@ -79,7 +66,7 @@
                     }" @click.outside="open = false; if(!selectedId) { search = ''; } else { search = selectedName; }">
 
                         <label class="form-label fw-bold small d-block text-start mb-1" style="color: var(--imperial-navy);">
-                            اختر طلب التعادل الموافق عليه :
+                            اختر طلب تعادل الماجستير الموافق عليه :
                         </label>
 
                         <input type="hidden" name="application_id" :value="selectedId" required>
@@ -129,7 +116,7 @@
                                 </template>
 
                                 <div x-show="filteredItems.length === 0" class="p-3 text-center text-muted fs-8">
-                                    <i class="fa-solid fa-circle-exclamation me-1 text-warning"></i> لا يوجد مرشح مطابق للبحث
+                                    <i class="fa-solid fa-circle-exclamation me-1 text-warning"></i> لا يوجد مرشح ماجستير مطابق للبحث
                                 </div>
                             </div>
                         </div>
@@ -186,7 +173,7 @@
                     <div class="row g-2 mb-2.5">
                         <div class="col-6 text-start">
                             <label class="form-label fw-bold small d-block text-start mb-1" style="color: var(--imperial-navy);">
-                                رقم قرار المعادلة :
+                                رقم قرار معادلة الماجستير :
                             </label>
                             <input
                                 type="text"
@@ -216,7 +203,7 @@
                     {{-- تحميل نسخة قرار التعادل الموقع (PDF) --}}
                     <div class="mb-3 text-start">
                         <label class="form-label fw-bold small d-block text-start mb-1" style="color: var(--imperial-navy);">
-                            تحميل نسخة قرار التعادل الموقع (PDF) :
+                            تحميل نسخة قرار تعادل الماجستير الموقع (PDF) :
                         </label>
                         <input
                             type="file"
@@ -256,7 +243,7 @@
     </div>
 
     {{-- ============================================================
-         العمود الأيسر: أرشيف قرارات التعادل الصادرة (ماجستير / دكتوراه)
+         العمود الأيسر: أرشيف قرارات تعادل الماجستير الصادرة
     ============================================================ --}}
     <div class="col-xl-8 col-lg-7 col-md-12">
         <div class="card border-0 shadow-sm overflow-hidden h-100" style="border-top: 3.5px solid var(--heritage-gold) !important; border-radius: 4px;">
@@ -264,7 +251,7 @@
             <div class="card-header py-2.5 px-3 text-white d-flex align-items-center justify-content-between flex-wrap gap-2" style="background-color: var(--imperial-navy) !important;">
                 <h5 class="mb-0 fs-6 fw-bold text-white d-flex align-items-center gap-2 text-start" dir="rtl">
                     <i class="fa-solid fa-box-archive" style="color: var(--heritage-gold-light);"></i>
-                    <span>قرارات التعادل والأهلية الصادرة المرسلة للجامعات</span>
+                    <span>قرارات تعادل الماجستير والأهلية الصادرة المرسلة للجامعات</span>
                 </h5>
                 <span class="badge bg-white bg-opacity-10 text-white border border-white-50 px-2.5 py-1 fs-8 fw-normal">
                     إجمالي القرارات: {{ $issuedDecisions->count() }}
@@ -333,7 +320,7 @@
                                         <a href="{{ asset('storage/' . $dec->file_path) }}" target="_blank" 
                                            class="btn btn-sm btn-light border border-danger text-danger p-1.5 rounded shadow-2xs d-inline-flex align-items-center justify-content-center" 
                                            style="width: 32px; height: 32px;"
-                                           title="تحميل قرار المعادلة (PDF)">
+                                           title="تحميل قرار معادلة الماجستير (PDF)">
                                             <i class="fa-solid fa-file-pdf fs-6"></i>
                                         </a>
                                     </div>
@@ -345,7 +332,7 @@
                                     <div class="opacity-50 mb-2">
                                         <i class="fa-solid fa-stamp fs-1" style="color: var(--imperial-navy);"></i>
                                     </div>
-                                    <p class="mb-0">لا توجد قرارات تعادل صادرة حالياً.</p>
+                                    <p class="mb-0">لا توجد قرارات تعادل ماجستير صادرة حالياً.</p>
                                 </td>
                             </tr>
                             @endforelse

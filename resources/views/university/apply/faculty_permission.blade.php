@@ -57,11 +57,17 @@
                 </h3>
                 <p class="body-md text-muted mb-0">معاملة مخصصة حصراً للسادة أعضاء الهيئة التدريسية القائمين على رأس عملهم في الجامعات الحكومية السورية لطلب السماح بالتدريس في الجامعات الخاصة.</p>
             </div>
-            @if($draft)
-                <span class="badge px-3 py-2 border fs-7 fw-bold" style="background-color: #FAF6EE; color: #8A651E; border-color: #D9C394 !important;">
-                    <i class="fa-solid fa-file-pen me-1"></i> تعديل مسودة طلب: #{{ $draft->application_no }}
-                </span>
-            @endif
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-outline-warning px-3 py-2 fw-bold shadow-2xs d-inline-flex align-items-center gap-1.5" onclick="triggerSaveDraft()" title="حفظ البيانات المدخلة كمسودة للعودة إليها لاحقاً برقم الطلب">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    <span>حفظ كمسودة ومتابعة لاحقاً</span>
+                </button>
+                @if($draft)
+                    <span class="badge px-3 py-2 border fs-7 fw-bold" style="background-color: #FAF6EE; color: #8A651E; border-color: #D9C394 !important;">
+                        <i class="fa-solid fa-file-pen me-1"></i> تعديل مسودة طلب: #{{ $draft->application_no }}
+                    </span>
+                @endif
+            </div>
         </div>
     </div>
 </div>
@@ -111,6 +117,8 @@
         <form action="{{ route('university.apply.faculty_permission.submit') }}" method="POST" enctype="multipart/form-data" id="wizard-form">
             @csrf
             <input type="hidden" name="draft_id" value="{{ optional($draft)->id }}">
+            <input type="hidden" name="action" id="form-action-input" value="submit_final">
+            <input type="hidden" name="is_draft" id="form-is-draft-input" value="0">
 
             {{-- =========================================================================
                  STEP 1: PERSONAL DETAILS & UNIVERSITY EVALUATION REQUEST
@@ -279,7 +287,7 @@
                                 @foreach($govUniversities as $gu)
                                     <option value="{{ $gu->id }}" {{ old('phd_university_id', optional($phdEd)->university_id) == $gu->id ? 'selected' : '' }}>{{ $gu->name }}</option>
                                 @endforeach
-                                <option value="other" {{ old('phd_university_other', optional($phdEd)->university_other) ? 'selected' : '' }}>جامعة أخرى (خارجية / معترف بها)</option>
+                                <option value="other" {{ old('phd_university_other', optional($phdEd)->university_other) ? 'selected' : '' }}>جامعة أخرى</option>
                             </select>
                         </div>
 
@@ -294,13 +302,18 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label label-md fw-medium text-dark">الكلية المانحة لشهادة الدكتوراه *</label>
-                            <input type="text" name="phd_faculty" id="input-phdFaculty" class="form-control academic-input" placeholder="مثال: كلية التربية" value="{{ old('phd_faculty', optional($phdEd)->faculty ?: optional($phdEd)->general_specialization) }}" required>
+                            <label class="form-label label-md fw-medium text-dark">الكلية المانحة لشهادة الدكتوراه <span class="text-muted fw-normal fs-8">(اختياري)</span></label>
+                            <input type="text" name="phd_faculty" id="input-phdFaculty" class="form-control academic-input" placeholder="مثال: كلية التربية" value="{{ old('phd_faculty', optional($phdEd)->faculty ?: optional($phdEd)->general_specialization) }}">
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label label-md fw-medium text-dark">القسم / الاختصاص الدقيق لشهادة الدكتوراه *</label>
-                            <input type="text" name="phd_department" id="input-phdDept" class="form-control academic-input" placeholder="مثال: أصول التربية" value="{{ old('phd_department', optional($phdEd)->department ?: optional($phdEd)->exact_specialization) }}" required>
+                            <label class="form-label label-md fw-medium text-dark">القسم لشهادة الدكتوراه <span class="text-muted fw-normal fs-8">(اختياري)</span></label>
+                            <input type="text" name="phd_department" id="input-phdDept" class="form-control academic-input" placeholder="مثال: قسم المناهج" value="{{ old('phd_department', optional($phdEd)->department) }}">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label label-md fw-medium text-dark">الاختصاص الدقيق لشهادة الدكتوراه <span class="text-danger">*</span></label>
+                            <input type="text" name="phd_specialization" id="input-phdSpec" class="form-control academic-input" placeholder="مثال: طرائق تدريس الرياضيات" value="{{ old('phd_specialization', optional($phdEd)->exact_specialization ?: (optional($phdEd)->section_name ?: optional($phdEd)->department)) }}" required>
                         </div>
                     </div>
                 </div>
@@ -364,74 +377,10 @@
 
                 <div class="row g-4">
                     
-                    <!-- 1. طلب التقويم / كتاب ترشيح الجامعة الخاصة -->
+                    <!-- 1. صورة الهوية الشخصية -->
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">
-                            كتاب صادر عن الجامعة يتضمن طلب تقويم درجاته العلمية <span class="text-danger">*</span>
-                        </label>
-                        <input type="file" name="file_uni_request" id="input-fileUniRequest" class="form-control academic-input" accept=".pdf" {{ empty($existingFiles['file_uni_request']) ? 'required' : '' }}>
-                        @if(!empty($existingFiles['file_uni_request']))
-                            <div class="mt-1 d-flex align-items-center gap-2">
-                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع مسبقاً</span>
-                                <a href="{{ asset('storage/' . $existingFiles['file_uni_request']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
-                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
-                                </a>
-                            </div>
-                        @endif
-                    </div>
-
-                    <!-- 2. مصدقة شهادة الدكتوراه -->
-                    <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">
-                            نسخة مصدقة أصولاً عن شهادة الدكتوراه <span class="text-danger">*</span>
-                        </label>
-                        <input type="file" name="file_phd_cert" id="input-filePhdCert" class="form-control academic-input" accept=".pdf" {{ empty($existingFiles['file_phd_cert']) ? 'required' : '' }}>
-                        @if(!empty($existingFiles['file_phd_cert']))
-                            <div class="mt-1 d-flex align-items-center gap-2">
-                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع مسبقاً</span>
-                                <a href="{{ asset('storage/' . $existingFiles['file_phd_cert']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
-                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
-                                </a>
-                            </div>
-                        @endif
-                    </div>
-
-                    <!-- 3. بيان وضع أو بطاقة ذاتية من الجامعة الحكومية -->
-                    <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">
-                            بيان وضع أو بطاقة ذاتية من الجامعة الحكومية <span class="text-danger">*</span>
-                        </label>
-                        <input type="file" name="file_service_statement" id="input-fileServiceStatement" class="form-control academic-input" accept=".pdf" {{ empty($existingFiles['file_service_statement']) ? 'required' : '' }}>
-                        @if(!empty($existingFiles['file_service_statement']))
-                            <div class="mt-1 d-flex align-items-center gap-2">
-                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع مسبقاً</span>
-                                <a href="{{ asset('storage/' . $existingFiles['file_service_statement']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
-                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
-                                </a>
-                            </div>
-                        @endif
-                    </div>
-
-                    <!-- 4. إيصال تسديد رسم التعادل -->
-                    <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">
-                            إيصال تسديد رسم التعادل (125,000 ل.س) <span class="text-danger">*</span>
-                        </label>
-                        <input type="file" name="file_payment" id="input-filePayment" class="form-control academic-input" accept=".pdf" {{ empty($existingFiles['file_payment']) ? 'required' : '' }}>
-                        @if(!empty($existingFiles['file_payment']))
-                            <div class="mt-1 d-flex align-items-center gap-2">
-                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع مسبقاً</span>
-                                <a href="{{ asset('storage/' . $existingFiles['file_payment']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
-                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
-                                </a>
-                            </div>
-                        @endif
-                    </div>
-
-                    <!-- 5. صورة عن الهوية الشخصية -->
-                    <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">
-                            صورة عن الهوية الشخصية (الوجهين) <span class="text-danger">*</span>
+                            1. صورة الهوية الشخصية (الوجهين) <span class="text-danger">*</span>
                         </label>
                         <input type="file" name="file_id_card" id="input-fileIdCard" class="form-control academic-input" accept=".pdf" {{ empty($existingFiles['file_id_card']) ? 'required' : '' }}>
                         @if(!empty($existingFiles['file_id_card']))
@@ -444,26 +393,74 @@
                         @endif
                     </div>
 
-                    <!-- 6. نسخة مصدقة عن شهادة الماجستير (اختياري) -->
+                    <!-- 2. طلب الجامعة أو التقويم -->
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">
-                            نسخة مصدقة عن شهادة الماجستير (اختياري)
+                            2. طلب الجامعة أو التقويم (كتاب ترشيح الجامعة الخاصة) <span class="text-danger">*</span>
                         </label>
-                        <input type="file" name="file_ma_cert" id="input-fileMaCert" class="form-control academic-input" accept=".pdf">
-                        @if(!empty($existingFiles['file_ma_cert']))
+                        <input type="file" name="file_uni_request" id="input-fileUniRequest" class="form-control academic-input" accept=".pdf" {{ empty($existingFiles['file_uni_request']) ? 'required' : '' }}>
+                        @if(!empty($existingFiles['file_uni_request']))
                             <div class="mt-1 d-flex align-items-center gap-2">
                                 <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع مسبقاً</span>
-                                <a href="{{ asset('storage/' . $existingFiles['file_ma_cert']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                <a href="{{ asset('storage/' . $existingFiles['file_uni_request']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
                                     <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
                                 </a>
                             </div>
                         @endif
                     </div>
 
-                    <!-- 7. مرفقات إضافية (اختياري) -->
-                    <div class="col-12">
+                    <!-- 3. بطاقة الذاتية أو بيان وضع من الجامعة -->
+                    <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">
-                            وثائق داعمة أو قرارات سابقة إضافية (اختياري)
+                            3. بطاقة الذاتية أو بيان وضع من الجامعة الحكومية <span class="text-danger">*</span>
+                        </label>
+                        <input type="file" name="file_service_statement" id="input-fileServiceStatement" class="form-control academic-input" accept=".pdf" {{ empty($existingFiles['file_service_statement']) ? 'required' : '' }}>
+                        @if(!empty($existingFiles['file_service_statement']))
+                            <div class="mt-1 d-flex align-items-center gap-2">
+                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع مسبقاً</span>
+                                <a href="{{ asset('storage/' . $existingFiles['file_service_statement']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                </a>
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- 4. نسخة مصدقة أصولا من شهادة الدكتورة -->
+                    <div class="col-md-6">
+                        <label class="form-label label-md fw-medium text-dark">
+                            4. نسخة مصدقة أصولاً من شهادة الدكتوراه <span class="text-danger">*</span>
+                        </label>
+                        <input type="file" name="file_phd_cert" id="input-filePhdCert" class="form-control academic-input" accept=".pdf" {{ empty($existingFiles['file_phd_cert']) ? 'required' : '' }}>
+                        @if(!empty($existingFiles['file_phd_cert']))
+                            <div class="mt-1 d-flex align-items-center gap-2">
+                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع مسبقاً</span>
+                                <a href="{{ asset('storage/' . $existingFiles['file_phd_cert']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                </a>
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- 5. إيصال تسديد رسم 125000 -->
+                    <div class="col-md-6">
+                        <label class="form-label label-md fw-medium text-dark">
+                            5. إيصال تسديد رسم السماح بالتدريس (125,000 ل.س) <span class="text-danger">*</span>
+                        </label>
+                        <input type="file" name="file_payment" id="input-filePayment" class="form-control academic-input" accept=".pdf" {{ empty($existingFiles['file_payment']) ? 'required' : '' }}>
+                        @if(!empty($existingFiles['file_payment']))
+                            <div class="mt-1 d-flex align-items-center gap-2">
+                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع مسبقاً</span>
+                                <a href="{{ asset('storage/' . $existingFiles['file_payment']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                </a>
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- 6. وثائق داعمة أو قرارات سابقة إضافية (اختياري) -->
+                    <div class="col-md-6">
+                        <label class="form-label label-md fw-medium text-dark">
+                            6. وثائق داعمة أو قرارات سابقة إضافية <span class="text-muted fw-normal fs-8">(اختياري)</span>
                         </label>
                         <input type="file" name="file_other_attachments" id="input-fileOtherAttachments" class="form-control academic-input" accept=".pdf">
                         @if(!empty($existingFiles['file_other_attachments']))
@@ -554,8 +551,9 @@
                                 <div class="row g-2">
                                     <div class="col-md-6"><strong>الجامعة المانحة:</strong> <span id="preview-phdUni">---</span></div>
                                     <div class="col-md-6"><strong>سنة/تاريخ المنح:</strong> <span id="preview-phdGrantDate">---</span></div>
-                                    <div class="col-md-6"><strong>الكلية المانحة:</strong> <span id="preview-phdFaculty">---</span></div>
-                                    <div class="col-md-6"><strong>القسم / الاختصاص الدقيق:</strong> <span id="preview-phdDept">---</span></div>
+                                    <div class="col-md-4"><strong>الكلية المانحة:</strong> <span id="preview-phdFaculty">---</span></div>
+                                    <div class="col-md-4"><strong>القسم:</strong> <span id="preview-phdDept">---</span></div>
+                                    <div class="col-md-4"><strong>الاختصاص الدقيق:</strong> <span id="preview-phdSpec">---</span></div>
                                 </div>
                             </div>
 
@@ -591,7 +589,7 @@
                     </button>
                     <div id="spacer-prev"></div>
 
-                    <button type="submit" formnovalidate name="action" value="save_draft" class="btn btn-outline-warning px-3 py-2 fw-bold" id="btn-draft" title="حفظ البيانات المعبأة كمسودة للعودة إليها لاحقاً برقم الطلب">
+                    <button type="button" class="btn btn-outline-warning px-3 py-2 fw-bold" id="btn-draft" onclick="triggerSaveDraft()" title="حفظ البيانات المعبأة كمسودة للعودة إليها لاحقاً برقم الطلب">
                         <i class="fa-solid fa-floppy-disk me-1"></i> حفظ كمسودة ومتابعة لاحقاً
                     </button>
                 </div>
@@ -801,6 +799,7 @@
         document.getElementById('preview-phdGrantDate').textContent = form.phd_grant_date.value || '---';
         document.getElementById('preview-phdFaculty').textContent = form.phd_faculty.value || '---';
         document.getElementById('preview-phdDept').textContent = form.phd_department.value || '---';
+        document.getElementById('preview-phdSpec').textContent = form.phd_specialization.value || '---';
 
         if (form.has_master && form.has_master.checked) {
             document.getElementById('preview-master-block').style.display = 'block';
@@ -813,6 +812,27 @@
         } else {
             document.getElementById('preview-master-block').style.display = 'none';
         }
+    }
+
+    function triggerSaveDraft() {
+        const form = document.getElementById('wizard-form');
+        if (!form) return;
+
+        // 1. Remove all required constraints and clear validity
+        form.querySelectorAll('input, select, textarea').forEach(function(el) {
+            el.removeAttribute('required');
+            el.setCustomValidity('');
+        });
+
+        // 2. Set action and is_draft hidden fields
+        const actionInput = document.getElementById('form-action-input');
+        if (actionInput) actionInput.value = 'save_draft';
+
+        const isDraftInput = document.getElementById('form-is-draft-input');
+        if (isDraftInput) isDraftInput.value = '1';
+
+        // 3. Submit form directly
+        form.submit();
     }
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -843,8 +863,14 @@
         const form = document.getElementById('wizard-form');
         if (form) {
             form.addEventListener('submit', function(e) {
+                const actionInput = document.getElementById('form-action-input');
+                const isDraftInput = document.getElementById('form-is-draft-input');
                 const submitter = e.submitter;
-                if (submitter && submitter.value === 'save_draft') {
+
+                if ((actionInput && actionInput.value === 'save_draft') || 
+                    (isDraftInput && isDraftInput.value === '1') || 
+                    (submitter && submitter.value === 'save_draft')) {
+                    form.querySelectorAll('input, select, textarea').forEach(el => el.removeAttribute('required'));
                     return true;
                 }
 

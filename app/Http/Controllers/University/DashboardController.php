@@ -9,6 +9,7 @@ use App\Models\Application;
 use App\Models\ApplicationMessage;
 use App\Models\LookupUniversity;
 use App\Models\SiteSetting;
+use App\Models\User;
 
 class DashboardController extends Controller
 {
@@ -405,6 +406,10 @@ class DashboardController extends Controller
             return redirect()->route('university.apply.faculty_permission', ['draft_id' => $application->id]);
         }
 
+        if (str_contains($application->request_type, 'خارجي') || str_contains($application->request_type, 'غير سوري')) {
+            return redirect()->route('university.apply.foreign_masters', ['draft_id' => $application->id]);
+        }
+
         if (str_contains($application->request_type, 'دكتوراه') || $application->educations()->whereHas('level', function($q) { $q->where('name', 'like', '%دكتوراه%'); })->exists()) {
             return redirect()->route('university.apply.syrian_doctorate', ['draft_id' => $application->id]);
         }
@@ -467,19 +472,33 @@ class DashboardController extends Controller
             }
         }
 
-        // Automated notification message to admin
+        // Automated notification message to admin & university
         $candidateName = $app->candidate ? $app->candidate->full_name : '';
         $uniName = $user->university ? $user->university->name : 'الجامعة';
+        $appNo = $app->application_no ?? ('App_' . $app->id);
 
+        // 1. Notification to Admin
         ApplicationMessage::create([
             'application_id' => $app->id,
             'sender_id' => $user->id,
-            'message' => "📑 [استكمال وثائق]: قامت جامعة ({$uniName}) بتحديث بيانات وإضافة المرفقات والوثائق المطلوبة للطلب رقم (#{$app->application_no}) للمرشح ({$candidateName}).",
+            'message' => "📑 [استكمال وتعديل وثائق]: قامت جامعة ({$uniName}) بالانتهاء من تعديل واستكمال الوثائق والبيانات المطلوبة للطلب رقم (#{$appNo}) للمرشح ({$candidateName}). يرجى تدقيق ومراجعة المعاملة لتحديث حالتها.",
+            'is_read' => false,
+        ]);
+
+        // 2. Notification to University
+        $systemAdminId = User::whereHas('role', function($q) {
+            $q->where('name', 'admin');
+        })->where('id', '!=', $user->id)->value('id') ?? (User::where('id', '!=', $user->id)->value('id') ?? 1);
+
+        ApplicationMessage::create([
+            'application_id' => $app->id,
+            'sender_id' => $systemAdminId,
+            'message' => "✅ [تأكيد استكمال التعديل]: تم استلام التعديلات والوثائق المستكملة للطلب رقم (#{$appNo}) للمرشح ({$candidateName}) بنجاح من قبل جامعة ({$uniName}). المعاملة الآن قيد المراجعة والتدقيق من قبل وزارة التعليم العالي لتحديث حالتها.",
             'is_read' => false,
         ]);
 
         return redirect()->route('university.dashboard')
-            ->with('success', 'تم تعديل البيانات وإضافة المرفقات والوثائق المطلوبة للطلب رقم (#' . ($app->application_no ?? $app->id) . ') بنجاح وإشعار مدير التعادل.');
+            ->with('success', 'تم تعديل البيانات وإضافة المرفقات والوثائق المطلوبة للطلب رقم (#' . $appNo . ') بنجاح! تم إشعار وزارة التعليم العالي لتدقيق التعديلات وتحديث حالة المعاملة.');
     }
 
     public function requiredDocuments()

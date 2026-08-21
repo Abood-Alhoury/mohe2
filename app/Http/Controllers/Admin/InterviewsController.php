@@ -28,10 +28,13 @@ class InterviewsController extends Controller
             'messages',
             'decisions',
         ])->where('status', 'بانتظار المقابلة')
-          ->where('request_type', 'not like', '%تطبيقي%')
           ->where('request_type', 'not like', '%سماح%')
           ->where('request_type', 'not like', '%تدريسية%')
-          ->where('request_type', 'not like', '%بحوث%');
+          ->where('request_type', 'not like', '%بحوث%')
+          ->where(function($q) {
+              $q->where('request_type', 'not like', '%تطبيقي%')
+                ->orWhere('request_type', 'like', '%نظري%');
+          });
 
         // Apply Search Filter
         if ($searchQuery) {
@@ -53,17 +56,23 @@ class InterviewsController extends Controller
         $applications = $query->latest()->paginate(20);
         $universities = LookupUniversity::all();
         $totalAwaitingCount = Application::where('status', 'بانتظار المقابلة')
-            ->where('request_type', 'not like', '%تطبيقي%')
             ->where('request_type', 'not like', '%سماح%')
             ->where('request_type', 'not like', '%تدريسية%')
             ->where('request_type', 'not like', '%بحوث%')
+            ->where(function($q) {
+                $q->where('request_type', 'not like', '%تطبيقي%')
+                  ->orWhere('request_type', 'like', '%نظري%');
+            })
             ->count();
         $scheduledCount = Application::where('status', 'بانتظار المقابلة')
             ->whereNotNull('interview_date')
-            ->where('request_type', 'not like', '%تطبيقي%')
             ->where('request_type', 'not like', '%سماح%')
             ->where('request_type', 'not like', '%تدريسية%')
             ->where('request_type', 'not like', '%بحوث%')
+            ->where(function($q) {
+                $q->where('request_type', 'not like', '%تطبيقي%')
+                  ->orWhere('request_type', 'like', '%نظري%');
+            })
             ->count();
 
         return view('admin.interviews.index', compact(

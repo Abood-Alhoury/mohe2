@@ -64,7 +64,7 @@
                 <label class="form-label fw-bold" style="color: var(--imperial-navy);">نوع المعاملة :</label>
                 <select name="request_type" class="form-select" onchange="this.form.submit()">
                     <option value="">-- كافة أنواع الطلبات --</option>
-                    @foreach(['ماجستير سوري', 'دكتوراه سوري', 'ماجستير خارجي', 'دكتوراه خارجي', 'ماجستير تطبيقي', 'عضو هيئة تدريسية', 'باحث في مراكز البحوث'] as $rt)
+                    @foreach(['ماجستير سوري', 'دكتوراه سوري', 'ماجستير خارجي', 'دكتوراه خارجي', 'ماجستير تطبيقي', 'عضو هيئة تدريسية'] as $rt)
                         <option value="{{ $rt }}" {{ request('request_type') == $rt ? 'selected' : '' }}>{{ $rt }}</option>
                     @endforeach
                 </select>
@@ -119,9 +119,8 @@
                     $reqType = $app->request_type ?? '';
                     $isFacultyPermission = str_contains($reqType, 'سماح') || str_contains($reqType, 'هيئة تدريسية');
                     $isApplied = str_contains($reqType, 'تطبيقي');
-                    $isResearchCenter = str_contains($reqType, 'بحوث') || str_contains($reqType, 'باحث');
                     $isForeignDoctorate = str_contains($reqType, 'دكتوراه خارجي') || str_contains($reqType, 'دكتورة خارجي') || str_contains($reqType, 'دكتوراه غير سورية');
-                    $isSingleDecisionType = $isFacultyPermission || $isApplied || $isResearchCenter;
+                    $isSingleDecisionType = $isFacultyPermission || $isApplied;
 
                     if ($isSingleDecisionType) {
                         $rowStatuses = ['تحت التدقيق الأولي', 'بانتظار الوثائق', 'بانتظار إصدار القرار', 'مرفوض'];
@@ -239,16 +238,6 @@
                                 @else
                                     <button type="button" class="btn btn-sm btn-secondary opacity-40 p-0 d-inline-flex align-items-center justify-content-center rounded" style="width: 32px; height: 32px;" disabled title="توليد قرار التكليف متاح بحالة (بانتظار إصدار القرار)">
                                         <i class="fa-solid fa-briefcase fs-7 text-muted"></i>
-                                    </button>
-                                @endif
-                            @elseif($isResearchCenter)
-                                @if($canGenerateDecision)
-                                    <a href="{{ route('admin.reports.generate_decision', ['id' => $app->id, 'type' => 'equivalence']) }}" class="btn btn-sm p-0 d-inline-flex align-items-center justify-content-center rounded shadow-2xs text-decoration-none" style="width: 32px; height: 32px; border: 1px solid #0284c7; color: #0369a1; background-color: #f0f9ff;" title="توليد قرار باحث مراكز البحوث">
-                                        <i class="fa-solid fa-microscope fs-7" style="color: #0369a1;"></i>
-                                    </a>
-                                @else
-                                    <button type="button" class="btn btn-sm btn-secondary opacity-40 p-0 d-inline-flex align-items-center justify-content-center rounded" style="width: 32px; height: 32px;" disabled title="توليد قرار باحث مراكز البحوث متاح بحالة (بانتظار إصدار القرار)">
-                                        <i class="fa-solid fa-microscope fs-7 text-muted"></i>
                                     </button>
                                 @endif
                             @else

@@ -376,7 +376,7 @@
                 </a>
 
                 <a href="{{ route('admin.decisions.index') }}" 
-                   class="sidebar-link {{ request()->routeIs('admin.decisions*') || request()->routeIs('admin.applied_decisions*') || request()->routeIs('admin.faculty_decisions*') || request()->routeIs('admin.research_decisions*') ? 'active' : '' }}"
+                   class="sidebar-link {{ request()->routeIs('admin.decisions*') || request()->routeIs('admin.doctorate_decisions*') || request()->routeIs('admin.applied_decisions*') || request()->routeIs('admin.faculty_decisions*') ? 'active' : '' }}"
                    :title="!isExpanded ? 'إصدار القرارات' : ''">
                     <div class="sidebar-icon-tile tile-amber">
                         <i class="fa-solid fa-stamp"></i>

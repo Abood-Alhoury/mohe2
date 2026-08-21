@@ -61,7 +61,10 @@ class GeneratedDecisionController extends Controller
         $phdEd = $application->educations->where('level.name', 'دكتوراه')->first() ?? $application->educations->where('education_level_id', 3)->first();
 
         $isDoctorate = !$isFacultyPermission && (str_contains($requestType, 'دكتوراه') || ($phdEd !== null));
-        $isApplied = str_contains($requestType, 'تطبيقي');
+        $isForeignMaster = str_contains($requestType, 'خارجي') || str_contains($requestType, 'غير سوري');
+        $isForeignApplied = $isForeignMaster && (str_contains($requestType, 'تطبيقي') || ($masterEd && $masterEd->experience_from_year === null && !str_contains($requestType, 'نظري')));
+        $isForeignTheoretical = $isForeignMaster && !$isForeignApplied;
+        $isApplied = str_contains($requestType, 'تطبيقي') || $isForeignApplied;
         $isResearchCenter = str_contains($requestType, 'بحوث') || str_contains($requestType, 'باحث');
 
         if ($isFacultyPermission) {
@@ -75,6 +78,14 @@ class GeneratedDecisionController extends Controller
             $decisionTitle = ($docType === 'eligibility')
                 ? 'قرار أهلية للدكتوراه'
                 : 'قرار تكليف دكتوراه سورية (داخلي)';
+        } elseif ($isForeignApplied) {
+            $decisionType = 'foreign_master_applied';
+            $decisionTitle = 'قرار ماجستير خارجي (تدريس الجوانب التطبيقية)';
+        } elseif ($isForeignTheoretical) {
+            $decisionType = 'foreign_master_theoretical';
+            $decisionTitle = ($docType === 'eligibility')
+                ? 'قرار أهلية للماجستير الخارجي'
+                : 'قرار ماجستير خارجي (تكليف بتدريس المقررات النظرية)';
         } elseif ($isApplied) {
             $decisionType = 'applied_master';
             $decisionTitle = ($docType === 'eligibility')
@@ -135,6 +146,8 @@ class GeneratedDecisionController extends Controller
         $phdUni = preg_replace('/^(جامعة|جامعه)\s+/u', '', trim($phdUniRaw));
 
         // Master info
+        $masterFaculty = $masterEd ? ($masterEd->faculty ?: '') : '';
+        $masterCountry = $masterEd ? (optional($masterEd->country)->name ?: '') : '';
         $masterGeneral = $masterEd ? ($masterEd->general_specialization ?: ($masterEd->faculty ?: '')) : '';
         $masterExact = $masterEd ? ($masterEd->exact_specialization ?: ($masterEd->department ?: ($masterEd->section_name ?: ''))) : '';
         $masterSpec = $masterExact ?: $masterGeneral;
@@ -166,6 +179,9 @@ class GeneratedDecisionController extends Controller
             'isDoctorate',
             'isFacultyPermission',
             'isApplied',
+            'isForeignMaster',
+            'isForeignApplied',
+            'isForeignTheoretical',
             'isResearchCenter',
             'rcCenterName',
             'rcDepartment',
@@ -195,6 +211,8 @@ class GeneratedDecisionController extends Controller
             'phdSpec',
             'phdYear',
             'phdUni',
+            'masterFaculty',
+            'masterCountry',
             'masterGeneral',
             'masterExact',
             'masterSpec',
@@ -259,7 +277,10 @@ class GeneratedDecisionController extends Controller
         $phdEd = $application->educations->where('level.name', 'دكتوراه')->first() ?? $application->educations->where('education_level_id', 3)->first();
 
         $isDoctorate = !$isFacultyPermission && (str_contains($requestType, 'دكتوراه') || ($phdEd !== null));
-        $isApplied = str_contains($requestType, 'تطبيقي');
+        $isForeignMaster = str_contains($requestType, 'خارجي') || str_contains($requestType, 'غير سوري');
+        $isForeignApplied = $isForeignMaster && (str_contains($requestType, 'تطبيقي') || ($masterEd && $masterEd->experience_from_year === null && !str_contains($requestType, 'نظري')));
+        $isForeignTheoretical = $isForeignMaster && !$isForeignApplied;
+        $isApplied = str_contains($requestType, 'تطبيقي') || $isForeignApplied;
         $isResearchCenter = str_contains($requestType, 'بحوث') || str_contains($requestType, 'باحث');
 
         if ($isFacultyPermission) {
@@ -273,6 +294,14 @@ class GeneratedDecisionController extends Controller
             $decisionTitle = ($docType === 'eligibility')
                 ? 'قرار أهلية للدكتوراه'
                 : 'قرار تكليف دكتوراه سورية (داخلي)';
+        } elseif ($isForeignApplied) {
+            $decisionType = 'foreign_master_applied';
+            $decisionTitle = 'قرار ماجستير خارجي (تدريس الجوانب التطبيقية)';
+        } elseif ($isForeignTheoretical) {
+            $decisionType = 'foreign_master_theoretical';
+            $decisionTitle = ($docType === 'eligibility')
+                ? 'قرار أهلية للماجستير الخارجي'
+                : 'قرار ماجستير خارجي (تكليف بتدريس المقررات النظرية)';
         } elseif ($isApplied) {
             $decisionType = 'applied_master';
             $decisionTitle = ($docType === 'eligibility')
@@ -332,6 +361,8 @@ class GeneratedDecisionController extends Controller
         $phdUni = preg_replace('/^(جامعة|جامعه)\s+/u', '', trim($phdUniRaw));
 
         // Master info
+        $masterFaculty = $masterEd ? ($masterEd->faculty ?: '') : '';
+        $masterCountry = $masterEd ? (optional($masterEd->country)->name ?: '') : '';
         $masterGeneral = $masterEd ? ($masterEd->general_specialization ?: ($masterEd->faculty ?: '')) : '';
         $masterExact = $masterEd ? ($masterEd->exact_specialization ?: ($masterEd->department ?: ($masterEd->section_name ?: ''))) : '';
         $masterSpec = $masterExact ?: $masterGeneral;
@@ -361,6 +392,9 @@ class GeneratedDecisionController extends Controller
             'isDoctorate',
             'isFacultyPermission',
             'isApplied',
+            'isForeignMaster',
+            'isForeignApplied',
+            'isForeignTheoretical',
             'isResearchCenter',
             'rcCenterName',
             'rcDepartment',
@@ -390,6 +424,8 @@ class GeneratedDecisionController extends Controller
             'phdSpec',
             'phdYear',
             'phdUni',
+            'masterFaculty',
+            'masterCountry',
             'masterGeneral',
             'masterExact',
             'masterSpec',
@@ -468,7 +504,10 @@ class GeneratedDecisionController extends Controller
         $requestType = $application->request_type ?? '';
         $isFacultyPermission = str_contains($requestType, 'سماح') || str_contains($requestType, 'هيئة تدريسية');
         $isDoctorate = !$isFacultyPermission && (str_contains($requestType, 'دكتوراه') || ($phdEd !== null));
-        $isApplied = str_contains($requestType, 'تطبيقي');
+        $isForeignMaster = str_contains($requestType, 'خارجي') || str_contains($requestType, 'غير سوري');
+        $isForeignApplied = $isForeignMaster && (str_contains($requestType, 'تطبيقي') || ($masterEd && $masterEd->experience_from_year === null && !str_contains($requestType, 'نظري')));
+        $isForeignTheoretical = $isForeignMaster && !$isForeignApplied;
+        $isApplied = str_contains($requestType, 'تطبيقي') || $isForeignApplied;
         $isResearchCenter = str_contains($requestType, 'بحوث') || str_contains($requestType, 'باحث');
 
         if ($isFacultyPermission) {
@@ -482,6 +521,14 @@ class GeneratedDecisionController extends Controller
             $decisionTitle = ($docType === 'eligibility')
                 ? 'قرار أهلية للدكتوراه'
                 : 'قرار تكليف دكتوراه سورية (داخلي)';
+        } elseif ($isForeignApplied) {
+            $decisionType = 'foreign_master_applied';
+            $decisionTitle = 'قرار ماجستير خارجي (تدريس الجوانب التطبيقية)';
+        } elseif ($isForeignTheoretical) {
+            $decisionType = 'foreign_master_theoretical';
+            $decisionTitle = ($docType === 'eligibility')
+                ? 'قرار أهلية للماجستير الخارجي'
+                : 'قرار ماجستير خارجي (تكليف بتدريس المقررات النظرية)';
         } elseif ($isApplied) {
             $decisionType = 'applied_master';
             $decisionTitle = ($docType === 'eligibility')
@@ -540,6 +587,8 @@ class GeneratedDecisionController extends Controller
         $phdUni = preg_replace('/^(جامعة|جامعه)\s+/u', '', trim($phdUniRaw));
 
         // Master info
+        $masterFaculty = $masterEd ? ($masterEd->faculty ?: '') : '';
+        $masterCountry = $masterEd ? (optional($masterEd->country)->name ?: '') : '';
         $masterGeneral = $masterEd ? ($masterEd->general_specialization ?: ($masterEd->faculty ?: '')) : '';
         $masterExact = $masterEd ? ($masterEd->exact_specialization ?: ($masterEd->department ?: ($masterEd->section_name ?: ''))) : '';
         $masterSpec = $masterExact ?: $masterGeneral;
@@ -568,6 +617,9 @@ class GeneratedDecisionController extends Controller
             'isDoctorate',
             'isFacultyPermission',
             'isApplied',
+            'isForeignMaster',
+            'isForeignApplied',
+            'isForeignTheoretical',
             'isResearchCenter',
             'rcCenterName',
             'rcDepartment',
@@ -597,6 +649,8 @@ class GeneratedDecisionController extends Controller
             'phdSpec',
             'phdYear',
             'phdUni',
+            'masterFaculty',
+            'masterCountry',
             'masterGeneral',
             'masterExact',
             'masterSpec',
