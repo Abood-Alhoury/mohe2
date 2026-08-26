@@ -37,6 +37,13 @@ class DecisionsController extends Controller
             ->latest()
             ->get();
 
+        if ($request->filled('app_id')) {
+            $targetApp = Application::with(['candidate', 'workUniversity', 'latestDecision'])->find($request->query('app_id'));
+            if ($targetApp && in_array($targetApp->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار']) && !$approvedApps->contains('id', $targetApp->id)) {
+                $approvedApps->prepend($targetApp);
+            }
+        }
+
         $search = $request->query('search');
 
         $issuedDecisions = ApplicationDecision::with('application.candidate', 'application.workUniversity')
@@ -98,6 +105,13 @@ class DecisionsController extends Controller
             ->latest()
             ->get();
 
+        if ($request->filled('app_id')) {
+            $targetApp = Application::with(['candidate', 'workUniversity', 'latestDecision'])->find($request->query('app_id'));
+            if ($targetApp && in_array($targetApp->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار']) && !$approvedApps->contains('id', $targetApp->id)) {
+                $approvedApps->prepend($targetApp);
+            }
+        }
+
         $search = $request->query('search');
 
         $issuedDecisions = ApplicationDecision::with('application.candidate', 'application.workUniversity')
@@ -148,6 +162,13 @@ class DecisionsController extends Controller
             ->where('request_type', 'not like', '%غير سوري%')
             ->latest()
             ->get();
+
+        if ($request->filled('app_id')) {
+            $targetApp = Application::with(['candidate', 'workUniversity', 'latestDecision'])->find($request->query('app_id'));
+            if ($targetApp && in_array($targetApp->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار']) && !$approvedApps->contains('id', $targetApp->id)) {
+                $approvedApps->prepend($targetApp);
+            }
+        }
 
         $search = $request->query('search');
 
@@ -401,6 +422,13 @@ class DecisionsController extends Controller
             ->latest()
             ->get();
 
+        if ($request->filled('app_id')) {
+            $targetApp = Application::with(['candidate', 'workUniversity', 'latestDecision'])->find($request->query('app_id'));
+            if ($targetApp && in_array($targetApp->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار']) && !$approvedApps->contains('id', $targetApp->id)) {
+                $approvedApps->prepend($targetApp);
+            }
+        }
+
         $search = $request->query('search');
 
         $issuedDecisions = ApplicationDecision::with('application.candidate', 'application.workUniversity')
@@ -482,19 +510,30 @@ class DecisionsController extends Controller
     }
 
     // =========================================================================
-    // 5. PAGE FOR FOREIGN MASTER EQUIVALENCE DECISIONS (تعادل الماجستير الخارجي - تطبيقي ونظري)
+    // 5. PAGE FOR FOREIGN MASTER APPLIED DECISIONS (تعادل الماجستير الخارجي التطبيقي - بدون أهلية)
     // =========================================================================
-    public function foreignMasterIndex(Request $request)
+    public function foreignMasterAppliedIndex(Request $request)
     {
-        // Applications ready for Foreign Master decision issuing
+        // Applications ready for Foreign Master Applied decision issuing
         $approvedApps = Application::with(['candidate', 'workUniversity', 'latestDecision', 'educations.level'])
             ->whereIn('status', ['بانتظار إصدار القرار', 'بانتظار صدور القرار'])
             ->where(function($q) {
                 $q->where('request_type', 'like', '%خارجي%')
                   ->orWhere('request_type', 'like', '%غير سوري%');
             })
+            ->where(function($q) {
+                $q->where('request_type', 'like', '%تطبيقي%')
+                  ->orWhere('request_type', 'not like', '%نظري%');
+            })
             ->latest()
             ->get();
+
+        if ($request->filled('app_id')) {
+            $targetApp = Application::with(['candidate', 'workUniversity', 'latestDecision', 'educations.level'])->find($request->query('app_id'));
+            if ($targetApp && in_array($targetApp->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار']) && !$approvedApps->contains('id', $targetApp->id)) {
+                $approvedApps->prepend($targetApp);
+            }
+        }
 
         $search = $request->query('search');
 
@@ -503,7 +542,119 @@ class DecisionsController extends Controller
                 $q->where(function($sq) {
                     $sq->where('request_type', 'like', '%خارجي%')
                        ->orWhere('request_type', 'like', '%غير سوري%');
+                })
+                ->where(function($sq) {
+                    $sq->where('request_type', 'like', '%تطبيقي%')
+                       ->orWhere('request_type', 'not like', '%نظري%');
                 });
+            })
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($q2) use ($search) {
+                    $q2->whereHas('application.candidate', function ($q) use ($search) {
+                        $q->where('full_name', 'like', '%' . $search . '%');
+                    })
+                    ->orWhereHas('application.workUniversity', function ($q) use ($search) {
+                        $q->where('name', 'like', '%' . $search . '%');
+                    })
+                    ->orWhereHas('application', function ($q) use ($search) {
+                        $q->where('request_type', 'like', '%' . $search . '%')
+                          ->orWhere('application_no', 'like', '%' . $search . '%');
+                    })
+                    ->orWhere('decision_no', 'like', '%' . $search . '%');
+                });
+            })
+            ->latest()
+            ->get();
+
+        return view('admin.decisions.foreign_master_applied_index', compact('approvedApps', 'issuedDecisions', 'search'));
+    }
+
+    public function foreignMasterAppliedStore(Request $request)
+    {
+        $request->validate([
+            'application_id' => 'required|exists:applications,id',
+            'decision_no'    => 'required|string',
+            'decision_date'  => 'required|date',
+            'decision_file'  => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'notes'          => 'nullable|string',
+        ]);
+
+        $app = Application::findOrFail($request->application_id);
+
+        if (!in_array($app->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار'])) {
+            return redirect()->back()->with('error', 'لا يمكن إرفاق قرار لطلب حالته حالياً (' . $app->status . '). إصدار القرارات متاح فقط للطلبات بحالة (بانتظار إصدار القرار).');
+        }
+
+        $safeAppNo = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $app->application_no ?? ('App_' . $app->id));
+        $safeDecNo = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $request->decision_no);
+        $candidateName = $app->candidate ? preg_replace('/[^\p{L}\p{N}\s\-_]/u', '', $app->candidate->full_name) : '';
+        $cleanCandidateName = trim(preg_replace('/\s+/', '_', $candidateName));
+
+        // 1. Process Main Equivalence Decision File
+        $ext = $request->file('decision_file')->getClientOriginalExtension();
+        $decisionFileName = 'Foreign_Master_Applied_Decision_No' . $safeDecNo . '_' . $safeAppNo . ($cleanCandidateName ? '_' . $cleanCandidateName : '') . '.' . $ext;
+        $path = $request->file('decision_file')->storeAs('decisions', $decisionFileName, 'public');
+
+        // 2. Create Decision Record (No Eligibility for Applied Foreign Master)
+        $decision = ApplicationDecision::create([
+            'application_id'           => $request->application_id,
+            'decision_no'              => $request->decision_no,
+            'decision_date'            => $request->decision_date,
+            'file_path'                => $path,
+            'eligibility_decision_no'   => null,
+            'eligibility_decision_date' => null,
+            'eligibility_file_path'    => null,
+            'notes'                    => $request->notes ?? 'قرار تعادل ماجستير خارجي تطبيقي صادر رسمياً',
+        ]);
+
+        // 3. Automatically update application status
+        $app->status = 'تم الصدور';
+        $app->save();
+
+        // 4. Send automated notification message to university
+        $candidateFullName = $app->candidate ? $app->candidate->full_name : '';
+        ApplicationMessage::create([
+            'application_id' => $app->id,
+            'sender_id' => Auth::id() ?? 1,
+            'message' => "📜 [إشعار رسمي - صدور قرار تعادل ماجستير خارجي تطبيقي]: تم صدور قرار تعادل الماجستير الخارجي (المسار التطبيقي - تدريس الجوانب التطبيقية) رسمياً برقم ({$request->decision_no}) للطلب رقم (#{$app->application_no}) للمرشح ({$candidateFullName}). يمكنك الاطلاع على نسخة القرار وتحميلها أصولاً.",
+            'is_read' => false,
+        ]);
+
+        return redirect()->route('admin.foreign_master_applied_decisions.index')->with('success', 'تم تسجيل وإرسال قرار تعادل الماجستير الخارجي التطبيقي وإشعار الجامعة المعنية بنجاح.');
+    }
+
+    // =========================================================================
+    // 6. PAGE FOR FOREIGN MASTER THEORETICAL DECISIONS (تعادل الماجستير الخارجي النظري - مع قرار الأهلية)
+    // =========================================================================
+    public function foreignMasterTheoreticalIndex(Request $request)
+    {
+        // Applications ready for Foreign Master Theoretical decision issuing
+        $approvedApps = Application::with(['candidate', 'workUniversity', 'latestDecision', 'educations.level'])
+            ->whereIn('status', ['بانتظار إصدار القرار', 'بانتظار صدور القرار'])
+            ->where(function($q) {
+                $q->where('request_type', 'like', '%خارجي%')
+                  ->orWhere('request_type', 'like', '%غير سوري%');
+            })
+            ->where('request_type', 'like', '%نظري%')
+            ->latest()
+            ->get();
+
+        if ($request->filled('app_id')) {
+            $targetApp = Application::with(['candidate', 'workUniversity', 'latestDecision', 'educations.level'])->find($request->query('app_id'));
+            if ($targetApp && in_array($targetApp->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار']) && !$approvedApps->contains('id', $targetApp->id)) {
+                $approvedApps->prepend($targetApp);
+            }
+        }
+
+        $search = $request->query('search');
+
+        $issuedDecisions = ApplicationDecision::with('application.candidate', 'application.workUniversity')
+            ->whereHas('application', function ($q) {
+                $q->where(function($sq) {
+                    $sq->where('request_type', 'like', '%خارجي%')
+                       ->orWhere('request_type', 'like', '%غير سوري%');
+                })
+                ->where('request_type', 'like', '%نظري%');
             })
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q2) use ($search) {
@@ -524,10 +675,10 @@ class DecisionsController extends Controller
             ->latest()
             ->get();
 
-        return view('admin.decisions.foreign_master_index', compact('approvedApps', 'issuedDecisions', 'search'));
+        return view('admin.decisions.foreign_master_theoretical_index', compact('approvedApps', 'issuedDecisions', 'search'));
     }
 
-    public function foreignMasterStore(Request $request)
+    public function foreignMasterTheoreticalStore(Request $request)
     {
         $request->validate([
             'application_id'           => 'required|exists:applications,id',
@@ -553,14 +704,14 @@ class DecisionsController extends Controller
 
         // 1. Process Main Equivalence Decision File
         $ext = $request->file('decision_file')->getClientOriginalExtension();
-        $decisionFileName = 'Foreign_Master_Decision_No' . $safeDecNo . '_' . $safeAppNo . ($cleanCandidateName ? '_' . $cleanCandidateName : '') . '.' . $ext;
+        $decisionFileName = 'Foreign_Master_Theoretical_Decision_No' . $safeDecNo . '_' . $safeAppNo . ($cleanCandidateName ? '_' . $cleanCandidateName : '') . '.' . $ext;
         $path = $request->file('decision_file')->storeAs('decisions', $decisionFileName, 'public');
 
-        // 2. Process Eligibility Decision File if provided (for theoretical master)
+        // 2. Process Eligibility Decision File if provided (has eligibility!)
         $eligibilityPath = null;
         if ($request->hasFile('eligibility_file')) {
             $elExt = $request->file('eligibility_file')->getClientOriginalExtension();
-            $elFileName = 'Foreign_Master_Eligibility_No' . ($request->eligibility_decision_no ? str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $request->eligibility_decision_no) : 'Draft') . '_' . $safeAppNo . ($cleanCandidateName ? '_' . $cleanCandidateName : '') . '.' . $elExt;
+            $elFileName = 'Foreign_Master_Theoretical_Eligibility_No' . ($request->eligibility_decision_no ? str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $request->eligibility_decision_no) : 'Draft') . '_' . $safeAppNo . ($cleanCandidateName ? '_' . $cleanCandidateName : '') . '.' . $elExt;
             $eligibilityPath = $request->file('eligibility_file')->storeAs('decisions', $elFileName, 'public');
         }
 
@@ -574,7 +725,7 @@ class DecisionsController extends Controller
                 $merger->addPDF($eligibilityPdfPath, 'all');
                 $merger->addPDF($mainPdfPath, 'all');
 
-                $combinedFileName = 'Foreign_Master_Package_No' . $safeDecNo . '_' . $safeAppNo . ($cleanCandidateName ? '_' . $cleanCandidateName : '') . '.pdf';
+                $combinedFileName = 'Foreign_Master_Theoretical_Package_No' . $safeDecNo . '_' . $safeAppNo . ($cleanCandidateName ? '_' . $cleanCandidateName : '') . '.pdf';
                 $combinedFullPath = Storage::disk('public')->path('decisions/' . $combinedFileName);
                 $merger->merge('file', $combinedFullPath, 'P');
 
@@ -582,7 +733,7 @@ class DecisionsController extends Controller
             } catch (\Throwable $e) {}
         }
 
-        // 4. Create Decision Record
+        // 4. Create Decision Record with eligibility
         $decision = ApplicationDecision::create([
             'application_id'           => $request->application_id,
             'decision_no'              => $request->decision_no,
@@ -591,7 +742,7 @@ class DecisionsController extends Controller
             'eligibility_decision_no'   => $request->eligibility_decision_no,
             'eligibility_decision_date' => $request->eligibility_decision_date,
             'eligibility_file_path'    => $eligibilityPath,
-            'notes'                    => $request->notes ?? 'قرار تعادل ماجستير خارجي صادر رسمياً',
+            'notes'                    => $request->notes ?? 'قرار تعادل ماجستير خارجي نظري صادر رسمياً',
         ]);
 
         // 5. Automatically update application status
@@ -603,10 +754,21 @@ class DecisionsController extends Controller
         ApplicationMessage::create([
             'application_id' => $app->id,
             'sender_id' => Auth::id() ?? 1,
-            'message' => "📜 [إشعار رسمي - صدور قرار تعادل الماجستير الخارجي]: تم صدور قرار تعادل الماجستير الخارجي رسمياً برقم ({$request->decision_no}) للطلب رقم (#{$app->application_no}) للمرشح ({$candidateFullName}). يمكنك الاطلاع على نسخة القرار وتحميلها أصولاً.",
+            'message' => "📜 [إشعار رسمي - صدور قرار تعادل ماجستير خارجي نظري والأهلية]: تم صدور قرار تعادل الماجستير الخارجي (المسار النظري) وقرار الأهلية رسمياً برقم ({$request->decision_no}) للطلب رقم (#{$app->application_no}) للمرشح ({$candidateFullName}). يمكنك الاطلاع على نسخة القرار وتحميلها أصولاً.",
             'is_read' => false,
         ]);
 
-        return redirect()->route('admin.foreign_master_decisions.index')->with('success', 'تم تسجيل وإرسال قرار تعادل الماجستير الخارجي النهائي وإشعار الجامعة المعنية بنجاح.');
+        return redirect()->route('admin.foreign_master_theoretical_decisions.index')->with('success', 'تم تسجيل وإرسال قرار تعادل الماجستير الخارجي النظري والأهلية وإشعار الجامعة المعنية بنجاح.');
+    }
+
+    // Legacy methods
+    public function foreignMasterIndex(Request $request)
+    {
+        return $this->foreignMasterAppliedIndex($request);
+    }
+
+    public function foreignMasterStore(Request $request)
+    {
+        return $this->foreignMasterAppliedStore($request);
     }
 }

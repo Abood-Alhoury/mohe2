@@ -434,9 +434,12 @@ body {
         <div class="pdf-preamble">
             <div style="font-weight: bold; margin-bottom: 5px;">رئيس لجنة التأهيل ومعادلة الدرجات العلمية.</div>
             <div>بناءً على أحكام قانون تنظيم الجامعات رقم 6 لعام 2006 ولائحته التنفيذية وتعديلاتهما.</div>
-            <div>وعلى قرار مجلس التعليم العالي رقم /236/ تاريخ 2007/7/15</div>
-            <div>وعلى قرار مجلس التعليم العالي رقم /175/ تاريخ 2022/6/16</div>
-            <div>وكتاب {{ $uniName }} رقم /{{ ($uniReqNo && $uniReqNo !== '---') ? $uniReqNo : '          ' }}/ تاريخ {{ $uniReqDate }}</div>
+            <div>وقرار مجلس التعليم العالي رقم /236/ تاريخ 2007/7/15</div>
+            <div>وقرار مجلس التعليم العالي رقم /175/ تاريخ 2022/6/16</div>
+            <div>وكتاب {{ $uniName }} رقم {{ ($uniReqNo && $uniReqNo !== '---') ? $uniReqNo : '          ' }} تاريخ {{ $uniReqDate }}</div>
+            @if($decisionType === 'foreign_master_theoretical')
+                <div>وعلى قرار لجنة التأهيل ومعادلة الدرجات العلمية المنعقدة في {{ $committeeDate ?? ($decisionDate ?? '') }}</div>
+            @endif
         </div>
 
         <!-- DECREE HEADER -->
@@ -447,58 +450,80 @@ body {
         <!-- ARTICLE 1 -->
         <div class="pdf-article">
             @if($decisionType === 'foreign_master_applied' || $decisionType === 'applied_master' || (!empty($isApplied) && empty($isDoctorate)))
-                المادة -1 تعدّ درجة الماجستير في {{ $masterFaculty ?: $masterGeneral }}{{ $masterSpec ? ' اختصاص ' . $masterSpec : '' }} الممنوحة عام {{ $masterYear }} {{ $candidateTitlePrep ?? 'للسيد' }} {{ $candidateName }} من {{ $masterUni }}{{ !empty($masterCountry) ? ' في ' . $masterCountry : '' }}، والمسبوقة بدرجة الإجازة في {{ $baGeneral }}{{ $baSection ? ' قسم ' . $baSection : '' }} الممنوحة عام {{ $baYear }} من {{ $baUni }}، محققةً لشروط الشهادة والاختصاص من أجل تدريس الجوانب التطبيقية في اختصاص {{ $teachingDept }} بالجامعات الخاصة السورية.
+                المادة 1- تعدّ درجة الماجستير في {{ $masterFaculty ?: $masterGeneral }}{{ $masterSpec ? ' اختصاص ' . $masterSpec : '' }} الممنوحة عام {{ $masterYear }} {{ $candidateTitlePrep ?? 'للسيد' }} {{ $candidateName }} من {{ $masterUni }}{{ !empty($masterCountry) ? ' في ' . $masterCountry : '' }}، والمسبوقة بدرجة الإجازة في {{ $baGeneral }}{{ $baSection ? ' قسم ' . $baSection : '' }} الممنوحة عام {{ $baYear }} من {{ $baUni }}، محققةً لشروط الشهادة والاختصاص من أجل تدريس الجوانب التطبيقية في اختصاص {{ $teachingDept }} بالجامعات الخاصة السورية.
             @elseif($decisionType === 'foreign_master_theoretical')
-                المادة -1 الموافقة على {{ $assignWord ?? 'تكليف' }} {{ $candidateTitle ?? 'السيد' }} {{ $candidateName }}، {{ $qualifierHolderWord ?? 'الحائز' }} درجة الماجستير في {{ $masterFaculty ?: $masterGeneral }}{{ $masterSpec ? ' اختصاص ' . $masterSpec : '' }} الممنوحة عام {{ $masterYear }} من {{ $masterUni }}{{ !empty($masterCountry) ? ' في ' . $masterCountry : '' }}، والمسبوقة بدرجة الإجازة في {{ $baGeneral }}{{ $baSection ? ' قسم ' . $baSection : '' }} الممنوحة عام {{ $baYear }} من {{ $baUni }}، بتدريس المقررات النظرية في اختصاص {{ $teachingDept }} في الجامعات الخاصة السورية على أن يكون {{ $fullTimeWord ?? 'تفرغه' }} فيها كلياً، وألا يقل {{ $quotaWord ?? 'نصابه' }} التدريسي عن /12/ ساعة أسبوعياً.
+                المادة 1- الموافقة على تكليف {{ $candidateTitle ?? 'السيد' }} {{ $candidateName }}، {{ $qualifierHolderWord ?? 'الحائز' }} درجة الماجستير{{ !empty($masterIsResearch) ? ' البحثي' : '' }} في {{ $masterSpec ?? ($masterGeneral ?? ($masterFaculty ?? '')) }} الممنوحة عام {{ $masterYear }} من {{ $masterUni }}{{ !empty($masterCountry) ? ' في ' . $masterCountry : '' }}، والمسبوقة بدرجة الإجازة في {{ $baSpec ?? ($baGeneral ?? '') }} الممنوحة عام {{ $baYear }} من {{ $baUni }}، بتدريس المقررات النظرية في اختصاص {{ $teachingDept }} في الجامعات الخاصة السورية على أن يكون {{ $fullTimeWord ?? 'تفرغه' }} كلياً فيها، وألا يقل {{ $quotaWord ?? 'نصابه' }} التدريسي عن /12/ ساعة أسبوعياً.
             @else
-                المادة -1 الموافقة على {{ $assignWord ?? 'تكليف' }} {{ $candidateTitle ?? 'السيد' }} {{ $candidateName }}، {{ $qualifierHolderWord ?? 'الحائز' }} درجة الماجستير في {{ $masterGeneral }}{{ $masterExact ? ' اختصاص ' . $masterExact : '' }} الممنوحة عام {{ $masterYear }} من جامعة {{ $masterUni }}، والمسبوقة بدرجة الإجازة في {{ $baGeneral }}{{ $baSection ? ' قسم ' . $baSection : '' }} الممنوحة عام {{ $baYear }} من جامعة {{ $baUni }}، بتدريس المقررات النظرية في اختصاص {{ $teachingDept }} في الجامعات الخاصة السورية على أن يكون {{ $fullTimeWord ?? 'تفرغه' }} فيها كلياً، وألا يقل {{ $quotaWord ?? 'نصابه' }} التدريسي عن /12/ ساعة أسبوعياً.
+                المادة 1- الموافقة على {{ $assignWord ?? 'تكليف' }} {{ $candidateTitle ?? 'السيد' }} {{ $candidateName }}، {{ $qualifierHolderWord ?? 'الحائز' }} درجة الماجستير في {{ $masterGeneral }}{{ $masterExact ? ' اختصاص ' . $masterExact : '' }} الممنوحة عام {{ $masterYear }} من جامعة {{ $masterUni }}، والمسبوقة بدرجة الإجازة في {{ $baGeneral }}{{ $baSection ? ' قسم ' . $baSection : '' }} الممنوحة عام {{ $baYear }} من جامعة {{ $baUni }}، بتدريس المقررات النظرية في اختصاص {{ $teachingDept }} في الجامعات الخاصة السورية على أن يكون {{ $fullTimeWord ?? 'تفرغه' }} كلياً فيها، وألا يقل {{ $quotaWord ?? 'نصابه' }} التدريسي عن /12/ ساعة أسبوعياً.
             @endif
         </div>
 
         <!-- ARTICLE 2 -->
         <div class="pdf-article">
-            المادة -2 يبلغ هذا القرار من يلزم لتنفيذه.
-            <div style="margin-top: 10px; margin-right: 30px;">دمشق في {{ $decisionDate }}</div>
+            المادة 2- يبلغ هذا القرار من يلزم لتنفيذه.
+            <div style="text-align: center; margin-top: 10px; margin-bottom: 8px;">دمشق في {{ $decisionDate }}</div>
         </div>
 
     @endif
 
 @endif
 
-    <!-- SIGNATURES TABLE (3 SIGNATURES - SHARED ACROSS ALL DECISIONS) -->
-    <table class="pdf-signatures" border="0" cellspacing="0" cellpadding="0">
-        <tr>
-            <!-- Left in DomPDF = Visual Left: Amin & Chairman -->
-            <td style="width: 50%; text-align: right; vertical-align: top; padding-right: 25px; font-size: 13px; font-weight: bold; line-height: 1.6;">
-                <div>
+    <!-- SIGNATURES TABLE -->
+    @if($decisionType === 'foreign_master_theoretical' || $decisionType === 'foreign_master_applied' || $decisionType === 'syrian_master')
+        {{-- TWO SIGNATURES (AS IN OFFICIAL GOVERNMENT FORM) --}}
+        <table class="pdf-signatures" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+                <!-- Left in DomPDF = Visual Left: Amin -->
+                <td style="width: 50%; text-align: center; vertical-align: top; font-size: 13px; font-weight: bold; line-height: 1.5;">
                     <div>أمين مجلس التعليم العالي</div>
-                    <div style="height: 35px; margin: 8px 0;"></div>
+                    <div style="height: 45px; margin: 8px 0;"></div>
                     <div style="font-size: 13.5px;">الدكتور علي الجاسم</div>
-                </div>
+                </td>
 
-                <div style="margin-top: 25px; line-height: 1.4;">
+                <!-- Right in DomPDF = Visual Right: Chairman -->
+                <td style="width: 50%; text-align: center; vertical-align: top; font-size: 13px; font-weight: bold; line-height: 1.5;">
                     <div>رئيس لجنة التأهيل ومعادلة الدرجات العلمية</div>
                     <div style="margin-top: 2px;">معاون وزير التعليم العالي والبحث العلمي</div>
-                    <div style="height: 35px; margin: 8px 0;"></div>
+                    <div style="height: 30px; margin: 8px 0;"></div>
                     <div style="font-size: 14px;">الدكتور عبد الحميد الخالد</div>
-                </div>
-            </td>
+                </td>
+            </tr>
+        </table>
+    @else
+        <table class="pdf-signatures" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+                <!-- Left in DomPDF = Visual Left: Amin & Chairman -->
+                <td style="width: 50%; text-align: right; vertical-align: top; padding-right: 25px; font-size: 13px; font-weight: bold; line-height: 1.6;">
+                    <div>
+                        <div>أمين مجلس التعليم العالي</div>
+                        <div style="height: 35px; margin: 8px 0;"></div>
+                        <div style="font-size: 13.5px;">الدكتور علي الجاسم</div>
+                    </div>
 
-            <!-- Right in DomPDF = Visual Right: Director of Equivalence -->
-            <td style="width: 50%; text-align: right; vertical-align: top; padding-right: 15px; font-size: 13px; font-weight: bold; line-height: 1.6;">
-                <div>مدير التعادل والإنتاج العلمي</div>
-                <div style="height: 35px; margin: 8px 0;"></div>
-                <div style="font-size: 13.5px;">المهندس عمار هلال</div>
-            </td>
-        </tr>
-    </table>
+                    <div style="margin-top: 25px; line-height: 1.4;">
+                        <div>رئيس لجنة التأهيل ومعادلة الدرجات العلمية</div>
+                        <div style="margin-top: 2px;">معاون وزير التعليم العالي والبحث العلمي</div>
+                        <div style="height: 35px; margin: 8px 0;"></div>
+                        <div style="font-size: 14px;">الدكتور عبد الحميد الخالد</div>
+                    </div>
+                </td>
+
+                <!-- Right in DomPDF = Visual Right: Director of Equivalence -->
+                <td style="width: 50%; text-align: right; vertical-align: top; padding-right: 15px; font-size: 13px; font-weight: bold; line-height: 1.6;">
+                    <div>مدير التعادل والإنتاج العلمي</div>
+                    <div style="height: 35px; margin: 8px 0;"></div>
+                    <div style="font-size: 13.5px;">المهندس عمار هلال</div>
+                </td>
+            </tr>
+        </table>
+    @endif
 
     <!-- COPIES TO -->
     <div class="pdf-copies">
         <div style="font-weight: bold; text-decoration: underline; margin-bottom: 3px;">صورة إلى:</div>
         <div>- مجلس التعليم العالي: مكتب التعادل – الديوان.</div>
-        <div>- المؤسسات التعليمية الخاصة.</div>
-        <div>- أمانة سر المجلس (للتعميم على الجامعة المعنية عبر البريد الالكتروني).</div>
+        <div>- أمانة سر المجلس (للتعميم على الجامعة المعنية عبر البريد الالكتروني) .</div>
+        <div>- مؤسسات التعليمية الخاصة.</div>
     </div>
 
 </body>

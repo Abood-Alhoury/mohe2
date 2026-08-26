@@ -60,7 +60,9 @@ body { direction: ltr; text-align: right; font-size: 13px; color: #111C2C; margi
 </table>
 
 @php
-    $isFacultyPermission = str_contains($application->request_type ?? '', 'سماح') || str_contains($application->request_type ?? '', 'تدريسية');
+    $reqType = $application->request_type ?? '';
+    $isForeignMaster = str_contains($reqType, 'ماجستير خارجي') || str_contains($reqType, 'خارجي') || str_contains($reqType, 'غير سوري');
+    $isFacultyPermission = !$isForeignMaster && (str_contains($reqType, 'سماح') || str_contains($reqType, 'هيئة تدريسية'));
     $govEd = $govEd ?? ($application->educations ? $application->educations->first(function($e) {
         return $e->thesis_title === 'عضو هيئة تدريسية في جامعة حكومية' || (optional($e->level)->name && str_contains(optional($e->level)->name, 'حكومية'));
     }) : null);
@@ -119,7 +121,7 @@ body { direction: ltr; text-align: right; font-size: 13px; color: #111C2C; margi
     <table class="mt">
         <tr>
             <td class="l">الجامعة الحكومية :</td>
-            <td style="font-weight:bold;color:#1A2A44;">{{ optional($govEd->university)->name ?? optional($govEd)->university_other ?? '---' }}</td>
+            <td style="font-weight:bold;color:#1A2A44;">{{ $govEd?->university?->name ?? $govEd?->university_other ?? '---' }}</td>
             <td class="l">الرتبة الأكاديمية :</td>
             <td style="font-weight:bold;">{{ optional($govEd)->rank ?? 'مدرس' }}</td>
         </tr>
@@ -135,7 +137,7 @@ body { direction: ltr; text-align: right; font-size: 13px; color: #111C2C; margi
     <table class="mt">
         <tr>
             <td class="l">الجامعة المانحة :</td>
-            <td style="font-weight:bold;color:#1A2A44;">{{ optional($phdEd->university)->name ?? optional($phdEd)->university_other ?? '---' }}</td>
+            <td style="font-weight:bold;color:#1A2A44;">{{ $phdEd?->university?->name ?? $phdEd?->university_other ?? '---' }}</td>
             <td class="l">تاريخ / سنة المنح :</td>
             <td>{{ optional($phdEd)->grant_date ?? '---' }}</td>
         </tr>

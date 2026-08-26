@@ -62,8 +62,17 @@
                             this.selectedId = '';
                             this.selectedName = '';
                             this.search = '';
+                        },
+                        init() {
+                            const preId = '{{ request('app_id') }}';
+                            if (preId) {
+                                const found = this.items.find(i => i.id == preId);
+                                if (found) {
+                                    this.select(found);
+                                }
+                            }
                         }
-                    }" @click.outside="open = false; if(!selectedId) { search = ''; } else { search = selectedName; }">
+                    }" x-init="init()" @click.outside="open = false; if(!selectedId) { search = ''; } else { search = selectedName; }">
 
                         <label class="form-label fw-bold small d-block text-start mb-1" style="color: var(--imperial-navy);">
                             اختر طلب الماجستير التطبيقي الموافق عليه :
@@ -128,13 +137,13 @@
                     <div class="row g-2 mb-2.5">
                         <div class="col-6 text-start">
                             <label class="form-label fw-bold small d-block text-start mb-1" style="color: var(--imperial-navy);">
-                                رقم قرار التعادل <span class="text-danger">*</span> :
+                                رقم قرار التطبيقي <span class="text-danger">*</span> 
                             </label>
-                            <input type="text" name="decision_no" class="form-control form-control-sm text-start" placeholder="مثال: 128 / ت.م" value="" required>
+                            <input type="text" name="decision_no" class="form-control form-control-sm text-start" placeholder="مثال: 128" value="" required>
                         </div>
                         <div class="col-6 text-start">
                             <label class="form-label fw-bold small d-block text-start mb-1" style="color: var(--imperial-navy);">
-                                تاريخ قرار التعادل <span class="text-danger">*</span> :
+                                تاريخ قرار التطبيقي <span class="text-danger">*</span> 
                             </label>
                             <input type="date" name="decision_date" class="form-control form-control-sm text-start" value="" required>
                         </div>

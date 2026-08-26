@@ -127,20 +127,20 @@
                 
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">اسم المرشح *</label>
+                        <label class="form-label label-md fw-medium text-dark">اسم المرشح </label><span class="text-danger"> *</span>
                         <input type="text" name="full_name" id="input-fullName" class="form-control academic-input" placeholder="الاسم والنسبة" value="{{ old('full_name', optional(optional($draft)->candidate)->full_name) }}" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">اسم الأب *</label>
+                        <label class="form-label label-md fw-medium text-dark">اسم الأب</label><span class="text-danger"> *</span>
                         <input type="text" name="father_name" id="input-fatherName" class="form-control academic-input" placeholder="اسم الأب" value="{{ old('father_name', optional(optional($draft)->candidate)->father_name) }}" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">اسم الأم ونسبتها *</label>
+                        <label class="form-label label-md fw-medium text-dark">اسم الأم ونسبتها </label><span class="text-danger"> *</span>
                         <input type="text" name="mother_name" id="input-motherName" class="form-control academic-input" placeholder="اسم ونسبة الأم" value="{{ old('mother_name', optional(optional($draft)->candidate)->mother_name) }}" required>
                     </div>
 
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">الجنسية *</label>
+                        <label class="form-label label-md fw-medium text-dark">الجنسية </label><span class="text-danger"> *</span>
                         <select name="nationality_id" id="input-nationality" class="form-select academic-input" onchange="updateSyrianStatus(this)" required>
                             @foreach($countries as $c)
                                 <option value="{{ $c->id }}" {{ old('nationality_id', optional(optional($draft)->candidate)->nationality_id ?? $syriaId) == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
@@ -149,7 +149,7 @@
                         <input type="hidden" name="is_syrian" id="input-isSyrian" value="1">
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">الرقم الوطني / رقم جواز السفر *</label>
+                        <label class="form-label label-md fw-medium text-dark">الرقم الوطني / رقم جواز السفر </label><span class="text-danger"> *</span>
                         @php
                             $draftNatId = optional(optional($draft)->candidate)->national_id;
                             if ($draftNatId && str_starts_with($draftNatId, 'TMP-')) {
@@ -159,28 +159,28 @@
                         <input type="text" name="national_id" id="input-nationalId" class="form-control academic-input" placeholder="الرقم الوطني المكون من 11 خانة" value="{{ old('national_id', $draftNatId) }}" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">تاريخ الميلاد *</label>
+                        <label class="form-label label-md fw-medium text-dark">تاريخ الميلاد </label><span class="text-danger"> *</span>
                         <input type="date" name="dob" id="input-dob" class="form-control academic-input" value="{{ old('dob', optional(optional($draft)->candidate)->dob) }}" required>
                     </div>
 
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">الوظيفة الحالية للمرشح *</label>
+                        <label class="form-label label-md fw-medium text-dark">الوظيفة الحالية للمرشح </label><span class="text-danger"> *</span>
                         <input type="text" name="job_title" id="input-jobTitle" class="form-control academic-input" placeholder="مثال: مهندس، موظف، معيد" value="{{ old('job_title', optional(optional($draft)->candidate)->job_title) }}" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">الجنس *</label>
+                        <label class="form-label label-md fw-medium text-dark">الجنس </label><span class="text-danger"> *</span>
                         <select name="gender" id="input-gender" class="form-select academic-input" required>
                             <option value="ذكر" {{ old('gender', optional(optional($draft)->candidate)->gender) == 'ذكر' ? 'selected' : '' }}>ذكر</option>
                             <option value="أنثى" {{ old('gender', optional(optional($draft)->candidate)->gender) == 'أنثى' ? 'selected' : '' }}>أنثى</option>
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">البريد الإلكتروني *</label>
+                        <label class="form-label label-md fw-medium text-dark">البريد الإلكتروني</label><span class="text-danger"> *</span>
                         <input type="email" name="email" id="input-email" class="form-control academic-input" placeholder="name@example.com" value="{{ old('email', optional(optional($draft)->candidate)->email ?: (Auth::user()->university->email ?? Auth::user()->email)) }}" oninput="this.setCustomValidity('')" required>
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">الهاتف المحمول *</label>
+                        <label class="form-label label-md fw-medium text-dark">الهاتف المحمول</label><span class="text-danger"> *</span>
                         <input type="text" name="mobile" id="input-mobile" class="form-control academic-input" placeholder="09xxxxxxxx" maxlength="10" pattern="[0-9]{10}" value="{{ old('mobile', optional(optional($draft)->candidate)->mobile) }}" oninput="this.setCustomValidity(''); this.value = this.value.replace(/[^0-9]/g, '')" required>
                     </div>
                     <div class="col-md-6">
@@ -189,20 +189,20 @@
                     </div>
 
                     <div class="col-12">
-                        <label class="form-label label-md fw-medium text-dark">عنوان الإقامة الحالي بالتفصيل *</label>
+                        <label class="form-label label-md fw-medium text-dark">عنوان الإقامة الحالي بالتفصيل </label><span class="text-danger"> *</span>
                         <textarea name="address" id="input-address" class="form-control academic-input" rows="2" placeholder="المحافظة - المدينة - الشارع - البناء" required>{{ old('address', optional(optional($draft)->candidate)->address) }}</textarea>
                     </div>
 
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">رقم كتاب طلب التقييم الصادر عن الجامعة *</label>
+                        <label class="form-label label-md fw-medium text-dark">رقم كتاب طلب التقييم الصادر عن الجامعة </label><span class="text-danger"> *</span>
                         <input type="text" name="req_no" id="input-reqNo" class="form-control academic-input" placeholder="مثال: 123/ص" value="{{ old('req_no', optional($draft)->new_uni_request_no) }}" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">تاريخ كتاب طلب التقييم *</label>
+                        <label class="form-label label-md fw-medium text-dark">تاريخ كتاب طلب التقييم </label><span class="text-danger"> *</span>
                         <input type="date" name="req_date" id="input-reqDate" class="form-control academic-input" value="{{ old('req_date', optional($draft)->new_uni_request_date) }}" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">تكرار طلب التعادل *</label>
+                        <label class="form-label label-md fw-medium text-dark">تكرار طلب التعادل </label><span class="text-danger"> *</span>
                         <select name="is_first_time" id="input-isFirstTime" class="form-select academic-input" onchange="togglePreviousDegree(this)" required>
                             <option value="1" {{ old('is_first_time', optional($draft)->parent_application_id ? '0' : '1') == '1' ? 'selected' : '' }}>تعادل للمرة الأولى</option>
                             <option value="0" {{ old('is_first_time', optional($draft)->parent_application_id ? '0' : '1') == '0' ? 'selected' : '' }}>سبق التقدم بتعادل لشهادة أخرى</option>
@@ -216,7 +216,7 @@
                             <p class="label-sm text-muted mb-3">يرجى تحديد المعاملة السابقة لربط الطلب الجديد بالملف المحفوظ:</p>
                             <div class="row g-3">
                                 <div class="col-md-12">
-                                    <label class="form-label label-md fw-medium text-dark">اختر المعاملة السابقة للمرشح *</label>
+                                    <label class="form-label label-md fw-medium text-dark">اختر المعاملة السابقة للمرشح </label><span class="text-danger"> *</span>
                                     <select name="parent_application_id" id="input-parentAppId" class="form-select academic-input">
                                         <option value="">-- اختر من المعاملات السابقة المسجلة --</option>
                                         @if(isset($previousApplications))
@@ -242,7 +242,7 @@
                 
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">دولة الحصول على الشهادة الثانوية *</label>
+                        <label class="form-label label-md fw-medium text-dark">دولة الحصول على الشهادة الثانوية </label><span class="text-danger"> *</span>
                         <select name="hs_country_id" id="input-hsCountry" class="form-select academic-input" onchange="toggleHsEquivalence(this)" required>
                             @foreach($countries as $c)
                                 <option value="{{ $c->id }}" {{ old('hs_country_id', optional($hsEd)->country_id ?? $syriaId) == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
@@ -250,7 +250,7 @@
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">نوع البكالوريا *</label>
+                        <label class="form-label label-md fw-medium text-dark">نوع البكالوريا </label><span class="text-danger"> *</span>
                         <select name="hs_type" id="input-hsType" class="form-select academic-input" required>
                             @php $oldHsType = old('hs_type', optional($hsEd)->section_name); @endphp
                             <option value="علمي" {{ $oldHsType == 'علمي' ? 'selected' : '' }}>علمي</option>
@@ -261,7 +261,7 @@
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">تاريخ الحصول على الشهادة (العام فقط) *</label>
+                        <label class="form-label label-md fw-medium text-dark">تاريخ الحصول على الشهادة (العام فقط) </label><span class="text-danger"> *</span>
                         <input type="number" name="hs_grant_date" id="input-hsDate" class="form-control academic-input" min="1950" max="{{ date('Y') }}" placeholder="مثال: 2015" value="{{ old('hs_grant_date', optional($hsEd)->grant_date ? (strlen($hsEd->grant_date) > 4 ? substr($hsEd->grant_date, 0, 4) : $hsEd->grant_date) : '') }}" required>
                     </div>
 
@@ -272,11 +272,11 @@
                             <p class="label-sm text-muted mb-3">بما أن الشهادة الثانوية غير صادرة عن الجمهورية العربية السورية، يرجى إدخال رقم وتاريخ قرار المعادلة الصادر عن وزارة التربية السورية، ورفع صورة القرار في خطوة المرفقات النهائية (إجباري).</p>
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label class="form-label label-md fw-medium text-dark">رقم قرار معادلة الشهادة الثانوية *</label>
+                                    <label class="form-label label-md fw-medium text-dark">رقم قرار معادلة الشهادة الثانوية </label><span class="text-danger"> *</span>
                                     <input type="text" name="hs_decision_no" id="input-hsDecisionNo" class="form-control academic-input" placeholder="أدخل رقم القرار الرسمي" value="{{ old('hs_decision_no', $hsEd && $hsEd->notes ? preg_replace('/.*رقم قرار المعادلة الثانوية:\s*([^\|]+).*/u', '$1', $hsEd->notes) : '') }}">
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label label-md fw-medium text-dark">تاريخ قرار معادلة الشهادة الثانوية *</label>
+                                    <label class="form-label label-md fw-medium text-dark">تاريخ قرار معادلة الشهادة الثانوية </label><span class="text-danger"> *</span>
                                     <input type="date" name="hs_decision_date" id="input-hsDecisionDate" class="form-control academic-input" value="{{ old('hs_decision_date', $hsEd && $hsEd->notes && str_contains($hsEd->notes, 'تاريخ القرار:') ? preg_replace('/.*تاريخ القرار:\s*([0-9\-]+).*/u', '$1', $hsEd->notes) : '') }}">
                                 </div>
                             </div>
@@ -293,7 +293,7 @@
                 
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">الدولة المانحة للإجازة *</label>
+                        <label class="form-label label-md fw-medium text-dark">الدولة المانحة للإجازة </label><span class="text-danger">*</span>
                         <select name="ba_country_id" id="input-baCountry" class="form-select academic-input" onchange="toggleBaCountrySection(this)" required>
                             @foreach($countries as $c)
                                 <option value="{{ $c->id }}" {{ old('ba_country_id', optional($baEd)->country_id ?? $syriaId) == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
@@ -302,7 +302,7 @@
                     </div>
                     
                     <div class="col-md-4" id="ba-uni-select-container">
-                        <label class="form-label label-md fw-medium text-dark">الجامعة المانحة *</label>
+                        <label class="form-label label-md fw-medium text-dark">الجامعة المانحة </label><span class="text-danger"> *</span>
                         <select name="ba_university_id" id="input-baUniId" class="form-select academic-input">
                             <option value="">-- اختر الجامعة --</option>
                             @foreach($universities as $uni)
@@ -314,12 +314,12 @@
                     </div>
 
                     <div class="col-md-4" id="ba-uni-text-container" style="display: none;">
-                        <label class="form-label label-md fw-medium text-dark">اسم الجامعة الأجنبية / الجهة المانحة *</label>
+                        <label class="form-label label-md fw-medium text-dark">اسم الجامعة الأجنبية / الجهة المانحة </label><span class="text-danger"> *</span>
                         <input type="text" name="ba_university_other" id="input-baUniOther" class="form-control academic-input" placeholder="اسم الجامعة الكامل" value="{{ old('ba_university_other', optional($baEd)->section_name) }}">
                     </div>
 
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">التقدير / المرتبة *</label>
+                        <label class="form-label label-md fw-medium text-dark">التقدير / المرتبة </label><span class="text-danger"> *</span>
                         @php $oldBaRank = old('ba_rank', optional($baEd)->rank); @endphp
                         <select name="ba_rank" id="input-baRank" class="form-select academic-input" required>
                             <option value="امتياز" {{ $oldBaRank == 'امتياز' ? 'selected' : '' }}>امتياز</option>
@@ -330,7 +330,7 @@
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">الفرع (التخصص العام) *</label>
+                        <label class="form-label label-md fw-medium text-dark">الفرع (التخصص العام) </label><span class="text-danger"> *</span>
                         <input type="text" name="ba_faculty" id="input-baFaculty" class="form-control academic-input" placeholder="مثال: هندسة المعلوماتية" value="{{ old('ba_faculty', optional($baEd)->general_specialization) }}" required>
                     </div>
                     <div class="col-md-6">
@@ -339,11 +339,11 @@
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">تاريخ التسجيل بالإجازة *</label>
+                        <label class="form-label label-md fw-medium text-dark">تاريخ التسجيل بالإجازة </label><span class="text-danger"> *</span>
                         <input type="date" name="ba_registration_date" id="input-baRegDate" class="form-control academic-input" value="{{ old('ba_registration_date', optional($baEd)->registration_date) }}" oninput="this.setCustomValidity(''); const g = document.getElementById('input-baGrantDate'); if(g) g.setCustomValidity('');" required>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">تاريخ التخرج / الحصول عليها *</label>
+                        <label class="form-label label-md fw-medium text-dark">تاريخ التخرج / الحصول عليها </label><span class="text-danger"> *</span>
                         <input type="date" name="ba_grant_date" id="input-baGrantDate" class="form-control academic-input" value="{{ old('ba_grant_date', optional($baEd)->grant_date) }}" oninput="this.setCustomValidity('')" required>
                     </div>
 
@@ -354,11 +354,11 @@
                             <p class="label-sm text-muted mb-3">بما أن الإجازة الجامعية الأولى غير صادرة عن الجمهورية العربية السورية، يرجى إدخال رقم وتاريخ قرار المعادلة الصادر عن وزارة التعليم العالي والبحث العلمي السورية، ورفع صورة القرار في خطوة المرفقات النهائية (إجباري).</p>
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label class="form-label label-md fw-medium text-dark">رقم قرار تعادل الإجازة الجامعية *</label>
+                                    <label class="form-label label-md fw-medium text-dark">رقم قرار تعادل الإجازة الجامعية </label><span class="text-danger"> *</span>
                                     <input type="text" name="ba_decision_no" id="input-baDecisionNo" class="form-control academic-input" placeholder="أدخل رقم قرار التعادل الرسمي" value="{{ old('ba_decision_no', $baEd && $baEd->notes ? preg_replace('/.*رقم قرار معادلة الإجازة:\s*([^\|]+).*/u', '$1', $baEd->notes) : '') }}">
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label label-md fw-medium text-dark">تاريخ قرار تعادل الإجازة الجامعية *</label>
+                                    <label class="form-label label-md fw-medium text-dark">تاريخ قرار تعادل الإجازة الجامعية </label><span class="text-danger"> *</span>
                                     <input type="date" name="ba_decision_date" id="input-baDecisionDate" class="form-control academic-input" value="{{ old('ba_decision_date', $baEd && $baEd->notes && str_contains($baEd->notes, 'تاريخ القرار:') ? preg_replace('/.*تاريخ القرار:\s*([0-9\-]+).*/u', '$1', $baEd->notes) : '') }}">
                                 </div>
                             </div>
@@ -375,7 +375,7 @@
                 
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">الجامعة المانحة للماجستير *</label>
+                        <label class="form-label label-md fw-medium text-dark">الجامعة المانحة للماجستير </label><span class="text-danger"> *</span>
                         <select name="ma_university_id" id="input-maUniId" class="form-select academic-input" required>
                             <option value="">-- اختر الجامعة السورية --</option>
                             @foreach($universities as $uni)
@@ -386,7 +386,7 @@
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">التقدير / المرتبة *</label>
+                        <label class="form-label label-md fw-medium text-dark">التقدير / المرتبة </label><span class="text-danger"> *</span>
                         @php $oldMaRank = old('ma_rank', optional($maEd)->rank); @endphp
                         <select name="ma_rank" id="input-maRank" class="form-select academic-input" required>
                             <option value="امتياز" {{ $oldMaRank == 'امتياز' ? 'selected' : '' }}>امتياز</option>
@@ -395,12 +395,12 @@
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">اسم الأستاذ المشرف *</label>
+                        <label class="form-label label-md fw-medium text-dark">اسم الأستاذ المشرف </label><span class="text-danger"> *</span>
                         <input type="text" name="ma_supervisor" id="input-maSupervisor" class="form-control academic-input" placeholder="الاسم الثنائي للمشرف مع اللقب العلمي" value="{{ old('ma_supervisor', optional($maEd)->supervisor_name) }}" required>
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">الفرع (التخصص العام للماجستير) *</label>
+                        <label class="form-label label-md fw-medium text-dark">الفرع (التخصص العام للماجستير) </label><span class="text-danger"> *</span>
                         <input type="text" name="ma_faculty" id="input-maFaculty" class="form-control academic-input" placeholder="كلية الهندسة المدنية" value="{{ old('ma_faculty', optional($maEd)->general_specialization) }}" required>
                     </div>
                     <div class="col-md-6">
@@ -409,20 +409,20 @@
                     </div>
 
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">تاريخ التسجيل بالدرجة *</label>
+                        <label class="form-label label-md fw-medium text-dark">تاريخ التسجيل بالدرجة </label><span class="text-danger"> *</span>
                         <input type="date" name="ma_registration_date" id="input-maRegDate" class="form-control academic-input" value="{{ old('ma_registration_date', optional($maEd)->registration_date) }}" oninput="this.setCustomValidity(''); const d = document.getElementById('input-maDefDate'); if(d) d.setCustomValidity(''); const g = document.getElementById('input-maGrantDate'); if(g) g.setCustomValidity('');" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">تاريخ المناقشة *</label>
+                        <label class="form-label label-md fw-medium text-dark">تاريخ المناقشة </label><span class="text-danger"> *</span>
                         <input type="date" name="ma_defense_date" id="input-maDefDate" class="form-control academic-input" value="{{ old('ma_defense_date', optional($maEd)->defense_date) }}" oninput="this.setCustomValidity(''); const g = document.getElementById('input-maGrantDate'); if(g) g.setCustomValidity('');" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">تاريخ منح الدرجة (الحصول على الشهادة) *</label>
+                        <label class="form-label label-md fw-medium text-dark">تاريخ منح الدرجة (الحصول على الشهادة) </label><span class="text-danger"> *</span>
                         <input type="date" name="ma_grant_date" id="input-maGrantDate" class="form-control academic-input" value="{{ old('ma_grant_date', optional($maEd)->grant_date) }}" onchange="checkMasterGrantDateForExperience()" oninput="this.setCustomValidity(''); checkMasterGrantDateForExperience();" required>
                     </div>
 
                     <div class="col-12">
-                        <label class="form-label label-md fw-medium text-dark">عنوان رسالة الماجستير (الأطروحة) بالتفصيل *</label>
+                        <label class="form-label label-md fw-medium text-dark">عنوان رسالة الماجستير (الأطروحة) بالتفصيل </label><span class="text-danger"> *</span>
                         <textarea name="ma_thesis_title" id="input-maThesisTitle" class="form-control academic-input" rows="2" placeholder="أدخل عنوان رسالة الماجستير كما هو مذكور في مصدقة التخرج" required>{{ old('ma_thesis_title', optional($maEd)->thesis_title) }}</textarea>
                     </div>
 
@@ -435,15 +435,15 @@
                             </div>
                             <div class="row g-3" id="experience-details-section" style="display: none;">
                                 <div class="col-md-6">
-                                    <label class="form-label label-md fw-medium text-dark">مكان الخبرة التدريسية (الجهة/الجامعة) *</label>
+                                    <label class="form-label label-md fw-medium text-dark">مكان الخبرة التدريسية (الجهة/الجامعة) </label><span class="text-danger"> *</span>
                                     <input type="text" name="exp_place" id="input-expPlace" class="form-control academic-input" placeholder="اسم الكلية أو الجامعة والمعهد" value="{{ old('exp_place', optional($maEd)->notes ? preg_replace('/.*مكان الخبرة التدريسية:\s*/u', '', $maEd->notes) : '') }}">
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label label-md fw-medium text-dark">من تاريخ *</label>
+                                    <label class="form-label label-md fw-medium text-dark">من تاريخ </label><span class="text-danger"> *</span>
                                     <input type="date" name="exp_from_year" id="input-expFrom" class="form-control academic-input" value="{{ old('exp_from_year', optional($maEd)->experience_from_year) }}">
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label label-md fw-medium text-dark">إلى تاريخ *</label>
+                                    <label class="form-label label-md fw-medium text-dark">إلى تاريخ </label><span class="text-danger"> *</span>
                                     <input type="date" name="exp_to_year" id="input-expTo" class="form-control academic-input" value="{{ old('exp_to_year', optional($maEd)->experience_to_year) }}">
                                 </div>
                             </div>
@@ -465,7 +465,7 @@
                 <div class="row g-4">
                     <!-- High School Cert -->
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">نسخة مصدقة أصولاً عن شهادة الدراسة الثانوية *</label>
+                        <label class="form-label label-md fw-medium text-dark">نسخة مصدقة أصولاً عن شهادة الدراسة الثانوية </label><span class="text-danger"> *</span>
                         <input type="file" name="file_hs_cert" id="input-fileHsCert" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['file_hs_cert']))
                             <div class="mt-1 d-flex align-items-center gap-2">
@@ -479,7 +479,7 @@
 
                     <!-- HS Equivalence Decision File (Conditional) -->
                     <div class="col-md-6" id="hs-decision-file-container" style="display: none;">
-                        <label class="form-label label-md fw-medium text-dark">صورة عن قرار معادلة الشهادة الثانوية (وزارة التربية) *</label>
+                        <label class="form-label label-md fw-medium text-dark">صورة عن قرار معادلة الشهادة الثانوية (وزارة التربية) </label><span class="text-danger"> *</span>
                         <input type="file" name="hs_decision_file" id="input-hsDecisionFile" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['hs_decision_file']))
                             <div class="mt-1 d-flex align-items-center gap-2">
@@ -493,7 +493,7 @@
 
                     <!-- Bachelor Cert -->
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">نسخة مصدقة أصولاً عن الإجازة الجامعية الأولى *</label>
+                        <label class="form-label label-md fw-medium text-dark">نسخة مصدقة أصولاً عن الإجازة الجامعية الأولى </label><span class="text-danger"> *</span>
                         <input type="file" name="file_ba_cert" id="input-fileBaCert" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['file_ba_cert']))
                             <div class="mt-1 d-flex align-items-center gap-2">
@@ -507,7 +507,7 @@
 
                     <!-- Bachelor Equivalence Decision File (Conditional) -->
                     <div class="col-md-6" id="ba-decision-file-container" style="display: none;">
-                        <label class="form-label label-md fw-medium text-dark">صورة عن قرار معادلة الشهادة الجامعية الأولى *</label>
+                        <label class="form-label label-md fw-medium text-dark">صورة عن قرار معادلة الشهادة الجامعية الأولى </label><span class="text-danger"> *</span>
                         <input type="file" name="ba_decision_file" id="input-baDecisionFile" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['ba_decision_file']))
                             <div class="mt-1 d-flex align-items-center gap-2">
@@ -521,7 +521,7 @@
 
                     <!-- Master Cert -->
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">نسخة مصدقة أصولاً عن شهادة الماجستير *</label>
+                        <label class="form-label label-md fw-medium text-dark">نسخة مصدقة أصولاً عن شهادة الماجستير </label><span class="text-danger"> *</span>
                         <input type="file" name="file_ma_cert" id="input-fileMaCert" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['file_ma_cert']))
                             <div class="mt-1 d-flex align-items-center gap-2">
@@ -535,7 +535,7 @@
 
                     <!-- Master Registration / Defense dates doc -->
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">وثيقة تواريخ التسجيل والمناقشة والمنح بالماجستير *</label>
+                        <label class="form-label label-md fw-medium text-dark">وثيقة تواريخ التسجيل والمناقشة والمنح بالماجستير </label><span class="text-danger"> *</span>
                         <input type="file" name="file_ma_dates" id="input-fileMaDates" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['file_ma_dates']))
                             <div class="mt-1 d-flex align-items-center gap-2">
@@ -549,7 +549,7 @@
 
                     <!-- Arabic Thesis Summary -->
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">ملخص باللغة العربية عن رسالة الماجستير إلكترونياً *</label>
+                        <label class="form-label label-md fw-medium text-dark">ملخص باللغة العربية عن رسالة الماجستير إلكترونياً </label><span class="text-danger"> *</span>
                         <input type="file" name="file_thesis_summary" id="input-fileThesisSummary" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['file_thesis_summary']))
                             <div class="mt-1 d-flex align-items-center gap-2">
@@ -563,7 +563,7 @@
 
                     <!-- University Request Doc -->
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">كتاب صادر عن الجامعة يتضمن طلب تقويم درجاته العلمية *</label>
+                        <label class="form-label label-md fw-medium text-dark">كتاب صادر عن الجامعة يتضمن طلب تقويم درجاته العلمية </label><span class="text-danger"> *</span>
                         <input type="file" name="file_uni_request" id="input-fileUniRequest" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['file_uni_request']))
                             <div class="mt-1 d-flex align-items-center gap-2">
@@ -577,7 +577,7 @@
 
                     <!-- Language Certificate -->
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">شهادة اللغة الإنكليزية المعتمدة *</label>
+                        <label class="form-label label-md fw-medium text-dark">شهادة اللغة الإنكليزية المعتمدة </label><span class="text-danger"> *</span>
                         <input type="file" name="file_lang_cert" id="input-fileLangCert" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['file_lang_cert']))
                             <div class="mt-1 d-flex align-items-center gap-2">
@@ -591,7 +591,7 @@
 
                     <!-- ICDL Certificate -->
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">شهادة مهارات الحاسوب (ICDL) المعتمدة *</label>
+                        <label class="form-label label-md fw-medium text-dark">شهادة مهارات الحاسوب (ICDL) المعتمدة </label><span class="text-danger"> *</span>
                         <input type="file" name="file_icdl_cert" id="input-fileIcdlCert" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['file_icdl_cert']))
                             <div class="mt-1 d-flex align-items-center gap-2">
@@ -605,7 +605,7 @@
 
                     <!-- CV -->
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">السيرة الذاتية للمرشح كاملة *</label>
+                        <label class="form-label label-md fw-medium text-dark">السيرة الذاتية للمرشح كاملة </label><span class="text-danger"> *</span>
                         <input type="file" name="file_cv" id="input-fileCv" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['file_cv']))
                             <div class="mt-1 d-flex align-items-center gap-2">
@@ -619,7 +619,7 @@
 
                     <!-- Payment Receipt -->
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">إيصال تسديد رسم تعادل 100,000 ل.س *</label>
+                        <label class="form-label label-md fw-medium text-dark">إيصال تسديد رسم تعادل 100,000 ل.س </label><span class="text-danger"> *</span>
                         <input type="file" name="file_payment" id="input-filePayment" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['file_payment']))
                             <div class="mt-1 d-flex align-items-center gap-2">
@@ -633,7 +633,7 @@
 
                     <!-- Experience Certificate (Conditional) -->
                     <div class="col-md-6 exp-conditional-file" style="display: none;">
-                        <label class="form-label label-md fw-medium text-dark">شهادة خبرة لا تقل عن سنتين ما بعد الدرجة *</label>
+                        <label class="form-label label-md fw-medium text-dark">شهادة خبرة لا تقل عن سنتين ما بعد الدرجة </label><span class="text-danger"> *</span>
                         <input type="file" name="file_exp_cert" id="input-fileExpCert" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['file_exp_cert']))
                             <div class="mt-1 d-flex align-items-center gap-2">
@@ -647,7 +647,7 @@
 
                     <!-- Contracts & Salary Slips (Conditional) -->
                     <div class="col-md-6 exp-conditional-file" style="display: none;">
-                        <label class="form-label label-md fw-medium text-dark">العقود وإيصالات الرواتب مصدقة أصولاً *</label>
+                        <label class="form-label label-md fw-medium text-dark">العقود وإيصالات الرواتب مصدقة أصولاً </label><span class="text-danger"> *</span>
                         <input type="file" name="file_contracts" id="input-fileContracts" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['file_contracts']))
                             <div class="mt-1 d-flex align-items-center gap-2">

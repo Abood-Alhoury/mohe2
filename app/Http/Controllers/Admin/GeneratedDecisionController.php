@@ -25,9 +25,20 @@ class GeneratedDecisionController extends Controller
         ])->findOrFail($id);
 
         $requestType = $application->request_type ?? '';
+        $candidate = $application->candidate;
+        $bachelorEd = $application->educations->where('level.name', 'إجازة جامعية')->first() ?? $application->educations->where('education_level_id', 1)->first();
+        $masterEd = $application->educations->where('level.name', 'ماجستير')->first() ?? $application->educations->where('education_level_id', 2)->first();
+        $phdEd = $application->educations->where('level.name', 'دكتوراه')->first() ?? $application->educations->where('education_level_id', 3)->first();
+
         $isFacultyPermission = str_contains($requestType, 'سماح') || str_contains($requestType, 'هيئة تدريسية');
-        $isApplied = str_contains($requestType, 'تطبيقي');
-        $isSingleDecisionType = $isFacultyPermission || $isApplied || str_contains($requestType, 'بحوث');
+        $isDoctorate = !$isFacultyPermission && (str_contains($requestType, 'دكتوراه') || ($phdEd !== null));
+        $isForeignMaster = str_contains($requestType, 'خارجي') || str_contains($requestType, 'غير سوري');
+        $isForeignApplied = $isForeignMaster && (str_contains($requestType, 'تطبيقي') || ($masterEd && $masterEd->experience_from_year === null && !str_contains($requestType, 'نظري')));
+        $isForeignTheoretical = $isForeignMaster && !$isForeignApplied;
+        $isApplied = str_contains($requestType, 'تطبيقي') || $isForeignApplied;
+        $isResearchCenter = str_contains($requestType, 'بحوث') || str_contains($requestType, 'باحث');
+
+        $isSingleDecisionType = $isFacultyPermission || $isApplied || $isResearchCenter;
 
         $docType = $request->query('type', $request->input('doc_type', 'equivalence'));
         if ($isSingleDecisionType) {
@@ -54,18 +65,6 @@ class GeneratedDecisionController extends Controller
                 }
             }
         }
-
-        $candidate = $application->candidate;
-        $bachelorEd = $application->educations->where('level.name', 'إجازة جامعية')->first() ?? $application->educations->where('education_level_id', 1)->first();
-        $masterEd = $application->educations->where('level.name', 'ماجستير')->first() ?? $application->educations->where('education_level_id', 2)->first();
-        $phdEd = $application->educations->where('level.name', 'دكتوراه')->first() ?? $application->educations->where('education_level_id', 3)->first();
-
-        $isDoctorate = !$isFacultyPermission && (str_contains($requestType, 'دكتوراه') || ($phdEd !== null));
-        $isForeignMaster = str_contains($requestType, 'خارجي') || str_contains($requestType, 'غير سوري');
-        $isForeignApplied = $isForeignMaster && (str_contains($requestType, 'تطبيقي') || ($masterEd && $masterEd->experience_from_year === null && !str_contains($requestType, 'نظري')));
-        $isForeignTheoretical = $isForeignMaster && !$isForeignApplied;
-        $isApplied = str_contains($requestType, 'تطبيقي') || $isForeignApplied;
-        $isResearchCenter = str_contains($requestType, 'بحوث') || str_contains($requestType, 'باحث');
 
         if ($isFacultyPermission) {
             $decisionType = 'faculty_permission';
@@ -168,6 +167,8 @@ class GeneratedDecisionController extends Controller
 
         $decisionNo = $request->query('decision_no', '');
         $decisionDate = format_sys_date(now());
+        $committeeDate = format_sys_date($application->latestDecision ? $application->latestDecision->decision_date : now());
+        $masterIsResearch = $masterEd && (str_contains(strtolower($masterEd->study_system ?? ''), 'بحثي') || str_contains($masterEd->thesis_title ?? '', 'بحثي') || str_contains($masterEd->notes ?? '', 'بحثي') || $isForeignTheoretical);
         $canEligibility = in_array($application->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 'تم الصدور']);
 
         return view('admin.reports.generated_decision', compact(
@@ -226,6 +227,8 @@ class GeneratedDecisionController extends Controller
             'teachingDept',
             'decisionNo',
             'decisionDate',
+            'committeeDate',
+            'masterIsResearch',
             'canEligibility'
         ));
     }
@@ -382,6 +385,8 @@ class GeneratedDecisionController extends Controller
 
         $decisionNo = $request->query('decision_no', '');
         $decisionDate = format_sys_date(now());
+        $committeeDate = format_sys_date($application->latestDecision ? $application->latestDecision->decision_date : now());
+        $masterIsResearch = $masterEd && (str_contains(strtolower($masterEd->study_system ?? ''), 'بحثي') || str_contains($masterEd->thesis_title ?? '', 'بحثي') || str_contains($masterEd->notes ?? '', 'بحثي') || $isForeignTheoretical);
 
         $html = view('admin.reports.generated_decision_pdf_template', compact(
             'application',
@@ -419,6 +424,8 @@ class GeneratedDecisionController extends Controller
             'uniReqNo',
             'uniReqDate',
             'eligibilityDate',
+            'committeeDate',
+            'masterIsResearch',
             'phdGeneral',
             'phdExact',
             'phdSpec',
@@ -606,6 +613,8 @@ class GeneratedDecisionController extends Controller
 
         $teachingDept = $application->work_department ?: ($application->work_faculty ?: ($isDoctorate ? $phdSpec : ($isFacultyPermission ? $govDepartment : ($masterExact ?: $masterGeneral))));
         $decisionDate = format_sys_date(now());
+        $committeeDate = format_sys_date($application->latestDecision ? $application->latestDecision->decision_date : now());
+        $masterIsResearch = $masterEd && (str_contains(strtolower($masterEd->study_system ?? ''), 'بحثي') || str_contains($masterEd->thesis_title ?? '', 'بحثي') || str_contains($masterEd->notes ?? '', 'بحثي') || $isForeignTheoretical);
 
         // 1. Render PDF HTML
         $html = view('admin.reports.generated_decision_pdf_template', compact(
@@ -644,6 +653,8 @@ class GeneratedDecisionController extends Controller
             'uniReqNo',
             'uniReqDate',
             'eligibilityDate',
+            'committeeDate',
+            'masterIsResearch',
             'phdGeneral',
             'phdExact',
             'phdSpec',

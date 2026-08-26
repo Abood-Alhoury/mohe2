@@ -62,8 +62,17 @@
                             this.selectedId = '';
                             this.selectedName = '';
                             this.search = '';
+                        },
+                        init() {
+                            const preId = '{{ request('app_id') }}';
+                            if (preId) {
+                                const found = this.items.find(i => i.id == preId);
+                                if (found) {
+                                    this.select(found);
+                                }
+                            }
                         }
-                    }" @click.outside="open = false; if(!selectedId) { search = ''; } else { search = selectedName; }">
+                    }" x-init="init()" @click.outside="open = false; if(!selectedId) { search = ''; } else { search = selectedName; }">
 
                         <label class="form-label fw-bold small d-block text-start mb-1" style="color: var(--imperial-navy);">
                             اختر طلب تعادل الماجستير الموافق عليه :

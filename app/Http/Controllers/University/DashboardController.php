@@ -472,6 +472,10 @@ class DashboardController extends Controller
             }
         }
 
+        // Update status to تحت التدقيق الأولي
+        $app->status = 'تحت التدقيق الأولي';
+        $app->save();
+
         // Automated notification message to admin & university
         $candidateName = $app->candidate ? $app->candidate->full_name : '';
         $uniName = $user->university ? $user->university->name : 'الجامعة';
@@ -481,24 +485,19 @@ class DashboardController extends Controller
         ApplicationMessage::create([
             'application_id' => $app->id,
             'sender_id' => $user->id,
-            'message' => "📑 [استكمال وتعديل وثائق]: قامت جامعة ({$uniName}) بالانتهاء من تعديل واستكمال الوثائق والبيانات المطلوبة للطلب رقم (#{$appNo}) للمرشح ({$candidateName}). يرجى تدقيق ومراجعة المعاملة لتحديث حالتها.",
+            'message' => "📑 [استكمال وتعديل وثائق]: قامت جامعة ({$uniName}) بالانتهاء من تعديل واستكمال الوثائق والبيانات المطلوبة للطلب رقم (#{$appNo}) للمرشح ({$candidateName}). تم تحويل حالة المعاملة تلقائياً إلى (تحت التدقيق الأولي).",
             'is_read' => false,
         ]);
 
         // 2. Notification to University
         $systemAdminId = User::whereHas('role', function($q) {
             $q->where('name', 'admin');
-        })->where('id', '!=', $user->id)->value('id') ?? (User::where('id', '!=', $user->id)->value('id') ?? 1);
+        })->where('id', '!=', $user->id)->value('id') ?? 1;
 
-        ApplicationMessage::create([
-            'application_id' => $app->id,
-            'sender_id' => $systemAdminId,
-            'message' => "✅ [تأكيد استكمال التعديل]: تم استلام التعديلات والوثائق المستكملة للطلب رقم (#{$appNo}) للمرشح ({$candidateName}) بنجاح من قبل جامعة ({$uniName}). المعاملة الآن قيد المراجعة والتدقيق من قبل وزارة التعليم العالي لتحديث حالتها.",
-            'is_read' => false,
-        ]);
+        $app->notifyUniversityOfStatusChange('تحت التدقيق الأولي', 'تم استلام التعديلات والمرفقات المطلوبة بنجاح من الجامعة وتحويل المعاملة للتدقيق الأولي.', $systemAdminId);
 
         return redirect()->route('university.dashboard')
-            ->with('success', 'تم تعديل البيانات وإضافة المرفقات والوثائق المطلوبة للطلب رقم (#' . $appNo . ') بنجاح! تم إشعار وزارة التعليم العالي لتدقيق التعديلات وتحديث حالة المعاملة.');
+            ->with('success', 'تم تعديل البيانات وإضافة المرفقات والوثائق المطلوبة للطلب رقم (#' . $appNo . ') بنجاح! تم تحويل حالة المعاملة إلى (تحت التدقيق الأولي) وإشعار وزارة التعليم العالي.');
     }
 
     public function requiredDocuments()
@@ -544,6 +543,7 @@ class DashboardController extends Controller
                 'educations.level',
                 'educations.country',
                 'educations.university',
+                'educations.residences',
                 'educations.attachments.attachmentType'
             ])->firstOrFail();
 

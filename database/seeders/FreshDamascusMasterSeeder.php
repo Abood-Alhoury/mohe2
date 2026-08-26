@@ -127,6 +127,13 @@ class FreshDamascusMasterSeeder extends Seeder
 
         $attachmentTypeId = DB::table('lookup_attachment_types')->value('id') ?? 1;
 
+        $statusAwaitingDecisionId = DB::table('application_statuses')->where('name', 'بانتظار إصدار القرار')->value('id') ?? 7;
+        $statusAwaitingInterviewId = DB::table('application_statuses')->where('name', 'بانتظار المقابلة')->value('id') ?? 6;
+        $statusUnderStudyId = DB::table('application_statuses')->where('name', 'تحت التدقيق الأولي')->value('id') ?? 2;
+
+        $reqTypeTheoId = DB::table('application_request_types')->where('name', 'ماجستير داخلي - نظري')->value('id') ?? 2;
+        $reqTypeAppliedId = DB::table('application_request_types')->where('name', 'ماجستير داخلي - تطبيقي')->value('id') ?? 1;
+
         // -------------------------------------------------------------
         // CANDIDATE 1: جلال مرعي العيسى (ماجستير سوري - بانتظار إصدار القرار)
         // -------------------------------------------------------------
@@ -150,7 +157,7 @@ class FreshDamascusMasterSeeder extends Seeder
         $app1 = DB::table('applications')->insertGetId([
             'candidate_id'         => $profile1,
             'application_no'       => 'MA-SY-463201',
-            'request_type'         => 'تعادل للمرة الأولى - ماجستير سوري',
+            'request_type'         => $reqTypeTheoId,
             'work_university_id'   => $uniDamascusId,
             'work_faculty'         => 'كلية الاقتصاد',
             'work_department'      => 'قسم إدارة الأعمال',
@@ -159,7 +166,7 @@ class FreshDamascusMasterSeeder extends Seeder
             'is_first_time'        => true,
             'study_system'         => 'فصلي منتظم',
             'has_previous_degree'  => true,
-            'status'               => 'بانتظار إصدار القرار',
+            'status'               => $statusAwaitingDecisionId,
             'user_id'              => 1,
             'created_at'           => now(),
             'updated_at'           => now(),
@@ -238,7 +245,7 @@ class FreshDamascusMasterSeeder extends Seeder
         $app2 = DB::table('applications')->insertGetId([
             'candidate_id'         => $profile2,
             'application_no'       => 'MA-SY-589236',
-            'request_type'         => 'تعادل للمرة الأولى - ماجستير سوري',
+            'request_type'         => $reqTypeTheoId,
             'work_university_id'   => $uniDamascusId,
             'work_faculty'         => 'كلية الهندسة المعلوماتية',
             'work_department'      => 'قسم هندسة البرمجيات ونظم المعلومات',
@@ -247,7 +254,7 @@ class FreshDamascusMasterSeeder extends Seeder
             'is_first_time'        => true,
             'study_system'         => 'فصلي منتظم',
             'has_previous_degree'  => true,
-            'status'               => 'بانتظار المقابلة',
+            'status'               => $statusAwaitingInterviewId,
             'interview_date'       => '2026-08-20',
             'interview_time'       => '10:30',
             'interview_notes'      => 'مقابلة علمية في القاعة 101 بكلية الهندسة المعلوماتية بجامعة دمشق',
@@ -313,7 +320,7 @@ class FreshDamascusMasterSeeder extends Seeder
         $app3 = DB::table('applications')->insertGetId([
             'candidate_id'         => $profile3,
             'application_no'       => 'MA-AP-213973',
-            'request_type'         => 'تعادل للمرة الأولى - ماجستير تطبيقي',
+            'request_type'         => $reqTypeAppliedId,
             'work_university_id'   => $uniDamascusId,
             'work_faculty'         => 'كلية الهندسة المدنية',
             'work_department'      => 'قسم الهندسة الإنشائية',
@@ -322,7 +329,7 @@ class FreshDamascusMasterSeeder extends Seeder
             'is_first_time'        => true,
             'study_system'         => 'ساعات معتمدة',
             'has_previous_degree'  => true,
-            'status'               => 'تحت التدقيق الأولي',
+            'status'               => $statusUnderStudyId,
             'user_id'              => 1,
             'created_at'           => now(),
             'updated_at'           => now(),
@@ -385,7 +392,7 @@ class FreshDamascusMasterSeeder extends Seeder
         $app4 = DB::table('applications')->insertGetId([
             'candidate_id'         => $profile4,
             'application_no'       => 'MA-SY-793847',
-            'request_type'         => 'تعادل للمرة الأولى - ماجستير سوري',
+            'request_type'         => $reqTypeTheoId,
             'work_university_id'   => $uniDamascusId,
             'work_faculty'         => 'كلية العلوم',
             'work_department'      => 'قسم تقانة المعلومات والويب',
@@ -394,7 +401,7 @@ class FreshDamascusMasterSeeder extends Seeder
             'is_first_time'        => true,
             'study_system'         => 'فصلي منتظم',
             'has_previous_degree'  => true,
-            'status'               => 'بانتظار إصدار القرار',
+            'status'               => $statusAwaitingDecisionId,
             'user_id'              => 1,
             'created_at'           => now(),
             'updated_at'           => now(),
@@ -471,7 +478,7 @@ class FreshDamascusMasterSeeder extends Seeder
         $app5 = DB::table('applications')->insertGetId([
             'candidate_id'         => $profile5,
             'application_no'       => 'MA-AP-701534',
-            'request_type'         => 'تعادل للمرة الأولى - ماجستير تطبيقي',
+            'request_type'         => $reqTypeAppliedId,
             'work_university_id'   => $uniDamascusId,
             'work_faculty'         => 'كلية الهندسة الميكانيكية والكهربائية',
             'work_department'      => 'قسم هندسة الطاقة والتكييف',
@@ -480,7 +487,7 @@ class FreshDamascusMasterSeeder extends Seeder
             'is_first_time'        => true,
             'study_system'         => 'ساعات معتمدة',
             'has_previous_degree'  => true,
-            'status'               => 'بانتظار المقابلة',
+            'status'               => $statusAwaitingInterviewId,
             'interview_date'       => '2026-08-22',
             'interview_time'       => '11:00',
             'interview_notes'      => 'مقابلة تخصصية بقاعة الاجتماعات الرئيسية بكلية الهمك بجامعة دمشق',

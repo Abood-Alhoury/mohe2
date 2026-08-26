@@ -64,8 +64,8 @@
                 <label class="form-label fw-bold" style="color: var(--imperial-navy);">نوع المعاملة :</label>
                 <select name="request_type" class="form-select" onchange="this.form.submit()">
                     <option value="">-- كافة أنواع الطلبات --</option>
-                    @foreach(['ماجستير سوري', 'دكتوراه سوري', 'ماجستير خارجي', 'دكتوراه خارجي', 'ماجستير تطبيقي', 'عضو هيئة تدريسية'] as $rt)
-                        <option value="{{ $rt }}" {{ request('request_type') == $rt ? 'selected' : '' }}>{{ $rt }}</option>
+                    @foreach($requestTypesList as $rt)
+                        <option value="{{ $rt->name }}" {{ ($requestTypeFilter == $rt->name || request('request_type') == $rt->name) ? 'selected' : '' }}>{{ $rt->name }}</option>
                     @endforeach
                 </select>
             </div>
@@ -117,10 +117,11 @@
                     $isForbiddenStatus = in_array($app->status, ['بانتظار الوثائق', 'مرفوض', 'معلق']);
                     
                     $reqType = $app->request_type ?? '';
-                    $isFacultyPermission = str_contains($reqType, 'سماح') || str_contains($reqType, 'هيئة تدريسية');
+                    $isForMaster = str_contains($reqType, 'خارجي') || str_contains($reqType, 'غير سوري');
+                    $isFacultyPermission = !$isForMaster && (str_contains($reqType, 'سماح') || str_contains($reqType, 'هيئة تدريسية'));
                     $isApplied = str_contains($reqType, 'تطبيقي');
                     $isForeignDoctorate = str_contains($reqType, 'دكتوراه خارجي') || str_contains($reqType, 'دكتورة خارجي') || str_contains($reqType, 'دكتوراه غير سورية');
-                    $isSingleDecisionType = $isFacultyPermission || $isApplied;
+                    $isSingleDecisionType = $isFacultyPermission || ($isApplied && !$isForMaster);
 
                     if ($isSingleDecisionType) {
                         $rowStatuses = ['تحت التدقيق الأولي', 'بانتظار الوثائق', 'بانتظار إصدار القرار', 'مرفوض'];
@@ -204,20 +205,44 @@
                             $canGenerateEquivalenceNonSingle = !$isSingleDecisionType && !in_array($app->status, ['مسودة', 'مرفوض', 'بانتظار الوثائق']);
                             $canGenerateEligibility = !$isSingleDecisionType && $canGenerateDecision;
                             $canAttachDecision = in_array($app->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار']);
+
+                            // Calculate appropriate decision page route based on application type
+                            $isForMaster = str_contains($reqType, 'خارجي') || str_contains($reqType, 'غير سوري');
+                            $isForApplied = $isForMaster && (str_contains($reqType, 'تطبيقي') || !str_contains($reqType, 'نظري'));
+                            $isForTheo = $isForMaster && !$isForApplied;
+                            $isDoc = !$isForMaster && (str_contains($reqType, 'دكتوراه') || str_contains($reqType, 'دكتورة'));
+                            $isFac = !$isForMaster && !$isDoc && (str_contains($reqType, 'سماح') || str_contains($reqType, 'هيئة تدريسية') || str_contains($reqType, 'بحوث') || str_contains($reqType, 'باحث'));
+                            $isAppMaster = !$isForMaster && !$isDoc && !$isFac && str_contains($reqType, 'تطبيقي');
+
+                            if ($isForApplied) {
+                                $targetDecisionUrl = route('admin.foreign_master_applied_decisions.index', ['app_id' => $app->id]);
+                            } elseif ($isForTheo) {
+                                $targetDecisionUrl = route('admin.foreign_master_theoretical_decisions.index', ['app_id' => $app->id]);
+                            } elseif ($isFac) {
+                                $targetDecisionUrl = route('admin.faculty_decisions.index', ['app_id' => $app->id]);
+                            } elseif ($isDoc) {
+                                $targetDecisionUrl = route('admin.doctorate_decisions.index', ['app_id' => $app->id]);
+                            } elseif ($isAppMaster) {
+                                $targetDecisionUrl = route('admin.applied_decisions.index', ['app_id' => $app->id]);
+                            } else {
+                                $targetDecisionUrl = route('admin.decisions.index', ['app_id' => $app->id]);
+                            }
                         @endphp
                         <div class="d-flex align-items-center justify-content-center gap-2 mx-auto">
-                            @if($canAttachDecision)
-                                <button type="button" class="btn btn-sm btn-solid-navy p-0 d-inline-flex align-items-center justify-content-center rounded shadow-2xs" style="width: 32px; height: 32px;" data-bs-toggle="modal" data-bs-target="#decisionModal{{ $app->id }}" title="إرفاق القرار">
-                                    <i class="fa-solid fa-cloud-arrow-up fs-7" style="color: var(--heritage-gold-light);"></i>
-                                </button>
-                            @elseif($app->status === 'تم الصدور')
-                                <span class="d-inline-flex align-items-center justify-content-center rounded bg-success-subtle border border-success-subtle text-success" style="width: 32px; height: 32px;" title="تم رصد القرار">
+                            @if($app->status === 'تم الصدور')
+                                <a href="{{ $targetDecisionUrl }}?search={{ urlencode($app->application_no ?? ($app->candidate->full_name ?? '')) }}" 
+                                   class="d-inline-flex align-items-center justify-content-center rounded bg-success-subtle border border-success-subtle text-success text-decoration-none shadow-2xs" 
+                                   style="width: 32px; height: 32px;" 
+                                   title="تم رصد القرار - عرض في سجل القرارات">
                                     <i class="fa-solid fa-stamp fs-7"></i>
-                                </span>
-                            @else
-                                <button type="button" class="btn btn-sm btn-secondary opacity-40 p-0 d-inline-flex align-items-center justify-content-center rounded" style="width: 32px; height: 32px;" disabled title="إرفاق القرار متاح بحالة (بانتظار إصدار القرار)">
-                                    <i class="fa-solid fa-lock fs-7"></i>
-                                </button>
+                                </a>
+                            @elseif($canAttachDecision)
+                                <a href="{{ $targetDecisionUrl }}" 
+                                   class="btn btn-sm btn-solid-navy p-0 d-inline-flex align-items-center justify-content-center rounded shadow-2xs text-decoration-none" 
+                                   style="width: 32px; height: 32px;" 
+                                   title="إرفاق القرار (الانتقال لصفحة إرفاق القرارات المناسبة)">
+                                    <i class="fa-solid fa-cloud-arrow-up fs-7" style="color: var(--heritage-gold-light);"></i>
+                                </a>
                             @endif
 
                             @if($isFacultyPermission)
@@ -252,6 +277,10 @@
                                         <i class="fa-solid fa-award fs-7" style="color: #7e22ce;"></i>
                                     </a>
                                 @endif
+                            @endif
+
+                            @if(!$canAttachDecision && $app->status !== 'تم الصدور' && !$isFacultyPermission && !$isApplied && !$canGenerateEquivalenceNonSingle && !$canGenerateEligibility)
+                                <span class="text-muted fs-8">-</span>
                             @endif
                         </div>
                     </td>

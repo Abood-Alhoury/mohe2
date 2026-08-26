@@ -130,20 +130,20 @@
 
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">اسم المرشح *</label>
+                        <label class="form-label label-md fw-medium text-dark">اسم المرشح </label><span class="text-danger"> *</span>
                         <input type="text" name="full_name" id="input-fullName" class="form-control academic-input" placeholder="الاسم والنسبة" value="{{ old('full_name', optional($candidate)->full_name) }}" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">اسم الأب *</label>
+                        <label class="form-label label-md fw-medium text-dark">اسم الأب </label><span class="text-danger"> *</span>
                         <input type="text" name="father_name" id="input-fatherName" class="form-control academic-input" placeholder="اسم الأب" value="{{ old('father_name', optional($candidate)->father_name) }}" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">اسم الأم ونسبتها *</label>
+                        <label class="form-label label-md fw-medium text-dark">اسم الأم ونسبتها </label><span class="text-danger"> *</span>
                         <input type="text" name="mother_name" id="input-motherName" class="form-control academic-input" placeholder="اسم ونسبة الأم" value="{{ old('mother_name', optional($candidate)->mother_name) }}" required>
                     </div>
 
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">الجنسية *</label>
+                        <label class="form-label label-md fw-medium text-dark">الجنسية </label><span class="text-danger"> *</span>
                         <select name="nationality_id" id="input-nationality" class="form-select academic-input" required>
                             @foreach($countries as $c)
                                 <option value="{{ $c->id }}" {{ old('nationality_id', optional($candidate)->nationality_id ?? 1) == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
@@ -152,7 +152,7 @@
                         <input type="hidden" name="is_syrian" id="input-isSyrian" value="1">
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">الرقم الوطني *</label>
+                        <label class="form-label label-md fw-medium text-dark">الرقم الوطني </label><span class="text-danger"> *</span>
                         @php
                             $draftNatId = optional($candidate)->national_id;
                             if ($draftNatId && str_starts_with($draftNatId, 'TMP-')) {
@@ -162,19 +162,19 @@
                         <input type="text" name="national_id" id="input-nationalId" class="form-control academic-input" placeholder="الرقم الوطني المكون من 11 خانة" value="{{ old('national_id', $draftNatId) }}" maxlength="11" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">تاريخ الميلاد *</label>
+                        <label class="form-label label-md fw-medium text-dark">تاريخ الميلاد </label><span class="text-danger"> *</span>
                         <input type="date" name="dob" id="input-dob" class="form-control academic-input" value="{{ old('dob', optional($candidate)->dob ? \Carbon\Carbon::parse($candidate->dob)->format('Y-m-d') : '') }}" required>
                     </div>
 
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">الجنس *</label>
+                        <label class="form-label label-md fw-medium text-dark">الجنس </label><span class="text-danger"> *</span>
                         <select name="gender" id="input-gender" class="form-select academic-input" required>
                             <option value="ذكر" {{ old('gender', optional($candidate)->gender) == 'ذكر' ? 'selected' : '' }}>ذكر</option>
                             <option value="أنثى" {{ old('gender', optional($candidate)->gender) == 'أنثى' ? 'selected' : '' }}>أنثى</option>
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">الهاتف المحمول *</label>
+                        <label class="form-label label-md fw-medium text-dark">الهاتف المحمول </label><span class="text-danger"> *</span>
                         <input type="text" name="mobile" id="input-mobile" class="form-control academic-input" placeholder="09xxxxxxxx" maxlength="10" value="{{ old('mobile', optional($candidate)->mobile) }}" required>
                     </div>
                     <div class="col-md-4">
@@ -183,11 +183,11 @@
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">البريد الإلكتروني *</label>
+                        <label class="form-label label-md fw-medium text-dark">البريد الإلكتروني </label><span class="text-danger"> *</span>
                         <input type="email" name="email" id="input-email" class="form-control academic-input" placeholder="name@example.com" value="{{ old('email', optional($candidate)->email ?: (Auth::user()->university->email ?? Auth::user()->email)) }}" required>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">عنوان الإقامة الحالي بالتفصيل *</label>
+                        <label class="form-label label-md fw-medium text-dark">عنوان الإقامة الحالي بالتفصيل </label><span class="text-danger"> *</span>
                         <input type="text" name="address" id="input-address" class="form-control academic-input" placeholder="المحافظة - المدينة - الشارع - البناء" value="{{ old('address', optional($candidate)->address) }}" required>
                     </div>
 
@@ -199,11 +199,11 @@
                             </h6>
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label class="form-label label-md fw-medium text-dark">رقم كتاب طلب التقييم الصادر عن الجامعة *</label>
+                                    <label class="form-label label-md fw-medium text-dark">رقم كتاب طلب التقييم الصادر عن الجامعة </label><span class="text-danger"> *</span>
                                     <input type="text" name="req_no" id="input-reqNo" class="form-control academic-input" placeholder="أدخل رقم كتاب الجامعة" value="{{ old('req_no', optional($draft)->new_uni_request_no) }}" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label label-md fw-medium text-dark">تاريخ كتاب طلب التقييم الصادر عن الجامعة *</label>
+                                    <label class="form-label label-md fw-medium text-dark">تاريخ كتاب طلب التقييم الصادر عن الجامعة </label><span class="text-danger"> *</span>
                                     <input type="date" name="req_date" id="input-reqDate" class="form-control academic-input" value="{{ old('req_date', optional($draft)->new_uni_request_date ? \Carbon\Carbon::parse($draft->new_uni_request_date)->format('Y-m-d') : '') }}" required>
                                 </div>
                             </div>
@@ -222,13 +222,13 @@
 
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">الجامعة الحكومية السورية التابع لها *</label>
+                        <label class="form-label label-md fw-medium text-dark">الجامعة الحكومية السورية التابع لها </label><span class="text-danger"> *</span>
                         <select name="gov_university_id" id="input-govUniId" class="form-select academic-input" onchange="toggleGovUniOther()" required>
                             <option value="">-- اختر الجامعة الحكومية --</option>
                             @foreach($govUniversities as $gu)
                                 <option value="{{ $gu->id }}" {{ old('gov_university_id', optional($govEd)->university_id) == $gu->id ? 'selected' : '' }}>{{ $gu->name }}</option>
                             @endforeach
-                            <option value="other" {{ old('gov_university_other', optional($govEd)->university_other) ? 'selected' : '' }}>أخرى (جامعة حكومية سورية أخرى)</option>
+                            <!-- <option value="other" {{ old('gov_university_other', optional($govEd)->university_other) ? 'selected' : '' }}>أخرى (جامعة حكومية سورية أخرى)</option> -->
                         </select>
                     </div>
 
@@ -238,7 +238,7 @@
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">الرتبة / الصفة الأكاديمية بالجامعة الحكومية *</label>
+                        <label class="form-label label-md fw-medium text-dark">الرتبة / الصفة الأكاديمية بالجامعة الحكومية </label><span class="text-danger"> *</span>
                         <select name="academic_rank" id="input-academicRank" class="form-select academic-input" required>
                             <option value="">-- اختر الرتبة الأكاديمية --</option>
                             <option value="مدرس" {{ old('academic_rank', optional($govEd)->rank) == 'مدرس' ? 'selected' : '' }}>مدرس</option>
@@ -248,12 +248,12 @@
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">الكلية التابع لها بالجامعة الحكومية *</label>
+                        <label class="form-label label-md fw-medium text-dark">الكلية التابع لها بالجامعة الحكومية </label><span class="text-danger"> *</span>
                         <input type="text" name="gov_faculty" id="input-govFaculty" class="form-control academic-input" placeholder="مثال: كلية التربية / كلية الاقتصاد" value="{{ old('gov_faculty', optional($govEd)->faculty ?: optional($govEd)->general_specialization) }}" required>
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">القسم التابع له بالجامعة الحكومية *</label>
+                        <label class="form-label label-md fw-medium text-dark">القسم التابع له بالجامعة الحكومية </label><span class="text-danger"> *</span>
                         <input type="text" name="gov_department" id="input-govDept" class="form-control academic-input" placeholder="مثال: قسم أصول التربية / قسم إدارة الأعمال" value="{{ old('gov_department', optional($govEd)->department ?: optional($govEd)->exact_specialization) }}" required>
                     </div>
 
@@ -281,7 +281,7 @@
                     </h6>
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label label-md fw-medium text-dark">الجامعة المانحة لشهادة الدكتوراه *</label>
+                            <label class="form-label label-md fw-medium text-dark">الجامعة المانحة لشهادة الدكتوراه </label><span class="text-danger"> *</span>
                             <select name="phd_university_id" id="input-phdUniId" class="form-select academic-input" onchange="togglePhdUniOther()" required>
                                 <option value="">-- اختر الجامعة المانحة --</option>
                                 @foreach($govUniversities as $gu)
@@ -292,12 +292,12 @@
                         </div>
 
                         <div class="col-md-6" id="phd_uni_other_div" style="display: {{ old('phd_university_other', optional($phdEd)->university_other) ? 'block' : 'none' }};">
-                            <label class="form-label label-md fw-medium text-dark">اسم الجامعة المانحة لدرجة الدكتوراه :</label>
+                            <label class="form-label label-md fw-medium text-dark">اسم الجامعة المانحة لدرجة الدكتوراه :</label><span class="text-danger"> *</span>
                             <input type="text" name="phd_university_other" id="input-phdUniOther" class="form-control academic-input" placeholder="أدخل اسم الجامعة المانحة" value="{{ old('phd_university_other', optional($phdEd)->university_other) }}">
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label label-md fw-medium text-dark">تاريخ / سنة منح شهادة الدكتوراه *</label>
+                            <label class="form-label label-md fw-medium text-dark">تاريخ / سنة منح شهادة الدكتوراه </label><span class="text-danger"> *</span>
                             <input type="date" name="phd_grant_date" id="input-phdGrantDate" class="form-control academic-input" value="{{ old('phd_grant_date', optional($phdEd)->grant_date ? \Carbon\Carbon::parse($phdEd->grant_date)->format('Y-m-d') : '') }}" required>
                         </div>
 
@@ -541,7 +541,7 @@
                         </div>
 
                         <!-- Group 4: Scientific Degrees -->
-                        <div class="col-12">
+                        <div class="col-12 border-bottom pb-3" style="border-bottom-color: var(--outline-variant) !important;">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h6 class="fw-bold mb-0" style="color: var(--primary-container);"><i class="fa-solid fa-graduation-cap me-1" style="color: var(--heritage-gold);"></i> 4. الشهادات والمؤهلات العلمية:</h6>
                                 <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2.5 fs-8 fw-bold" onclick="goToStep(3)"><i class="fa-solid fa-pen-to-square me-1"></i> تعديل</button>
@@ -566,6 +566,15 @@
                                     <div class="col-md-6"><strong>القسم / الاختصاص:</strong> <span id="preview-maDept">---</span></div>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Group 5: Uploaded Documents Summary -->
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold mb-0" style="color: var(--primary-container);"><i class="fa-solid fa-folder-open me-1" style="color: var(--heritage-gold);"></i> 5. الوثائق والمستندات المرفقة:</h6>
+                                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2.5 fs-8 fw-bold" onclick="goToStep(4)"><i class="fa-solid fa-pen-to-square me-1"></i> تعديل المرفقات</button>
+                            </div>
+                            <p class="text-muted fs-8 mb-0"><i class="fa-solid fa-circle-check text-success me-1"></i> تم إرفاق الوثائق والمستندات المطلوبة والموافقات الرسمية بصيغة PDF. يمكنك النقر على زر التعديل للعودة لخطوة المرفقات.</p>
                         </div>
                     </div>
                 </div>

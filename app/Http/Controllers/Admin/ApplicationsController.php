@@ -8,6 +8,8 @@ use App\Models\Application;
 use App\Models\LookupUniversity;
 use App\Models\ApplicationMessage;
 use App\Models\ApplicationDecision;
+use App\Models\ApplicationStatus;
+use App\Models\ApplicationRequestType;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
@@ -17,16 +19,23 @@ class ApplicationsController extends Controller
     {
         $statusFilter = $request->query('status');
         $universityFilter = $request->query('university_id');
+        $requestTypeFilter = $request->query('request_type');
         $searchQuery = $request->query('search');
 
-        $query = Application::where('status', '!=', 'مسودة')->with(['candidate.applications', 'workUniversity', 'user', 'messages', 'decisions']);
+        $query = Application::where('status', '!=', 'مسودة')->with(['candidate.applications', 'workUniversity', 'user', 'messages', 'decisions', 'requestTypeRelation', 'statusRelation']);
 
         if ($statusFilter) {
-            $query->where('status', $statusFilter);
+            $query->where(function($q) use ($statusFilter) {
+                $q->where('status', $statusFilter)
+                  ->orWhere('status_id', $statusFilter);
+            });
         }
 
-        if ($request->filled('request_type')) {
-            $query->where('request_type', 'like', '%' . $request->query('request_type') . '%');
+        if ($requestTypeFilter) {
+            $query->where(function($q) use ($requestTypeFilter) {
+                $q->where('request_type', $requestTypeFilter)
+                  ->orWhere('request_type_id', $requestTypeFilter);
+            });
         }
 
         if ($universityFilter) {
@@ -53,35 +62,21 @@ class ApplicationsController extends Controller
 
         $applications = $query->latest()->paginate(15);
         $universities = LookupUniversity::all();
+        $requestTypesList = ApplicationRequestType::where('name', '!=', 'مسودة')->get();
 
-        $filterStatusesList = [
-            'تحت التدقيق الأولي',
-            'بانتظار الوثائق',
-            'لجنة عامة',
-            'بانتظار لجنة إنتاج علمي',
-            'بانتظار المقابلة',
-            'بانتظار إصدار القرار',
-            'تم الصدور',
-            'مرفوض',
-        ];
-
-        $statusesList = [
-            'تحت التدقيق الأولي',
-            'بانتظار الوثائق',
-            'لجنة عامة',
-            'بانتظار لجنة إنتاج علمي',
-            'بانتظار المقابلة',
-            'بانتظار إصدار القرار',
-            'مرفوض',
-        ];
+        // Load statuses dynamically from application_statuses table
+        $filterStatusesList = ApplicationStatus::whereNotIn('name', ['مسودة'])->pluck('name')->toArray();
+        $statusesList = ApplicationStatus::whereNotIn('name', ['مسودة', 'تم الصدور'])->pluck('name')->toArray();
 
         return view('admin.applications.index', compact(
             'applications',
             'universities',
             'statusesList',
             'filterStatusesList',
+            'requestTypesList',
             'statusFilter',
             'universityFilter',
+            'requestTypeFilter',
             'searchQuery'
         ));
     }
@@ -90,18 +85,17 @@ class ApplicationsController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|string',
+            'status' => 'required|string|exists:application_statuses,name',
             'decision_no' => 'nullable|string',
             'decision_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
 
         $app = Application::findOrFail($id);
-        $forbiddenStatuses = ['بانتظار الوثائق', 'مرفوض', 'معلق'];
 
-        // Requirement 4: If attaching decision, enforce forbidden status check
+        // Enforce that attaching a decision file is only allowed when status is 'بانتظار إصدار القرار'
         if ($request->hasFile('decision_file') || $request->status === 'تم الصدور') {
-            if (in_array($app->status, $forbiddenStatuses)) {
-                return redirect()->back()->with('error', 'لا يمكن إرفاق قرار تعادل لطلب حالته حالياً (' . $app->status . ').');
+            if (!in_array($app->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 'تم الصدور'])) {
+                return redirect()->back()->with('error', 'لا يمكن إرفاق قرار تعادل لطلب حالته حالياً (' . $app->status . '). إرفاق القرار متاح فقط عندما تكون حالة الطلب (بانتظار إصدار القرار).');
             }
         }
 

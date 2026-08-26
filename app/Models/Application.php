@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+use App\Models\Builders\ApplicationBuilder;
+
 class Application extends Model
 {
     protected $table = 'applications';
@@ -27,6 +29,67 @@ class Application extends Model
         'interview_notes',
         'user_id',
     ];
+
+    public function newEloquentBuilder($query)
+    {
+        return new ApplicationBuilder($query);
+    }
+
+    public function getStatusAttribute($value)
+    {
+        if (is_numeric($value)) {
+            return ApplicationStatus::find($value)?->name ?? $value;
+        }
+        return $value;
+    }
+
+    public function setStatusAttribute($value)
+    {
+        if (is_string($value) && !is_numeric($value)) {
+            $id = ApplicationStatus::where('name', $value)->value('id');
+            $this->attributes['status'] = $id ?? 2;
+        } else {
+            $this->attributes['status'] = $value ?? 2;
+        }
+    }
+
+    public function getRequestTypeAttribute($value)
+    {
+        if (is_numeric($value)) {
+            return ApplicationRequestType::find($value)?->name ?? $value;
+        }
+        return $value;
+    }
+
+    public function setRequestTypeAttribute($value)
+    {
+        if (is_string($value) && !is_numeric($value)) {
+            $id = ApplicationRequestType::where('name', $value)->value('id');
+            $this->attributes['request_type'] = $id ?? 1;
+        } else {
+            $this->attributes['request_type'] = $value;
+        }
+    }
+
+    public function getStatusIdAttribute()
+    {
+        return $this->attributes['status'] ?? null;
+    }
+
+    public function getRequestTypeIdAttribute()
+    {
+        return $this->attributes['request_type'] ?? null;
+    }
+
+    public function requestTypeRelation()
+    {
+        return $this->belongsTo(ApplicationRequestType::class, 'request_type_id');
+    }
+
+    public function statusRelation()
+    {
+        return $this->belongsTo(ApplicationStatus::class, 'status_id');
+    }
 
     public function parentApplication()
     {

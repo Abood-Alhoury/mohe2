@@ -33,10 +33,17 @@
         <span>السماح بالتدريس</span>
     </a>
 
-    <a href="{{ route('admin.foreign_master_decisions.index') }}" 
-       class="btn {{ ($active === 'foreign_master' || $currentRoute === 'admin.foreign_master_decisions.index') ? 'btn-solid-navy' : 'btn-outline-navy bg-white' }} fw-bold px-3 py-1.5 rounded-pill shadow-xs fs-7 d-inline-flex align-items-center gap-1.5"
-       title="إصدار قرارات الماجستير الخارجي (تطبيقي ونظري)">
-        <i class="fa-solid fa-earth-americas" style="{{ ($active === 'foreign_master' || $currentRoute === 'admin.foreign_master_decisions.index') ? 'color: var(--heritage-gold-light);' : '' }} font-size: 0.82rem;"></i>
-        <span>الماجستير الخارجي</span>
+    <a href="{{ route('admin.foreign_master_applied_decisions.index') }}" 
+       class="btn {{ ($active === 'foreign_master_applied' || $currentRoute === 'admin.foreign_master_applied_decisions.index' || $currentRoute === 'admin.foreign_master_decisions.index') ? 'btn-solid-navy' : 'btn-outline-navy bg-white' }} fw-bold px-3 py-1.5 rounded-pill shadow-xs fs-7 d-inline-flex align-items-center gap-1.5"
+       title="إصدار قرارات الماجستير الخارجي التطبيقي (تدريس الجوانب التطبيقية بدون أهلية)">
+        <i class="fa-solid fa-screwdriver-wrench" style="{{ ($active === 'foreign_master_applied' || $currentRoute === 'admin.foreign_master_applied_decisions.index' || $currentRoute === 'admin.foreign_master_decisions.index') ? 'color: var(--heritage-gold-light);' : '' }} font-size: 0.82rem;"></i>
+        <span>الماجستير الخارجي التطبيقي</span>
+    </a>
+
+    <a href="{{ route('admin.foreign_master_theoretical_decisions.index') }}" 
+       class="btn {{ ($active === 'foreign_master_theoretical' || $currentRoute === 'admin.foreign_master_theoretical_decisions.index') ? 'btn-solid-navy' : 'btn-outline-navy bg-white' }} fw-bold px-3 py-1.5 rounded-pill shadow-xs fs-7 d-inline-flex align-items-center gap-1.5"
+       title="إصدار قرارات الماجستير الخارجي النظري (مع قرار الأهلية)">
+        <i class="fa-solid fa-book-open-reader" style="{{ ($active === 'foreign_master_theoretical' || $currentRoute === 'admin.foreign_master_theoretical_decisions.index') ? 'color: var(--heritage-gold-light);' : '' }} font-size: 0.82rem;"></i>
+        <span>الماجستير الخارجي النظري</span>
     </a>
 </div>

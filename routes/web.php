@@ -103,9 +103,19 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/faculty-decisions', [DecisionsController::class, 'facultyIndex'])->name('admin.faculty_decisions.index');
     Route::post('/faculty-decisions', [DecisionsController::class, 'facultyStore'])->name('admin.faculty_decisions.store');
 
-    // Foreign Master Equivalence Decisions Upload & Issue (تعادل الماجستير الخارجي - تطبيقي ونظري)
-    Route::get('/foreign-master-decisions', [DecisionsController::class, 'foreignMasterIndex'])->name('admin.foreign_master_decisions.index');
-    Route::post('/foreign-master-decisions', [DecisionsController::class, 'foreignMasterStore'])->name('admin.foreign_master_decisions.store');
+    // Foreign Master Applied Decisions Upload & Issue (تعادل الماجستير الخارجي التطبيقي - بدون أهلية)
+    Route::get('/foreign-master-applied-decisions', [DecisionsController::class, 'foreignMasterAppliedIndex'])->name('admin.foreign_master_applied_decisions.index');
+    Route::post('/foreign-master-applied-decisions', [DecisionsController::class, 'foreignMasterAppliedStore'])->name('admin.foreign_master_applied_decisions.store');
+
+    // Foreign Master Theoretical Decisions Upload & Issue (تعادل الماجستير الخارجي النظري - مع قرار الأهلية)
+    Route::get('/foreign-master-theoretical-decisions', [DecisionsController::class, 'foreignMasterTheoreticalIndex'])->name('admin.foreign_master_theoretical_decisions.index');
+    Route::post('/foreign-master-theoretical-decisions', [DecisionsController::class, 'foreignMasterTheoreticalStore'])->name('admin.foreign_master_theoretical_decisions.store');
+
+    // Legacy Route Alias for backwards compatibility
+    Route::get('/foreign-master-decisions', function () {
+        return redirect()->route('admin.foreign_master_applied_decisions.index');
+    })->name('admin.foreign_master_decisions.index');
+    Route::post('/foreign-master-decisions', [DecisionsController::class, 'foreignMasterAppliedStore'])->name('admin.foreign_master_decisions.store');
 
     // Interviews Management & Scheduling ('بانتظار المقابلة')
     Route::get('/interviews', [InterviewsController::class, 'index'])->name('admin.interviews.index');

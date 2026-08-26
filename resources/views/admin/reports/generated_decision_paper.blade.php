@@ -334,7 +334,10 @@
             <div>بناءً على أحكام قانون تنظيم الجامعات رقم 6 لعام 2006 ولائحته التنفيذية وتعديلاتهما.</div>
             <div>وقرار مجلس التعليم العالي رقم /236/ تاريخ 2007/7/15</div>
             <div>وقرار مجلس التعليم العالي رقم /175/ تاريخ 2022/6/16</div>
-            <div>وكتاب {{ $uniName }} رقم /<span contenteditable="true" style="outline:none;">{!! $uniReqNo ?: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' !!}</span>/ تاريخ <span contenteditable="true" style="outline:none;">{!! $uniReqDate ?: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' !!}</span></div>
+            <div>وكتاب {{ $uniName }} رقم <span contenteditable="true" style="outline:none;">{!! $uniReqNo ?: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' !!}</span> تاريخ <span contenteditable="true" style="outline:none;">{!! $uniReqDate ?: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' !!}</span></div>
+            @if($decisionType === 'foreign_master_theoretical')
+                <div>وعلى قرار لجنة التأهيل ومعادلة الدرجات العلمية المنعقدة في <span contenteditable="true" style="outline:none;">{{ $committeeDate ?? ($decisionDate ?? '') }}</span></div>
+            @endif
         </div>
 
         <!-- DECISION DECREE HEADER -->
@@ -345,62 +348,84 @@
         <!-- ARTICLE 1 -->
         <div class="article-div" contenteditable="true" title="انقر هنا لتعديل نص القرار مباشرة" style="font-size: 16.5px; margin-bottom: 22px; text-align: justify; line-height: 2.15; color: #000000; outline: none;">
             @if($decisionType === 'foreign_master_applied' || $decisionType === 'applied_master' || (!empty($isApplied) && empty($isDoctorate)))
-                <strong>المادة -1</strong> تعدّ درجة الماجستير في <strong>{{ $masterFaculty ?: $masterGeneral }}</strong>{!! $masterSpec ? ' اختصاص <strong>' . $masterSpec . '</strong>' : '' !!} الممنوحة عام <strong>{{ $masterYear }}</strong> {{ $candidateTitlePrep ?? 'للسيد' }} <strong>{{ $candidateName }}</strong> من <strong>{{ $masterUni }}</strong>{{ !empty($masterCountry) ? ' في ' . $masterCountry : '' }}، والمسبوقة بدرجة الإجازة في <strong>{{ $baGeneral }}</strong>{!! $baSection ? ' قسم <strong>' . $baSection . '</strong>' : '' !!} الممنوحة عام <strong>{{ $baYear }}</strong> من <strong>{{ $baUni }}</strong>، محققةً لشروط الشهادة والاختصاص من أجل تدريس الجوانب التطبيقية في اختصاص <strong>{{ $teachingDept }}</strong> بالجامعات الخاصة السورية.
+                <strong>المادة 1-</strong> تعدّ درجة الماجستير في <strong>{{ $masterFaculty ?: $masterGeneral }}</strong>{!! $masterSpec ? ' اختصاص <strong>' . $masterSpec . '</strong>' : '' !!} الممنوحة عام <strong>{{ $masterYear }}</strong> {{ $candidateTitlePrep ?? 'للسيد' }} <strong>{{ $candidateName }}</strong> من <strong>{{ $masterUni }}</strong>{{ !empty($masterCountry) ? ' في ' . $masterCountry : '' }}، والمسبوقة بدرجة الإجازة في <strong>{{ $baGeneral }}</strong>{!! $baSection ? ' قسم <strong>' . $baSection . '</strong>' : '' !!} الممنوحة عام <strong>{{ $baYear }}</strong> من <strong>{{ $baUni }}</strong>، محققةً لشروط الشهادة والاختصاص من أجل تدريس الجوانب التطبيقية في اختصاص <strong>{{ $teachingDept }}</strong> بالجامعات الخاصة السورية.
             @elseif($decisionType === 'foreign_master_theoretical')
-                <strong>المادة -1</strong> الموافقة على {{ $assignWord ?? 'تكليف' }} {{ $candidateTitle ?? 'السيد' }} <strong>{{ $candidateName }}</strong>، {{ $qualifierHolderWord ?? 'الحائز' }} درجة الماجستير في <strong>{{ $masterFaculty ?: $masterGeneral }}</strong>{!! $masterSpec ? ' اختصاص <strong>' . $masterSpec . '</strong>' : '' !!} الممنوحة عام <strong>{{ $masterYear }}</strong> من <strong>{{ $masterUni }}</strong>{{ !empty($masterCountry) ? ' في ' . $masterCountry : '' }}، والمسبوقة بدرجة الإجازة في <strong>{{ $baGeneral }}</strong>{!! $baSection ? ' قسم <strong>' . $baSection . '</strong>' : '' !!} الممنوحة عام <strong>{{ $baYear }}</strong> من <strong>{{ $baUni }}</strong>، بتدريس المقررات النظرية في اختصاص <strong>{{ $teachingDept }}</strong> في الجامعات الخاصة السورية على أن يكون {{ $fullTimeWord ?? 'تفرغه' }} فيها كلياً، وألا يقل {{ $quotaWord ?? 'نصابه' }} التدريسي عن /12/ ساعة أسبوعياً.
+                <strong>المادة 1-</strong> الموافقة على تكليف <span contenteditable="true" style="outline:none;">{{ $candidateTitle ?? 'السيد' }}</span> <strong contenteditable="true" style="outline:none;">{{ $candidateName }}</strong>، <span contenteditable="true" style="outline:none;">{{ $qualifierHolderWord ?? 'الحائز' }}</span> درجة الماجستير<span contenteditable="true" style="outline:none;">{{ !empty($masterIsResearch) ? ' البحثي' : '' }}</span> في <strong contenteditable="true" style="outline:none;">{{ $masterSpec ?? ($masterGeneral ?? ($masterFaculty ?? '')) }}</strong> الممنوحة عام <strong contenteditable="true" style="outline:none;">{{ $masterYear }}</strong> من <strong contenteditable="true" style="outline:none;">{{ $masterUni }}</strong>{{ !empty($masterCountry) ? ' في ' . $masterCountry : '' }}، والمسبوقة بدرجة الإجازة في <strong contenteditable="true" style="outline:none;">{{ $baSpec ?? ($baGeneral ?? '') }}</strong> الممنوحة عام <strong contenteditable="true" style="outline:none;">{{ $baYear }}</strong> من <strong contenteditable="true" style="outline:none;">{{ $baUni }}</strong>، بتدريس المقررات النظرية في اختصاص <strong contenteditable="true" style="outline:none;">{{ $teachingDept }}</strong> في الجامعات الخاصة السورية على أن يكون <span contenteditable="true" style="outline:none;">{{ $fullTimeWord ?? 'تفرغه' }}</span> كلياً فيها، وألا يقل <span contenteditable="true" style="outline:none;">{{ $quotaWord ?? 'نصابه' }}</span> التدريسي عن /12/ ساعة أسبوعياً.
             @else
-                <strong>المادة -1</strong> الموافقة على {{ $assignWord ?? 'تكليف' }} {{ $candidateTitle ?? 'السيد' }} <strong>{{ $candidateName }}</strong>، {{ $qualifierHolderWord ?? 'الحائز' }} درجة الماجستير في <strong>{{ $masterGeneral }}</strong>{!! $masterExact ? ' اختصاص <strong>' . $masterExact . '</strong>' : '' !!} الممنوحة عام <strong>{{ $masterYear }}</strong> من جامعة <strong>{{ $masterUni }}</strong>، والمسبوقة بدرجة الإجازة في <strong>{{ $baGeneral }}</strong>{!! $baSection ? ' قسم <strong>' . $baSection . '</strong>' : '' !!} الممنوحة عام <strong>{{ $baYear }}</strong> من جامعة <strong>{{ $baUni }}</strong>، بتدريس المقررات النظرية في اختصاص <strong>{{ $teachingDept }}</strong> في الجامعات الخاصة السورية على أن يكون {{ $fullTimeWord ?? 'تفرغه' }} فيها كلياً، وألا يقل {{ $quotaWord ?? 'نصابه' }} التدريسي عن /12/ ساعة أسبوعياً.
+                <strong>المادة 1-</strong> الموافقة على {{ $assignWord ?? 'تكليف' }} {{ $candidateTitle ?? 'السيد' }} <strong>{{ $candidateName }}</strong>، {{ $qualifierHolderWord ?? 'الحائز' }} درجة الماجستير في <strong>{{ $masterGeneral }}</strong>{!! $masterExact ? ' اختصاص <strong>' . $masterExact . '</strong>' : '' !!} الممنوحة عام <strong>{{ $masterYear }}</strong> من جامعة <strong>{{ $masterUni }}</strong>، والمسبوقة بدرجة الإجازة في <strong>{{ $baGeneral }}</strong>{!! $baSection ? ' قسم <strong>' . $baSection . '</strong>' : '' !!} الممنوحة عام <strong>{{ $baYear }}</strong> من جامعة <strong>{{ $baUni }}</strong>، بتدريس المقررات النظرية في اختصاص <strong>{{ $teachingDept }}</strong> في الجامعات الخاصة السورية على أن يكون {{ $fullTimeWord ?? 'تفرغه' }} كلياً فيها، وألا يقل {{ $quotaWord ?? 'نصابه' }} التدريسي عن /12/ ساعة أسبوعياً.
             @endif
         </div>
 
         <!-- ARTICLE 2 -->
         <div class="article-div" style="font-size: 16.5px; margin-bottom: 25px; color: #000000;">
-            <strong>المادة -2</strong> يبلغ هذا القرار من يلزم لتنفيذه.
-            <div style="margin-top: 15px; margin-right: 40px; color: #000000;">دمشق في <span contenteditable="true" style="outline: none;">{{ $decisionDate }}</span></div>
+            <strong>المادة 2-</strong> يبلغ هذا القرار من يلزم لتنفيذه.
+            <div style="text-align: center; margin-top: 15px; margin-bottom: 10px; color: #000000;">دمشق في <span contenteditable="true" style="outline: none;">{{ $decisionDate }}</span></div>
         </div>
 
     @endif
 
 @endif
 
-    <!-- OFFICIAL SIGNATURES SECTION (3 SIGNATURES - SHARED ACROSS ALL DECISIONS) -->
-    <div class="signatures-div" style="margin-top: 35px; margin-bottom: 20px; page-break-inside: avoid; color: #000000;">
-        <table style="width: 100%; border-collapse: collapse;" border="0">
-            <tr>
-                <!-- Right Column: Director of Equivalence -->
-                <td style="width: 50%; text-align: right; vertical-align: top; padding-right: 15px; font-size: 15px; font-weight: bold; line-height: 1.6; color: #000000;">
-                    <div>مدير التعادل والإنتاج العلمي</div>
-                    <div style="height: 40px; margin: 10px 0;"></div>
-                    <div style="font-size: 16px;">المهندس عمار هلال</div>
-                </td>
-
-                <!-- Left Column: Amin & Chairman -->
-                <td style="width: 50%; text-align: right; vertical-align: top; padding-right: 25px; font-size: 15px; font-weight: bold; line-height: 1.6; color: #000000;">
-                    <div>
-                        <div>أمين مجلس التعليم العالي</div>
-                        <div style="height: 40px; margin: 10px 0;"></div>
-                        <div style="font-size: 16px;">الدكتور علي الجاسم</div>
-                    </div>
-
-                    <div style="margin-top: 35px; line-height: 1.4; color: #000000;">
+    <!-- OFFICIAL SIGNATURES SECTION -->
+    <div class="signatures-div" style="margin-top: 40px; margin-bottom: 25px; page-break-inside: avoid; color: #000000;">
+        @if($decisionType === 'foreign_master_theoretical' || $decisionType === 'foreign_master_applied' || $decisionType === 'syrian_master')
+            {{-- TWO SIGNATURES LAYOUT (IDENTICAL TO OFFICIAL GOVERNMENT DECREE) --}}
+            <table style="width: 100%; border-collapse: collapse;" border="0">
+                <tr>
+                    <!-- Right Column (Visual Right in RTL): Chairman of Committee & Deputy Minister -->
+                    <td style="width: 50%; text-align: center; vertical-align: top; font-size: 15px; font-weight: bold; line-height: 1.5; color: #000000;">
                         <div>رئيس لجنة التأهيل ومعادلة الدرجات العلمية</div>
                         <div style="margin-top: 2px;">معاون وزير التعليم العالي والبحث العلمي</div>
+                        <div style="height: 45px; margin: 8px 0;"></div>
+                        <div style="font-size: 16px;">الدكتور عبد الحميد الخالد</div>
+                    </td>
+
+                    <!-- Left Column (Visual Left in RTL): Secretary General of Higher Education Council -->
+                    <td style="width: 50%; text-align: center; vertical-align: top; font-size: 15px; font-weight: bold; line-height: 1.5; color: #000000;">
+                        <div>أمين مجلس التعليم العالي</div>
+                        <div style="height: 60px; margin: 8px 0;"></div>
+                        <div style="font-size: 16px;">الدكتور علي الجاسم</div>
+                    </td>
+                </tr>
+            </table>
+        @else
+            <table style="width: 100%; border-collapse: collapse;" border="0">
+                <tr>
+                    <!-- Right Column: Director of Equivalence -->
+                    <td style="width: 50%; text-align: right; vertical-align: top; padding-right: 15px; font-size: 15px; font-weight: bold; line-height: 1.6; color: #000000;">
+                        <div>مدير التعادل والإنتاج العلمي</div>
                         <div style="height: 40px; margin: 10px 0;"></div>
-                        <div style="font-size: 16.5px;">الدكتور عبد الحميد الخالد</div>
-                    </div>
-                </td>
-            </tr>
-        </table>
+                        <div style="font-size: 16px;">المهندس عمار هلال</div>
+                    </td>
+
+                    <!-- Left Column: Amin & Chairman -->
+                    <td style="width: 50%; text-align: right; vertical-align: top; padding-right: 25px; font-size: 15px; font-weight: bold; line-height: 1.6; color: #000000;">
+                        <div>
+                            <div>أمين مجلس التعليم العالي</div>
+                            <div style="height: 40px; margin: 10px 0;"></div>
+                            <div style="font-size: 16px;">الدكتور علي الجاسم</div>
+                        </div>
+
+                        <div style="margin-top: 35px; line-height: 1.4; color: #000000;">
+                            <div>رئيس لجنة التأهيل ومعادلة الدرجات العلمية</div>
+                            <div style="margin-top: 2px;">معاون وزير التعليم العالي والبحث العلمي</div>
+                            <div style="height: 40px; margin: 10px 0;"></div>
+                            <div style="font-size: 16.5px;">الدكتور عبد الحميد الخالد</div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        @endif
     </div>
 
     </div>
 
     <!-- BOTTOM FOOTER: COPIES TO SECTION -->
-    <div class="copies-div" style="font-size: 14px; line-height: 1.8; page-break-inside: avoid; border-top: 1px solid #cbd5e1; padding-top: 12px; margin-top: auto; color: #000000;">
-        <div style="font-weight: bold; text-decoration: underline; margin-bottom: 4px;">صورة إلى:</div>
+    <div class="copies-div" style="font-size: 14px; line-height: 1.8; page-break-inside: avoid; margin-top: auto; color: #000000; text-align: right;">
+        <div style="font-weight: bold; margin-bottom: 4px;">صورة إلى:</div>
         <div>- مجلس التعليم العالي: مكتب التعادل – الديوان.</div>
-        <div>- المؤسسات التعليمية الخاصة.</div>
-        <div>- أمانة سر المجلس (للتعميم على الجامعة المعنية عبر البريد الالكتروني).</div>
+        <div>- أمانة سر المجلس (للتعميم على الجامعة المعنية عبر البريد الالكتروني) .</div>
+        <div>- مؤسسات التعليمية الخاصة.</div>
     </div>
 
 </div>
