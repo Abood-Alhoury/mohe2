@@ -23,12 +23,7 @@
             </div>
             <div class="card-body p-3.5 bg-white" dir="rtl">
                 <!-- Info banner: No eligibility needed -->
-                <div class="alert alert-warning py-2 px-2.5 mb-3 border-0 small d-flex align-items-start gap-2" style="background-color: #fffbeb; color: #92400e; font-size: 0.8rem; border-radius: 4px;">
-                    <i class="fa-solid fa-circle-info fs-6 mt-0.5 text-warning flex-shrink-0"></i>
-                    <div>
-                        <strong>مسار تطبيقي (هيئة فنية):</strong> يعتمد لتدريس الجوانب التطبيقية والمخبرية فقط، <u>ولا يتطلب إجراء مقابلة أو صدور قرار أهلية</u>.
-                    </div>
-                </div>
+             
 
                 <form action="{{ route('admin.foreign_master_applied_decisions.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf

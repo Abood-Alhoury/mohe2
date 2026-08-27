@@ -83,12 +83,12 @@ class Application extends Model
 
     public function requestTypeRelation()
     {
-        return $this->belongsTo(ApplicationRequestType::class, 'request_type_id');
+        return $this->belongsTo(ApplicationRequestType::class, 'request_type');
     }
 
     public function statusRelation()
     {
-        return $this->belongsTo(ApplicationStatus::class, 'status_id');
+        return $this->belongsTo(ApplicationStatus::class, 'status');
     }
 
     public function parentApplication()

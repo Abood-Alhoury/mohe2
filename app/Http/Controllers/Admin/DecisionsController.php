@@ -9,37 +9,91 @@ use setasign\Fpdi\Fpdi;
 use App\Models\Application;
 use App\Models\ApplicationDecision;
 use App\Models\ApplicationMessage;
+use App\Models\ApplicationRequestType;
 use Illuminate\Support\Facades\Auth;
 
 class DecisionsController extends Controller
 {
+    /**
+     * Get matching ApplicationRequestType IDs for a given decision section.
+     */
+    private function getRequestTypeIds(string $section): array
+    {
+        switch ($section) {
+            case 'syrian_master':
+                $ids = ApplicationRequestType::where(function($q) {
+                    $q->where('name', 'like', '%ماجستير%')
+                      ->orWhere('name', 'like', '%ماستر%');
+                })
+                ->where('name', 'like', '%داخلي%')
+                ->where('name', 'not like', '%تطبيقي%')
+                ->where('name', 'not like', '%خارجي%')
+                ->pluck('id')
+                ->toArray();
+                return !empty($ids) ? $ids : [2];
+
+            case 'syrian_doctorate':
+                $ids = ApplicationRequestType::where(function($q) {
+                    $q->where('name', 'like', '%دكتوراه%')
+                      ->orWhere('name', 'like', '%دكتورة%');
+                })
+                ->where('name', 'not like', '%خارجي%')
+                ->pluck('id')
+                ->toArray();
+                return !empty($ids) ? $ids : [3];
+
+            case 'applied_master':
+                $ids = ApplicationRequestType::where('name', 'like', '%تطبيقي%')
+                    ->where('name', 'not like', '%خارجي%')
+                    ->pluck('id')
+                    ->toArray();
+                return !empty($ids) ? $ids : [1];
+
+            case 'faculty_permission':
+                $ids = ApplicationRequestType::where(function($q) {
+                    $q->where('name', 'like', '%سماح%')
+                      ->orWhere('name', 'like', '%تدريس%');
+                })
+                ->pluck('id')
+                ->toArray();
+                return !empty($ids) ? $ids : [4];
+
+            case 'foreign_master_applied':
+                $ids = ApplicationRequestType::where('name', 'like', '%خارجي%')
+                    ->where('name', 'like', '%تطبيقي%')
+                    ->pluck('id')
+                    ->toArray();
+                return !empty($ids) ? $ids : [5];
+
+            case 'foreign_master_theoretical':
+                $ids = ApplicationRequestType::where('name', 'like', '%خارجي%')
+                    ->where('name', 'like', '%نظري%')
+                    ->pluck('id')
+                    ->toArray();
+                return !empty($ids) ? $ids : [6];
+
+            default:
+                return [];
+        }
+    }
+
     // =========================================================================
     // 1. PAGE FOR MASTER EQUIVALENCE DECISIONS (تعادل الماجستير الداخلي)
     // =========================================================================
     public function index(Request $request)
     {
+        $typeIds = $this->getRequestTypeIds('syrian_master');
+
         // Applications ready for decision issuing (Syrian Academic Masters)
         $approvedApps = Application::with(['candidate', 'workUniversity', 'latestDecision'])
-            ->whereIn('status', ['بانتظار إصدار القرار', 'بانتظار صدور القرار'])
-            ->where(function($q) {
-                $q->where('request_type', 'like', '%ماجستير%')
-                  ->orWhere('request_type', 'like', '%ماستر%');
-            })
-            ->where('request_type', 'not like', '%تطبيقي%')
-            ->where('request_type', 'not like', '%دكتوراه%')
-            ->where('request_type', 'not like', '%دكتورة%')
-            ->where('request_type', 'not like', '%سماح%')
-            ->where('request_type', 'not like', '%تدريسية%')
-            ->where('request_type', 'not like', '%بحوث%')
-            ->where('request_type', 'not like', '%باحث%')
-            ->where('request_type', 'not like', '%خارجي%')
-            ->where('request_type', 'not like', '%غير سوري%')
+            ->whereIn('status', ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 7])
+            ->whereIn('request_type', $typeIds)
             ->latest()
             ->get();
 
         if ($request->filled('app_id')) {
             $targetApp = Application::with(['candidate', 'workUniversity', 'latestDecision'])->find($request->query('app_id'));
-            if ($targetApp && in_array($targetApp->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار']) && !$approvedApps->contains('id', $targetApp->id)) {
+            if ($targetApp && in_array($targetApp->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 7]) && !$approvedApps->contains('id', $targetApp->id)) {
                 $approvedApps->prepend($targetApp);
             }
         }
@@ -47,20 +101,8 @@ class DecisionsController extends Controller
         $search = $request->query('search');
 
         $issuedDecisions = ApplicationDecision::with('application.candidate', 'application.workUniversity')
-            ->whereHas('application', function ($q) {
-                $q->where(function($sq) {
-                    $sq->where('request_type', 'like', '%ماجستير%')
-                       ->orWhere('request_type', 'like', '%ماستر%');
-                })
-                ->where('request_type', 'not like', '%تطبيقي%')
-                ->where('request_type', 'not like', '%دكتوراه%')
-                ->where('request_type', 'not like', '%دكتورة%')
-                ->where('request_type', 'not like', '%سماح%')
-                ->where('request_type', 'not like', '%تدريسية%')
-                ->where('request_type', 'not like', '%بحوث%')
-                ->where('request_type', 'not like', '%باحث%')
-                ->where('request_type', 'not like', '%خارجي%')
-                ->where('request_type', 'not like', '%غير سوري%');
+            ->whereHas('application', function ($q) use ($typeIds) {
+                $q->whereIn('request_type', $typeIds);
             })
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q2) use ($search) {
@@ -71,8 +113,7 @@ class DecisionsController extends Controller
                         $q->where('name', 'like', '%' . $search . '%');
                     })
                     ->orWhereHas('application', function ($q) use ($search) {
-                        $q->where('request_type', 'like', '%' . $search . '%')
-                          ->orWhere('application_no', 'like', '%' . $search . '%');
+                        $q->where('application_no', 'like', '%' . $search . '%');
                     })
                     ->orWhere('decision_no', 'like', '%' . $search . '%')
                     ->orWhere('eligibility_decision_no', 'like', '%' . $search . '%');
@@ -89,25 +130,18 @@ class DecisionsController extends Controller
     // =========================================================================
     public function doctorateIndex(Request $request)
     {
+        $typeIds = $this->getRequestTypeIds('syrian_doctorate');
+
         // Applications ready for Doctorate decision issuing
         $approvedApps = Application::with(['candidate', 'workUniversity', 'latestDecision'])
-            ->whereIn('status', ['بانتظار إصدار القرار', 'بانتظار صدور القرار'])
-            ->where(function($q) {
-                $q->where('request_type', 'like', '%دكتوراه%')
-                  ->orWhere('request_type', 'like', '%دكتورة%');
-            })
-            ->where('request_type', 'not like', '%سماح%')
-            ->where('request_type', 'not like', '%تدريسية%')
-            ->where('request_type', 'not like', '%بحوث%')
-            ->where('request_type', 'not like', '%باحث%')
-            ->where('request_type', 'not like', '%خارجي%')
-            ->where('request_type', 'not like', '%غير سوري%')
+            ->whereIn('status', ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 7])
+            ->whereIn('request_type', $typeIds)
             ->latest()
             ->get();
 
         if ($request->filled('app_id')) {
             $targetApp = Application::with(['candidate', 'workUniversity', 'latestDecision'])->find($request->query('app_id'));
-            if ($targetApp && in_array($targetApp->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار']) && !$approvedApps->contains('id', $targetApp->id)) {
+            if ($targetApp && in_array($targetApp->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 7]) && !$approvedApps->contains('id', $targetApp->id)) {
                 $approvedApps->prepend($targetApp);
             }
         }
@@ -115,17 +149,8 @@ class DecisionsController extends Controller
         $search = $request->query('search');
 
         $issuedDecisions = ApplicationDecision::with('application.candidate', 'application.workUniversity')
-            ->whereHas('application', function ($q) {
-                $q->where(function($sq) {
-                    $sq->where('request_type', 'like', '%دكتوراه%')
-                       ->orWhere('request_type', 'like', '%دكتورة%');
-                })
-                ->where('request_type', 'not like', '%سماح%')
-                ->where('request_type', 'not like', '%تدريسية%')
-                ->where('request_type', 'not like', '%بحوث%')
-                ->where('request_type', 'not like', '%باحث%')
-                ->where('request_type', 'not like', '%خارجي%')
-                ->where('request_type', 'not like', '%غير سوري%');
+            ->whereHas('application', function ($q) use ($typeIds) {
+                $q->whereIn('request_type', $typeIds);
             })
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q2) use ($search) {
@@ -136,8 +161,7 @@ class DecisionsController extends Controller
                         $q->where('name', 'like', '%' . $search . '%');
                     })
                     ->orWhereHas('application', function ($q) use ($search) {
-                        $q->where('request_type', 'like', '%' . $search . '%')
-                          ->orWhere('application_no', 'like', '%' . $search . '%');
+                        $q->where('application_no', 'like', '%' . $search . '%');
                     })
                     ->orWhere('decision_no', 'like', '%' . $search . '%')
                     ->orWhere('eligibility_decision_no', 'like', '%' . $search . '%');
@@ -154,18 +178,18 @@ class DecisionsController extends Controller
     // =========================================================================
     public function appliedIndex(Request $request)
     {
+        $typeIds = $this->getRequestTypeIds('applied_master');
+
         // Applications ready for Applied Master decision issuing
         $approvedApps = Application::with(['candidate', 'workUniversity', 'latestDecision'])
-            ->whereIn('status', ['بانتظار إصدار القرار', 'بانتظار صدور القرار'])
-            ->where('request_type', 'like', '%تطبيقي%')
-            ->where('request_type', 'not like', '%خارجي%')
-            ->where('request_type', 'not like', '%غير سوري%')
+            ->whereIn('status', ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 7])
+            ->whereIn('request_type', $typeIds)
             ->latest()
             ->get();
 
         if ($request->filled('app_id')) {
             $targetApp = Application::with(['candidate', 'workUniversity', 'latestDecision'])->find($request->query('app_id'));
-            if ($targetApp && in_array($targetApp->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار']) && !$approvedApps->contains('id', $targetApp->id)) {
+            if ($targetApp && in_array($targetApp->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 7]) && !$approvedApps->contains('id', $targetApp->id)) {
                 $approvedApps->prepend($targetApp);
             }
         }
@@ -173,10 +197,8 @@ class DecisionsController extends Controller
         $search = $request->query('search');
 
         $issuedDecisions = ApplicationDecision::with('application.candidate', 'application.workUniversity')
-            ->whereHas('application', function ($q) {
-                $q->where('request_type', 'like', '%تطبيقي%')
-                  ->where('request_type', 'not like', '%خارجي%')
-                  ->where('request_type', 'not like', '%غير سوري%');
+            ->whereHas('application', function ($q) use ($typeIds) {
+                $q->whereIn('request_type', $typeIds);
             })
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q2) use ($search) {
@@ -187,8 +209,7 @@ class DecisionsController extends Controller
                         $q->where('name', 'like', '%' . $search . '%');
                     })
                     ->orWhereHas('application', function ($q) use ($search) {
-                        $q->where('request_type', 'like', '%' . $search . '%')
-                          ->orWhere('application_no', 'like', '%' . $search . '%');
+                        $q->where('application_no', 'like', '%' . $search . '%');
                     })
                     ->orWhere('decision_no', 'like', '%' . $search . '%')
                     ->orWhere('eligibility_decision_no', 'like', '%' . $search . '%');
@@ -412,19 +433,18 @@ class DecisionsController extends Controller
     // =========================================================================
     public function facultyIndex(Request $request)
     {
+        $typeIds = $this->getRequestTypeIds('faculty_permission');
+
         // Applications ready for Faculty Permission decision issuing
         $approvedApps = Application::with(['candidate', 'workUniversity', 'latestDecision'])
-            ->whereIn('status', ['بانتظار إصدار القرار', 'بانتظار صدور القرار'])
-            ->where(function($q) {
-                $q->where('request_type', 'like', '%سماح%')
-                  ->orWhere('request_type', 'like', '%تدريسية%');
-            })
+            ->whereIn('status', ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 7])
+            ->whereIn('request_type', $typeIds)
             ->latest()
             ->get();
 
         if ($request->filled('app_id')) {
             $targetApp = Application::with(['candidate', 'workUniversity', 'latestDecision'])->find($request->query('app_id'));
-            if ($targetApp && in_array($targetApp->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار']) && !$approvedApps->contains('id', $targetApp->id)) {
+            if ($targetApp && in_array($targetApp->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 7]) && !$approvedApps->contains('id', $targetApp->id)) {
                 $approvedApps->prepend($targetApp);
             }
         }
@@ -432,11 +452,8 @@ class DecisionsController extends Controller
         $search = $request->query('search');
 
         $issuedDecisions = ApplicationDecision::with('application.candidate', 'application.workUniversity')
-            ->whereHas('application', function ($q) {
-                $q->where(function($sq) {
-                    $sq->where('request_type', 'like', '%سماح%')
-                       ->orWhere('request_type', 'like', '%تدريسية%');
-                });
+            ->whereHas('application', function ($q) use ($typeIds) {
+                $q->whereIn('request_type', $typeIds);
             })
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q2) use ($search) {
@@ -449,7 +466,8 @@ class DecisionsController extends Controller
                     ->orWhereHas('application', function ($q) use ($search) {
                         $q->where('application_no', 'like', '%' . $search . '%');
                     })
-                    ->orWhere('decision_no', 'like', '%' . $search . '%');
+                    ->orWhere('decision_no', 'like', '%' . $search . '%')
+                    ->orWhere('eligibility_decision_no', 'like', '%' . $search . '%');
                 });
             })
             ->latest()
@@ -514,23 +532,18 @@ class DecisionsController extends Controller
     // =========================================================================
     public function foreignMasterAppliedIndex(Request $request)
     {
+        $typeIds = $this->getRequestTypeIds('foreign_master_applied');
+
         // Applications ready for Foreign Master Applied decision issuing
         $approvedApps = Application::with(['candidate', 'workUniversity', 'latestDecision', 'educations.level'])
-            ->whereIn('status', ['بانتظار إصدار القرار', 'بانتظار صدور القرار'])
-            ->where(function($q) {
-                $q->where('request_type', 'like', '%خارجي%')
-                  ->orWhere('request_type', 'like', '%غير سوري%');
-            })
-            ->where(function($q) {
-                $q->where('request_type', 'like', '%تطبيقي%')
-                  ->orWhere('request_type', 'not like', '%نظري%');
-            })
+            ->whereIn('status', ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 7])
+            ->whereIn('request_type', $typeIds)
             ->latest()
             ->get();
 
         if ($request->filled('app_id')) {
             $targetApp = Application::with(['candidate', 'workUniversity', 'latestDecision', 'educations.level'])->find($request->query('app_id'));
-            if ($targetApp && in_array($targetApp->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار']) && !$approvedApps->contains('id', $targetApp->id)) {
+            if ($targetApp && in_array($targetApp->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 7]) && !$approvedApps->contains('id', $targetApp->id)) {
                 $approvedApps->prepend($targetApp);
             }
         }
@@ -538,15 +551,8 @@ class DecisionsController extends Controller
         $search = $request->query('search');
 
         $issuedDecisions = ApplicationDecision::with('application.candidate', 'application.workUniversity')
-            ->whereHas('application', function ($q) {
-                $q->where(function($sq) {
-                    $sq->where('request_type', 'like', '%خارجي%')
-                       ->orWhere('request_type', 'like', '%غير سوري%');
-                })
-                ->where(function($sq) {
-                    $sq->where('request_type', 'like', '%تطبيقي%')
-                       ->orWhere('request_type', 'not like', '%نظري%');
-                });
+            ->whereHas('application', function ($q) use ($typeIds) {
+                $q->whereIn('request_type', $typeIds);
             })
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q2) use ($search) {
@@ -557,10 +563,10 @@ class DecisionsController extends Controller
                         $q->where('name', 'like', '%' . $search . '%');
                     })
                     ->orWhereHas('application', function ($q) use ($search) {
-                        $q->where('request_type', 'like', '%' . $search . '%')
-                          ->orWhere('application_no', 'like', '%' . $search . '%');
+                        $q->where('application_no', 'like', '%' . $search . '%');
                     })
-                    ->orWhere('decision_no', 'like', '%' . $search . '%');
+                    ->orWhere('decision_no', 'like', '%' . $search . '%')
+                    ->orWhere('eligibility_decision_no', 'like', '%' . $search . '%');
                 });
             })
             ->latest()
@@ -628,20 +634,18 @@ class DecisionsController extends Controller
     // =========================================================================
     public function foreignMasterTheoreticalIndex(Request $request)
     {
+        $typeIds = $this->getRequestTypeIds('foreign_master_theoretical');
+
         // Applications ready for Foreign Master Theoretical decision issuing
         $approvedApps = Application::with(['candidate', 'workUniversity', 'latestDecision', 'educations.level'])
-            ->whereIn('status', ['بانتظار إصدار القرار', 'بانتظار صدور القرار'])
-            ->where(function($q) {
-                $q->where('request_type', 'like', '%خارجي%')
-                  ->orWhere('request_type', 'like', '%غير سوري%');
-            })
-            ->where('request_type', 'like', '%نظري%')
+            ->whereIn('status', ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 7])
+            ->whereIn('request_type', $typeIds)
             ->latest()
             ->get();
 
         if ($request->filled('app_id')) {
             $targetApp = Application::with(['candidate', 'workUniversity', 'latestDecision', 'educations.level'])->find($request->query('app_id'));
-            if ($targetApp && in_array($targetApp->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار']) && !$approvedApps->contains('id', $targetApp->id)) {
+            if ($targetApp && in_array($targetApp->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 7]) && !$approvedApps->contains('id', $targetApp->id)) {
                 $approvedApps->prepend($targetApp);
             }
         }
@@ -649,12 +653,8 @@ class DecisionsController extends Controller
         $search = $request->query('search');
 
         $issuedDecisions = ApplicationDecision::with('application.candidate', 'application.workUniversity')
-            ->whereHas('application', function ($q) {
-                $q->where(function($sq) {
-                    $sq->where('request_type', 'like', '%خارجي%')
-                       ->orWhere('request_type', 'like', '%غير سوري%');
-                })
-                ->where('request_type', 'like', '%نظري%');
+            ->whereHas('application', function ($q) use ($typeIds) {
+                $q->whereIn('request_type', $typeIds);
             })
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q2) use ($search) {
@@ -665,8 +665,7 @@ class DecisionsController extends Controller
                         $q->where('name', 'like', '%' . $search . '%');
                     })
                     ->orWhereHas('application', function ($q) use ($search) {
-                        $q->where('request_type', 'like', '%' . $search . '%')
-                          ->orWhere('application_no', 'like', '%' . $search . '%');
+                        $q->where('application_no', 'like', '%' . $search . '%');
                     })
                     ->orWhere('decision_no', 'like', '%' . $search . '%')
                     ->orWhere('eligibility_decision_no', 'like', '%' . $search . '%');

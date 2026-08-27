@@ -29,7 +29,7 @@
                         $existingFiles['file_ma_dates'] = $att->file_path;
                     } elseif (str_contains($att->notes, 'ملخص')) {
                         $existingFiles['file_thesis_summary'] = $att->file_path;
-                    } elseif (str_contains($att->notes, 'كتاب الجامعة')) {
+                    } elseif (str_contains($att->notes, 'طلب')) {
                         $existingFiles['file_uni_request'] = $att->file_path;
                     } elseif (str_contains($att->notes, 'اللغة')) {
                         $existingFiles['file_lang_cert'] = $att->file_path;
@@ -37,15 +37,19 @@
                         $existingFiles['file_icdl_cert'] = $att->file_path;
                     } elseif (str_contains($att->notes, 'السيرة')) {
                         $existingFiles['file_cv'] = $att->file_path;
-                    } elseif (str_contains($att->notes, 'إيصال')) {
+                    } elseif (str_contains($att->notes, 'تسديد')|| str_contains($att->notes, 'رسم')) {
                         $existingFiles['file_payment'] = $att->file_path;
-                    } elseif (str_contains($att->notes, 'خبرة')) {
+                    }
+                     elseif (str_contains($att->notes, 'خبرة')) {
                         $existingFiles['file_exp_cert'] = $att->file_path;
-                    } elseif (str_contains($att->notes, 'العقود')) {
+                    } 
+                    elseif (str_contains($att->notes, 'عقود') || str_contains($att->notes, 'رواتب')) {
                         $existingFiles['file_contracts'] = $att->file_path;
-                    } elseif (str_contains($att->notes, 'أخرى') || str_contains($att->notes, 'اخرى')) {
+                    }
+                     elseif (str_contains($att->notes, 'أخرى') || str_contains($att->notes, 'اخرى')) {
                         $existingFiles['file_other_attachments'] = $att->file_path;
                     }
+                  
                 }
             }
         }
@@ -115,7 +119,7 @@
         </div>
 
         <!-- Form Tag -->
-        <form action="{{ route('university.apply.syrian_masters.submit') }}" method="POST" enctype="multipart/form-data" id="wizard-form">
+        <form action="{{ route('university.apply.syrian_masters.submit') }}" method="POST" enctype="multipart/form-data" id="wizard-form" novalidate>
             @csrf
             <input type="hidden" name="draft_id" value="{{ optional($draft)->id }}">
 
@@ -195,7 +199,7 @@
 
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">رقم كتاب طلب التقييم الصادر عن الجامعة </label><span class="text-danger"> *</span>
-                        <input type="text" name="req_no" id="input-reqNo" class="form-control academic-input" placeholder="مثال: 123/ص" value="{{ old('req_no', optional($draft)->new_uni_request_no) }}" required>
+                        <input type="text" name="req_no" id="input-reqNo" class="form-control academic-input" placeholder="مثال: 123" value="{{ old('req_no', optional($draft)->new_uni_request_no) }}" required>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">تاريخ كتاب طلب التقييم </label><span class="text-danger"> *</span>
@@ -243,7 +247,7 @@
                 <div class="row g-3">
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">دولة الحصول على الشهادة الثانوية </label><span class="text-danger"> *</span>
-                        <select name="hs_country_id" id="input-hsCountry" class="form-select academic-input" onchange="toggleHsEquivalence(this)" required>
+                        <select name="hs_country_id" id="input-hsCountry" class="form-select academic-input" onchange="toggleHsCountrySection(this)" required>
                             @foreach($countries as $c)
                                 <option value="{{ $c->id }}" {{ old('hs_country_id', optional($hsEd)->country_id ?? $syriaId) == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
                             @endforeach
@@ -258,6 +262,7 @@
                             <option value="شرعي" {{ $oldHsType == 'شرعي' ? 'selected' : '' }}>شرعي</option>
                             <option value="تجاري" {{ $oldHsType == 'تجاري' ? 'selected' : '' }}>تجاري</option>
                             <option value="صناعي" {{ $oldHsType == 'صناعي' ? 'selected' : '' }}>صناعي</option>
+                            <option value="أخر" {{ $oldHsType == 'أخرى' ? 'selected' : '' }}>أخرى</option>
                         </select>
                     </div>
                     <div class="col-md-4">
@@ -284,7 +289,7 @@
                     </div>
                 </div>
             </div>
-
+            
             <!-- ================= STEP 3: UNIVERSITY DEGREE ================= -->
             <div class="form-section" id="step-3" style="display: none;">
                 <h5 class="fw-bold border-bottom pb-2 mb-4 d-flex align-items-center gap-2" style="color: var(--primary-container); border-bottom-color: var(--outline-variant) !important;">
@@ -301,7 +306,7 @@
                         </select>
                     </div>
                     
-                    <div class="col-md-4" id="ba-uni-select-container">
+                    <!-- <div class="col-md-4" id="ba-uni-select-container">
                         <label class="form-label label-md fw-medium text-dark">الجامعة المانحة </label><span class="text-danger"> *</span>
                         <select name="ba_university_id" id="input-baUniId" class="form-select academic-input">
                             <option value="">-- اختر الجامعة --</option>
@@ -311,12 +316,17 @@
                                 @endif
                             @endforeach
                         </select>
+                    </div> -->
+
+                     <div class="col-md-4">
+                        <label class="form-label label-md fw-medium text-dark">الجامعة المانحة</label><span class="text-danger"> *</span>
+                        <input type="text" name="ba_faculty" id="input-baFaculty" class="form-control academic-input" placeholder="مثال: جامعة دمشق" value="{{ old('ba_university_id', optional($baEd)->university_id) }}" required>
                     </div>
 
-                    <div class="col-md-4" id="ba-uni-text-container" style="display: none;">
+                    <!-- <div class="col-md-4" id="ba-uni-text-container" style="display: none;">
                         <label class="form-label label-md fw-medium text-dark">اسم الجامعة الأجنبية / الجهة المانحة </label><span class="text-danger"> *</span>
                         <input type="text" name="ba_university_other" id="input-baUniOther" class="form-control academic-input" placeholder="اسم الجامعة الكامل" value="{{ old('ba_university_other', optional($baEd)->section_name) }}">
-                    </div>
+                    </div> -->
 
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">التقدير / المرتبة </label><span class="text-danger"> *</span>
@@ -329,20 +339,20 @@
                         </select>
                     </div>
 
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">الفرع (التخصص العام) </label><span class="text-danger"> *</span>
                         <input type="text" name="ba_faculty" id="input-baFaculty" class="form-control academic-input" placeholder="مثال: هندسة المعلوماتية" value="{{ old('ba_faculty', optional($baEd)->general_specialization) }}" required>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">القسم (التخصص الدقيق) <span class="text-muted fw-normal fs-8">(اختياري)</span></label>
                         <input type="text" name="ba_department" id="input-baDept" class="form-control academic-input" placeholder="مثال: هندسة البرمجيات ونظم المعلومات" value="{{ old('ba_department', optional($baEd)->exact_specialization) }}">
                     </div>
 
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">تاريخ التسجيل بالإجازة </label><span class="text-danger"> *</span>
                         <input type="date" name="ba_registration_date" id="input-baRegDate" class="form-control academic-input" value="{{ old('ba_registration_date', optional($baEd)->registration_date) }}" oninput="this.setCustomValidity(''); const g = document.getElementById('input-baGrantDate'); if(g) g.setCustomValidity('');" required>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">تاريخ التخرج / الحصول عليها </label><span class="text-danger"> *</span>
                         <input type="date" name="ba_grant_date" id="input-baGrantDate" class="form-control academic-input" value="{{ old('ba_grant_date', optional($baEd)->grant_date) }}" oninput="this.setCustomValidity('')" required>
                     </div>
@@ -816,12 +826,16 @@
                     </button>
                 </div>
 
-                <div>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-outline-primary px-3 py-2 fw-bold" id="btn-quick-review" onclick="quickReturnToReview()" style="display: none;" title="العودة مباشرة لخطوة المراجعة والتدقيق النهائي">
+                        <i class="fa-solid fa-clipboard-check me-1"></i> العودة للمراجعة والإرسال
+                    </button>
+
                     <button type="button" class="btn btn-primary px-4 py-2" id="btn-next" onclick="changeStep(1)">
                         التالي <i class="fa-solid fa-arrow-left ms-1"></i>
                     </button>
 
-                    <button type="submit" name="action" value="submit_final" class="btn btn-gold-cta px-5 py-2" id="btn-submit" style="display: none;">
+                    <button type="submit" formnovalidate name="action" value="submit_final" class="btn btn-gold-cta px-5 py-2" id="btn-submit" style="display: none;">
                         إنهاء وإرسال الطلب للوزارة <i class="fa-solid fa-paper-plane ms-1"></i>
                     </button>
                 </div>
@@ -839,6 +853,11 @@
     let currentStep = 1;
     const totalSteps = 6;
     const syriaCountryId = "{{ $syriaId }}";
+    let hasVisitedReview = {{ optional($draft)->id ? 'true' : 'false' }};
+
+    function quickReturnToReview() {
+        goToStep(totalSteps);
+    }
 
     // Toggle experience details
     function toggleExperienceSection(checkbox) {
@@ -975,6 +994,10 @@
 
     // Step navigation
     function changeStep(direction) {
+        // Prevent navigating past bounds
+        if (direction === 1 && currentStep >= totalSteps) return;
+        if (direction === -1 && currentStep <= 1) return;
+
         // Validate inputs in current step before proceeding forward
         if (direction === 1) {
             const currentSection = document.getElementById(`step-${currentStep}`);
@@ -1200,21 +1223,24 @@
                     requiredAttachments.push({ id: 'input-fileExpCert', name: 'شهادة خبرة لا تقل عن سنتين ما بعد الدرجة' });
                 }
 
-                for (const att of requiredAttachments) {
-                    const inputEl = document.getElementById(att.id);
-                    if (inputEl) {
-                        const hasFile = inputEl.files && inputEl.files.length > 0;
-                        const parentContainer = inputEl.closest('.col-md-6, .col-12');
-                        const isAlreadyUploaded = parentContainer && parentContainer.querySelector('.badge.bg-success-subtle');
+                const isExistingApplication = {{ optional($draft)->id ? 'true' : 'false' }};
+                if (!isExistingApplication) {
+                    for (const att of requiredAttachments) {
+                        const inputEl = document.getElementById(att.id);
+                        if (inputEl) {
+                            const hasFile = inputEl.files && inputEl.files.length > 0;
+                            const parentContainer = inputEl.closest('.col-md-6, .col-12');
+                            const isAlreadyUploaded = parentContainer && parentContainer.querySelector('.badge.bg-success-subtle');
 
-                        if (!hasFile && !isAlreadyUploaded) {
-                            inputEl.setCustomValidity(`يرجى رفع ملف (${att.name}) بصيغة PDF للمتابعة.`);
-                            inputEl.reportValidity();
-                            inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            inputEl.focus();
-                            return;
-                        } else {
-                            inputEl.setCustomValidity('');
+                            if (!hasFile && !isAlreadyUploaded) {
+                                inputEl.setCustomValidity(`يرجى رفع ملف (${att.name}) بصيغة PDF للمتابعة.`);
+                                inputEl.reportValidity();
+                                inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                inputEl.focus();
+                                return;
+                            } else {
+                                inputEl.setCustomValidity('');
+                            }
                         }
                     }
                 }
@@ -1222,24 +1248,35 @@
         }
 
         // Hide current step
-        document.getElementById(`step-${currentStep}`).style.display = 'none';
-        document.getElementById(`step-${currentStep}`).classList.remove('active');
+        const oldSection = document.getElementById(`step-${currentStep}`);
+        if (oldSection) {
+            oldSection.style.display = 'none';
+            oldSection.classList.remove('active');
+        }
 
         // Update step index
         currentStep += direction;
+        if (currentStep > totalSteps) currentStep = totalSteps;
+        if (currentStep < 1) currentStep = 1;
 
         // Show new step
         const newSection = document.getElementById(`step-${currentStep}`);
-        newSection.style.display = 'block';
-        newSection.classList.add('active');
-
-        // If entering final step (review), populate preview fields
-        if (currentStep === 6) {
-            updateReportPreview();
+        if (newSection) {
+            newSection.style.display = 'block';
+            newSection.classList.add('active');
         }
 
-        // Update indicators
+        // Update indicators and buttons FIRST!
         updateWizardProgress();
+
+        // If entering final step (review), populate preview fields safely
+        if (currentStep === totalSteps) {
+            try {
+                updateReportPreview();
+            } catch (err) {
+                console.error('Error updating preview report:', err);
+            }
+        }
 
         // Scroll smooth to wizard top
         window.scrollTo({ top: 150, behavior: 'smooth' });
@@ -1267,6 +1304,7 @@
         const spacerPrev = document.getElementById('spacer-prev');
         const btnNext = document.getElementById('btn-next');
         const btnSubmit = document.getElementById('btn-submit');
+        const btnQuickReview = document.getElementById('btn-quick-review');
 
         if (currentStep === 1) {
             btnPrev.style.display = 'none';
@@ -1277,11 +1315,16 @@
         }
 
         if (currentStep === totalSteps) {
+            hasVisitedReview = true;
             btnNext.style.display = 'none';
             btnSubmit.style.display = 'inline-block';
+            if (btnQuickReview) btnQuickReview.style.display = 'none';
         } else {
             btnNext.style.display = 'inline-block';
             btnSubmit.style.display = 'none';
+            if (btnQuickReview) {
+                btnQuickReview.style.display = hasVisitedReview ? 'inline-block' : 'none';
+            }
         }
     }
 
@@ -1305,13 +1348,17 @@
                 targetSec.classList.add('active');
             }
 
-            // If entering final review step, update preview
-            if (currentStep === totalSteps) {
-                updateReportPreview();
-            }
-
-            // Update indicators and buttons
+            // Update indicators and buttons FIRST!
             updateWizardProgress();
+
+            // If entering final review step, update preview safely
+            if (currentStep === totalSteps) {
+                try {
+                    updateReportPreview();
+                } catch (err) {
+                    console.error('Error updating report preview:', err);
+                }
+            }
 
             // Scroll smooth to wizard top
             window.scrollTo({ top: 120, behavior: 'smooth' });
@@ -1329,78 +1376,95 @@
     }
 
     function updateReportPreview() {
+        const getVal = id => {
+            const el = document.getElementById(id);
+            if (!el) return '-';
+            if (el.tagName === 'SELECT') {
+                return (el.options && el.selectedIndex >= 0 && el.options[el.selectedIndex])
+                    ? el.options[el.selectedIndex].text
+                    : '-';
+            }
+            if (el.type === 'checkbox') return el.checked;
+            return el.value && el.value.trim() ? el.value.trim() : '-';
+        };
+
+        const setTxt = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = (val !== null && val !== undefined && val !== '') ? val : '-';
+        };
+
         // Personal details
-        document.getElementById('preview-fullName').innerText = document.getElementById('input-fullName').value;
-        document.getElementById('preview-fatherName').innerText = document.getElementById('input-fatherName').value;
-        document.getElementById('preview-motherName').innerText = document.getElementById('input-motherName').value;
-        
-        const nationalitySelect = document.getElementById('input-nationality');
-        document.getElementById('preview-nationalId').innerText = document.getElementById('input-nationalId').value;
-        document.getElementById('preview-dob').innerText = formatDateDisplay(document.getElementById('input-dob').value);
-        document.getElementById('preview-jobTitle').innerText = document.getElementById('input-jobTitle').value;
-        document.getElementById('preview-gender').innerText = document.getElementById('input-gender').value;
-        document.getElementById('preview-email').innerText = document.getElementById('input-email').value;
-        document.getElementById('preview-mobile').innerText = document.getElementById('input-mobile').value;
-        document.getElementById('preview-address').innerText = document.getElementById('input-address').value;
+        setTxt('preview-fullName', getVal('input-fullName'));
+        setTxt('preview-fatherName', getVal('input-fatherName'));
+        setTxt('preview-motherName', getVal('input-motherName'));
+        setTxt('preview-nationalId', getVal('input-nationalId'));
+        setTxt('preview-dob', formatDateDisplay(getVal('input-dob')));
+        setTxt('preview-jobTitle', getVal('input-jobTitle'));
+        setTxt('preview-gender', getVal('input-gender'));
+        setTxt('preview-email', getVal('input-email'));
+        setTxt('preview-mobile', getVal('input-mobile'));
+        setTxt('preview-address', getVal('input-address'));
 
         // HS details
         const hsCountrySelect = document.getElementById('input-hsCountry');
-        document.getElementById('preview-hsCountry').innerText = hsCountrySelect.options[hsCountrySelect.selectedIndex].text;
-        document.getElementById('preview-hsType').innerText = document.getElementById('input-hsType').value;
-        document.getElementById('preview-hsDate').innerText = formatDateDisplay(document.getElementById('input-hsDate').value);
+        setTxt('preview-hsCountry', getVal('input-hsCountry'));
+        setTxt('preview-hsType', getVal('input-hsType'));
+        setTxt('preview-hsDate', formatDateDisplay(getVal('input-hsDate')));
         
-        if (hsCountrySelect.value != syriaCountryId) {
-            document.getElementById('preview-hsDecisionContainer').style.display = 'block';
-            document.getElementById('preview-hsDecisionNo').innerText = document.getElementById('input-hsDecisionNo').value;
+        const hsDecContainer = document.getElementById('preview-hsDecisionContainer');
+        if (hsCountrySelect && hsCountrySelect.value && hsCountrySelect.value != syriaCountryId) {
+            if (hsDecContainer) hsDecContainer.style.display = 'block';
+            setTxt('preview-hsDecisionNo', getVal('input-hsDecisionNo'));
         } else {
-            document.getElementById('preview-hsDecisionContainer').style.display = 'none';
+            if (hsDecContainer) hsDecContainer.style.display = 'none';
         }
 
         // BA details
         const baCountrySelect = document.getElementById('input-baCountry');
-        document.getElementById('preview-baCountry').innerText = baCountrySelect.options[baCountrySelect.selectedIndex].text;
+        setTxt('preview-baCountry', getVal('input-baCountry'));
         
-        if (baCountrySelect.value == syriaCountryId) {
-            const baUniSelect = document.getElementById('input-baUniId');
-            document.getElementById('preview-baUni').innerText = baUniSelect.options[baUniSelect.selectedIndex].text;
-            document.getElementById('preview-baDecisionContainer').style.display = 'none';
+        const baDecContainer = document.getElementById('preview-baDecisionContainer');
+        if (baCountrySelect && baCountrySelect.value == syriaCountryId) {
+            setTxt('preview-baUni', getVal('input-baUniId'));
+            if (baDecContainer) baDecContainer.style.display = 'none';
         } else {
-            document.getElementById('preview-baUni').innerText = document.getElementById('input-baUniOther').value;
-            document.getElementById('preview-baDecisionContainer').style.display = 'block';
-            document.getElementById('preview-baDecisionNo').innerText = document.getElementById('input-baDecisionNo').value;
+            setTxt('preview-baUni', getVal('input-baUniOther'));
+            if (baDecContainer) baDecContainer.style.display = 'block';
+            setTxt('preview-baDecisionNo', getVal('input-baDecisionNo'));
         }
-        document.getElementById('preview-baFaculty').innerText = document.getElementById('input-baFaculty').value;
-        document.getElementById('preview-baDept').innerText = document.getElementById('input-baDept').value;
-        document.getElementById('preview-baRank').innerText = document.getElementById('input-baRank').value;
-        document.getElementById('preview-baRegDate').innerText = formatDateDisplay(document.getElementById('input-baRegDate').value);
-        document.getElementById('preview-baGrantDate').innerText = formatDateDisplay(document.getElementById('input-baGrantDate').value);
+        setTxt('preview-baFaculty', getVal('input-baFaculty'));
+        setTxt('preview-baDept', getVal('input-baDept'));
+        setTxt('preview-baRank', getVal('input-baRank'));
+        setTxt('preview-baRegDate', formatDateDisplay(getVal('input-baRegDate')));
+        setTxt('preview-baGrantDate', formatDateDisplay(getVal('input-baGrantDate')));
 
         // MA details
-        const maUniSelect = document.getElementById('input-maUniId');
-        document.getElementById('preview-maUni').innerText = maUniSelect.options[maUniSelect.selectedIndex].text;
-        document.getElementById('preview-maFaculty').innerText = document.getElementById('input-maFaculty').value;
-        document.getElementById('preview-maDept').innerText = document.getElementById('input-maDept').value;
-        document.getElementById('preview-maRank').innerText = document.getElementById('input-maRank').value;
-        document.getElementById('preview-maSupervisor').innerText = document.getElementById('input-maSupervisor').value;
-        document.getElementById('preview-maRegDate').innerText = formatDateDisplay(document.getElementById('input-maRegDate').value);
-        document.getElementById('preview-maDefDate').innerText = formatDateDisplay(document.getElementById('input-maDefDate').value);
-        document.getElementById('preview-maGrantDate').innerText = formatDateDisplay(document.getElementById('input-maGrantDate').value);
-        document.getElementById('preview-maThesisTitle').innerText = document.getElementById('input-maThesisTitle').value;
+        setTxt('preview-maUni', getVal('input-maUniId'));
+        setTxt('preview-maFaculty', getVal('input-maFaculty'));
+        setTxt('preview-maDept', getVal('input-maDept'));
+        setTxt('preview-maRank', getVal('input-maRank'));
+        setTxt('preview-maSupervisor', getVal('input-maSupervisor'));
+        setTxt('preview-maRegDate', formatDateDisplay(getVal('input-maRegDate')));
+        setTxt('preview-maDefDate', formatDateDisplay(getVal('input-maDefDate')));
+        setTxt('preview-maGrantDate', formatDateDisplay(getVal('input-maGrantDate')));
+        setTxt('preview-maThesisTitle', getVal('input-maThesisTitle'));
 
         // Experience
-        const hasExp = document.getElementById('input-hasExperience').checked;
+        const hasExpEl = document.getElementById('input-hasExperience');
+        const hasExp = hasExpEl ? hasExpEl.checked : false;
+        const expContainer = document.getElementById('preview-experience-container');
         if (hasExp) {
-            document.getElementById('preview-experience-container').style.display = 'block';
-            document.getElementById('preview-expPlace').innerText = document.getElementById('input-expPlace').value;
-            document.getElementById('preview-expFrom').innerText = formatDateDisplay(document.getElementById('input-expFrom').value);
-            document.getElementById('preview-expTo').innerText = formatDateDisplay(document.getElementById('input-expTo').value);
+            if (expContainer) expContainer.style.display = 'block';
+            setTxt('preview-expPlace', getVal('input-expPlace'));
+            setTxt('preview-expFrom', formatDateDisplay(getVal('input-expFrom')));
+            setTxt('preview-expTo', formatDateDisplay(getVal('input-expTo')));
         } else {
-            document.getElementById('preview-experience-container').style.display = 'none';
+            if (expContainer) expContainer.style.display = 'none';
         }
 
         // Request
-        document.getElementById('preview-reqNo').innerText = document.getElementById('input-reqNo').value;
-        document.getElementById('preview-reqDate').innerText = formatDateDisplay(document.getElementById('input-reqDate').value);
+        setTxt('preview-reqNo', getVal('input-reqNo'));
+        setTxt('preview-reqDate', formatDateDisplay(getVal('input-reqDate')));
     }
 
     function toggleCandidateLookupBox(show) {
@@ -1580,11 +1644,50 @@
         const initialStep = {{ $initialStep }};
         goToStep(initialStep);
 
+        // Make stepper circles clickable
+        document.querySelectorAll('#wizard-steps-container .wizard-step').forEach(el => {
+            el.style.cursor = 'pointer';
+            el.addEventListener('click', function() {
+                const targetStep = parseInt(this.getAttribute('data-step'));
+                if (targetStep) {
+                    goToStep(targetStep);
+                }
+            });
+        });
+
         document.querySelectorAll('input[type="file"]').forEach(input => {
             input.addEventListener('change', function() {
                 this.setCustomValidity('');
             });
         });
+
+        const form = document.getElementById('wizard-form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const submitter = e.submitter;
+                if (submitter && submitter.value === 'save_draft') {
+                    form.querySelectorAll('input, select, textarea').forEach(el => el.removeAttribute('required'));
+                    return true;
+                }
+
+                const chkConfirm = document.getElementById('chkConfirm');
+                if (chkConfirm && !chkConfirm.checked) {
+                    e.preventDefault();
+                    goToStep(6);
+                    chkConfirm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    chkConfirm.focus();
+                    chkConfirm.setCustomValidity('يرجى المصادقة على الإقرار بصحة البيانات للمتابعة.');
+                    chkConfirm.reportValidity();
+                    return false;
+                } else if (chkConfirm) {
+                    chkConfirm.setCustomValidity('');
+                }
+
+                // Remove required from all inputs to ensure smooth and guaranteed submission
+                form.querySelectorAll('input, select, textarea').forEach(el => el.removeAttribute('required'));
+                return true;
+            });
+        }
     });
 </script>
 @endpush

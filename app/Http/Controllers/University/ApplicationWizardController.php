@@ -1488,29 +1488,16 @@ class ApplicationWizardController extends Controller
                 'work_department' => 'nullable|string|max:255',
 
                 // Step 2: High School
-                'hs_country_id' => [
-                    'required',
-                    function ($attribute, $value, $fail) {
-                        if ($value !== 'other' && !\App\Models\LookupCountry::where('id', $value)->exists()) {
-                            $fail('يرجى اختيار بلد الشهادة الثانوية من القائمة أو اختيار "أخرى".');
-                        }
-                    }
-                ],
-                'hs_country_other' => 'required_if:hs_country_id,other|nullable|string|max:255',
+                'hs_country_id' => 'required|exists:lookup_countries,id',
+                'hs_country_other' => 'nullable|string|max:255',
                 'hs_type' => 'required|string|max:100',
                 'hs_grant_date' => 'required|numeric|digits:4',
                 'hs_decision_no' => $isHsForeign ? 'required|string|max:100' : 'nullable|string|max:100',
                 'hs_decision_date' => $isHsForeign ? 'required|date' : 'nullable|date',
 
                 // Step 3: Bachelor
-                'ba_country_id' => [
-                    'required',
-                    function ($attribute, $value, $fail) {
-                        if ($value !== 'other' && !\App\Models\LookupCountry::where('id', $value)->exists()) {
-                            $fail('يرجى اختيار بلد الإجازة الجامعية من القائمة أو اختيار "أخرى".');
-                        }
-                    }
-                ],
+                'ba_country_id' => 'required|exists:lookup_countries,id',
+                'ba_country_other' => 'nullable|string|max:255',
                 'ba_university_id' => 'nullable',
                 'ba_university_other' => 'required|string|max:255',
                 'ba_faculty' => 'required|string|max:255',
@@ -1525,22 +1512,14 @@ class ApplicationWizardController extends Controller
                 // Step 4: Foreign Master
                 'ma_country_id' => [
                     'required',
+                    'exists:lookup_countries,id',
                     function ($attribute, $value, $fail) use ($syriaId) {
                         if ($value == $syriaId) {
                             $fail('بلد الحصول على درجة الماجستير الخارجي يجب أن يكون بلداً غير سوري.');
                         }
-                        if ($value !== 'other' && !\App\Models\LookupCountry::where('id', $value)->exists()) {
-                            $fail('يرجى اختيار بلد دراسة الماجستير من القائمة أو اختيار "أخرى".');
-                        }
                     }
                 ],
-                'ma_country_other' => [
-                    'required_if:ma_country_id,other',
-                    'nullable',
-                    'string',
-                    'max:255',
-                    \Illuminate\Validation\Rule::notIn(['سوريا', 'سورية', 'الجمهورية العربية السورية']),
-                ],
+                'ma_country_other' => 'nullable|string|max:255',
                 'ma_university_other' => 'required|string|max:255',
                 'ma_faculty' => 'required|string|max:255',
                 'ma_department' => 'nullable|string|max:255',
@@ -1567,24 +1546,24 @@ class ApplicationWizardController extends Controller
                 'residences' => 'nullable|array',
 
                 // Step 6: Attachments
-                'file_secondary_cert' => !empty($existingFilesMap['file_secondary_cert']) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
-                'file_hs_decision' => ($isHsForeign && empty($existingFilesMap['file_hs_decision'])) ? 'required|file|mimes:pdf|max:2048' : 'nullable|file|mimes:pdf|max:2048',
-                'file_bachelor_cert' => !empty($existingFilesMap['file_bachelor_cert']) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
-                'file_ba_decision' => ($isBaForeign && empty($existingFilesMap['file_ba_decision'])) ? 'required|file|mimes:pdf|max:2048' : 'nullable|file|mimes:pdf|max:2048',
+                'file_secondary_cert' => (!empty($existingFilesMap['file_secondary_cert']) || $isExisting) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
+                'file_hs_decision' => ($isHsForeign && empty($existingFilesMap['file_hs_decision']) && !$isExisting) ? 'required|file|mimes:pdf|max:2048' : 'nullable|file|mimes:pdf|max:2048',
+                'file_bachelor_cert' => (!empty($existingFilesMap['file_bachelor_cert']) || $isExisting) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
+                'file_ba_decision' => ($isBaForeign && empty($existingFilesMap['file_ba_decision']) && !$isExisting) ? 'required|file|mimes:pdf|max:2048' : 'nullable|file|mimes:pdf|max:2048',
                 'file_prev_qual_cert' => 'nullable|file|mimes:pdf|max:2048',
-                'file_master_cert' => !empty($existingFilesMap['file_master_cert']) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
-                'file_envoy_decision' => ($isEnvoy && empty($existingFilesMap['file_envoy_decision'])) ? 'required|file|mimes:pdf|max:2048' : 'nullable|file|mimes:pdf|max:2048',
+                'file_master_cert' => (!empty($existingFilesMap['file_master_cert']) || $isExisting) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
+                'file_envoy_decision' => ($isEnvoy && empty($existingFilesMap['file_envoy_decision']) && !$isExisting) ? 'required|file|mimes:pdf|max:2048' : 'nullable|file|mimes:pdf|max:2048',
                 'file_master_transcript' => 'nullable|file|mimes:pdf|max:2048',
-                'file_thesis_abstract' => !empty($existingFilesMap['file_thesis_abstract']) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
+                'file_thesis_abstract' => (!empty($existingFilesMap['file_thesis_abstract']) || $isExisting) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
                 'file_library_receipt' => 'nullable|file|mimes:pdf|max:2048',
-                'file_reg_defense_doc' => !empty($existingFilesMap['file_reg_defense_doc']) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
-                'file_experience_cert' => ($isExpYes && empty($existingFilesMap['file_experience_cert'])) ? 'required|file|mimes:pdf|max:2048' : 'nullable|file|mimes:pdf|max:2048',
+                'file_reg_defense_doc' => (!empty($existingFilesMap['file_reg_defense_doc']) || $isExisting) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
+                'file_experience_cert' => ($isExpYes && empty($existingFilesMap['file_experience_cert']) && !$isExisting) ? 'required|file|mimes:pdf|max:2048' : 'nullable|file|mimes:pdf|max:2048',
                 'file_private_uni_contracts' => 'nullable|file|mimes:pdf|max:2048',
                 'file_salary_receipts' => 'nullable|file|mimes:pdf|max:2048',
-                'file_icdl_cert' => !empty($existingFilesMap['file_icdl_cert']) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
-                'file_english_cert' => !empty($existingFilesMap['file_english_cert']) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
-                'file_fees_receipt' => !empty($existingFilesMap['file_fees_receipt']) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
-                'file_passport' => !empty($existingFilesMap['file_passport']) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
+                'file_icdl_cert' => (!empty($existingFilesMap['file_icdl_cert']) || $isExisting) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
+                'file_english_cert' => (!empty($existingFilesMap['file_english_cert']) || $isExisting) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
+                'file_fees_receipt' => (!empty($existingFilesMap['file_fees_receipt']) || $isExisting) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
+                'file_passport' => (!empty($existingFilesMap['file_passport']) || $isExisting) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
                 'file_other_attachments' => 'nullable|file|mimes:pdf|max:2048',
             ];
 
@@ -1601,13 +1580,11 @@ class ApplicationWizardController extends Controller
                 'req_no.required' => 'يرجى إدخال رقم كتاب الجامعة الخاصة.',
                 'req_date.required' => 'يرجى إدخال تاريخ كتاب الجامعة الخاصة.',
                 'hs_country_id.required' => 'يرجى اختيار بلد الحصول على الشهادة الثانوية.',
-                'hs_country_other.required_if' => 'يرجى كتابة اسم بلد الشهادة الثانوية في حال اختيار "أخرى".',
                 'hs_type.required' => 'يرجى اختيار فرع الشهادة الثانوية.',
                 'hs_grant_date.required' => 'يرجى إدخال سنة الشهادة الثانوية.',
                 'hs_decision_no.required' => 'يرجى إدخال رقم قرار معادلة الشهادة الثانوية غير السورية.',
                 'hs_decision_date.required' => 'يرجى إدخال تاريخ صدور قرار معادلة الشهادة الثانوية غير السورية.',
                 'ba_country_id.required' => 'يرجى اختيار بلد الإجازة الجامعية.',
-                'ba_country_other.required_if' => 'يرجى كتابة اسم بلد الإجازة الجامعية في حال اختيار "أخرى".',
                 'ba_university_other.required' => 'يرجى إدخال اسم الجامعة المانحة للإجازة الجامعية.',
                 'ba_faculty.required' => 'يرجى إدخال كلية الإجازة الجامعية.',
                 'ba_grant_date.required' => 'يرجى إدخال تاريخ منح الإجازة الجامعية.',
@@ -1615,8 +1592,6 @@ class ApplicationWizardController extends Controller
                 'ba_decision_no.required' => 'يرجى إدخال رقم قرار معادلة الإجازة الجامعية غير السورية.',
                 'ba_decision_date.required' => 'يرجى إدخال تاريخ صدور قرار معادلة الإجازة الجامعية غير السورية.',
                 'ma_country_id.required' => 'يرجى اختيار بلد دراسة الماجستير.',
-                'ma_country_other.required_if' => 'يرجى كتابة اسم الدولة في حال اختيار "أخرى".',
-                'ma_country_other.not_in' => 'بلد الحصول على درجة الماجستير الخارجي يجب أن يكون بلداً غير سوري.',
                 'ma_university_other.required' => 'يرجى إدخال اسم الجامعة الخارجية المانحة للماجستير.',
                 'ma_faculty.required' => 'يرجى إدخال كلية درجة الماجستير.',
                 'ma_grant_date.required' => 'يرجى إدخال تاريخ منح شهادة الماجستير.',
@@ -1740,15 +1715,7 @@ class ApplicationWizardController extends Controller
         }
         $hsNotes = !empty($hsDecNotes) ? implode(' | ', $hsDecNotes) : (optional($existingHsEd)->notes ?? '');
 
-        $hsCountryId = $syriaId;
-        if ($request->input('hs_country_id') === 'other' && $request->filled('hs_country_other')) {
-            $createdHsCountry = \App\Models\LookupCountry::firstOrCreate(['name' => trim($request->hs_country_other)]);
-            $hsCountryId = $createdHsCountry->id;
-        } elseif ($request->filled('hs_country_id') && is_numeric($request->hs_country_id)) {
-            $hsCountryId = $request->hs_country_id;
-        } else {
-            $hsCountryId = optional($existingHsEd)->country_id ?? $syriaId;
-        }
+        $hsCountryId = ($request->filled('hs_country_id') && is_numeric($request->hs_country_id)) ? $request->hs_country_id : (optional($existingHsEd)->country_id ?? $syriaId);
 
         $hsEd = Education::updateOrCreate(
             [
@@ -1768,15 +1735,7 @@ class ApplicationWizardController extends Controller
             ->where('education_level_id', 1)
             ->first();
 
-        $baCountryId = $syriaId;
-        if ($request->input('ba_country_id') === 'other' && $request->filled('ba_country_other')) {
-            $createdBaCountry = \App\Models\LookupCountry::firstOrCreate(['name' => trim($request->ba_country_other)]);
-            $baCountryId = $createdBaCountry->id;
-        } elseif ($request->filled('ba_country_id') && is_numeric($request->ba_country_id)) {
-            $baCountryId = $request->ba_country_id;
-        } else {
-            $baCountryId = optional($existingBaEd)->country_id ?? $syriaId;
-        }
+        $baCountryId = ($request->filled('ba_country_id') && is_numeric($request->ba_country_id)) ? $request->ba_country_id : (optional($existingBaEd)->country_id ?? $syriaId);
 
         $baUniId = null;
         if (($request->input('ba_university_id') === 'other' || !$request->filled('ba_university_id')) && $request->filled('ba_university_other')) {
@@ -1831,15 +1790,7 @@ class ApplicationWizardController extends Controller
             $expNotes = 'جامعات الخبرة: ' . $request->syrian_exp_universities;
         }
 
-        $maCountryId = null;
-        if ($request->input('ma_country_id') === 'other' && $request->filled('ma_country_other')) {
-            $createdCountry = \App\Models\LookupCountry::firstOrCreate(['name' => trim($request->ma_country_other)]);
-            $maCountryId = $createdCountry->id;
-        } elseif ($request->filled('ma_country_id') && is_numeric($request->ma_country_id)) {
-            $maCountryId = $request->ma_country_id;
-        } else {
-            $maCountryId = optional($existingMaEd)->country_id ?? null;
-        }
+        $maCountryId = ($request->filled('ma_country_id') && is_numeric($request->ma_country_id)) ? $request->ma_country_id : optional($existingMaEd)->country_id;
 
         $maUniId = null;
         if ($request->filled('ma_university_other')) {
@@ -2177,11 +2128,11 @@ class ApplicationWizardController extends Controller
                 'ma_grant_date' => 'nullable|date',
 
                 // Step 4: Required Attachments (5 official requirements)
-                'file_id_card' => !empty($existingFilesMap['file_id_card']) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
-                'file_uni_request' => !empty($existingFilesMap['file_uni_request']) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
-                'file_service_statement' => !empty($existingFilesMap['file_service_statement']) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
-                'file_phd_cert' => !empty($existingFilesMap['file_phd_cert']) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
-                'file_payment' => !empty($existingFilesMap['file_payment']) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
+                'file_id_card' => (!empty($existingFilesMap['file_id_card']) || $isExisting) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
+                'file_uni_request' => (!empty($existingFilesMap['file_uni_request']) || $isExisting) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
+                'file_service_statement' => (!empty($existingFilesMap['file_service_statement']) || $isExisting) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
+                'file_phd_cert' => (!empty($existingFilesMap['file_phd_cert']) || $isExisting) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
+                'file_payment' => (!empty($existingFilesMap['file_payment']) || $isExisting) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
                 'file_ma_cert' => 'nullable|file|mimes:pdf|max:2048',
                 'file_other_attachments' => 'nullable|file|mimes:pdf|max:2048',
             ];

@@ -127,7 +127,7 @@
         </div>
 
         <!-- Form Tag -->
-        <form action="{{ route('university.apply.syrian_doctorate.submit') }}" method="POST" enctype="multipart/form-data" id="wizard-form">
+        <form action="{{ route('university.apply.syrian_doctorate.submit') }}" method="POST" enctype="multipart/form-data" id="wizard-form" novalidate>
             @csrf
             <input type="hidden" name="draft_id" value="{{ optional($draft)->id }}">
 
@@ -1024,12 +1024,16 @@
                     </button>
                 </div>
 
-                <div>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-outline-primary px-3 py-2 fw-bold" id="btn-quick-review" onclick="quickReturnToReview()" style="display: none;" title="العودة مباشرة لخطوة المراجعة والتدقيق النهائي">
+                        <i class="fa-solid fa-clipboard-check me-1"></i> العودة للمراجعة والإرسال
+                    </button>
+
                     <button type="button" class="btn btn-primary px-4 py-2" id="btn-next" onclick="nextStep()">
                         التالي <i class="fa-solid fa-arrow-left ms-1"></i>
                     </button>
 
-                    <button type="submit" name="action" value="submit_final" class="btn btn-gold-cta px-5 py-2 fw-bold shadow-sm" id="btn-submit" style="display: none;">
+                    <button type="submit" formnovalidate name="action" value="submit_final" class="btn btn-gold-cta px-5 py-2 fw-bold shadow-sm" id="btn-submit" style="display: none;">
                         إنهاء وإرسال الطلب للوزارة <i class="fa-solid fa-paper-plane ms-1"></i>
                     </button>
                 </div>
@@ -1163,6 +1167,8 @@
         }
     }
 
+    let hasVisitedReview = {{ optional($draft)->id ? 'true' : 'false' }};
+
     function showStep(step) {
         document.querySelectorAll('.form-section').forEach(sec => sec.style.display = 'none');
         const currentSection = document.getElementById(`step-${step}`);
@@ -1188,16 +1194,31 @@
         const btnPrev = document.getElementById('btn-prev');
         const btnNext = document.getElementById('btn-next');
         const btnSubmit = document.getElementById('btn-submit');
+        const btnQuickReview = document.getElementById('btn-quick-review');
 
         if (btnPrev) btnPrev.style.display = (step === 1) ? 'none' : 'inline-block';
         if (btnNext) btnNext.style.display = (step === totalSteps) ? 'none' : 'inline-block';
         if (btnSubmit) btnSubmit.style.display = (step === totalSteps) ? 'inline-block' : 'none';
 
         if (step === 7) {
-            populateReview();
+            hasVisitedReview = true;
+            if (btnQuickReview) btnQuickReview.style.display = 'none';
+            try {
+                populateReview();
+            } catch (err) {
+                console.error('Error populating review:', err);
+            }
+        } else {
+            if (btnQuickReview) {
+                btnQuickReview.style.display = hasVisitedReview ? 'inline-block' : 'none';
+            }
         }
 
         window.scrollTo({ top: 150, behavior: 'smooth' });
+    }
+
+    function quickReturnToReview() {
+        goToStep(totalSteps);
     }
 
     function validateStep(step) {
@@ -1461,21 +1482,24 @@
                 requiredAttachments.push({ id: 'input-fileMaDecision', name: 'قرار معادلة شهادة الماجستير غير السورية' });
             }
 
-            for (const att of requiredAttachments) {
-                const inputEl = document.getElementById(att.id);
-                if (inputEl) {
-                    const hasFile = inputEl.files && inputEl.files.length > 0;
-                    const parentContainer = inputEl.closest('.col-md-6, .col-12');
-                    const isAlreadyUploaded = parentContainer && parentContainer.querySelector('.badge.bg-success-subtle');
+            const isExistingApplication = {{ optional($draft)->id ? 'true' : 'false' }};
+            if (!isExistingApplication) {
+                for (const att of requiredAttachments) {
+                    const inputEl = document.getElementById(att.id);
+                    if (inputEl) {
+                        const hasFile = inputEl.files && inputEl.files.length > 0;
+                        const parentContainer = inputEl.closest('.col-md-6, .col-12');
+                        const isAlreadyUploaded = parentContainer && parentContainer.querySelector('.badge.bg-success-subtle');
 
-                    if (!hasFile && !isAlreadyUploaded) {
-                        inputEl.setCustomValidity(`يرجى رفع ملف (${att.name}) بصيغة PDF للمتابعة.`);
-                        inputEl.reportValidity();
-                        inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        inputEl.focus();
-                        return false;
-                    } else {
-                        inputEl.setCustomValidity('');
+                        if (!hasFile && !isAlreadyUploaded) {
+                            inputEl.setCustomValidity(`يرجى رفع ملف (${att.name}) بصيغة PDF للمتابعة.`);
+                            inputEl.reportValidity();
+                            inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            inputEl.focus();
+                            return false;
+                        } else {
+                            inputEl.setCustomValidity('');
+                        }
                     }
                 }
             }
@@ -1721,11 +1745,50 @@
         const initialStep = {{ $initialStep }};
         showStep(initialStep);
 
+        // Make stepper circles clickable
+        document.querySelectorAll('#wizard-steps-container .wizard-step').forEach((el, idx) => {
+            el.style.cursor = 'pointer';
+            el.addEventListener('click', function() {
+                const targetStep = idx + 1;
+                if (targetStep) {
+                    goToStep(targetStep);
+                }
+            });
+        });
+
         document.querySelectorAll('input[type="file"]').forEach(input => {
             input.addEventListener('change', function() {
                 this.setCustomValidity('');
             });
         });
+
+        const form = document.getElementById('wizard-form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const submitter = e.submitter;
+                if (submitter && submitter.value === 'save_draft') {
+                    form.querySelectorAll('input, select, textarea').forEach(el => el.removeAttribute('required'));
+                    return true;
+                }
+
+                const chkConfirm = document.getElementById('chkConfirm');
+                if (chkConfirm && !chkConfirm.checked) {
+                    e.preventDefault();
+                    goToStep(7);
+                    chkConfirm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    chkConfirm.focus();
+                    chkConfirm.setCustomValidity('يرجى المصادقة على الإقرار بصحة البيانات للمتابعة.');
+                    chkConfirm.reportValidity();
+                    return false;
+                } else if (chkConfirm) {
+                    chkConfirm.setCustomValidity('');
+                }
+
+                // Remove required from all inputs to ensure smooth and guaranteed submission
+                form.querySelectorAll('input, select, textarea').forEach(el => el.removeAttribute('required'));
+                return true;
+            });
+        }
     });
 </script>
 

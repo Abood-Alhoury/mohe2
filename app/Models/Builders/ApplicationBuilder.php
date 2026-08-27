@@ -15,17 +15,38 @@ class ApplicationBuilder extends Builder
             $operator = '=';
         }
 
-        if (($column === 'status' || $column === 'applications.status') && is_string($value) && !is_numeric($value)) {
-            $statusId = ApplicationStatus::where('name', $value)->value('id');
-            if ($statusId) {
-                return parent::where($column, $operator, $statusId, $boolean);
+        $isStatusCol = in_array($column, ['status', 'applications.status']);
+        $isTypeCol = in_array($column, ['request_type', 'applications.request_type']);
+
+        if ($isStatusCol && is_string($value) && !is_numeric($value)) {
+            $lowerOp = strtolower(trim((string)$operator));
+            if ($lowerOp === 'like') {
+                $ids = ApplicationStatus::where('name', 'like', $value)->pluck('id')->toArray();
+                return parent::whereIn($column, $ids, $boolean);
+            } elseif ($lowerOp === 'not like') {
+                $ids = ApplicationStatus::where('name', 'like', $value)->pluck('id')->toArray();
+                return parent::whereNotIn($column, $ids, $boolean);
+            } else {
+                $statusId = ApplicationStatus::where('name', $value)->value('id');
+                if ($statusId) {
+                    return parent::where($column, $operator, $statusId, $boolean);
+                }
             }
         }
 
-        if (($column === 'request_type' || $column === 'applications.request_type') && is_string($value) && !is_numeric($value)) {
-            $typeId = ApplicationRequestType::where('name', $value)->value('id');
-            if ($typeId) {
-                return parent::where($column, $operator, $typeId, $boolean);
+        if ($isTypeCol && is_string($value) && !is_numeric($value)) {
+            $lowerOp = strtolower(trim((string)$operator));
+            if ($lowerOp === 'like') {
+                $ids = ApplicationRequestType::where('name', 'like', $value)->pluck('id')->toArray();
+                return parent::whereIn($column, $ids, $boolean);
+            } elseif ($lowerOp === 'not like') {
+                $ids = ApplicationRequestType::where('name', 'like', $value)->pluck('id')->toArray();
+                return parent::whereNotIn($column, $ids, $boolean);
+            } else {
+                $typeId = ApplicationRequestType::where('name', $value)->value('id');
+                if ($typeId) {
+                    return parent::where($column, $operator, $typeId, $boolean);
+                }
             }
         }
 
@@ -65,5 +86,10 @@ class ApplicationBuilder extends Builder
         }
 
         return parent::whereIn($column, $values, $boolean, $not);
+    }
+
+    public function whereNotIn($column, $values, $boolean = 'and')
+    {
+        return $this->whereIn($column, $values, $boolean, true);
     }
 }

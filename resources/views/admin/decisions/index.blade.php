@@ -137,14 +137,14 @@
                     <div class="row g-2 mb-2.5">
                         <div class="col-6 text-start">
                             <label class="form-label fw-bold small d-block text-start mb-1" style="color: var(--imperial-navy);">
-                                رقم قرار الأهلية (اختياري) :
+                                رقم قرار الأهلية :
                             </label>
                             <input
                                 type="text"
                                 name="eligibility_decision_no"
                                 class="form-control form-control-sm text-start"
                                 style="direction: rtl; text-align: right !important;"
-                                placeholder="مثال: أ.هـ/502/2026"
+                                placeholder="مثال: 502/2026"
                                 value=""
                             >
                         </div>
@@ -189,7 +189,7 @@
                                 name="decision_no"
                                 class="form-control form-control-sm text-start"
                                 style="direction: rtl; text-align: right !important;"
-                                placeholder="مثال: م.ل.ق/105/2026"
+                                placeholder="مثال:105/2026"
                                 value=""
                                 required
                             >

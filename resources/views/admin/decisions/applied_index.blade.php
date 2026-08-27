@@ -220,8 +220,8 @@
                     <table class="table mohe-table align-middle text-center mb-0">
                         <thead>
                             <tr>
-                                <th>رقم قرار المعادلة</th>
-                                <th>تاريخ المعادلة</th>
+                                <th>رقم القرار </th>
+                                <th>تاريخ القرار</th>
                                 <th>اسم المرشح</th>
                                 <th>الجامعة</th>
                                 <th>نوع الطلب</th>

@@ -114,7 +114,7 @@
         </div>
 
         <!-- Form Tag -->
-        <form action="{{ route('university.apply.faculty_permission.submit') }}" method="POST" enctype="multipart/form-data" id="wizard-form">
+        <form action="{{ route('university.apply.faculty_permission.submit') }}" method="POST" enctype="multipart/form-data" id="wizard-form" novalidate>
             @csrf
             <input type="hidden" name="draft_id" value="{{ optional($draft)->id }}">
             <input type="hidden" name="action" id="form-action-input" value="submit_final">
@@ -282,19 +282,20 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label label-md fw-medium text-dark">الجامعة المانحة لشهادة الدكتوراه </label><span class="text-danger"> *</span>
-                            <select name="phd_university_id" id="input-phdUniId" class="form-select academic-input" onchange="togglePhdUniOther()" required>
+                            <!-- <select name="phd_university_id" id="input-phdUniId" class="form-select academic-input" onchange="togglePhdUniOther()" required>
                                 <option value="">-- اختر الجامعة المانحة --</option>
                                 @foreach($govUniversities as $gu)
                                     <option value="{{ $gu->id }}" {{ old('phd_university_id', optional($phdEd)->university_id) == $gu->id ? 'selected' : '' }}>{{ $gu->name }}</option>
                                 @endforeach
-                                <option value="other" {{ old('phd_university_other', optional($phdEd)->university_other) ? 'selected' : '' }}>جامعة أخرى</option>
-                            </select>
+                                
+                            </select> -->
+                            <input type="text" name="phd_university_id" id="input-phdUniId" class="form-control academic-input" placeholder="أدخل اسم الجامعة المانحة" value="{{ old('phd_university_id', optional($phdEd)->university_id) }}">
                         </div>
-
+<!-- 
                         <div class="col-md-6" id="phd_uni_other_div" style="display: {{ old('phd_university_other', optional($phdEd)->university_other) ? 'block' : 'none' }};">
                             <label class="form-label label-md fw-medium text-dark">اسم الجامعة المانحة لدرجة الدكتوراه :</label><span class="text-danger"> *</span>
                             <input type="text" name="phd_university_other" id="input-phdUniOther" class="form-control academic-input" placeholder="أدخل اسم الجامعة المانحة" value="{{ old('phd_university_other', optional($phdEd)->university_other) }}">
-                        </div>
+                        </div> -->
 
                         <div class="col-md-6">
                             <label class="form-label label-md fw-medium text-dark">تاريخ / سنة منح شهادة الدكتوراه </label><span class="text-danger"> *</span>
@@ -603,12 +604,16 @@
                     </button>
                 </div>
 
-                <div>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-outline-primary px-3 py-2 fw-bold" id="btn-quick-review" onclick="quickReturnToReview()" style="display: none;" title="العودة مباشرة لخطوة المراجعة والتدقيق النهائي">
+                        <i class="fa-solid fa-clipboard-check me-1"></i> العودة للمراجعة والإرسال
+                    </button>
+
                     <button type="button" class="btn btn-primary px-4 py-2" id="btn-next" onclick="changeStep(1)">
                         التالي <i class="fa-solid fa-arrow-left ms-1"></i>
                     </button>
 
-                    <button type="submit" name="action" value="submit_final" class="btn btn-gold-cta px-5 py-2" id="btn-submit" style="display: none;">
+                    <button type="submit" formnovalidate name="action" value="submit_final" class="btn btn-gold-cta px-5 py-2" id="btn-submit" style="display: none;">
                         إنهاء وإرسال الطلب للوزارة <i class="fa-solid fa-paper-plane ms-1"></i>
                     </button>
                 </div>
@@ -621,6 +626,7 @@
 <script>
     let currentStep = 1;
     const totalSteps = 5;
+    let hasVisitedReview = {{ optional($draft)->id ? 'true' : 'false' }};
 
     function showStep(step) {
         currentStep = step;
@@ -659,6 +665,7 @@
         const spacerPrev = document.getElementById('spacer-prev');
         const btnNext = document.getElementById('btn-next');
         const btnSubmit = document.getElementById('btn-submit');
+        const btnQuickReview = document.getElementById('btn-quick-review');
 
         if (step > 1) {
             btnPrev.style.display = 'inline-block';
@@ -669,15 +676,30 @@
         }
 
         if (step === totalSteps) {
+            hasVisitedReview = true;
             btnNext.style.display = 'none';
             btnSubmit.style.display = 'inline-block';
-            populateReview();
+            if (btnQuickReview) btnQuickReview.style.display = 'none';
+            try {
+                populateReview();
+            } catch (err) {
+                console.error('Error populating review:', err);
+            }
         } else {
             btnNext.style.display = 'inline-block';
             btnSubmit.style.display = 'none';
+            if (btnQuickReview) {
+                btnQuickReview.style.display = hasVisitedReview ? 'inline-block' : 'none';
+            }
         }
 
         window.scrollTo({ top: 120, behavior: 'smooth' });
+    }
+
+    function quickReturnToReview() {
+        if (validateCurrentStep(currentStep)) {
+            showStep(totalSteps);
+        }
     }
 
     function changeStep(delta) {
@@ -896,11 +918,18 @@
                 if (chkConfirm && !chkConfirm.checked) {
                     e.preventDefault();
                     goToStep(5);
+                    chkConfirm.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     chkConfirm.focus();
                     chkConfirm.setCustomValidity('يرجى المصادقة على الإقرار بصحة البيانات للمتابعة.');
                     chkConfirm.reportValidity();
                     return false;
+                } else if (chkConfirm) {
+                    chkConfirm.setCustomValidity('');
                 }
+
+                // Remove required from all inputs to ensure smooth and guaranteed submission
+                form.querySelectorAll('input, select, textarea').forEach(el => el.removeAttribute('required'));
+                return true;
             });
         }
     });

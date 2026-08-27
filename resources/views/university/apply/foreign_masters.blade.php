@@ -94,7 +94,7 @@
         </div>
 
         <!-- Form Tag -->
-        <form action="{{ route('university.apply.foreign_masters.submit') }}" method="POST" enctype="multipart/form-data" id="wizard-form">
+        <form action="{{ route('university.apply.foreign_masters.submit') }}" method="POST" enctype="multipart/form-data" id="wizard-form" novalidate>
             @csrf
             <input type="hidden" name="draft_id" value="{{ optional($draft)->id }}">
             <input type="hidden" name="action" id="form-action-input" value="submit_final">
@@ -215,26 +215,19 @@
                     $hsDecNo = $draftHsEd && $draftHsEd->notes ? preg_replace('/.*رقم قرار المعادلة الثانوية:\s*([^\|]+).*/u', '$1', $draftHsEd->notes) : '';
                     $hsDecDate = $draftHsEd && $draftHsEd->notes && str_contains($draftHsEd->notes, 'تاريخ القرار:') ? trim(preg_replace('/.*تاريخ القرار:\s*([^\|]+).*/u', '$1', $draftHsEd->notes)) : '';
                     $isHsForeign = old('hs_country_id', $hsCountryId) != ($syriaId ?? 1);
-                    $isHsOther = old('hs_country_id', $hsCountryId) === 'other';
                 @endphp
 
                 <div class="row g-3" id="hs_fields_row">
-                    <div class="{{ $isHsOther ? 'col-md-3' : 'col-md-4' }}" id="hs_country_col">
+                    <div class="col-md-4" id="hs_country_col">
                         <label class="form-label label-sm fw-bold">بلد الحصول على الشهادة الثانوية <span class="text-danger">*</span></label>
                         <select name="hs_country_id" id="hs_country_id" class="form-select academic-input" onchange="toggleHsDecision(this.value)" required>
                             @foreach($countries as $c)
                                 <option value="{{ $c->id }}" {{ old('hs_country_id', $hsCountryId) == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
                             @endforeach
-                            <option value="other" {{ old('hs_country_id', $hsCountryId) === 'other' ? 'selected' : '' }}>أخرى</option>
                         </select>
                     </div>
 
-                    <div class="col-md-3" id="hs_country_other_box" style="display: {{ $isHsOther ? 'block' : 'none' }};">
-                        <label class="form-label label-sm fw-bold" style="color: #000000 !important;">اسم بلد الشهادة الثانوية (أخرى) <span class="text-danger">*</span></label>
-                        <input type="text" name="hs_country_other" id="hs_country_other" class="form-control academic-input" placeholder="اكتب اسم البلد" value="{{ old('hs_country_other') }}">
-                    </div>
-
-                    <div class="{{ $isHsOther ? 'col-md-3' : 'col-md-4' }}" id="hs_type_col">
+                    <div class="col-md-4" id="hs_type_col">
                         <label class="form-label label-sm fw-bold">فرع الشهادة الثانوية <span class="text-danger">*</span></label>
                         <select name="hs_type" class="form-select academic-input" required>
                             <option value="علمي" {{ old('hs_type', $hsType) == 'علمي' ? 'selected' : '' }}>علمي</option>
@@ -247,7 +240,7 @@
                         </select>
                     </div>
 
-                    <div class="{{ $isHsOther ? 'col-md-3' : 'col-md-4' }}" id="hs_year_col">
+                    <div class="col-md-4" id="hs_year_col">
                         <label class="form-label label-sm fw-bold">سنة الحصول على الشهادة الثانوية <span class="text-danger">*</span></label>
                         <input type="number" name="hs_grant_date" class="form-control academic-input" placeholder="مثال: 2012" min="1950" max="{{ date('Y') }}" value="{{ old('hs_grant_date', $hsYear) }}" required>
                     </div>
@@ -289,28 +282,20 @@
                     $baDecNo = $draftBaEd && $draftBaEd->notes ? preg_replace('/.*رقم قرار معادلة الإجازة:\s*([^\|]+).*/u', '$1', $draftBaEd->notes) : '';
                     $baDecDate = $draftBaEd && $draftBaEd->notes && str_contains($draftBaEd->notes, 'تاريخ القرار:') ? trim(preg_replace('/.*تاريخ القرار:\s*([^\|]+).*/u', '$1', $draftBaEd->notes)) : '';
                     $isBaForeign = old('ba_country_id', $baCountryId) != ($syriaId ?? 1);
-                    $isBaOtherCountry = old('ba_country_id', $baCountryId) === 'other';
-                    $baColClass = $isBaOtherCountry ? 'col-md-4' : 'col-md-6';
                     $baUniValue = old('ba_university_other', optional($draftBaEd)->university ? $draftBaEd->university->name : $baUniOther);
                 @endphp
 
                 <div class="row g-3" id="ba_first_row">
-                    <div class="{{ $baColClass }}" id="ba_country_col">
+                    <div class="col-md-6" id="ba_country_col">
                         <label class="form-label label-sm fw-bold">بلد الإجازة الجامعية الأولى <span class="text-danger">*</span></label>
                         <select name="ba_country_id" id="ba_country_id" class="form-select academic-input" onchange="toggleBaCountry(this.value)" required>
                             @foreach($countries as $c)
                                 <option value="{{ $c->id }}" {{ old('ba_country_id', $baCountryId) == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
                             @endforeach
-                            <option value="other" {{ old('ba_country_id', $baCountryId) === 'other' ? 'selected' : '' }}>أخرى</option>
                         </select>
                     </div>
 
-                    <div class="{{ $baColClass }}" id="ba_country_other_box" style="display: {{ $isBaOtherCountry ? 'block' : 'none' }};">
-                        <label class="form-label label-sm fw-bold" style="color: #000000 !important;">اسم بلد الإجازة الجامعية (أخرى) <span class="text-danger">*</span></label>
-                        <input type="text" name="ba_country_other" id="ba_country_other" class="form-control academic-input" placeholder="اكتب اسم البلد" value="{{ old('ba_country_other') }}">
-                    </div>
-
-                    <div class="{{ $baColClass }}" id="ba_uni_col">
+                    <div class="col-md-6" id="ba_uni_col">
                         <label class="form-label label-sm fw-bold">الجامعة المانحة للإجازة الجامعية <span class="text-danger">*</span></label>
                         <input type="text" name="ba_university_other" id="ba_university_other" class="form-control academic-input" placeholder="أدخل اسم الجامعة المانحة للإجازة (مثال: جامعة دمشق / جامعة القاهرة)" value="{{ $baUniValue }}" required>
                     </div>
@@ -381,7 +366,7 @@
                     $draftMaEd = optional($draft)->educations ? $draft->educations->where('education_level_id', 2)->first() : null;
                     $maCountryId = $draftMaEd ? $draftMaEd->country_id : null;
                     $maUniId = $draftMaEd ? $draftMaEd->university_id : '';
-                    $maUniOther = $draftMaEd ? $draftMaEd->university_other : '';
+                     $maUniOther = $draftMaEd ? ($draftMaEd->university_other ?: optional($draftMaEd->university)->name) : '';
                     $maFaculty = $draftMaEd ? $draftMaEd->faculty : '';
                     $maDept = $draftMaEd ? $draftMaEd->department : '';
                     $maSpec = $draftMaEd ? ($draftMaEd->exact_specialization ?: $draftMaEd->section_name) : '';
@@ -406,13 +391,8 @@
                     $expUnis = $draftMaEd && $draftMaEd->notes ? preg_replace('/.*جامعات الخبرة:\s*([^\|]+).*/u', '$1', $draftMaEd->notes) : '';
                 @endphp
 
-                @php
-                    $isMaOtherCountry = old('ma_country_id', $maCountryId) === 'other';
-                    $maColClass = $isMaOtherCountry ? 'col-md-4' : 'col-md-6';
-                @endphp
-
                 <div class="row g-3" id="ma_first_row">
-                    <div class="{{ $maColClass }}" id="ma_country_col">
+                    <div class="col-md-6" id="ma_country_col">
                         <label class="form-label label-sm fw-bold">بلد الحصول على درجة الماجستير (بلد الدراسة) <span class="text-danger">*</span></label>
                         <select name="ma_country_id" id="ma_country_id" class="form-select academic-input" onchange="toggleMaCountry(this.value)" required>
                             <option value="">-- اختر بلد دراسة الماجستير (خارجي) --</option>
@@ -421,16 +401,10 @@
                                     <option value="{{ $c->id }}" {{ old('ma_country_id', $maCountryId) == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
                                 @endif
                             @endforeach
-                            <option value="other" {{ old('ma_country_id', $maCountryId) === 'other' ? 'selected' : '' }}>أخرى</option>
                         </select>
                     </div>
 
-                    <div class="{{ $maColClass }}" id="ma_country_other_box" style="display: {{ $isMaOtherCountry ? 'block' : 'none' }};">
-                        <label class="form-label label-sm fw-bold" style="color: #000000 !important;">اسم بلد دراسة الماجستير (أخرى) <span class="text-danger">*</span></label>
-                        <input type="text" name="ma_country_other" id="ma_country_other" class="form-control academic-input" placeholder="اكتب اسم البلد باللغة العربية" value="{{ old('ma_country_other') }}" {{ $isMaOtherCountry ? 'required' : '' }}>
-                    </div>
-
-                    <div class="{{ $maColClass }}" id="ma_university_col">
+                    <div class="col-md-6" id="ma_university_col">
                         <label class="form-label label-sm fw-bold">الجامعة الخارجية المانحة للماجستير <span class="text-danger">*</span></label>
                         <input type="text" name="ma_university_other" id="ma_university_other" class="form-control academic-input" placeholder="اسم الجامعة الخارجية (مثال: جامعة بيروت العربية / جامعة القاهرة)" value="{{ old('ma_university_other', $maUniOther) }}" required>
                     </div>
@@ -735,6 +709,7 @@
                                 if ($att->attachment_type_id == 16 || str_contains($note, 'معادلة الشهادة الثانوية') || str_contains($note, 'معادلة الثانوية')) $existingFilesMap['file_hs_decision'] = $att;
                                 if ($att->attachment_type_id == 17 || str_contains($note, 'معادلة الإجازة') || str_contains($note, 'معادلة البكالوريوس')) $existingFilesMap['file_ba_decision'] = $att;
                                 if ($att->attachment_type_id == 18 || str_contains($note, 'الإيفاد')) $existingFilesMap['file_envoy_decision'] = $att;
+                                if ($att->attachment_type_id == 19 || str_contains($note, 'وثائق ومرفقات ثبوتية')) $existingFilesMap['file_other_attachments'] = $att;
                             }
                         }
                     }
@@ -747,8 +722,14 @@
                             <label class="form-label label-sm fw-bold">1. نسخة مصدقة عن شهادة الثانوية العامة <span class="text-danger">*</span></label>
                             <input type="file" name="file_secondary_cert" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_secondary_cert']) ? 'required' : '' }}>
                             @if(!empty($existingFilesMap['file_secondary_cert']))
-                                <div class="mt-2"><span class="badge bg-success-subtle text-success"><i class="fa-solid fa-check me-1"></i> تم رفع الملف سابقاً: {{ basename($existingFilesMap['file_secondary_cert']->file_path) }}</span></div>
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                    <a href="{{ asset('storage/' . $existingFilesMap['file_secondary_cert']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                        <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                    </a>
+                                </div>
                             @endif
+
                         </div>
                     </div>
 
@@ -758,7 +739,12 @@
                             <label class="form-label label-sm fw-bold ">قرار معادلة الشهادة الثانوية غير السورية <span class="text-danger" id="hs_att_req_badge">*</span></label>
                             <input type="file" name="file_hs_decision" id="file_hs_decision" class="form-control academic-input" accept=".pdf" {{ $isHsForeign && empty($existingFilesMap['file_hs_decision']) ? 'required' : '' }}>
                             @if(!empty($existingFilesMap['file_hs_decision']))
-                                <div class="mt-2"><span class="badge bg-success-subtle text-success"><i class="fa-solid fa-check me-1"></i> تم رفع الملف سابقاً: {{ basename($existingFilesMap['file_hs_decision']->file_path) }}</span></div>
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                    <a href="{{ asset('storage/' . $existingFilesMap['file_hs_decision']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                        <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                    </a>
+                                </div>
                             @endif
                         </div>
                     </div>
@@ -768,8 +754,13 @@
                         <div class="border rounded p-3 bg-light h-100">
                             <label class="form-label label-sm fw-bold">2. نسخة مصدقة عن شهادة الإجازة الجامعية الأولى (البكالوريوس) <span class="text-danger">*</span></label>
                             <input type="file" name="file_bachelor_cert" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_bachelor_cert']) ? 'required' : '' }}>
-                            @if(!empty($existingFilesMap['file_bachelor_cert']))
-                                <div class="mt-2"><span class="badge bg-success-subtle text-success"><i class="fa-solid fa-check me-1"></i> تم رفع الملف سابقاً: {{ basename($existingFilesMap['file_bachelor_cert']->file_path) }}</span></div>
+                                 @if(!empty($existingFilesMap['file_bachelor_cert']))
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                    <a href="{{ asset('storage/' . $existingFilesMap['file_bachelor_cert']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                        <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                    </a>
+                                </div>
                             @endif
                         </div>
                     </div>
@@ -780,7 +771,12 @@
                             <label class="form-label label-sm fw-bold ">قرار معادلة الإجازة الجامعية الأولى غير السورية <span class="text-danger" id="ba_att_req_badge">*</span></label>
                             <input type="file" name="file_ba_decision" id="file_ba_decision" class="form-control academic-input" accept=".pdf" {{ $isBaForeign && empty($existingFilesMap['file_ba_decision']) ? 'required' : '' }}>
                             @if(!empty($existingFilesMap['file_ba_decision']))
-                                <div class="mt-2"><span class="badge bg-success-subtle text-success"><i class="fa-solid fa-check me-1"></i> تم رفع الملف سابقاً: {{ basename($existingFilesMap['file_ba_decision']->file_path) }}</span></div>
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                    <a href="{{ asset('storage/' . $existingFilesMap['file_ba_decision']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                        <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                    </a>
+                                </div>
                             @endif
                         </div>
                     </div>
@@ -791,7 +787,12 @@
                             <label class="form-label label-sm fw-bold">3. الشهادة قبل المؤهل العلمي الأخير <span class="text-muted fs-8 fw-normal">(اختياري)</span></label>
                             <input type="file" name="file_prev_qual_cert" class="form-control academic-input" accept=".pdf">
                             @if(!empty($existingFilesMap['file_prev_qual_cert']))
-                                <div class="mt-2"><span class="badge bg-success-subtle text-success"><i class="fa-solid fa-check me-1"></i> تم رفع الملف سابقاً</span></div>
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                    <a href="{{ asset('storage/' . $existingFilesMap['file_prev_qual_cert']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                        <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                    </a>
+                                </div>
                             @endif
                         </div>
                     </div>
@@ -802,7 +803,12 @@
                             <label class="form-label label-sm fw-bold">4. نسخة مصدقة أصولاً عن شهادة الماجستير الخارجي <span class="text-danger">*</span></label>
                             <input type="file" name="file_master_cert" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_master_cert']) ? 'required' : '' }}>
                             @if(!empty($existingFilesMap['file_master_cert']))
-                                <div class="mt-2"><span class="badge bg-success-subtle text-success"><i class="fa-solid fa-check me-1"></i> تم رفع الملف سابقاً: {{ basename($existingFilesMap['file_master_cert']->file_path) }}</span></div>
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                    <a href="{{ asset('storage/' . $existingFilesMap['file_master_cert']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                        <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                    </a>
+                                </div>
                             @endif
                         </div>
                     </div>
@@ -813,7 +819,12 @@
                             <label class="form-label label-sm fw-bold ">قرار الإيفاد الرسمي للدراسة في الخارج <span class="text-danger" id="envoy_att_req_badge">*</span></label>
                             <input type="file" name="file_envoy_decision" id="file_envoy_decision" class="form-control academic-input" accept=".pdf" {{ old('is_envoy', $isEnvoy) && empty($existingFilesMap['file_envoy_decision']) ? 'required' : '' }}>
                             @if(!empty($existingFilesMap['file_envoy_decision']))
-                                <div class="mt-2"><span class="badge bg-success-subtle text-success"><i class="fa-solid fa-check me-1"></i> تم رفع الملف سابقاً: {{ basename($existingFilesMap['file_envoy_decision']->file_path) }}</span></div>
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                    <a href="{{ asset('storage/' . $existingFilesMap['file_envoy_decision']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                        <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                    </a>
+                                </div>
                             @endif
                         </div>
                     </div>
@@ -824,7 +835,12 @@
                             <label class="form-label label-sm fw-bold">5. كشف علامات الماجستير إن وجد <span class="text-muted fs-8 fw-normal">(اختياري)</span></label>
                             <input type="file" name="file_master_transcript" class="form-control academic-input" accept=".pdf">
                             @if(!empty($existingFilesMap['file_master_transcript']))
-                                <div class="mt-2"><span class="badge bg-success-subtle text-success"><i class="fa-solid fa-check me-1"></i> تم رفع الملف سابقاً</span></div>
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                    <a href="{{ asset('storage/' . $existingFilesMap['file_master_transcript']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                        <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                    </a>
+                                </div>
                             @endif
                         </div>
                     </div>
@@ -835,7 +851,12 @@
                             <label class="form-label label-sm fw-bold">6. ملخص عن أطروحة الماجستير باللغة العربية <span class="text-danger">*</span></label>
                             <input type="file" name="file_thesis_abstract" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_thesis_abstract']) ? 'required' : '' }}>
                             @if(!empty($existingFilesMap['file_thesis_abstract']))
-                                <div class="mt-2"><span class="badge bg-success-subtle text-success"><i class="fa-solid fa-check me-1"></i> تم رفع الملف سابقاً: {{ basename($existingFilesMap['file_thesis_abstract']->file_path) }}</span></div>
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                    <a href="{{ asset('storage/' . $existingFilesMap['file_thesis_abstract']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                        <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                    </a>
+                                </div>
                             @endif
                         </div>
                     </div>
@@ -846,7 +867,12 @@
                             <label class="form-label label-sm fw-bold">7. إيصال إيداع الأطروحة لدى المكتبة الوطنية <span class="text-muted fs-8 fw-normal">(اختياري)</span></label>
                             <input type="file" name="file_library_receipt" class="form-control academic-input" accept=".pdf">
                             @if(!empty($existingFilesMap['file_library_receipt']))
-                                <div class="mt-2"><span class="badge bg-success-subtle text-success"><i class="fa-solid fa-check me-1"></i> تم رفع الملف سابقاً</span></div>
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                    <a href="{{ asset('storage/' . $existingFilesMap['file_library_receipt']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                        <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                    </a>
+                                </div>
                             @endif
                         </div>
                     </div>
@@ -857,7 +883,12 @@
                             <label class="form-label label-sm fw-bold">8. وثيقة تثبت تواريخ التسجيل والمباشرة والمناقشة لدرجة الماجستير <span class="text-danger">*</span></label>
                             <input type="file" name="file_reg_defense_doc" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_reg_defense_doc']) ? 'required' : '' }}>
                             @if(!empty($existingFilesMap['file_reg_defense_doc']))
-                                <div class="mt-2"><span class="badge bg-success-subtle text-success"><i class="fa-solid fa-check me-1"></i> تم رفع الملف سابقاً</span></div>
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                    <a href="{{ asset('storage/' . $existingFilesMap['file_reg_defense_doc']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                        <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                    </a>
+                                </div>
                             @endif
                         </div>
                     </div>
@@ -868,7 +899,12 @@
                             <label class="form-label label-sm fw-bold">9. شهادة الخبرة التدريسية المثبتة داخل الجامعات السورية <span class="text-danger" id="exp_cert_required_badge" style="display: {{ old('has_syrian_experience', $hasExp) == 'yes' ? 'inline' : 'none' }};">*</span> <span class="text-muted fs-8 fw-normal" id="exp_cert_optional_badge" style="display: {{ old('has_syrian_experience', $hasExp) == 'yes' ? 'none' : 'inline' }};">(خاص بالمسار النظري)</span></label>
                             <input type="file" name="file_experience_cert" id="file_experience_cert" class="form-control academic-input" accept=".pdf" {{ old('has_syrian_experience', $hasExp) == 'yes' && empty($existingFilesMap['file_experience_cert']) ? 'required' : '' }}>
                             @if(!empty($existingFilesMap['file_experience_cert']))
-                                <div class="mt-2"><span class="badge bg-success-subtle text-success"><i class="fa-solid fa-check me-1"></i> تم رفع الملف سابقاً</span></div>
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                    <a href="{{ asset('storage/' . $existingFilesMap['file_experience_cert']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                        <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                    </a>
+                                </div>
                             @endif
                         </div>
                     </div>
@@ -879,7 +915,12 @@
                             <label class="form-label label-sm fw-bold">10. العقود مع الجامعة الخاصة <span class="text-muted fs-8 fw-normal">(اختياري)</span></label>
                             <input type="file" name="file_private_uni_contracts" class="form-control academic-input" accept=".pdf">
                             @if(!empty($existingFilesMap['file_private_uni_contracts']))
-                                <div class="mt-2"><span class="badge bg-success-subtle text-success"><i class="fa-solid fa-check me-1"></i> تم رفع الملف سابقاً</span></div>
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                    <a href="{{ asset('storage/' . $existingFilesMap['file_private_uni_contracts']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                        <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                    </a>
+                                </div>
                             @endif
                         </div>
                     </div>
@@ -890,7 +931,12 @@
                             <label class="form-label label-sm fw-bold">11. إيصالات الرواتب التي قبضت من الجامعة <span class="text-muted fs-8 fw-normal">(اختياري)</span></label>
                             <input type="file" name="file_salary_receipts" class="form-control academic-input" accept=".pdf">
                             @if(!empty($existingFilesMap['file_salary_receipts']))
-                                <div class="mt-2"><span class="badge bg-success-subtle text-success"><i class="fa-solid fa-check me-1"></i> تم رفع الملف سابقاً</span></div>
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                    <a href="{{ asset('storage/' . $existingFilesMap['file_salary_receipts']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                        <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                    </a>
+                                </div>
                             @endif
                         </div>
                     </div>
@@ -901,7 +947,12 @@
                             <label class="form-label label-sm fw-bold">12. شهادة مهارات الحاسوب (ICDL) <span class="text-danger">*</span></label>
                             <input type="file" name="file_icdl_cert" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_icdl_cert']) ? 'required' : '' }}>
                             @if(!empty($existingFilesMap['file_icdl_cert']))
-                                <div class="mt-2"><span class="badge bg-success-subtle text-success"><i class="fa-solid fa-check me-1"></i> تم رفع الملف سابقاً</span></div>
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                    <a href="{{ asset('storage/' . $existingFilesMap['file_icdl_cert']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                        <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                    </a>
+                                </div>
                             @endif
                         </div>
                     </div>
@@ -912,7 +963,12 @@
                             <label class="form-label label-sm fw-bold">13. وثيقة اجتياز اختبار اللغة الأجنبية (الإنكليزية) <span class="text-danger">*</span></label>
                             <input type="file" name="file_english_cert" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_english_cert']) ? 'required' : '' }}>
                             @if(!empty($existingFilesMap['file_english_cert']))
-                                <div class="mt-2"><span class="badge bg-success-subtle text-success"><i class="fa-solid fa-check me-1"></i> تم رفع الملف سابقاً</span></div>
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                    <a href="{{ asset('storage/' . $existingFilesMap['file_english_cert']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                        <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                    </a>
+                                </div>
                             @endif
                         </div>
                     </div>
@@ -923,7 +979,12 @@
                             <label class="form-label label-sm fw-bold">14. إيصال تسديد رسم تعادل الماجستير الخارجي (100,000 ل.س) <span class="text-danger">*</span></label>
                             <input type="file" name="file_fees_receipt" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_fees_receipt']) ? 'required' : '' }}>
                             @if(!empty($existingFilesMap['file_fees_receipt']))
-                                <div class="mt-2"><span class="badge bg-success-subtle text-success"><i class="fa-solid fa-check me-1"></i> تم رفع الملف سابقاً: {{ basename($existingFilesMap['file_fees_receipt']->file_path) }}</span></div>
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                    <a href="{{ asset('storage/' . $existingFilesMap['file_fees_receipt']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                        <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                    </a>
+                                </div>
                             @endif
                         </div>
                     </div>
@@ -934,7 +995,12 @@
                             <label class="form-label label-sm fw-bold">15. صورة عن جواز السفر وصفحات الأختام والإقامة ببلد الدراسة <span class="text-danger">*</span></label>
                             <input type="file" name="file_passport" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_passport']) ? 'required' : '' }}>
                             @if(!empty($existingFilesMap['file_passport']))
-                                <div class="mt-2"><span class="badge bg-success-subtle text-success"><i class="fa-solid fa-check me-1"></i> تم رفع الملف سابقاً: {{ basename($existingFilesMap['file_passport']->file_path) }}</span></div>
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                    <a href="{{ asset('storage/' . $existingFilesMap['file_passport']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                        <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                    </a>
+                                </div>
                             @endif
                         </div>
                     </div>
@@ -944,6 +1010,14 @@
                         <div class="border rounded p-3 bg-light h-100">
                             <label class="form-label label-sm fw-bold">16. وثائق ومرفقات ثبوتية داعمة أخرى <span class="text-muted fs-8 fw-normal">(اختياري)</span></label>
                             <input type="file" name="file_other_attachments" class="form-control academic-input" accept=".pdf">
+                               @if(!empty($existingFilesMap['file_other_attachments']))
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                    <a href="{{ asset('storage/' . $existingFilesMap['file_other_attachments']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                        <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                    </a>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -1104,12 +1178,16 @@
                     </button>
                 </div>
 
-                <div>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-outline-primary px-3 py-2 fw-bold" id="btn-quick-review" onclick="quickReturnToReview()" style="display: none;" title="العودة مباشرة لخطوة المراجعة والتدقيق النهائي">
+                        <i class="fa-solid fa-clipboard-check me-1"></i> العودة للمراجعة والإرسال
+                    </button>
+
                     <button type="button" class="btn btn-primary px-4 py-2" id="btn-next" onclick="changeStep(1)">
                         التالي <i class="fa-solid fa-arrow-left ms-1"></i>
                     </button>
 
-                    <button type="submit" name="action" value="submit_final" class="btn btn-gold-cta px-5 py-2" id="btn-submit" style="display: none;">
+                    <button type="submit" formnovalidate name="action" value="submit_final" class="btn btn-gold-cta px-5 py-2" id="btn-submit" style="display: none;">
                         إنهاء وإرسال الطلب للوزارة <i class="fa-solid fa-paper-plane ms-1"></i>
                     </button>
                 </div>
@@ -1122,6 +1200,7 @@
 <script>
     let currentStep = 1;
     const totalSteps = 7;
+    let hasVisitedReview = {{ optional($draft)->id ? 'true' : 'false' }};
 
     function showStep(step) {
         currentStep = step;
@@ -1154,6 +1233,7 @@
         const spacerPrev = document.getElementById('spacer-prev');
         const btnNext = document.getElementById('btn-next');
         const btnSubmit = document.getElementById('btn-submit');
+        const btnQuickReview = document.getElementById('btn-quick-review');
 
         if (step === 1) {
             btnPrev.style.display = 'none';
@@ -1164,15 +1244,30 @@
         }
 
         if (step === totalSteps) {
+            hasVisitedReview = true;
             btnNext.style.display = 'none';
             btnSubmit.style.display = 'inline-block';
-            populateReview();
+            if (btnQuickReview) btnQuickReview.style.display = 'none';
+            try {
+                populateReview();
+            } catch (err) {
+                console.error('Error populating review:', err);
+            }
         } else {
             btnNext.style.display = 'inline-block';
             btnSubmit.style.display = 'none';
+            if (btnQuickReview) {
+                btnQuickReview.style.display = hasVisitedReview ? 'inline-block' : 'none';
+            }
         }
 
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function quickReturnToReview() {
+        if (validateCurrentStep(currentStep)) {
+            showStep(totalSteps);
+        }
     }
 
     function changeStep(delta) {
@@ -1251,32 +1346,6 @@
     const syriaCountryId = '{{ $syriaId ?? 1 }}';
 
     function toggleHsDecision(countryId) {
-        const isOther = (countryId === 'other');
-        const countryBox = document.getElementById('hs_country_other_box');
-        const countryInput = document.getElementById('hs_country_other');
-        const countryCol = document.getElementById('hs_country_col');
-        const typeCol = document.getElementById('hs_type_col');
-        const yearCol = document.getElementById('hs_year_col');
-
-        if (countryBox) {
-            countryBox.style.display = isOther ? 'block' : 'none';
-        }
-        if (countryInput) {
-            if (isOther) {
-                countryInput.setAttribute('required', 'required');
-            } else {
-                countryInput.removeAttribute('required');
-                countryInput.classList.remove('is-invalid');
-            }
-        }
-
-        if (countryCol && typeCol && yearCol) {
-            countryCol.className = isOther ? 'col-md-3' : 'col-md-4';
-            if (countryBox) countryBox.className = 'col-md-3';
-            typeCol.className = isOther ? 'col-md-3' : 'col-md-4';
-            yearCol.className = isOther ? 'col-md-3' : 'col-md-4';
-        }
-
         const box = document.getElementById('hs_decision_box');
         const noInput = document.getElementById('hs_decision_no');
         const dateInput = document.getElementById('hs_decision_date');
@@ -1301,30 +1370,6 @@
     }
 
     function toggleBaCountry(countryId) {
-        const isOther = (countryId === 'other');
-        const countryBox = document.getElementById('ba_country_other_box');
-        const countryInput = document.getElementById('ba_country_other');
-        const countryCol = document.getElementById('ba_country_col');
-        const uniCol = document.getElementById('ba_uni_col');
-
-        if (countryBox) {
-            countryBox.style.display = isOther ? 'block' : 'none';
-        }
-        if (countryInput) {
-            if (isOther) {
-                countryInput.setAttribute('required', 'required');
-            } else {
-                countryInput.removeAttribute('required');
-                countryInput.classList.remove('is-invalid');
-            }
-        }
-
-        if (countryCol && uniCol) {
-            countryCol.className = isOther ? 'col-md-4' : 'col-md-6';
-            if (countryBox) countryBox.className = isOther ? 'col-md-4' : 'col-md-6';
-            uniCol.className = isOther ? 'col-md-4' : 'col-md-6';
-        }
-
         const box = document.getElementById('ba_decision_box');
         const noInput = document.getElementById('ba_decision_no');
         const dateInput = document.getElementById('ba_decision_date');
@@ -1351,30 +1396,7 @@
     function toggleBaUniOther(val) {}
     function updateBaRowCols() {}
 
-    function toggleMaCountry(val) {
-        const isOther = (val === 'other');
-        const box = document.getElementById('ma_country_other_box');
-        const input = document.getElementById('ma_country_other');
-        const countryCol = document.getElementById('ma_country_col');
-        const uniCol = document.getElementById('ma_university_col');
-
-        if (box) {
-            box.style.display = isOther ? 'block' : 'none';
-        }
-        if (input) {
-            if (isOther) {
-                input.setAttribute('required', 'required');
-            } else {
-                input.removeAttribute('required');
-                input.classList.remove('is-invalid');
-            }
-        }
-        if (countryCol && uniCol) {
-            countryCol.className = isOther ? 'col-md-4' : 'col-md-6';
-            if (box) box.className = isOther ? 'col-md-4' : 'col-md-6';
-            uniCol.className = isOther ? 'col-md-4' : 'col-md-6';
-        }
-    }
+    function toggleMaCountry(val) {}
 
     function toggleEnvoyBox(checked) {
         const box = document.getElementById('envoy_details_box');
@@ -1594,9 +1616,6 @@
         // Group 2: High School
         const hsCountrySelect = form.hs_country_id;
         let hsCountryText = hsCountrySelect.options[hsCountrySelect.selectedIndex]?.text || '---';
-        if (hsCountrySelect.value === 'other' && form.hs_country_other && form.hs_country_other.value.trim()) {
-            hsCountryText = form.hs_country_other.value.trim() + ' (دولة غير مدرجة)';
-        }
         document.getElementById('preview-hsCountry').textContent = hsCountryText;
         document.getElementById('preview-hsType').textContent = form.hs_type.value || '---';
         document.getElementById('preview-hsDate').textContent = form.hs_grant_date.value || '---';
@@ -1615,9 +1634,6 @@
         // Group 3: Bachelor's Degree
         const baCountrySelect = form.ba_country_id;
         let baCountryText = baCountrySelect.options[baCountrySelect.selectedIndex]?.text || '---';
-        if (baCountrySelect.value === 'other' && form.ba_country_other && form.ba_country_other.value.trim()) {
-            baCountryText = form.ba_country_other.value.trim() + ' (دولة غير مدرجة)';
-        }
         document.getElementById('preview-baCountry').textContent = baCountryText;
         document.getElementById('preview-baUni').textContent = form.ba_university_other.value || '---';
         document.getElementById('preview-baFaculty').textContent = form.ba_faculty.value || '---';
@@ -1640,9 +1656,6 @@
         // Group 4: Master & Track
         const maCountrySelect = form.ma_country_id;
         let maCountryText = maCountrySelect.options[maCountrySelect.selectedIndex]?.text || '---';
-        if (maCountrySelect.value === 'other' && form.ma_country_other && form.ma_country_other.value.trim()) {
-            maCountryText = form.ma_country_other.value.trim() + ' (دولة غير مدرجة)';
-        }
         document.getElementById('preview-maCountry').textContent = maCountryText;
         document.getElementById('preview-maUni').textContent = form.ma_university_other.value || '---';
         document.getElementById('preview-maFaculty').textContent = form.ma_faculty.value || '---';
@@ -1739,24 +1752,23 @@
                     return true;
                 }
 
-                // On final submit: remove required from files that have uploaded badges
-                document.querySelectorAll('input[type="file"]').forEach(function(input) {
-                    const parentDiv = input.closest('.border.rounded') || input.closest('.col-md-6') || input.parentElement;
-                    if (parentDiv && parentDiv.querySelector('.badge.bg-success-subtle')) {
-                        input.removeAttribute('required');
-                    }
-                });
-
                 // Check final step confirmation
                 const chkConfirm = document.getElementById('chkConfirm');
                 if (chkConfirm && !chkConfirm.checked) {
                     e.preventDefault();
                     goToStep(7);
+                    chkConfirm.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     chkConfirm.focus();
                     chkConfirm.setCustomValidity('يرجى المصادقة على الإقرار بصحة البيانات للمتابعة.');
                     chkConfirm.reportValidity();
                     return false;
+                } else if (chkConfirm) {
+                    chkConfirm.setCustomValidity('');
                 }
+
+                // Remove required from all inputs to ensure smooth and guaranteed submission
+                form.querySelectorAll('input, select, textarea').forEach(el => el.removeAttribute('required'));
+                return true;
             });
         }
     });
