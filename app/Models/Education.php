@@ -65,6 +65,11 @@ class Education extends Model
         return $this->hasMany(EducationResidence::class, 'education_id');
     }
 
+    public function getUniversityNameAttribute()
+    {
+        return optional($this->university)->name ?? ($this->section_name ?? '');
+    }
+
     public function getTypeOrFacultyAttribute()
     {
         // For High school: section_name holds 'علمي'/'أدبي'/'شرعي' etc.

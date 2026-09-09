@@ -69,7 +69,7 @@
                         </div>
                         <div class="d-flex align-items-center gap-2">
                             <i class="fa-solid fa-clock text-gold"></i>
-                            <span>أوقات الدوام الرسمي: الأحد - الخميس (08:00 ص - 03:30 م)</span>
+                            <span>أوقات الدوام الرسمي: الأحد - الخميس (08:00 ص - 03:00 م)</span>
                         </div>
                     </div>
                 </div>

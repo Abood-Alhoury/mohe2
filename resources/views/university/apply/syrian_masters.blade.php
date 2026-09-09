@@ -318,9 +318,14 @@
                         </select>
                     </div> -->
 
-                     <div class="col-md-4">
+                     <!-- <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">الجامعة المانحة</label><span class="text-danger"> *</span>
                         <input type="text" name="ba_faculty" id="input-baFaculty" class="form-control academic-input" placeholder="مثال: جامعة دمشق" value="{{ old('ba_university_id', optional($baEd)->university_id) }}" required>
+                    </div> -->
+
+                    <div class="col-md-4">
+                        <label class="form-label label-md fw-medium text-dark">الجامعة المانحة</label><span class="text-danger"> *</span>
+                        <input type="text" name="ba_university_text" id="input-baUniText" class="form-control academic-input" placeholder="مثال: جامعة دمشق" value="{{ old('ba_university_text', optional($baEd)->university_name ?: (optional(optional($baEd)->university)->name ?? (optional($baEd)->section_name ?? ''))) }}" required>
                     </div>
 
                     <!-- <div class="col-md-4" id="ba-uni-text-container" style="display: none;">
@@ -349,8 +354,8 @@
                     </div>
 
                     <div class="col-md-4">
-                        <label class="form-label label-md fw-medium text-dark">تاريخ التسجيل بالإجازة </label><span class="text-danger"> *</span>
-                        <input type="date" name="ba_registration_date" id="input-baRegDate" class="form-control academic-input" value="{{ old('ba_registration_date', optional($baEd)->registration_date) }}" oninput="this.setCustomValidity(''); const g = document.getElementById('input-baGrantDate'); if(g) g.setCustomValidity('');" required>
+                        <label class="form-label label-md fw-medium text-dark">تاريخ التسجيل بالإجازة </label>
+                        <input type="date" name="ba_registration_date" id="input-baRegDate" class="form-control academic-input" value="{{ old('ba_registration_date', optional($baEd)->registration_date) }}" oninput="this.setCustomValidity(''); const g = document.getElementById('input-baGrantDate'); if(g) g.setCustomValidity('');" >
                     </div>
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">تاريخ التخرج / الحصول عليها </label><span class="text-danger"> *</span>
@@ -1116,15 +1121,17 @@
                         decDate.setCustomValidity('');
                     }
                 } else if (baCountry) {
+                    const uniText = document.getElementById('input-baUniText');
                     const uniId = document.getElementById('input-baUniId');
-                    if (uniId && !uniId.value) {
-                        uniId.setCustomValidity('يرجى اختيار الجامعة المانحة للإجازة.');
-                        uniId.reportValidity();
-                        uniId.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        uniId.focus();
+                    const uniEl = (uniText && uniText.offsetParent !== null) ? uniText : (uniText || uniId);
+                    if (uniEl && !uniEl.value.trim()) {
+                        uniEl.setCustomValidity('يرجى إدخال اسم الجامعة المانحة للإجازة.');
+                        uniEl.reportValidity();
+                        uniEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        uniEl.focus();
                         return;
-                    } else if (uniId) {
-                        uniId.setCustomValidity('');
+                    } else if (uniEl) {
+                        uniEl.setCustomValidity('');
                     }
                 }
 
@@ -1424,11 +1431,13 @@
         setTxt('preview-baCountry', getVal('input-baCountry'));
         
         const baDecContainer = document.getElementById('preview-baDecisionContainer');
+        const baUniTxt = getVal('input-baUniText');
+        const baUniDisplay = (baUniTxt && baUniTxt !== '-') ? baUniTxt : (getVal('input-baUniId') !== '-' ? getVal('input-baUniId') : getVal('input-baUniOther'));
+        setTxt('preview-baUni', baUniDisplay);
+
         if (baCountrySelect && baCountrySelect.value == syriaCountryId) {
-            setTxt('preview-baUni', getVal('input-baUniId'));
             if (baDecContainer) baDecContainer.style.display = 'none';
         } else {
-            setTxt('preview-baUni', getVal('input-baUniOther'));
             if (baDecContainer) baDecContainer.style.display = 'block';
             setTxt('preview-baDecisionNo', getVal('input-baDecisionNo'));
         }
@@ -1504,6 +1513,13 @@
                 const ba = data.bachelor;
                 const ma = data.master;
 
+                if (data.draft_id) {
+                    const draftInput = document.querySelector('input[name="draft_id"]');
+                    if (draftInput && !draftInput.value) {
+                        draftInput.value = data.draft_id;
+                    }
+                }
+
                 // Auto-fill Step 1 (Personal Info)
                 if (c.full_name) document.getElementById('input-fullName').value = c.full_name;
                 if (c.father_name) document.getElementById('input-fatherName').value = c.father_name;
@@ -1568,11 +1584,17 @@
                     checkMasterGrantDateForExperience();
                 }
 
+                let draftNotice = '';
+                if (data.draft_id) {
+                    draftNotice = `<br><span class="badge bg-warning text-dark mt-1 fs-8"><i class="fa-solid fa-floppy-disk me-1"></i> توجد مسودة سابقة محفوظة لهذا المرشح (#Draft-${data.draft_id}). سيتم تحديث بياناتها تلقائياً دون تكرار.</span>`;
+                }
+
                 area.innerHTML = `
                     <div class="alert alert-success py-2 px-3 fs-8 mt-2 shadow-sm border-0" style="background-color: #E6F4EA; color: #137333;">
                         <i class="fa-solid fa-circle-check fs-6 me-1.5" style="color: #137333;"></i>
                         <strong>تم الاستعلام والتعبئة بنجاح بالرقم الوطني (${c.national_id}):</strong><br>
                         تم جلب وتعبئة البيانات الشخصية والمؤهلات العلمية السابقة للمرشح (<strong>${c.full_name}</strong>) تلقائياً عبر جميع الخطوات! يمكنك الضغط على "التالي" لمتابعة الخطوات ومراجعة أو إضافة مرفقات جديدة.
+                        ${draftNotice}
                     </div>
                 `;
             })

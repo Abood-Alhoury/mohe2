@@ -86,6 +86,25 @@ class ApplicationWizardController extends Controller
                 ->with(['educations.attachments'])
                 ->first();
         }
+
+        // Smart draft lookup: check if this candidate already has an open draft for Syrian Masters in this university
+        if (!$existingApp && $request->filled('national_id')) {
+            $existingProfile = EquivalenceProfile::where('national_id', trim($request->national_id))->first();
+            if ($existingProfile) {
+                $existingApp = Application::where('candidate_id', $existingProfile->id)
+                    ->where('work_university_id', $uniId)
+                    ->where(function($q) {
+                        $q->where('status', 'مسودة')->orWhere('status', 1);
+                    })
+                    ->where(function($q) {
+                        $q->whereIn('request_type', ['ماجستير داخلي - نظري', 'ماجستير داخلي - تطبيقي', 1, 2]);
+                    })
+                    ->with(['educations.attachments'])
+                    ->latest('id')
+                    ->first();
+            }
+        }
+
         $isExisting = ($existingApp !== null);
         $fileRule = $isExisting ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048';
 
@@ -125,6 +144,7 @@ class ApplicationWizardController extends Controller
                 'ba_rank' => 'nullable|string',
                 'ba_decision_no' => 'nullable|string|max:100',
                 'ba_decision_date' => 'nullable',
+                'ba_university_text' => 'nullable|string|max:255',
 
                 'ma_university_id' => 'nullable',
                 'ma_faculty' => 'nullable|string|max:255',
@@ -184,7 +204,7 @@ class ApplicationWizardController extends Controller
 
                 // Step 2: High School Info
                 'hs_country_id' => 'required|exists:lookup_countries,id',
-                'hs_type' => 'required|string|in:علمي,أدبي,شرعي,صناعي,تجاري',
+                'hs_type' => 'required|string|in:أخرى,علمي,أدبي,شرعي,صناعي,تجاري',
                 'hs_grant_date' => 'required|numeric|digits:4|min:1950|max:' . date('Y'),
                 'hs_decision_no' => ($request->hs_country_id != $syriaId) ? 'required|string|max:100' : 'nullable|string|max:100',
                 'hs_decision_date' => ($request->hs_country_id != $syriaId) ? 'required|date' : 'nullable|date',
@@ -194,6 +214,7 @@ class ApplicationWizardController extends Controller
                 'ba_country_id' => 'required|exists:lookup_countries,id',
                 'ba_university_id' => 'nullable|exists:lookup_universities,id',
                 'ba_university_other' => 'nullable|string|max:255',
+                'ba_university_text' => 'nullable|string|max:255',
                 'ba_faculty' => 'required|string|max:255',
                 'ba_department' => 'nullable|string|max:255',
                 'ba_specialization' => 'nullable|string|max:255',
@@ -463,14 +484,34 @@ class ApplicationWizardController extends Controller
             }
         }
 
+        $baUniId = null;
+        $baUniName = trim($request->input('ba_university_text', ''));
+        if ($baUniName === '') {
+            $baUniName = trim($request->input('ba_university_other', ''));
+        }
+
+        if ($baUniName !== '') {
+            $uni = \App\Models\LookupUniversity::where('name', $baUniName)->first()
+                ?: \App\Models\LookupUniversity::where('name', 'like', "%{$baUniName}%")->first();
+            if (!$uni) {
+                $uni = \App\Models\LookupUniversity::create([
+                    'name' => $baUniName,
+                    'country_id' => $request->ba_country_id ?: $syriaCountryId,
+                ]);
+            }
+            $baUniId = $uni->id;
+        } elseif ($request->filled('ba_university_id')) {
+            $baUniId = $request->ba_university_id;
+        }
+
         $edBA = Education::create([
             'application_id' => $application->id,
             'education_level_id' => $baLevelId,
             'country_id' => $request->ba_country_id,
-            'university_id' => $request->ba_university_id,
+            'university_id' => $baUniId,
             'faculty' => $request->ba_faculty,
             'department' => $request->ba_department,
-            'section_name' => $request->ba_specialization ?: ($request->ba_university_other ?? null),
+            'section_name' => $request->ba_specialization ?: ($baUniName ?: ($request->ba_university_other ?? null)),
             'general_specialization' => $request->ba_faculty,
             'exact_specialization' => $request->ba_department,
             'registration_date' => $request->ba_registration_date,
@@ -663,6 +704,26 @@ class ApplicationWizardController extends Controller
                 ->with(['educations.attachments'])
                 ->first();
         }
+
+        // Smart draft lookup: check if this candidate already has an open draft for Syrian Doctorate in this university
+        if (!$existingApp && $request->filled('national_id')) {
+            $existingProfile = EquivalenceProfile::where('national_id', trim($request->national_id))->first();
+            if ($existingProfile) {
+                $existingApp = Application::where('candidate_id', $existingProfile->id)
+                    ->where('work_university_id', $uniId)
+                    ->where(function($q) {
+                        $q->where('status', 'مسودة')->orWhere('status', 1);
+                    })
+                    ->where(function($q) {
+                        $q->where('request_type', 'like', '%دكتور%')
+                          ->orWhereIn('request_type', [3, 7]);
+                    })
+                    ->with(['educations.attachments'])
+                    ->latest('id')
+                    ->first();
+            }
+        }
+
         $isExisting = ($existingApp !== null);
         $fileRule = $isExisting ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048';
 
@@ -1343,6 +1404,26 @@ class ApplicationWizardController extends Controller
                 ->with(['educations.attachments', 'educations.residences'])
                 ->first();
         }
+
+        // Smart draft lookup: check if this candidate already has an open draft for Foreign Masters in this university
+        if (!$existingApp && $request->filled('national_id')) {
+            $existingProfile = EquivalenceProfile::where('national_id', trim($request->national_id))->first();
+            if ($existingProfile) {
+                $existingApp = Application::where('candidate_id', $existingProfile->id)
+                    ->where('work_university_id', $uniId)
+                    ->where(function($q) {
+                        $q->where('status', 'مسودة')->orWhere('status', 1);
+                    })
+                    ->where(function($q) {
+                        $q->where('request_type', 'like', '%خارجي%')
+                          ->orWhereIn('request_type', [5, 6]);
+                    })
+                    ->with(['educations.attachments', 'educations.residences'])
+                    ->latest('id')
+                    ->first();
+            }
+        }
+
         $isExisting = ($existingApp !== null);
 
         $existingFilesMap = [];
@@ -2003,9 +2084,31 @@ class ApplicationWizardController extends Controller
         $existingApp = null;
         if ($request->filled('draft_id')) {
             $existingApp = Application::where('id', $request->draft_id)
+                ->where('work_university_id', $uniId)
                 ->with(['educations.attachments'])
                 ->first();
         }
+
+        // Smart draft lookup: check if this candidate already has an open draft for Faculty Permission in this university
+        if (!$existingApp && $request->filled('national_id')) {
+            $existingProfile = EquivalenceProfile::where('national_id', trim($request->national_id))->first();
+            if ($existingProfile) {
+                $existingApp = Application::where('candidate_id', $existingProfile->id)
+                    ->where('work_university_id', $uniId)
+                    ->where(function($q) {
+                        $q->where('status', 'مسودة')->orWhere('status', 1);
+                    })
+                    ->where(function($q) {
+                        $q->where('request_type', 'like', '%سماح%')
+                          ->orWhere('request_type', 'like', '%تدريس%')
+                          ->orWhere('request_type', 4);
+                    })
+                    ->with(['educations.attachments'])
+                    ->latest('id')
+                    ->first();
+            }
+        }
+
         $isExisting = ($existingApp !== null);
 
         // Check which files already exist in DB
@@ -2512,6 +2615,18 @@ class ApplicationWizardController extends Controller
             }
         }
 
+        $userUniId = Auth::user() ? Auth::user()->university_id : null;
+        $activeDraft = null;
+        if ($userUniId) {
+            $activeDraft = $profile->applications
+                ->where('work_university_id', $userUniId)
+                ->filter(function($app) {
+                    return $app->status === 'مسودة' || $app->status == 1;
+                })
+                ->sortByDesc('id')
+                ->first();
+        }
+
         return response()->json([
             'success' => true,
             'candidate' => $candidateData,
@@ -2519,6 +2634,9 @@ class ApplicationWizardController extends Controller
             'bachelor' => $baData,
             'master' => $maData,
             'doctorate' => $phdData,
+            'draft_id' => $activeDraft ? $activeDraft->id : null,
+            'draft_app_no' => $activeDraft ? $activeDraft->application_no : null,
+            'draft_type' => $activeDraft ? $activeDraft->request_type : null,
         ]);
     }
 }
