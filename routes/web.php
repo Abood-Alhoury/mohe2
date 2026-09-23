@@ -69,7 +69,7 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::patch('/applications/{id}/candidate', [EditApplicationController::class, 'updateCandidate'])->name('admin.applications.update_candidate');
     Route::patch('/applications/{id}/education', [EditApplicationController::class, 'updateEducation'])->name('admin.applications.update_education');
     Route::patch('/applications/{id}/details', [EditApplicationController::class, 'updateApplicationDetails'])->name('admin.applications.update_details');
-
+Route::get('/admin/attachments/{id}/view/{filename?}', [\App\Http\Controllers\Admin\EditApplicationController::class, 'viewAttachment'])->name('admin.attachments.view');
     // General Committee Topics
     Route::get('/committee', [CommitteeController::class, 'index'])->name('admin.committee.index');
     Route::patch('/committee/{id}', [CommitteeController::class, 'decide'])->name('admin.committee.decide');
@@ -125,13 +125,14 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     // Official Decision Generator Routes
     Route::get('/reports/{id}/generate-decision', [GeneratedDecisionController::class, 'show'])->name('admin.reports.generate_decision');
     Route::post('/reports/{id}/adopt-generated-decision', [GeneratedDecisionController::class, 'adopt'])->name('admin.reports.adopt_generated_decision');
-    Route::get('/reports/{id}/download-generated-decision-pdf', [GeneratedDecisionController::class, 'downloadPdf'])->name('admin.reports.download_generated_decision_pdf');
+    Route::match(['get', 'post'], '/reports/{id}/download-generated-decision-pdf', [GeneratedDecisionController::class, 'downloadPdf'])->name('admin.reports.download_generated_decision_pdf');
 });
 
 // 4. University Area (Protected by role:university)
 Route::prefix('university')->middleware(['auth', 'role:university'])->group(function () {
     // Dashboard & Required Documents
     Route::get('/dashboard', [UniDashboardController::class, 'index'])->name('university.dashboard');
+    Route::get('/drafts', [UniDashboardController::class, 'drafts'])->name('university.drafts.index');
     Route::get('/required-documents', [UniDashboardController::class, 'requiredDocuments'])->name('university.required_documents');
     
     // Notifications & Messages

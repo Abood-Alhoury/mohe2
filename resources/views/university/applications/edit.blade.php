@@ -170,7 +170,7 @@
         <div class="card-body p-4 bg-white">
             <div class="row g-3 mb-3">
                 <div class="col-md-4">
-                    <label class="form-label fw-bold">الدولة المانحة :</label>
+                    <label class="form-label fw-bold">1. الدولة المانحة :</label>
                     <select name="educations[{{ $bachelorEd->id }}][country_id]" class="form-select">
                         @foreach($countries as $cnt)
                             <option value="{{ $cnt->id }}" {{ $bachelorEd->country_id == $cnt->id ? 'selected' : '' }}>{{ $cnt->name }}</option>
@@ -178,28 +178,38 @@
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label fw-bold">الجامعة المانحة :</label>
+                    <label class="form-label fw-bold">2. الجامعة المانحة :</label>
                     <select name="educations[{{ $bachelorEd->id }}][university_id]" class="form-select">
+                        <option value="">-- اختر الجامعة --</option>
                         @foreach($universities as $u)
                             <option value="{{ $u->id }}" {{ $bachelorEd->university_id == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label fw-bold">الكلية / الاختصاص العام :</label>
-                    <input type="text" name="educations[{{ $bachelorEd->id }}][general_specialization]" class="form-control" value="{{ $bachelorEd->general_specialization }}">
+                    <label class="form-label fw-bold">3. الكلية :</label>
+                    <input type="text" name="educations[{{ $bachelorEd->id }}][faculty]" class="form-control" value="{{ $bachelorEd->faculty ?: $bachelorEd->general_specialization }}">
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label fw-bold">القسم / الاختصاص الدقيق :</label>
-                    <input type="text" name="educations[{{ $bachelorEd->id }}][exact_specialization]" class="form-control" value="{{ $bachelorEd->exact_specialization }}">
+                    <label class="form-label fw-bold">4. القسم :</label>
+                    <input type="text" name="educations[{{ $bachelorEd->id }}][department]" class="form-control" value="{{ $bachelorEd->department }}">
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label fw-bold">تاريخ المنح :</label>
+                    <label class="form-label fw-bold">5. اختصاص (اختياري) :</label>
+                    <input type="text" name="educations[{{ $bachelorEd->id }}][exact_specialization]" class="form-control" value="{{ $bachelorEd->exact_specialization ?: $bachelorEd->section_name }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">6. التقدير :</label>
+                    <select name="educations[{{ $bachelorEd->id }}][rank]" class="form-select">
+                        <option value="">-- اختر التقدير --</option>
+                        @foreach(['ممتاز', 'جيد جداً', 'جيد', 'مقبول'] as $r)
+                            <option value="{{ $r }}" {{ ($bachelorEd->rank == $r || str_replace(' ', '', $bachelorEd->rank) == str_replace(' ', '', $r)) ? 'selected' : '' }}>{{ $r }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">7. تاريخ الحصول على الدرجة :</label>
                     <input type="date" name="educations[{{ $bachelorEd->id }}][grant_date]" class="form-control" value="{{ $bachelorEd->grant_date }}">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-bold">المعدل / التقدير :</label>
-                    <input type="text" name="educations[{{ $bachelorEd->id }}][rank]" class="form-control" value="{{ $bachelorEd->rank }}">
                 </div>
             </div>
 
@@ -235,48 +245,62 @@
         <div class="card-body p-4 bg-white">
             <div class="row g-3 mb-3">
                 <div class="col-md-4">
-                    <label class="form-label fw-bold">الجامعة المانحة :</label>
+                    <label class="form-label fw-bold">1. الجامعة المانحة للماجستير :</label>
                     <select name="educations[{{ $masterEd->id }}][university_id]" class="form-select">
+                        <option value="">-- اختر الجامعة --</option>
                         @foreach($universities as $u)
                             <option value="{{ $u->id }}" {{ $masterEd->university_id == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label fw-bold">الكلية :</label>
+                    <label class="form-label fw-bold">2. الكلية :</label>
+                    <input type="text" name="educations[{{ $masterEd->id }}][faculty]" class="form-control" value="{{ $masterEd->faculty ?: $masterEd->general_specialization }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">3. القسم :</label>
+                    <input type="text" name="educations[{{ $masterEd->id }}][department]" class="form-control" value="{{ $masterEd->department ?: $masterEd->exact_specialization }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">4. الاختصاص العام :</label>
                     <input type="text" name="educations[{{ $masterEd->id }}][general_specialization]" class="form-control" value="{{ $masterEd->general_specialization }}">
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label fw-bold">القسم :</label>
-                    <input type="text" name="educations[{{ $masterEd->id }}][exact_specialization]" class="form-control" value="{{ $masterEd->exact_specialization }}">
+                    <label class="form-label fw-bold">5. الاختصاص الدقيق (اختياري) :</label>
+                    <input type="text" name="educations[{{ $masterEd->id }}][exact_specialization]" class="form-control" value="{{ $masterEd->exact_specialization ?: $masterEd->section_name }}">
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label fw-bold">تاريخ التسجيل :</label>
+                    <label class="form-label fw-bold">6. اسم الأستاذ المشرف :</label>
+                    <input type="text" name="educations[{{ $masterEd->id }}][supervisor_name]" class="form-control" value="{{ $masterEd->supervisor_name ?: $masterEd->supervisor }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">7. التقدير :</label>
+                    <select name="educations[{{ $masterEd->id }}][rank]" class="form-select">
+                        <option value="">-- اختر التقدير --</option>
+                        @foreach(['ممتاز', 'جيد جداً', 'جيد'] as $r)
+                            <option value="{{ $r }}" {{ ($masterEd->rank == $r || str_replace(' ', '', $masterEd->rank) == str_replace(' ', '', $r)) ? 'selected' : '' }}>{{ $r }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">8. تاريخ التسجيل بالدرجة :</label>
                     <input type="date" name="educations[{{ $masterEd->id }}][registration_date]" class="form-control" value="{{ $masterEd->registration_date }}">
                 </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-bold">تاريخ المناقشة :</label>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">9. تاريخ المناقشة :</label>
                     <input type="date" name="educations[{{ $masterEd->id }}][defense_date]" class="form-control" value="{{ $masterEd->defense_date }}">
                 </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-bold">تاريخ المنح :</label>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">10. تاريخ منح الدرجة :</label>
                     <input type="date" name="educations[{{ $masterEd->id }}][grant_date]" class="form-control" value="{{ $masterEd->grant_date }}">
                 </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-bold">اسم المشرف :</label>
-                    <input type="text" name="educations[{{ $masterEd->id }}][supervisor_name]" class="form-control" value="{{ $masterEd->supervisor_name }}">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-bold">التقدير / المرتبة :</label>
-                    <input type="text" name="educations[{{ $masterEd->id }}][rank]" class="form-control" value="{{ $masterEd->rank }}">
-                </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <label class="form-label fw-bold">مكان الخبرة التدريسية :</label>
                     <input type="text" name="educations[{{ $masterEd->id }}][notes]" class="form-control" value="{{ $masterEd->notes }}">
                 </div>
-                <div class="col-md-12">
-                    <label class="form-label fw-bold">عنوان الرسالة / الأطروحة :</label>
-                    <input type="text" name="educations[{{ $masterEd->id }}][thesis_title]" class="form-control fw-bold" value="{{ $masterEd->thesis_title }}">
+                <div class="col-12">
+                    <label class="form-label fw-bold">11. عنوان رسالة الماجستير (الأطروحة) بالتفصيل :</label>
+                    <textarea name="educations[{{ $masterEd->id }}][thesis_title]" class="form-control fw-bold" rows="2">{{ $masterEd->thesis_title }}</textarea>
                 </div>
             </div>
 

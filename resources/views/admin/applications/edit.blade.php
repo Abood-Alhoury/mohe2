@@ -12,6 +12,11 @@
     </div>
 @endif
 
+@php
+    // فحص نوع المعاملة: طلب دكتوراه داخلي أم طلب ماجستير داخلي
+    $isDocApp = str_contains($application->request_type ?? '', 'دكتور') || ($phdEd !== null);
+@endphp
+
 <!-- TOP HEADER & APPLICATION SUMMARY SLAB -->
 <div class="card border-0 shadow-sm mb-4" style="border-top: 4px solid var(--heritage-gold) !important; border-radius: 4px;">
     <div class="card-header py-3 px-4 text-white d-flex align-items-center justify-content-between flex-wrap gap-3" style="background-color: var(--imperial-navy);">
@@ -201,12 +206,7 @@
             <div class="row g-3 mb-3">
                 <div class="col-md-6">
                     <label class="form-label fw-bold" style="color: var(--imperial-navy);">الجامعة الحكومية السورية التابع لها :</label>
-                    <select name="university_id" class="form-select">
-                        <option value="">-- اختر الجامعة الحكومية السورية --</option>
-                        @foreach($universities as $u)
-                            <option value="{{ $u->id }}" {{ optional($govEd)->university_id == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
-                        @endforeach
-                    </select>
+                    <input type="text" name="university_name" class="form-control fw-bold" value="{{ optional($govEd)->university->name ?? (optional($govEd)->university_other ?? '') }}" placeholder="مثال: جامعة دمشق، جامعة حلب...">
                 </div>
                 <div class="col-md-6">
                     <label class="form-label fw-bold" style="color: var(--imperial-navy);">الرتبة الأكاديمية بالجامعة الحكومية :</label>
@@ -231,7 +231,7 @@
                 <span class="fw-bold fs-8 d-block mb-2 text-dark"><i class="fa-solid fa-paperclip me-1 text-primary"></i> بيان الوضع والوثائق المرفوعة للتعيين الحكومي:</span>
                 <div class="d-flex flex-wrap gap-2">
                     @foreach($govEd->attachments as $att)
-                        <a href="{{ asset('storage/' . $att->file_path) }}" target="_blank" class="btn btn-xs btn-outline-navy py-1 px-2 text-decoration-none">
+                        <a href="{{ route('admin.attachments.view', ['id' => $att->id, 'filename' => 'preview.pdf']) }}" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-navy py-1 px-2 text-decoration-none">
                             <i class="fa-solid fa-file-pdf me-1 text-danger"></i> {{ $att->notes ?? 'بيان وضع وظيفي' }}
                         </a>
                     @endforeach
@@ -263,13 +263,13 @@
     <span class="text-muted fs-8">ملاحظة: يتم عرض وإتاحة تعديل المؤهلات المسجلة للمرشح</span>
 </div>
 
-{{-- 4.1 شهادة دكتوراه --}}
+{{-- 4.1 شهادة دكتوراه (إن وجدت) --}}
 @if($phdEd)
 <div class="card border mb-4 shadow-sm" style="border-top: 3.5px solid var(--heritage-gold) !important; border-radius: 4px;">
     <div class="card-header bg-white py-3 px-4 d-flex align-items-center justify-content-between">
         <div class="d-flex align-items-center gap-2">
             <span class="badge bg-warning text-dark fw-bold fs-7"><i class="fa-solid fa-star me-1"></i> المؤهل الأساسي (الدكتوراه)</span>
-            <h6 class="fw-bold mb-0" style="color: var(--imperial-navy); font-size: 1.05rem;">شهادة درجة الدكتوراه</h6>
+            <h6 class="fw-bold mb-0" style="color: var(--imperial-navy); font-size: 1.05rem;">شهادة درجة الدكتوراه السورية</h6>
         </div>
         <span class="fs-8 text-muted">تعديل بيانات الدكتوراه والجامعة المانحة</span>
     </div>
@@ -283,8 +283,8 @@
             <div class="row g-3 mb-3">
                 <div class="col-md-6">
                     <label class="form-label fw-bold" style="color: var(--imperial-navy);">الجامعة المانحة لشهادة الدكتوراه :</label>
-                    <select name="university_id" class="form-select">
-                        <option value="">-- اختر الجامعة المانحة --</option>
+                    <select name="university_id" class="form-select fw-bold">
+                        <option value="">-- اختر الجامعة السورية --</option>
                         @foreach($universities as $u)
                             <option value="{{ $u->id }}" {{ $phdEd->university_id == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
                         @endforeach
@@ -296,11 +296,11 @@
                 </div>
                 <div class="col-md-6">
                     <label class="form-label fw-bold" style="color: var(--imperial-navy);">الكلية المانحة للدكتوراه :</label>
-                    <input type="text" name="faculty" class="form-control" value="{{ $phdEd->faculty ?: $phdEd->general_specialization }}" placeholder="مثال: كلية الهندسة المدنية">
+                    <input type="text" name="faculty" class="form-control" value="{{ $phdEd->faculty ?: $phdEd->general_specialization }}" placeholder="مثال: كلية الحقوق">
                 </div>
                 <div class="col-md-6">
                     <label class="form-label fw-bold" style="color: var(--imperial-navy);">القسم / الاختصاص الدقيق للدكتوراه :</label>
-                    <input type="text" name="department" class="form-control" value="{{ $phdEd->department ?: $phdEd->exact_specialization }}" placeholder="مثال: الهندسة الإنشائية">
+                    <input type="text" name="department" class="form-control" value="{{ $phdEd->department ?: $phdEd->exact_specialization }}" placeholder="مثال: القانون العام">
                 </div>
                 <div class="col-md-12">
                     <label class="form-label fw-bold" style="color: var(--imperial-navy);">عنوان أطروحة الدكتوراه :</label>
@@ -314,8 +314,8 @@
                 <span class="fw-bold fs-8 d-block mb-2 text-dark"><i class="fa-solid fa-paperclip me-1 text-primary"></i> الوثائق والمرفقات المرفوعة للدكتوراه:</span>
                 <div class="d-flex flex-wrap gap-2">
                     @foreach($phdEd->attachments as $att)
-                        <a href="{{ asset('storage/' . $att->file_path) }}" target="_blank" class="btn btn-xs btn-outline-navy py-1 px-2 text-decoration-none">
-                            <i class="fa-solid fa-file-pdf me-1 text-danger"></i> {{ $att->notes ?? 'وثيقة الدكتوراه' }}
+                        <a href="{{ route('admin.attachments.view', ['id' => $att->id, 'filename' => 'preview.pdf']) }}" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-navy py-1 px-2 text-decoration-none">
+                            <i class="fa-solid fa-file-pdf me-1 text-danger"></i> {{ $att->notes ?: (optional($att->attachmentType)->name ?? 'وثيقة الدكتوراه') }}
                         </a>
                     @endforeach
                 </div>
@@ -338,12 +338,14 @@
 </div>
 @endif
 
-{{-- 4.2 شهادة ماجستير (تظهر إذا تم إدخالها بالطلب) --}}
+{{-- 4.2 شهادة ماجستير --}}
 @if($masterEd)
 <div class="card border mb-4 shadow-sm" style="border-top: 3px solid var(--heritage-gold) !important; border-radius: 4px;">
     <div class="card-header bg-white py-3 px-4 d-flex align-items-center justify-content-between">
         <div class="d-flex align-items-center gap-2">
-            <span class="badge bg-secondary text-white fs-7">مؤهل سابِق/داعِم</span>
+            <span class="badge {{ $isDocApp ? 'bg-secondary' : 'bg-primary' }} text-white fs-7">
+                {{ $isDocApp ? 'مؤهل سابق / داعم' : 'المؤهل الأساسي (الماجستير)' }}
+            </span>
             <h6 class="fw-bold mb-0" style="color: var(--imperial-navy);">شهادة درجة الماجستير</h6>
         </div>
         <span class="fs-8 text-muted">تعديل بيانات الماجستير</span>
@@ -356,26 +358,69 @@
             <input type="hidden" name="education_level_id" value="{{ $masterEd->education_level_id }}">
 
             <div class="row g-3 mb-3">
-                <div class="col-md-6">
-                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">الجامعة المانحة للماجستير :</label>
-                    <select name="university_id" class="form-select">
-                        <option value="">-- اختر الجامعة --</option>
-                        @foreach($universities as $u)
-                            <option value="{{ $u->id }}" {{ $masterEd->university_id == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
+                {{-- الشرط الذكي: Text Box إذا كان الطلب دكتوراه، و Dropdown إذا كان ماجستير داخلي --}}
+                <div class="col-md-4">
+                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">1. الجامعة المانحة للماجستير :</label>
+                    @if($isDocApp)
+                        <input type="text" 
+                               name="university_name" 
+                               class="form-control fw-bold" 
+                               value="{{ old('university_name', optional($masterEd->university)->name ?: ($masterEd->university_other ?: ($masterEd->university_text ?: ''))) }}" 
+                               placeholder="أدخل اسم الجامعة (مثلاً: الجامعة الأردنية، جامعة القاهرة...)">
+                    @else
+                        <select name="university_id" class="form-select fw-bold">
+                            <option value="">-- اختر الجامعة السورية المانحة --</option>
+                            @foreach($universities as $u)
+                                <option value="{{ $u->id }}" {{ $masterEd->university_id == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
+                            @endforeach
+                        </select>
+                    @endif
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">2. الكلية :</label>
+                    <input type="text" name="faculty" class="form-control" value="{{ $masterEd->faculty ?: $masterEd->general_specialization }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">3. القسم :</label>
+                    <input type="text" name="department" class="form-control" value="{{ $masterEd->department ?: $masterEd->exact_specialization }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">4. الاختصاص العام :</label>
+                    <input type="text" name="general_specialization" class="form-control" value="{{ $masterEd->general_specialization }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">5. الاختصاص الدقيق (اختياري) :</label>
+                    <input type="text" name="exact_specialization" class="form-control" value="{{ $masterEd->exact_specialization ?: $masterEd->section_name }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">6. اسم الأستاذ المشرف :</label>
+                    <input type="text" name="supervisor_name" class="form-control" value="{{ $masterEd->supervisor_name ?: $masterEd->supervisor }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">7. التقدير :</label>
+                    <select name="rank" class="form-select">
+                        <option value="">-- اختر التقدير --</option>
+                        @foreach(['ممتاز', 'جيد جداً', 'جيد'] as $r)
+                            <option value="{{ $r }}" {{ ($masterEd->rank == $r || str_replace(' ', '', $masterEd->rank) == str_replace(' ', '', $r)) ? 'selected' : '' }}>{{ $r }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">تاريخ المنح :</label>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">8. تاريخ التسجيل بالدرجة :</label>
+                    <input type="date" name="registration_date" class="form-control" value="{{ $masterEd->registration_date }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">9. تاريخ المناقشة :</label>
+                    <input type="date" name="defense_date" class="form-control" value="{{ $masterEd->defense_date }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">10. تاريخ منح الدرجة :</label>
                     <input type="date" name="grant_date" class="form-control" value="{{ $masterEd->grant_date }}">
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">الكلية المانحة :</label>
-                    <input type="text" name="faculty" class="form-control" value="{{ $masterEd->faculty ?: $masterEd->general_specialization }}">
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">القسم / الاختصاص :</label>
-                    <input type="text" name="department" class="form-control" value="{{ $masterEd->department ?: $masterEd->exact_specialization }}">
+                <div class="col-12">
+                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">11. عنوان رسالة الماجستير (الأطروحة) بالتفصيل :</label>
+                    <textarea name="thesis_title" class="form-control fw-bold" rows="2">{{ $masterEd->thesis_title }}</textarea>
                 </div>
             </div>
 
@@ -385,8 +430,8 @@
                 <span class="fw-bold fs-8 d-block mb-2 text-dark"><i class="fa-solid fa-paperclip me-1 text-primary"></i> الوثائق والمرفقات المرفوعة للماجستير:</span>
                 <div class="d-flex flex-wrap gap-2">
                     @foreach($masterEd->attachments as $att)
-                        <a href="{{ asset('storage/' . $att->file_path) }}" target="_blank" class="btn btn-xs btn-outline-navy py-1 px-2 text-decoration-none">
-                            <i class="fa-solid fa-file-pdf me-1 text-danger"></i> {{ $att->notes ?? 'مرفق الماجستير' }}
+                        <a href="{{ route('admin.attachments.view', ['id' => $att->id, 'filename' => 'preview.pdf']) }}" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-navy py-1 px-2 text-decoration-none">
+                            <i class="fa-solid fa-file-pdf me-1 text-danger"></i> {{ $att->notes ?: (optional($att->attachmentType)->name ?? 'مرفق الماجستير') }}
                         </a>
                     @endforeach
                 </div>
@@ -427,37 +472,50 @@
             <input type="hidden" name="education_level_id" value="{{ $bachelorEd->education_level_id }}">
 
             <div class="row g-3 mb-3">
+                {{-- الدولة المانحة للإجازة: Text Box --}}
                 <div class="col-md-4">
-                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">الدولة المانحة :</label>
-                    <select name="country_id" class="form-select">
-                        @foreach($countries as $cnt)
-                            <option value="{{ $cnt->id }}" {{ $bachelorEd->country_id == $cnt->id ? 'selected' : '' }}>{{ $cnt->name }}</option>
+                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">1. الدولة المانحة للإجازة :</label>
+                    <input type="text" 
+                           name="country_name" 
+                           class="form-control fw-bold" 
+                           value="{{ old('country_name', optional($bachelorEd->country)->name ?: ($bachelorEd->country_other ?? 'سوريا')) }}" 
+                           placeholder="أدخل الدولة (مثال: سوريا، مصر، الأردن...)">
+                </div>
+
+                {{-- الجامعة المانحة للإجازة: Text Box --}}
+                <div class="col-md-4">
+                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">2. الجامعة المانحة للإجازة :</label>
+                    <input type="text" 
+                           name="university_name" 
+                           class="form-control fw-bold" 
+                           value="{{ old('university_name', optional($bachelorEd->university)->name ?: ($bachelorEd->university_text ?: ($bachelorEd->university_other ?: ''))) }}" 
+                           placeholder="أدخل الجامعة (مثال: جامعة دمشق، جامعة القاهرة...)">
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">3. الكلية :</label>
+                    <input type="text" name="faculty" class="form-control" value="{{ $bachelorEd->faculty ?: $bachelorEd->general_specialization }}" placeholder="مثال: كلية الحقوق">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">4. القسم :</label>
+                    <input type="text" name="department" class="form-control" value="{{ $bachelorEd->department }}" placeholder="مثال: القانون العام">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">5. اختصاص (اختياري) :</label>
+                    <input type="text" name="exact_specialization" class="form-control" value="{{ $bachelorEd->exact_specialization ?: $bachelorEd->section_name }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">6. التقدير :</label>
+                    <select name="rank" class="form-select">
+                        <option value="">-- اختر التقدير --</option>
+                        @foreach(['ممتاز', 'جيد جداً', 'جيد', 'مقبول'] as $r)
+                            <option value="{{ $r }}" {{ ($bachelorEd->rank == $r || str_replace(' ', '', $bachelorEd->rank) == str_replace(' ', '', $r)) ? 'selected' : '' }}>{{ $r }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">الجامعة المانحة :</label>
-                    <select name="university_id" class="form-select">
-                        @foreach($universities as $u)
-                            <option value="{{ $u->id }}" {{ $bachelorEd->university_id == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">الكلية / الاختصاص العام :</label>
-                    <input type="text" name="general_specialization" class="form-control" value="{{ $bachelorEd->general_specialization }}">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">القسم / الاختصاص الدقيق :</label>
-                    <input type="text" name="exact_specialization" class="form-control" value="{{ $bachelorEd->exact_specialization }}">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">تاريخ المنح / التخرج :</label>
+                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">7. تاريخ الحصول على الدرجة :</label>
                     <input type="date" name="grant_date" class="form-control" value="{{ $bachelorEd->grant_date }}">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-bold" style="color: var(--imperial-navy);">التقدير / المعدل :</label>
-                    <input type="text" name="rank" class="form-control" value="{{ $bachelorEd->rank }}">
                 </div>
             </div>
 
@@ -467,8 +525,8 @@
                 <span class="fw-bold fs-8 d-block mb-2 text-dark"><i class="fa-solid fa-paperclip me-1 text-primary"></i> الوثائق والمرفقات المرفوعة للإجازة:</span>
                 <div class="d-flex flex-wrap gap-2">
                     @foreach($bachelorEd->attachments as $att)
-                        <a href="{{ asset('storage/' . $att->file_path) }}" target="_blank" class="btn btn-xs btn-outline-navy py-1 px-2 text-decoration-none">
-                            <i class="fa-solid fa-file-pdf me-1 text-danger"></i> {{ $att->notes ?? 'مرفق الإجازة' }}
+                        <a href="{{ route('admin.attachments.view', ['id' => $att->id, 'filename' => 'preview.pdf']) }}" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-navy py-1 px-2 text-decoration-none">
+                            <i class="fa-solid fa-file-pdf me-1 text-danger"></i> {{ $att->notes ?: (optional($att->attachmentType)->name ?? 'مرفق الإجازة') }}
                         </a>
                     @endforeach
                 </div>
@@ -522,7 +580,7 @@
                                 <div class="fs-8 text-muted">{{ optional($attObj->attachmentType)->name ?? 'وثيقة رسمية' }}</div>
                             </div>
                             <div class="pt-2 border-top text-end">
-                                <a href="{{ asset('storage/' . $attObj->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-8 fw-bold">
+                                <a href="{{ route('admin.attachments.view', ['id' => $attObj->id, 'filename' => 'preview.pdf']) }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-danger py-0 px-2 fs-8 fw-bold">
                                     <i class="fa-solid fa-eye me-1"></i> معاينة واستعراض PDF
                                 </a>
                             </div>

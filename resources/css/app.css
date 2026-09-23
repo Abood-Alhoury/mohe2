@@ -21,6 +21,9 @@
 :root {
   --primary: #04152e;
   --primary-container: #1a2a44;
+  --imperial-navy: #1A2A44;
+  --imperial-navy-dark: #0f1d33;
+  --imperial-navy-light: #243b5e;
   --secondary: #775a19;
   --secondary-container: #fed488;
   --heritage-gold: #C5A059;
@@ -40,13 +43,14 @@ body {
 
 .academic-input {
   border: 1px solid var(--outline-variant);
-  border-radius: 4px;
+  border-radius: 6px;
+  min-height: 44px;
   transition: all 0.2s ease-in-out;
 }
 
 .academic-input:focus {
   border-color: var(--primary-container) !important;
-  box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.3) !important;
+  box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.35) !important;
   outline: none !important;
 }
 
@@ -54,7 +58,8 @@ body {
   background-color: var(--heritage-gold);
   color: var(--primary);
   font-weight: 700;
-  border-radius: 4px;
+  border-radius: 6px;
+  min-height: 42px;
   transition: all 0.2s ease;
   border: none;
 }

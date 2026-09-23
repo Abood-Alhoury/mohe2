@@ -3,63 +3,85 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use App\Models\Application;
-use App\Models\ApplicationMessage;
+use Illuminate\Http\Request;
 
 class CommitteeController extends Controller
 {
-    public function index()
+    /**
+     * عرض قائمة طلبات اللجنة العامة
+     */
+    public function index(Request $request)
     {
-        // Applications requiring General Committee decision (status 'لجنة عامة' or 'معلق') - only for allowed full equivalence types
-        $committeeApps = Application::with(['candidate', 'workUniversity', 'educations.level'])
-            ->whereIn('status', ['لجنة عامة', 'معلق'])
-            ->where('request_type', 'not like', '%سماح%')
-            ->where('request_type', 'not like', '%تدريسية%')
-            ->where('request_type', 'not like', '%بحوث%')
-            ->where(function($q) {
-                $q->where('request_type', 'not like', '%تطبيقي%')
-                  ->orWhere('request_type', 'like', '%خارجي%');
-            })
-            ->latest()
+        $committeeApps = Application::where('status', 'لجنة عامة')
+            ->orWhere('status', 4)
+            ->with(['candidate', 'workUniversity', 'educations.level'])
+            ->latest('id')
             ->get();
 
         return view('admin.committee.index', compact('committeeApps'));
     }
 
+    /**
+     * اتخاذ وحفظ قرار اللجنة العامة (Dropdown)
+     */
     public function decide(Request $request, $id)
     {
-        $request->validate([
-            'decision' => 'required|in:موافقة,رفض,بانتظار إصدار القرار,بانتظار المقابلة,مرفوض,تم الصدور,قيد الدراسة,معلق',
-        ]);
+        $application = Application::with(['candidate', 'educations'])->findOrFail($id);
 
-        $app = Application::with('educations')->findOrFail($id);
+        $action = $request->input('decision_action') ?? $request->input('decision');
+        $isForeignMaster = str_contains($application->request_type ?? '', 'خارجي') || str_contains($application->request_type ?? '', 'غير سوري');
 
-        if ($request->decision === 'موافقة' || $request->decision === 'بانتظار إصدار القرار') {
-            $isForeignTheoretical = str_contains($app->request_type, 'نظري') || 
-                (str_contains($app->request_type, 'خارجي') && optional($app->educations->where('education_level_id', 2)->first())->experience_from_year !== null);
+        // 1. في حال الرفض
+        if ($action === 'rejected' || $action === 'رفض') {
+            $reason = $request->input('rejection_reason') ?: 'تم رفض المعادلة بقرار من اللجنة العامة لعدم استيفاء الشروط.';
 
-            if ($isForeignTheoretical) {
-                $app->status = 'بانتظار المقابلة';
-                $msg = 'تمت الموافقة من اللجنة العامة لمعاملة الماجستير الخارجي (المسار النظري) وتحويل الطلب رقم (' . ($app->application_no ?? $app->id) . ') إلى (بانتظار المقابلة) لتحديد موعد مقابلة الأهلية.';
-            } else {
-                $app->status = 'بانتظار إصدار القرار';
-                $msg = 'تم إقرار الموافقة من اللجنة العامة وتحويل حالة الطلب رقم (' . ($app->application_no ?? $app->id) . ') بنجاح إلى (بانتظار إصدار القرار).';
-            }
-        } elseif ($request->decision === 'رفض' || $request->decision === 'مرفوض') {
-            $app->status = 'مرفوض';
-            $msg = 'تم إقرار الرفض من اللجنة العامة وتحويل حالة الطلب رقم (' . ($app->application_no ?? $app->id) . ') بنجاح إلى (مرفوض).';
-        } else {
-            $app->status = $request->decision;
-            $msg = 'تم تحديث وضع الطلب بنجاح إلى (' . $app->status . ')';
+            $application->update([
+                'status'              => 'مرفوض',
+                'committee_track'     => 'rejected',
+                'experience_approved' => false,
+                'rejection_reason'    => $reason,
+            ]);
+
+            return redirect()->route('admin.committee.index')->with('success', 'تم تسجيل قرار الرفض للطلب رقم: ' . $application->application_no);
         }
 
-        $app->save();
+        // 2. معالجة خيارات الماجستير الخارجي
+        if ($isForeignMaster) {
+            // الخيار أ: مقبول (مسار نظري)
+            if ($action === 'approved_theoretical') {
+                $application->update([
+                    'committee_track'     => 'theoretical',
+                    'experience_approved' => true,
+                    'request_type'        => 'ماجستير خارجي - نظري',
+                    'status'              => 'بانتظار المقابلة', // يتطلب مقابلة وأهلية
+                    'rejection_reason'    => null,
+                ]);
+                $msg = 'تم اعتماد تعادل الماجستير الخارجي (مسار نظري - اعتماد الخبرة) وإحالة المرشح إلى (بانتظار المقابلة).';
+            } 
+            // الخيار ب: ماجستير تطبيقي (سواء كان تطبيقي من البداية وقُبل، أو كان نظري وتم تحويله لتطبيقي)
+            elseif ($action === 'approved_applied' || $action === 'applied') {
+                $application->update([
+                    'committee_track'     => 'applied',
+                    'experience_approved' => false,
+                    'request_type'        => 'ماجستير خارجي - تطبيقي',
+                    'status'              => 'بانتظار إصدار القرار', // مباشرة بدون مقابلة
+                    'rejection_reason'    => null,
+                ]);
+                $msg = 'تم اعتماد تعادل الماجستير الخارجي (مسار تطبيقي - عضو هيئة فنية) ونقله مباشرة إلى (بانتظار إصدار القرار).';
+            }
+        } else {
+            // 3. بقية الطلبات السورية
+            $isDoctorate = str_contains($application->request_type ?? '', 'دكتوراه');
+            $nextStatus = $isDoctorate ? 'بانتظار المقابلة' : 'بانتظار إصدار القرار';
 
-        // Automated notification to university
-        $app->notifyUniversityOfStatusChange($app->status);
+            $application->update([
+                'status'           => $nextStatus,
+                'rejection_reason' => null,
+            ]);
+            $msg = 'تم إقرار موافقة اللجنة العامة على الطلب وتحويله إلى (' . $nextStatus . ') بنجاح.';
+        }
 
-        return redirect()->route('admin.committee.index')->with('success', $msg);
+        return redirect()->route('admin.committee.index')->with('success', $msg ?? 'تم حفظ قرار اللجنة بنجاح.');
     }
 }

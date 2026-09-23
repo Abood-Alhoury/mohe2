@@ -28,6 +28,9 @@ class Application extends Model
         'interview_time',
         'interview_notes',
         'user_id',
+        'committee_track',
+        'experience_approved',
+        'rejection_reason',
     ];
 
     public function newEloquentBuilder($query)
@@ -180,5 +183,20 @@ class Application extends Model
         // 2. Dispatch / Log SMS Notification
         $uniName = $this->workUniversity->name ?? 'الجامعة الخاصة المعنية';
         \Illuminate\Support\Facades\Log::info("[SMS Notification] Sent to University ({$uniName}) for App #{$appNo}: {$msgText}");
+    }
+    /**
+ * هل تم اعتماد المسار النظري من قبل اللجنة؟
+ */
+    public function isTheoreticalApproved(): bool
+    {
+        return $this->committee_track === 'theoretical' || $this->committee_track === 'نظري';
+    }
+
+    /**
+     * هل تم اعتماد المسار التطبيقي من قبل اللجنة؟
+     */
+    public function isAppliedApproved(): bool
+    {
+        return $this->committee_track === 'applied' || $this->committee_track === 'تطبيقي';
     }
 }

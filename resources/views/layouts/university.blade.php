@@ -31,64 +31,6 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <style>
-        :root {
-            --imperial-navy: #1A2A44;
-            --imperial-navy-dark: #04152E;
-            --heritage-gold: #C5A059;
-            --heritage-gold-light: #FED488;
-            --surface-bg: #F9F9FF;
-            --surface-card: #FFFFFF;
-            --outline-variant: #C5C6CE;
-        }
-
-        body {
-            font-family: 'IBM Plex Sans Arabic', system-ui, -apple-system, sans-serif;
-            background-color: var(--surface-bg);
-            color: #111C2C;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .mohe-header {
-            background-color: var(--imperial-navy);
-            color: #ffffff;
-            border-bottom: 3px solid var(--heritage-gold);
-            box-shadow: 0 4px 12px rgba(4, 21, 46, 0.2);
-            padding: 0.85rem 1.5rem;
-            z-index: 50;
-        }
-
-        .mohe-emblem-ring {
-            width: 75px;
-            height: 75px;
-            border-radius: 50%;
-            border: 2px solid var(--heritage-gold);
-            padding: 2px;
-            background-color: #ffffff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            flex-shrink: 0;
-        }
-
-        .mohe-emblem-ring img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            border-radius: 50%;
-        }
-
-        .mohe-footer-institutional {
-            background-color: #e4e2e4;
-            color: #44474D;
-            border-top: 1px solid var(--outline-variant);
-            padding: 1.25rem 2rem;
-            font-size: 0.85rem;
-            margin-top: auto;
-        }
-
         /* Global System-Wide Print Optimization Rules */
         @media print {
             @page {
@@ -309,25 +251,13 @@
                 </a>
 
                 <!-- 3. Drafts -->
-                <a href="{{ route('university.dashboard') }}#drafts-section" 
-                   class="sidebar-link"
-                   :title="!isExpanded ? 'مسودات الطلبات غير المكتملة' : ''">
+                <a href="{{ route('university.drafts.index') }}" 
+                   class="sidebar-link {{ request()->routeIs('university.drafts*') ? 'active' : '' }}"
+                   :title="!isExpanded ? 'إدارة المسودات والمعاملات غير المكتملة' : ''">
                     <div class="sidebar-icon-tile tile-amber">
                         <i class="fa-solid fa-floppy-disk"></i>
                     </div>
-                    <span class="sidebar-text-label">مسودات الطلبات المحفوظة</span>
-                </a>
-
-                <!-- 4. Quick Search -->
-                <a href="#" 
-                   data-bs-toggle="modal" 
-                   data-bs-target="#searchModal" 
-                   class="sidebar-link"
-                   :title="!isExpanded ? 'البحث السريع عن المعاملات' : ''">
-                    <div class="sidebar-icon-tile tile-purple">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                    </div>
-                    <span class="sidebar-text-label">البحث السريع عن طلب</span>
+                    <span class="sidebar-text-label">إدارة المسودات المحفوظة</span>
                 </a>
 
                 <!-- 5. Messages & Notifications -->
@@ -441,6 +371,60 @@
                     setTimeout(() => alertEl.remove(), 200);
                 }
             }
+        });
+    </script>
+
+    <!-- Universal Instant Table Search (AJAX / Client-Side Live Filter with Zero Page Reload) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('input[name="search"]').forEach(function(input) {
+                const form = input.closest('form');
+                if (!form || form.id === 'recent-apps-search-form' || form.id === 'admin-apps-search-form' || form.id === 'drafts-search-form') {
+                    return;
+                }
+
+                const cardOrSection = form.closest('.card, .card-academic-table, .container, main') || document.body;
+                const table = cardOrSection.querySelector('table');
+
+                if (table) {
+                    const tbody = table.querySelector('tbody');
+                    if (tbody) {
+                        input.addEventListener('input', function() {
+                            const term = this.value.trim().toLowerCase();
+                            const rows = tbody.querySelectorAll('tr:not(.client-search-empty-row)');
+                            let visibleCount = 0;
+
+                            rows.forEach(function(row) {
+                                const text = row.innerText.toLowerCase();
+                                if (!term || text.includes(term)) {
+                                    row.style.display = '';
+                                    visibleCount++;
+                                } else {
+                                    row.style.display = 'none';
+                                }
+                            });
+
+                            let emptyMsg = tbody.querySelector('.client-search-empty-row');
+                            if (visibleCount === 0 && term) {
+                                if (!emptyMsg) {
+                                    const colCount = table.querySelectorAll('thead th').length || 7;
+                                    emptyMsg = document.createElement('tr');
+                                    emptyMsg.className = 'client-search-empty-row';
+                                    emptyMsg.innerHTML = `<td colspan="${colCount}" class="text-center py-4 text-muted fs-7">لم يتم العثور على أي نتائج مطابقة لعبارة البحث: <strong>"${term}"</strong>.</td>`;
+                                    tbody.appendChild(emptyMsg);
+                                }
+                            } else if (emptyMsg) {
+                                emptyMsg.remove();
+                            }
+                        });
+
+                        form.addEventListener('submit', function(e) {
+                            e.preventDefault();
+                            input.dispatchEvent(new Event('input'));
+                        });
+                    }
+                }
+            });
         });
     </script>
 

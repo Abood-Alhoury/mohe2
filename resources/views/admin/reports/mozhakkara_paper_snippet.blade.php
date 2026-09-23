@@ -12,15 +12,15 @@
 @endphp
 
 <div class="moz-wrapper">
-    <div class="moz-header d-flex justify-content-between align-items-center mb-3 pb-2" style="border-bottom: 3px double var(--heritage-gold);">
+    <div class="moz-header d-flex justify-content-between align-items-center mb-2 pb-2" style="border-bottom: 3px double var(--heritage-gold, #C5A059);">
         <div class="d-flex align-items-center gap-3">
             <div class="mohe-emblem-ring" style="border: none; background: transparent; box-shadow: none;">
-                <img src="{{ asset('assets/report_logo.png') }}" alt="شعار الجمهورية العربية السورية" style="width: 75px; height: 75px; object-fit: contain;">
+                <img src="{{ asset('assets/report_logo.png') }}" alt="شعار الجمهورية العربية السورية" style="width: 98px; height: 98px; object-fit: contain;">
             </div>
             <div class="moz-header-text text-start">
-                <div class="ar" style="font-weight: 700; color: var(--imperial-navy); font-size: 1.05rem;">الجمهورية العربية السورية</div>
-                <div class="ar" style="font-weight: 700; color: var(--imperial-navy); font-size: 1.05rem;">وزارة التعليم العالي والبحث العلمي</div>
-                <div class="en" style="font-size: 0.72rem; color: #666; letter-spacing: 0.5px;">MINISTRY OF HIGHER EDUCATION AND SCIENTIFIC RESEARCH</div>
+                <div class="ar" style="font-weight: 700; color: #1A2A44; font-size: 1.15rem; line-height: 1.3;">الجمهورية العربية السورية</div>
+                <div class="ar" style="font-weight: 700; color: #1A2A44; font-size: 1.15rem; line-height: 1.3;">وزارة التعليم العالي والبحث العلمي</div>
+                <div class="en" style="font-size: 0.72rem; color: #555; letter-spacing: 0.5px;">MINISTRY OF HIGHER EDUCATION AND SCIENTIFIC RESEARCH</div>
             </div>
         </div>
     </div>
@@ -215,30 +215,10 @@
                 <td colspan="3" style="font-weight: 600; color: var(--imperial-navy);">{{ $masterEd->thesis_title }}</td>
             </tr>
             @endif
-            <tr>
-                <td class="l">صفة الإيفاد الرسمي :</td>
-                <td colspan="3">
-                    @if($masterEd->envoy_decision)
-                        <span class="badge bg-info-subtle text-info border px-2 py-1"><i class="fa-solid fa-plane me-1"></i> موفد بموجب قرار إيفاد رقم ({{ $masterEd->envoy_decision }}) تاريخ ({{ format_sys_date($masterEd->envoy_date) }})</span>
-                    @else
-                        <span>غير موفد (دراسة خاصة)</span>
-                    @endif
-                </td>
-            </tr>
-            <tr>
-                <td class="l">مسار تعادل الشهادة :</td>
-                <td colspan="3">
-                    @if($hasExp)
-                        <span class="badge bg-primary-subtle text-primary border border-primary px-2 py-1">
-                            <i class="fa-solid fa-book-open-reader me-1"></i> مسار نظري (خبرة سنتين تدريسية داخل سوريا: {{ $masterEd->notes ?: 'مرفق شهادة الخبرة' }} - يتطلب مقابلة علمية وفحص أهلية)
-                        </span>
-                    @else
-                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning px-2 py-1">
-                            <i class="fa-solid fa-tools me-1"></i> مسار تطبيقي (عضو هيئة فنية - تدريس تطبيقي ومخبري بدون مقابلة)
-                        </span>
-                    @endif
-                </td>
-            </tr>
+      
+           
+       
+            
         </table>
         @endif
 
@@ -344,34 +324,28 @@
         @endif
 
         {{-- 3. الإجازة الجامعية --}}
-        <div class="moz-section"><i class="fa-solid fa-university me-1"></i> الإجازة الجامعية :</div>
+        <div class="moz-section"><i class="fa-solid fa-university me-1"></i> الإجازة الجامعية الأولى :</div>
         @if($bachelorEd)
         <table class="mt">
             <tr>
-                <td class="l">بلد المنح :</td>
-                <td>{{ optional($bachelorEd->country)->name }}</td>
-                <td class="l">الجامعة :</td>
-                <td>{{ optional($bachelorEd->university)->name ?? $bachelorEd->university_other }}</td>
+                <td class="l">بلد المنح والجامعة :</td>
+                <td>{{ optional($bachelorEd->country)->name ?? 'سوريا' }} - {{ optional($bachelorEd->university)->name ?? ($bachelorEd->university_other ?? '---') }}</td>
+                <td class="l">الكلية والقسم :</td>
+                <td>{{ $bachelorEd->faculty ?: ($bachelorEd->general_specialization ?: '---') }} - {{ $bachelorEd->department ?: '---' }}</td>
             </tr>
             <tr>
-                <td class="l">الكلية والفرع :</td>
+                <td class="l">الاختصاص والتقدير :</td>
                 <td>
-                    {{ $bachelorEd->general_specialization ?: ($bachelorEd->faculty ?: '---') }}
-                    @if($bachelorEd->exact_specialization || $bachelorEd->department)
-                        - {{ $bachelorEd->exact_specialization ?: $bachelorEd->department }}
-                    @endif
-                    @if($bachelorEd->section_name && $bachelorEd->section_name !== ($bachelorEd->exact_specialization ?: $bachelorEd->department))
-                        ({{ $bachelorEd->section_name }})
+                    <strong>الاختصاص:</strong> {{ $bachelorEd->section_name ?: ($bachelorEd->exact_specialization ?: '---') }} |
+                    <strong>التقدير:</strong> {{ $bachelorEd->rank_or_grade }}
+                </td>
+                <td class="l">تاريخ المنح والمعادلة :</td>
+                <td>
+                    <strong>تاريخ المنح:</strong> {{ format_sys_date($bachelorEd->grant_date) }}
+                    @if($bachelorEd->notes || $bachelorEd->decision_no)
+                        | <strong>معادلة:</strong> {{ $bachelorEd->notes ?: $bachelorEd->decision_no }}
                     @endif
                 </td>
-                <td class="l">تاريخ التسجيل :</td>
-                <td>{{ format_sys_date($bachelorEd->registration_date) }}</td>
-            </tr>
-            <tr>
-                <td class="l">تاريخ المنح :</td>
-                <td>{{ format_sys_date($bachelorEd->grant_date) }}</td>
-                <td class="l">التقدير/المعدل :</td>
-                <td>{{ $bachelorEd->rank_or_grade }}</td>
             </tr>
         </table>
         @else
@@ -384,7 +358,7 @@
         <table class="mt">
             <tr>
                 <td class="l">الجامعة والكلية :</td>
-                <td>{{ optional($diplomaEd->university)->name }} - {{ $diplomaEd->general_specialization ?: $diplomaEd->faculty }}</td>
+                <td>{{ optional($diplomaEd->university)->name }} - {{ $diplomaEd->faculty ?: $diplomaEd->general_specialization }}</td>
                 <td class="l">التخصص :</td>
                 <td>{{ $diplomaEd->exact_specialization ?: ($diplomaEd->department ?: ($diplomaEd->section_name ?: '---')) }}</td>
             </tr>
@@ -399,42 +373,40 @@
 
         {{-- 5. الماجستير --}}
         @if($masterEd)
-        <div class="moz-section"><i class="fa-solid fa-scroll me-1"></i> درجة الماجستير المراد تعادلها :</div>
+        <div class="moz-section"><i class="fa-solid fa-scroll me-1"></i> درجة الماجستير :</div>
         <table class="mt">
             <tr>
                 <td class="l">الجامعة والكلية :</td>
                 <td>
                     {{ optional($masterEd->university)->name ?? ($masterEd->university_other ?? '---') }}
-                    @if($masterEd->general_specialization || $masterEd->faculty)
-                        - {{ $masterEd->general_specialization ?: $masterEd->faculty }}
+                    @if($masterEd->faculty || $masterEd->general_specialization)
+                        - {{ $masterEd->faculty ?: $masterEd->general_specialization }}
                     @endif
                 </td>
-                <td class="l">القسم والفرع :</td>
+                <td class="l">القسم :</td>
+                <td>{{ $masterEd->department ?: '---' }}</td>
+            </tr>
+            <tr>
+                <td class="l">الاختصاص العام والدقيق :</td>
                 <td>
-                    {{ $masterEd->exact_specialization ?: ($masterEd->department ?: ($masterEd->section_name ?: '---')) }}
-                    @if($masterEd->section_name && $masterEd->section_name !== ($masterEd->exact_specialization ?: $masterEd->department))
-                        ({{ $masterEd->section_name }})
-                    @endif
+                    <strong>العام:</strong> {{ $masterEd->general_specialization ?: '---' }} |
+                    <strong>الدقيق:</strong> {{ $masterEd->exact_specialization ?: ($masterEd->section_name ?: '---') }}
                 </td>
-            </tr>
-            <tr>
-                <td class="l">تاريخ التسجيل :</td>
-                <td>{{ format_sys_date($masterEd->registration_date) }}</td>
-                <td class="l">تاريخ المناقشة :</td>
-                <td>{{ format_sys_date($masterEd->defense_date) }}</td>
-            </tr>
-            <tr>
-                <td class="l">تاريخ المنح :</td>
-                <td>{{ format_sys_date($masterEd->grant_date) }}</td>
                 <td class="l">التقدير :</td>
                 <td>{{ $masterEd->rank_or_grade }}</td>
             </tr>
             <tr>
-                <td class="l">الأستاذ المشرف :</td>
-                <td colspan="3">{{ $masterEd->supervisor_name ?? '---' }}</td>
+                <td class="l">تواريخ التسجيل والمناقشة :</td>
+                <td><strong>تسجيل:</strong> {{ format_sys_date($masterEd->registration_date) }} | <strong>مناقشة:</strong> {{ format_sys_date($masterEd->defense_date) }}</td>
+                <td class="l">تاريخ منح الدرجة :</td>
+                <td>{{ format_sys_date($masterEd->grant_date) }}</td>
             </tr>
             <tr>
-                <td class="l">عنوان الرسالة :</td>
+                <td class="l">الأستاذ المشرف :</td>
+                <td colspan="3">{{ $masterEd->supervisor_name ?? ($masterEd->supervisor ?? '---') }}</td>
+            </tr>
+            <tr>
+                <td class="l">عنوان رسالة الماجستير :</td>
                 <td colspan="3" style="font-weight: 600; color: var(--imperial-navy);">{{ $masterEd->thesis_title ?? '---' }}</td>
             </tr>
         </table>
@@ -498,24 +470,24 @@
 
 
     <!-- OFFICIAL FOOTER: CANDIDATE SIGNATURE (RIGHT) & SUBMISSION DATE (LEFT) -->
-    <div style="margin-top: 30px; border-top: 2px solid var(--heritage-gold); padding-top: 15px;">
+    <div style="margin-top: 16px; border-top: 2px solid var(--heritage-gold, #C5A059); padding-top: 8px; page-break-inside: avoid; break-inside: avoid;">
         <table style="width: 100%; border-collapse: collapse;" border="0" cellspacing="0" cellpadding="0">
             <tr>
                 <!-- Right side: Candidate Signature -->
                 <td style="width: 50%; text-align: right; vertical-align: top;" align="right">
-                    <div style="font-weight: bold; color: var(--imperial-navy); font-size: 13.5px; margin-bottom: 6px;">
-                        <i class="fa-solid fa-signature me-1.5" style="color: var(--heritage-gold);"></i> توقيع المرشح صاحب العلاقة :
+                    <div style="font-weight: bold; color: #1A2A44; font-size: 12px; margin-bottom: 4px;">
+                        <i class="fa-solid fa-signature me-1.5" style="color: var(--heritage-gold, #C5A059);"></i> توقيع المرشح صاحب العلاقة :
                     </div>
-                    <div style="margin-top: 20px; border-bottom: 1.5px dashed var(--imperial-navy); width: 200px; height: 1px;"></div>
-                    <div style="font-size: 11px; color: #666; margin-top: 4px;">(التوقيع والاسم الثلاثي للمرشح)</div>
+                    <div style="margin-top: 14px; border-bottom: 1.5px dashed #1A2A44; width: 190px; height: 1px;"></div>
+                    <div style="font-size: 10px; color: #666; margin-top: 3px;">(التوقيع والاسم الثلاثي للمرشح)</div>
                 </td>
 
                 <!-- Left side: Submission Date -->
                 <td style="width: 50%; text-align: left; vertical-align: top;" align="left">
-                    <div style="font-weight: bold; color: var(--imperial-navy); font-size: 13.5px; margin-bottom: 6px; text-align: left;">
-                        <i class="fa-regular fa-calendar-check me-1.5" style="color: var(--heritage-gold);"></i> تاريخ تقديم الطلب :
+                    <div style="font-weight: bold; color: #1A2A44; font-size: 12px; margin-bottom: 4px; text-align: left;">
+                        <i class="fa-regular fa-calendar-check me-1.5" style="color: var(--heritage-gold, #C5A059);"></i> تاريخ تقديم الطلب :
                     </div>
-                    <div style="font-size: 1.05rem; font-weight: 700; color: #111C2C; margin-top: 6px; text-align: left;">
+                    <div style="font-size: 0.95rem; font-weight: 700; color: #111C2C; margin-top: 4px; text-align: left;">
                         {{ format_sys_date($application->created_at ?? now()) }}
                     </div>
                 </td>

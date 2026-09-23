@@ -68,6 +68,20 @@ class ApplicationsController extends Controller
         $filterStatusesList = ApplicationStatus::whereNotIn('name', ['مسودة'])->pluck('name')->toArray();
         $statusesList = ApplicationStatus::whereNotIn('name', ['مسودة', 'تم الصدور'])->pluck('name')->toArray();
 
+        if ($request->ajax() || $request->has('ajax')) {
+            return view('admin.applications.partials._table', compact(
+                'applications',
+                'universities',
+                'statusesList',
+                'filterStatusesList',
+                'requestTypesList',
+                'statusFilter',
+                'universityFilter',
+                'requestTypeFilter',
+                'searchQuery'
+            ))->render();
+        }
+
         return view('admin.applications.index', compact(
             'applications',
             'universities',

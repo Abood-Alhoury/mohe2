@@ -44,7 +44,8 @@ class DashboardController extends Controller
             ->where('status', '!=', 'مسودة')
             ->with(['candidate', 'latestDecision', 'educations.level', 'educations.country', 'educations.university', 'educations.attachments.attachmentType']);
 
-        if ($request->filled('search')) {
+        $isSearch = $request->filled('search');
+        if ($isSearch) {
             $search = trim($request->search);
             $query->where(function($q) use ($search) {
                 $q->where('application_no', 'like', "%{$search}%")
@@ -57,7 +58,12 @@ class DashboardController extends Controller
             });
         }
 
-        $recentApplications = $query->latest()->take(15)->get();
+        $recentApplications = $isSearch ? $query->latest()->take(50)->get() : $query->latest()->take(15)->get();
+        $search = $request->get('search', '');
+
+        if ($request->ajax() || $request->has('ajax')) {
+            return view('university.partials._recent_applications_table', compact('recentApplications', 'search'))->render();
+        }
 
         // Get unread notifications for the notifications center
         $notifications = ApplicationMessage::whereHas('application', function($q) use ($uniId) {
@@ -80,6 +86,73 @@ class DashboardController extends Controller
             'draftApplications',
             'approvedCount',
             'recentApplications',
+            'notifications',
+            'universityName',
+            'user',
+            'siteLocked',
+            'siteNotice'
+        ));
+    }
+
+    public function drafts(Request $request)
+    {
+        $user = Auth::user();
+        $uniId = $user->university_id;
+
+        if (!$uniId) {
+            Auth::logout();
+            return redirect()->route('login')->withErrors(['email' => 'هذا المستخدم ليس مرتبطاً بأي جامعة.']);
+        }
+
+        $universityName = $user->university ? $user->university->name : 'الجامعة';
+
+        $query = Application::where('work_university_id', $uniId)
+            ->where('status', 'مسودة')
+            ->with(['candidate', 'educations.level', 'educations.country', 'educations.university', 'educations.attachments']);
+
+        $search = trim($request->get('search', ''));
+        if ($search !== '') {
+            $query->where(function($q) use ($search) {
+                $q->where('id', 'like', "%{$search}%")
+                  ->orWhere('application_no', 'like', "%{$search}%")
+                  ->orWhere('request_type', 'like', "%{$search}%")
+                  ->orWhere('work_faculty', 'like', "%{$search}%")
+                  ->orWhere('work_department', 'like', "%{$search}%")
+                  ->orWhereHas('candidate', function($cq) use ($search) {
+                      $cq->where('full_name', 'like', "%{$search}%")
+                        ->orWhere('national_id', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $drafts = $query->latest('updated_at')->paginate(20)->withQueryString();
+        $draftsCount = Application::where('work_university_id', $uniId)->where('status', 'مسودة')->count();
+
+        $notifications = ApplicationMessage::whereHas('application', function($q) use ($uniId) {
+                $q->where('work_university_id', $uniId);
+            })
+            ->where('sender_id', '!=', $user->id)
+            ->where('is_read', false)
+            ->with(['application.candidate', 'sender'])
+            ->latest()
+            ->get();
+
+        $siteLocked = SiteSetting::get('site_locked', '0') === '1';
+        $siteNotice = SiteSetting::get('site_notice', '');
+
+        if ($request->ajax() || $request->has('ajax')) {
+            return view('university.drafts.partials._table', compact(
+                'drafts',
+                'draftsCount',
+                'search',
+                'siteLocked'
+            ))->render();
+        }
+
+        return view('university.drafts.index', compact(
+            'drafts',
+            'draftsCount',
+            'search',
             'notifications',
             'universityName',
             'user',

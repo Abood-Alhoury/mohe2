@@ -144,6 +144,32 @@ class EditApplicationController extends Controller
             'notes',
         ]), function($v) { return $v !== null; });
 
+        // 1. معالجة اسم الدولة إذا أُرسلت كـ Text Box (للإجازة)
+        if ($request->filled('country_name')) {
+            $cName = trim($request->input('country_name'));
+            $country = LookupCountry::where('name', $cName)->first()
+                ?: LookupCountry::create(['name' => $cName]);
+            $data['country_id'] = $country->id;
+        }
+
+        // 2. معالجة اسم الجامعة إذا أُرسلت كـ Text Box (لماجستير الدكتوراه أو للإجازة)
+        if ($request->filled('university_name')) {
+            $uniName = trim($request->input('university_name'));
+            $uni = LookupUniversity::where('name', $uniName)->first()
+                ?: LookupUniversity::where('name', 'like', "%{$uniName}%")->first();
+
+            if ($uni) {
+                $data['university_id'] = $uni->id;
+                $data['university_other'] = null;
+            } else {
+                $data['university_id'] = null;
+                $data['university_other'] = $uniName;
+                $data['university_text'] = $uniName;
+            }
+        } elseif ($request->filled('university_id')) {
+            $data['university_other'] = null;
+        }
+
         if ($educationId) {
             $ed = Education::findOrFail($educationId);
             $ed->update($data);
@@ -153,18 +179,62 @@ class EditApplicationController extends Controller
             $ed = Education::create($data);
         }
 
-        // Handle attachment upload if provided
+        // 3. معالجة المرفق الجديد وحفظه بالرقم المعياري 23 (مرفقات ووثائق أخرى)
         if ($request->hasFile('new_attachment')) {
             $file = $request->file('new_attachment');
             $path = $file->store('attachments/' . $app->id, 'public');
+
+            $levelName = optional($ed->level)->name ?? '';
+            $defaultNote = 'وثيقة مرفقة حديثاً من صفحة التعديل الإداري';
+            if (str_contains($levelName, 'ماجستير') || $ed->education_level_id == 2) {
+                $defaultNote = 'مرفق إضافي - درجة الماجستير';
+            } elseif (str_contains($levelName, 'إجازة') || $ed->education_level_id == 1) {
+                $defaultNote = 'مرفق إضافي - الإجازة الجامعية';
+            } elseif (str_contains($levelName, 'دكتوراه') || $ed->education_level_id == 3) {
+                $defaultNote = 'مرفق إضافي - درجة الدكتوراه';
+            }
+
             \App\Models\EducationAttachment::create([
-                'education_id' => $ed->id,
-                'attachment_type_id' => 3,
-                'file_path' => $path,
-                'notes' => $request->input('attachment_notes', 'وثيقة مرفقة حديثاً من صفحة التعديل الإداري'),
+                'education_id'       => $ed->id,
+                'attachment_type_id' => 23,
+                'file_path'          => $path,
+                'notes'              => $request->input('attachment_notes', $defaultNote),
             ]);
         }
 
         return redirect()->back()->with('success', 'تم تحديث البيانات والمؤهل العلمي بنجاح');
+    }
+    /**
+     * استعراض ملف المرفق مباشرة في المتصفح بصيغة PDF
+     */
+  /**
+     * معاينة واستعراض ملف المرفق في المتصفح مباشرة
+     */
+    public function viewAttachment($id)
+    {
+        $attachment = \App\Models\EducationAttachment::findOrFail($id);
+        $filePath = $attachment->file_path;
+
+        $fullPath = storage_path('app/public/' . $filePath);
+        if (!file_exists($fullPath)) {
+            $fullPath = storage_path('app/' . $filePath);
+        }
+
+        if (!file_exists($fullPath)) {
+            abort(404, 'عذراً، الملف غير موجود على الخادم.');
+        }
+
+        // قراءة محتوى الملف
+        $fileContent = file_get_contents($fullPath);
+
+        // إجبار اسم الملف أن ينتهي دائماً بـ .pdf ليتعرف عليه عارض المتصفح
+        $displayName = 'preview_' . $attachment->id . '.pdf';
+
+        return response($fileContent, 200, [
+            'Content-Type'              => 'application/pdf',
+            'Content-Disposition'       => 'inline; filename="' . $displayName . '"',
+            'Content-Transfer-Encoding' => 'binary',
+            'Accept-Ranges'             => 'bytes',
+        ]);
     }
 }

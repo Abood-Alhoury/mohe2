@@ -80,41 +80,142 @@ class ApplicationWizardController extends Controller
 
         $uniId = Auth::user()->university_id;
         $existingApp = null;
-        if ($request->filled('draft_id')) {
-            $existingApp = Application::where('id', $request->draft_id)
+
+        // 1. التقاط معرّف الطلب في كافة الحالات
+        $appId = $request->input('draft_id') ?? $request->input('application_id') ?? $request->input('app_id') ?? $request->input('id');
+        if ($appId) {
+            $existingApp = Application::where('id', $appId)
                 ->where('work_university_id', $uniId)
-                ->with(['educations.attachments'])
+                ->with(['educations.level', 'educations.attachments'])
                 ->first();
         }
 
-        // Smart draft lookup: check if this candidate already has an open draft for Syrian Masters in this university
+        // البحث الاحتياطي الذكي بالرقم الوطني
         if (!$existingApp && $request->filled('national_id')) {
             $existingProfile = EquivalenceProfile::where('national_id', trim($request->national_id))->first();
             if ($existingProfile) {
                 $existingApp = Application::where('candidate_id', $existingProfile->id)
                     ->where('work_university_id', $uniId)
                     ->where(function($q) {
-                        $q->where('status', 'مسودة')->orWhere('status', 1);
+                        $q->whereIn('status', ['مسودة', 'بانتظار الوثائق', 'بانتظار استكمال الوثائق', 'بانتظار الوثائق الناقصة', 1, 3]);
                     })
                     ->where(function($q) {
                         $q->whereIn('request_type', ['ماجستير داخلي - نظري', 'ماجستير داخلي - تطبيقي', 1, 2]);
                     })
-                    ->with(['educations.attachments'])
+                    ->with(['educations.level', 'educations.attachments'])
                     ->latest('id')
                     ->first();
             }
         }
 
         $isExisting = ($existingApp !== null);
-        $fileRule = $isExisting ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048';
+        $syriaCountry = LookupCountry::where('name', 'سوريا')->first();
+        $syriaId = $syriaCountry ? $syriaCountry->id : null;
+
+        // 2. تجميع المرفقات السابقة (بالأرقام الجديدة وبالنصوص لضمان عدم ضياع أي ملف)
+        $existingAttachments = [];
+        if ($existingApp) {
+            foreach ($existingApp->educations as $ed) {
+                foreach ($ed->attachments as $att) {
+                    $notes = $att->notes ?? '';
+                    $tId = (int) ($att->attachment_type_id ?? 0);
+                    $path = $att->file_path;
+                    if (!$path) continue;
+
+                    if ($tId) $existingAttachments[$tId] = $path;
+                    if ($notes) $existingAttachments[$notes] = $path;
+
+                    // دعم المسميات والـ IDs الجديدة والقديمة
+                    if ($tId === 1 || (str_contains($notes, 'ثانوية') && !str_contains($notes, 'قرار'))) {
+                        $existingAttachments[1] = $path;
+                        $existingAttachments['hs_cert'] = $path;
+                        $existingAttachments['file_hs_cert'] = $path;
+                    } elseif ($tId === 2 || $tId === 13 || (str_contains($notes, 'قرار') && str_contains($notes, 'ثانوية'))) {
+                        $existingAttachments[2] = $path;
+                        $existingAttachments['hs_decision'] = $path;
+                        $existingAttachments['hs_decision_file'] = $path;
+                        $existingAttachments['file_hs_decision'] = $path;
+                    } elseif ($tId === 3 || $tId === 2 || (str_contains($notes, 'الإجازة') && !str_contains($notes, 'قرار'))) {
+                        $existingAttachments[3] = $path;
+                        $existingAttachments['ba_cert'] = $path;
+                        $existingAttachments['file_ba_cert'] = $path;
+                    } elseif ($tId === 4 || $tId === 15 || (str_contains($notes, 'قرار') && str_contains($notes, 'الإجازة'))) {
+                        $existingAttachments[4] = $path;
+                        $existingAttachments['ba_decision'] = $path;
+                        $existingAttachments['ba_decision_file'] = $path;
+                        $existingAttachments['file_ba_decision'] = $path;
+                    } elseif ($tId === 6 || $tId === 12 || (str_contains($notes, 'شهادة') && str_contains($notes, 'ماجستير'))) {
+                        $existingAttachments[6] = $path;
+                        $existingAttachments['ma_cert'] = $path;
+                        $existingAttachments['file_ma_cert'] = $path;
+                    } elseif ($tId === 7 || $tId === 16 || str_contains($notes, 'تواريخ') || str_contains($notes, 'مجلس')) {
+                        $existingAttachments[7] = $path;
+                        $existingAttachments['ma_dates'] = $path;
+                        $existingAttachments['file_ma_dates'] = $path;
+                    } elseif ($tId === 8 || $tId === 17 || str_contains($notes, 'ملخص')) {
+                        $existingAttachments[8] = $path;
+                        $existingAttachments['thesis_summary'] = $path;
+                        $existingAttachments['file_thesis_summary'] = $path;
+                    } elseif ($tId === 13 || $tId === 11 || str_contains($notes, 'هوية') || str_contains($notes, 'شخصية')) {
+                        $existingAttachments[13] = $path;
+                        $existingAttachments['national_id'] = $path;
+                        $existingAttachments['file_national_id'] = $path;
+                    } elseif ($tId === 14 || $tId === 20 || str_contains($notes, 'السيرة') || str_contains($notes, 'سيرة')) {
+                        $existingAttachments[14] = $path;
+                        $existingAttachments['cv'] = $path;
+                        $existingAttachments['file_cv'] = $path;
+                    } elseif ($tId === 15 || $tId === 21 || str_contains($notes, 'كتاب') || str_contains($notes, 'طلب')) {
+                        $existingAttachments[15] = $path;
+                        $existingAttachments['uni_request'] = $path;
+                        $existingAttachments['file_uni_request'] = $path;
+                    } elseif ($tId === 16 || $tId === 6 || str_contains($notes, 'إيصال') || str_contains($notes, 'تسديد') || str_contains($notes, 'رسم')) {
+                        $existingAttachments[16] = $path;
+                        $existingAttachments['payment'] = $path;
+                        $existingAttachments['file_payment'] = $path;
+                    } elseif ($tId === 18 || str_contains($notes, 'اللغة')) {
+                        $existingAttachments[18] = $path;
+                        $existingAttachments['lang_cert'] = $path;
+                        $existingAttachments['file_lang_cert'] = $path;
+                    } elseif ($tId === 19 || str_contains($notes, 'ICDL') || str_contains($notes, 'حاسوب')) {
+                        $existingAttachments[19] = $path;
+                        $existingAttachments['icdl_cert'] = $path;
+                        $existingAttachments['file_icdl_cert'] = $path;
+                    } elseif ($tId === 20 || $tId === 22 || str_contains($notes, 'خبرة')) {
+                        $existingAttachments[20] = $path;
+                        $existingAttachments['exp_cert'] = $path;
+                        $existingAttachments['file_exp_cert'] = $path;
+                    } elseif ($tId === 21 || $tId === 23 || str_contains($notes, 'العقود') || str_contains($notes, 'رواتب')) {
+                        $existingAttachments[21] = $path;
+                        $existingAttachments['contracts'] = $path;
+                        $existingAttachments['file_contracts'] = $path;
+                    } elseif ($tId === 22 || $tId === 25 || str_contains($notes, 'المكتبة')) {
+                        $existingAttachments[22] = $path;
+                        $existingAttachments['nat_library_receipt'] = $path;
+                        $existingAttachments['file_nat_library_receipt'] = $path;
+                    } elseif ($tId === 23 || $tId === 24 || str_contains($notes, 'أخرى') || str_contains($notes, 'اخرى')) {
+                        $existingAttachments[23] = $path;
+                        $existingAttachments['other_attachments'] = $path;
+                        $existingAttachments['file_other_attachments'] = $path;
+                    }
+                }
+            }
+        }
+
+        $reqOrNullable = fn($typeId, $key) => (isset($existingAttachments[$typeId]) || isset($existingAttachments[$key]) || isset($existingAttachments['file_' . $key]))
+            ? 'nullable|file|mimes:pdf|max:2048'
+            : 'required|file|mimes:pdf|max:2048';
+
+        $hasHsDecision = isset($existingAttachments[2]) || isset($existingAttachments['hs_decision']) || isset($existingAttachments['hs_decision_file']);
+        $hasBaDecision = isset($existingAttachments[4]) || isset($existingAttachments['ba_decision']) || isset($existingAttachments['ba_decision_file']);
+        $hasContracts  = isset($existingAttachments[21]) || isset($existingAttachments['contracts']) || isset($existingAttachments['file_contracts']);
 
         $isDraft = $request->input('action') === 'save_draft';
 
-        // 1. Validation of all sections
+        // 3. قواعد التحقق (Validation Rules)
         if ($isDraft) {
             $rules = [
                 'full_name' => 'nullable|string|max:255',
-                'national_id' => 'nullable|string|max:50',
+                'national_id' => 'nullable|string|regex:/^[0-9]{1,11}$/',
                 'father_name' => 'nullable|string|max:255',
                 'mother_name' => 'nullable|string|max:255',
                 'nationality_id' => 'nullable',
@@ -132,6 +233,7 @@ class ApplicationWizardController extends Controller
                 'hs_grant_date' => 'nullable',
                 'hs_decision_no' => 'nullable|string|max:100',
                 'hs_decision_date' => 'nullable',
+                'hs_decision_file' => 'nullable|file|mimes:pdf|max:2048',
 
                 'ba_country_id' => 'nullable',
                 'ba_university_id' => 'nullable',
@@ -144,11 +246,14 @@ class ApplicationWizardController extends Controller
                 'ba_rank' => 'nullable|string',
                 'ba_decision_no' => 'nullable|string|max:100',
                 'ba_decision_date' => 'nullable',
+                'ba_decision_file' => 'nullable|file|mimes:pdf|max:2048',
+                'file_ba_decision' => 'nullable|file|mimes:pdf|max:2048',
                 'ba_university_text' => 'nullable|string|max:255',
 
                 'ma_university_id' => 'nullable',
                 'ma_faculty' => 'nullable|string|max:255',
                 'ma_department' => 'nullable|string|max:255',
+                'ma_general_specialization' => 'nullable|string|max:255',
                 'ma_specialization' => 'nullable|string|max:255',
                 'ma_registration_date' => 'nullable',
                 'ma_defense_date' => 'nullable',
@@ -183,16 +288,12 @@ class ApplicationWizardController extends Controller
             ];
             $messages = [];
         } else {
-            $syriaCountry = LookupCountry::where('name', 'سوريا')->first();
-            $syriaId = $syriaCountry ? $syriaCountry->id : null;
-
             $rules = [
-                // Step 1: Personal Info
                 'full_name' => 'required|string|max:255',
                 'father_name' => 'required|string|max:255',
                 'mother_name' => 'required|string|max:255',
                 'nationality_id' => 'required|exists:lookup_countries,id',
-                'national_id' => 'required|string|max:50',
+                'national_id' => ['required', 'regex:/^[0-9]{11}$/'],
                 'dob' => 'required|date',
                 'job_title' => 'required|string|max:150',
                 'phone' => 'nullable|string|regex:/^[0-9]{10}$/',
@@ -202,33 +303,33 @@ class ApplicationWizardController extends Controller
                 'gender' => 'required|string|in:ذكر,أنثى',
                 'is_syrian' => 'required|boolean',
 
-                // Step 2: High School Info
                 'hs_country_id' => 'required|exists:lookup_countries,id',
                 'hs_type' => 'required|string|in:أخرى,علمي,أدبي,شرعي,صناعي,تجاري',
                 'hs_grant_date' => 'required|numeric|digits:4|min:1950|max:' . date('Y'),
                 'hs_decision_no' => ($request->hs_country_id != $syriaId) ? 'required|string|max:100' : 'nullable|string|max:100',
                 'hs_decision_date' => ($request->hs_country_id != $syriaId) ? 'required|date' : 'nullable|date',
-                'hs_decision_file' => ($request->hs_country_id != $syriaId && !$isExisting) ? 'required|file|mimes:pdf|max:2048' : 'nullable|file|mimes:pdf|max:2048',
+                'hs_decision_file' => ($request->hs_country_id != $syriaId && !$hasHsDecision) ? 'required|file|mimes:pdf|max:2048' : 'nullable|file|mimes:pdf|max:2048',
+                'file_hs_decision' => 'nullable|file|mimes:pdf|max:2048',
 
-                // Step 3: Bachelor's Degree Info
                 'ba_country_id' => 'required|exists:lookup_countries,id',
                 'ba_university_id' => 'nullable|exists:lookup_universities,id',
                 'ba_university_other' => 'nullable|string|max:255',
-                'ba_university_text' => 'nullable|string|max:255',
+                'ba_university_text' => 'required|string|max:255',
                 'ba_faculty' => 'required|string|max:255',
-                'ba_department' => 'nullable|string|max:255',
+                'ba_department' => 'required|string|max:255',
                 'ba_specialization' => 'nullable|string|max:255',
-                'ba_registration_date' => 'required|date',
-                'ba_grant_date' => 'required|date|after:ba_registration_date|before_or_equal:today',
+                'ba_registration_date' => 'nullable|date',
+                'ba_grant_date' => 'required|date|before_or_equal:today',
                 'ba_rank' => 'required|string|max:100',
                 'ba_decision_no' => ($request->ba_country_id != $syriaId) ? 'required|string|max:100' : 'nullable|string|max:100',
                 'ba_decision_date' => ($request->ba_country_id != $syriaId) ? 'required|date' : 'nullable|date',
-                'ba_decision_file' => ($request->ba_country_id != $syriaId && !$isExisting) ? 'required|file|mimes:pdf|max:2048' : 'nullable|file|mimes:pdf|max:2048',
+                'ba_decision_file' => ($request->ba_country_id != $syriaId && !$hasBaDecision) ? 'required|file|mimes:pdf|max:2048' : 'nullable|file|mimes:pdf|max:2048',
+                'file_ba_decision' => 'nullable|file|mimes:pdf|max:2048',
 
-                // Step 4: Syrian Master's Degree Info
                 'ma_university_id' => 'required|exists:lookup_universities,id',
                 'ma_faculty' => 'required|string|max:255',
-                'ma_department' => 'nullable|string|max:255',
+                'ma_department' => 'required|string|max:255',
+                'ma_general_specialization' => 'required|string|max:255',
                 'ma_specialization' => 'nullable|string|max:255',
                 'ma_registration_date' => 'required|date',
                 'ma_defense_date' => 'required|date|after:ma_registration_date',
@@ -236,14 +337,12 @@ class ApplicationWizardController extends Controller
                 'ma_rank' => 'required|string|max:100',
                 'ma_supervisor' => 'required|string|max:255',
                 'ma_thesis_title' => 'required|string',
-                
-                // Experience
+
                 'has_experience' => 'nullable|boolean',
                 'exp_place' => 'nullable|required_if:has_experience,1|string|max:255',
                 'exp_from_year' => 'nullable|required_if:has_experience,1|date',
                 'exp_to_year' => 'nullable|required_if:has_experience,1|date|after_or_equal:exp_from_year',
 
-                // Step 1: University Request Details
                 'req_no' => 'required',
                 'req_date' => 'required|date',
                 'courses' => 'nullable|array',
@@ -251,23 +350,27 @@ class ApplicationWizardController extends Controller
                 'courses.*.faculty' => 'nullable|string|max:255',
                 'courses.*.department' => 'nullable|string|max:255',
 
-                // Step 5: Attachments Upload
-                'file_uni_request' => $fileRule,
+                // المرفقات المطلوبة مع الاستفادة من التخزين السابق
+                'file_uni_request' => $reqOrNullable(15, 'uni_request'),
                 'file_national_id' => 'nullable|file|mimes:pdf|max:2048',
-                'file_hs_cert' => $fileRule,
-                'file_ba_cert' => $fileRule,
-                'file_ma_cert' => $fileRule,
-                'file_ma_dates' => $fileRule,
-                'file_thesis_summary' => $fileRule,
-                'file_exp_cert' => 'nullable|file|mimes:pdf|max:2048',
-                'file_contracts' => 'nullable|file|mimes:pdf|max:2048',
-                'file_lang_cert' => $fileRule,
-                'file_icdl_cert' => $fileRule,
-                'file_cv' => $fileRule,
-                'file_payment' => $fileRule,
+                'file_hs_cert' => $reqOrNullable(1, 'hs_cert'),
+                'file_ba_cert' => $reqOrNullable(3, 'ba_cert'),
+                'file_ma_cert' => $reqOrNullable(6, 'ma_cert'),
+                'file_ma_dates' => $reqOrNullable(7, 'ma_dates'),
+                'file_thesis_summary' => $reqOrNullable(8, 'thesis_summary'),
+                'file_cv' => $reqOrNullable(14, 'cv'),
+                'file_payment' => $reqOrNullable(16, 'payment'),
+                'file_exp_cert' => ($request->boolean('has_experience') && !isset($existingAttachments[20]) && !isset($existingAttachments['exp_cert'])) ? 'required|file|mimes:pdf|max:2048' : 'nullable|file|mimes:pdf|max:2048',
+                'file_contracts' => ($request->boolean('has_experience') && !$hasContracts) ? 'required|file|mimes:pdf|max:2048' : 'nullable|file|mimes:pdf|max:2048',
+                'file_lang_cert' => 'nullable|file|mimes:pdf|max:2048',
+                'file_icdl_cert' => 'nullable|file|mimes:pdf|max:2048',
+                'file_nat_library_receipt' => 'nullable|file|mimes:pdf|max:2048',
                 'file_other_attachments' => 'nullable|file|mimes:pdf|max:2048',
             ];
+
             $messages = [
+                'national_id.required' => 'الرقم الوطني مطلوب.',
+                'national_id.regex' => 'الرقم الوطني يجب أن يتألف من 11 رقماً حصراً.',
                 'mobile.regex' => 'رقم الهاتف المحمول يجب أن يتكون من 10 أرقام.',
                 'phone.regex' => 'رقم الهاتف الأرضي يجب أن يتكون من 10 أرقام.',
                 'email.email' => 'البريد الإلكتروني المدخل غير صحيح.',
@@ -277,18 +380,27 @@ class ApplicationWizardController extends Controller
                 'ba_decision_no.required' => 'يرجى إدخال رقم قرار تعادل الإجازة الجامعية غير السورية.',
                 'ba_decision_date.required' => 'يرجى إدخال تاريخ قرار تعادل الإجازة الجامعية غير السورية.',
                 'ba_decision_file.required' => 'يرجى رفع صورة عن قرار معادلة الإجازة الجامعية غير السورية (PDF).',
-                'ba_grant_date.after' => 'تاريخ التخرج من الإجازة يجب أن يكون بعد تاريخ التسجيل بالإجازة.',
                 'ba_grant_date.before_or_equal' => 'تاريخ التخرج من الإجازة يجب أن يكون قبل أو يساوي اليوم الحالي.',
                 'ma_defense_date.after' => 'تاريخ المناقشة يجب أن يكون بعد تاريخ التسجيل بالدرجة.',
                 'ma_grant_date.after' => 'تاريخ منح الدرجة يجب أن يكون بعد تاريخ المناقشة.',
-                'ma_grant_date.before_or_equal' => 'تاريخ منح الدرجة يجب أن يكون قبل أو يساوي اليوم الحالي وليس في المستقبل.',
+                'ma_grant_date.before_or_equal' => 'تاريخ منح الدرجة يجب أن يكون قبل أو يساوي اليوم الحالي.',
+                'file_uni_request.required' => 'يرجى رفع ملف كتاب طلب التقويم الصادر عن الجامعة (PDF).',
+                'file_hs_cert.required' => 'يرجى رفع ملف شهادة الدراسة الثانوية (PDF).',
+                'file_ba_cert.required' => 'يرجى رفع ملف شهادة الإجازة الجامعية الأولى (PDF).',
+                'file_ma_cert.required' => 'يرجى رفع ملف شهادة الماجستير السورية (PDF).',
+                'file_ma_dates.required' => 'يرجى رفع ملف وثيقة تواريخ وقرارات المجلس بالماجستير (PDF).',
+                'file_thesis_summary.required' => 'يرجى رفع ملف ملخص رسالة الماجستير (PDF).',
+                'file_cv.required' => 'يرجى رفع ملف السيرة الذاتية للمرشح (PDF).',
+                'file_payment.required' => 'يرجى رفع ملف إيصال تسديد رسم تعادل الماجستير 100,000 ل.س (PDF).',
+                'file_exp_cert.required' => 'يرجى رفع شهادة الخبرة التدريسية (PDF).',
+                'file_contracts.required' => 'يرجى رفع العقود وإيصالات الرواتب (PDF).',
                 'max' => 'حجم الملف المرفق يتجاوز الحد الأقصى المسموح به (2 ميغابايت).',
             ];
         }
 
         $validated = $request->validate($rules, $messages);
 
-        // 2. Save Equivalence Profile (Candidate)
+        // 4. حفظ وتحديث بيانات المرشح
         if ($existingApp && $existingApp->candidate) {
             $profile = $existingApp->candidate;
             $profile->update([
@@ -327,7 +439,7 @@ class ApplicationWizardController extends Controller
             );
         }
 
-        // 3. Save Application
+        // 5. حفظ وتحديث بيانات الطلب
         $hasExp = $request->boolean('has_experience') && !empty($request->input('exp_place'));
         $trackName = $hasExp ? 'ماجستير داخلي - نظري' : 'ماجستير داخلي - تطبيقي';
         $appPrefix = $hasExp ? 'MA-SY-' : 'MA-APP-';
@@ -335,64 +447,11 @@ class ApplicationWizardController extends Controller
         $requestType = $trackName;
 
         $wasAwaitingDocs = ($existingApp && in_array($existingApp->status, ['بانتظار الوثائق', 'بانتظار استكمال الوثائق', 'بانتظار الوثائق الناقصة', 3]));
-
-        if ($isDraft) {
-            $appStatus = 'مسودة';
-        } else {
-            $appStatus = 'تحت التدقيق الأولي';
-        }
-
+        $appStatus = $isDraft ? 'مسودة' : 'تحت التدقيق الأولي';
         $application = $existingApp;
-        $existingAttachments = [];
 
         if ($application) {
-            // Collect existing attachment file paths before updating Educations
-            foreach ($application->educations as $ed) {
-                foreach ($ed->attachments as $att) {
-                    if ($att->notes) {
-                        $existingAttachments[$att->notes] = $att->file_path;
-                    }
-                    if (str_contains($att->notes, 'هوية') || str_contains($att->notes, 'شخصية')) {
-                        $existingAttachments['national_id'] = $att->file_path;
-                        $existingAttachments['file_national_id'] = $att->file_path;
-                    } elseif (str_contains($att->notes, 'ثانوية') && !str_contains($att->notes, 'قرار')) {
-                        $existingAttachments['hs_cert'] = $att->file_path;
-                    } elseif (str_contains($att->notes, 'قرار معادلة الشهادة الثانوية')) {
-                        $existingAttachments['hs_decision'] = $att->file_path;
-                    } elseif (str_contains($att->notes, 'الإجازة') && !str_contains($att->notes, 'قرار')) {
-                        $existingAttachments['ba_cert'] = $att->file_path;
-                    } elseif (str_contains($att->notes, 'قرار معادلة الشهادة الجامعية')) {
-                        $existingAttachments['ba_decision'] = $att->file_path;
-                    } elseif (str_contains($att->notes, 'شهادة الماجستير')) {
-                        $existingAttachments['ma_cert'] = $att->file_path;
-                    } elseif (str_contains($att->notes, 'تواريخ')) {
-                        $existingAttachments['ma_dates'] = $att->file_path;
-                    } elseif (str_contains($att->notes, 'ملخص')) {
-                        $existingAttachments['thesis_summary'] = $att->file_path;
-                    } elseif (str_contains($att->notes, 'كتاب الجامعة')) {
-                        $existingAttachments['uni_request'] = $att->file_path;
-                    } elseif (str_contains($att->notes, 'اللغة')) {
-                        $existingAttachments['lang_cert'] = $att->file_path;
-                        $existingAttachments['file_lang_cert'] = $att->file_path;
-                    } elseif (str_contains($att->notes, 'ICDL') || str_contains($att->notes, 'حاسوب')) {
-                        $existingAttachments['icdl_cert'] = $att->file_path;
-                        $existingAttachments['file_icdl_cert'] = $att->file_path;
-                    } elseif (str_contains($att->notes, 'السيرة')) {
-                        $existingAttachments['cv'] = $att->file_path;
-                    } elseif (str_contains($att->notes, 'إيصال')) {
-                        $existingAttachments['payment'] = $att->file_path;
-                    } elseif (str_contains($att->notes, 'خبرة')) {
-                        $existingAttachments['exp_cert'] = $att->file_path;
-                    } elseif (str_contains($att->notes, 'العقود')) {
-                        $existingAttachments['contracts'] = $att->file_path;
-                    } elseif (str_contains($att->notes, 'أخرى') || str_contains($att->notes, 'اخرى')) {
-                        $existingAttachments['other_attachments'] = $att->file_path;
-                    }
-                }
-            }
-
             $isFirstTime = $request->has('is_first_time') ? 1 : 0;
-
             $application->update([
                 'candidate_id' => $profile->id,
                 'request_type' => $requestType,
@@ -426,7 +485,7 @@ class ApplicationWizardController extends Controller
             ]);
         }
 
-        // 4. Save Courses (if provided)
+        // 6. حفظ المقررات
         if ($request->has('courses') && is_array($request->courses)) {
             foreach ($request->courses as $course) {
                 if (!empty($course['name'])) {
@@ -441,7 +500,7 @@ class ApplicationWizardController extends Controller
             }
         }
 
-        // Get Education Levels from DB
+        // جلب مستويات التعليم
         $lvlHS = LookupEducationLevel::where('name', 'like', '%ثانوية%')->first();
         $lvlBA = LookupEducationLevel::where('name', 'like', '%إجازة%')->first();
         $lvlMA = LookupEducationLevel::where('name', 'like', '%ماجستير%')->first();
@@ -450,8 +509,8 @@ class ApplicationWizardController extends Controller
         $baLevelId = $lvlBA ? $lvlBA->id : 1;
         $maLevelId = $lvlMA ? $lvlMA->id : 2;
 
-        // 5. Create Educations records
-        // A. High School Education
+        // 7. حفظ سجلات التعليم (Educations)
+        // أ. الثانوية
         $hsNotes = null;
         if ($request->hs_decision_no) {
             $hsNotes = 'رقم قرار المعادلة الثانوية: ' . $request->hs_decision_no;
@@ -475,7 +534,7 @@ class ApplicationWizardController extends Controller
             'notes' => $hsNotes,
         ]);
 
-        // B. Bachelor's Education
+        // ب. الإجازة الجامعية الأولى
         $baNotes = null;
         if ($request->ba_decision_no) {
             $baNotes = 'رقم قرار معادلة الإجازة: ' . $request->ba_decision_no;
@@ -489,6 +548,8 @@ class ApplicationWizardController extends Controller
         if ($baUniName === '') {
             $baUniName = trim($request->input('ba_university_other', ''));
         }
+
+        $syriaCountryId = $syriaId ?: $request->nationality_id;
 
         if ($baUniName !== '') {
             $uni = \App\Models\LookupUniversity::where('name', $baUniName)->first()
@@ -511,19 +572,16 @@ class ApplicationWizardController extends Controller
             'university_id' => $baUniId,
             'faculty' => $request->ba_faculty,
             'department' => $request->ba_department,
-            'section_name' => $request->ba_specialization ?: ($baUniName ?: ($request->ba_university_other ?? null)),
+            'section_name' => $request->ba_specialization ?: null,
             'general_specialization' => $request->ba_faculty,
-            'exact_specialization' => $request->ba_department,
+            'exact_specialization' => $request->ba_specialization ?: $request->ba_department,
             'registration_date' => $request->ba_registration_date,
             'grant_date' => $request->ba_grant_date,
             'rank' => $request->ba_rank,
             'notes' => $baNotes,
         ]);
 
-        // C. Master's Education
-        $syriaCountry = LookupCountry::where('name', 'سوريا')->first();
-        $syriaCountryId = $syriaCountry ? $syriaCountry->id : $request->nationality_id;
-
+        // ج. الماجستير
         $edMA = Education::create([
             'application_id' => $application->id,
             'education_level_id' => $maLevelId,
@@ -532,8 +590,8 @@ class ApplicationWizardController extends Controller
             'faculty' => $request->ma_faculty,
             'department' => $request->ma_department,
             'section_name' => $request->ma_specialization ?? null,
-            'general_specialization' => $request->ma_faculty,
-            'exact_specialization' => $request->ma_department,
+            'general_specialization' => $request->ma_general_specialization ?: $request->ma_faculty,
+            'exact_specialization' => $request->ma_specialization ?: $request->ma_department,
             'registration_date' => $request->ma_registration_date,
             'defense_date' => $request->ma_defense_date,
             'grant_date' => $request->ma_grant_date,
@@ -545,7 +603,7 @@ class ApplicationWizardController extends Controller
             'notes' => $request->exp_place ? 'مكان الخبرة التدريسية: ' . $request->exp_place : null,
         ]);
 
-        // 6. Handle File Uploads & Attachments
+        // 8. حفظ وربط المرفقات بالأرقام المعيارية (1 - 23)
         $folder = 'attachments/' . $application->id;
 
         $uploadAndAttach = function($fileKey, $educationId, $typeId, $notes, $existingKey = null) use ($request, $folder, $existingAttachments) {
@@ -559,7 +617,10 @@ class ApplicationWizardController extends Controller
                     'notes' => $notes,
                 ]);
             } else {
-                $oldPath = $existingAttachments[$notes] ?? ($existingKey && isset($existingAttachments[$existingKey]) ? $existingAttachments[$existingKey] : null);
+                $oldPath = $existingAttachments[$typeId]
+                    ?? ($existingKey && isset($existingAttachments[$existingKey]) ? $existingAttachments[$existingKey] : null)
+                    ?? ($existingAttachments[$notes] ?? null);
+
                 if ($oldPath) {
                     EducationAttachment::create([
                         'education_id' => $educationId,
@@ -571,53 +632,69 @@ class ApplicationWizardController extends Controller
             }
         };
 
-        // Personal ID Attachment (if provided)
-        if ($request->hasFile('file_national_id') || isset($existingAttachments['national_id'])) {
-            $uploadAndAttach('file_national_id', $edMA->id, 11, 'صورة عن الهوية الشخصية', 'national_id');
+        // الهوية الشخصية (13)
+        if ($request->hasFile('file_national_id') || isset($existingAttachments[13]) || isset($existingAttachments['national_id'])) {
+            $uploadAndAttach('file_national_id', $edMA->id, 13, 'صورة عن الهوية الشخصية / جواز السفر', 'national_id');
         }
 
-        // High School Attachments
+        // مرفقات الثانوية (شهادة 1 / قرار 2)
         $uploadAndAttach('file_hs_cert', $edHS->id, 1, 'نسخة مصدقة عن الشهادة الثانوية', 'hs_cert');
-        if ($request->hasFile('hs_decision_file') || isset($existingAttachments['hs_decision'])) {
-            $uploadAndAttach('hs_decision_file', $edHS->id, 13, 'قرار معادلة الشهادة الثانوية', 'hs_decision');
+        $hsDecisionInput = $request->hasFile('file_hs_decision') ? 'file_hs_decision' : 'hs_decision_file';
+        if ($request->hasFile($hsDecisionInput) || $hasHsDecision) {
+            $uploadAndAttach($hsDecisionInput, $edHS->id, 2, 'قرار معادلة الشهادة الثانوية غير السورية', 'hs_decision');
         }
 
-        // Bachelor's Attachments
-        $uploadAndAttach('file_ba_cert', $edBA->id, 2, 'مصدقة الإجازة الجامعية الأولى', 'ba_cert');
-        if ($request->hasFile('ba_decision_file') || isset($existingAttachments['ba_decision'])) {
-            $uploadAndAttach('ba_decision_file', $edBA->id, 15, 'قرار معادلة الإجازة الجامعية الأولى', 'ba_decision');
+        // مرفقات الإجازة الجامعية الأولى (مصدقة 3 / قرار 4)
+        $uploadAndAttach('file_ba_cert', $edBA->id, 3, 'مصدقة الإجازة الجامعية الأولى', 'ba_cert');
+        $baDecisionInput = $request->hasFile('file_ba_decision') ? 'file_ba_decision' : 'ba_decision_file';
+        if ($request->hasFile($baDecisionInput) || $hasBaDecision) {
+            $uploadAndAttach($baDecisionInput, $edBA->id, 4, 'قرار معادلة الإجازة الجامعية الأولى غير السورية', 'ba_decision');
         }
 
-        // Master's Attachments
-        $uploadAndAttach('file_ma_cert', $edMA->id, 12, 'نسخة مصدقة عن شهادة الماجستير', 'ma_cert');
-        $uploadAndAttach('file_ma_dates', $edMA->id, 16, 'وثيقة تواريخ التسجيل والمناقشة والمنح بالماجستير', 'ma_dates');
-        $uploadAndAttach('file_thesis_summary', $edMA->id, 17, 'ملخص رسالة الماجستير باللغة العربية', 'thesis_summary');
-        $uploadAndAttach('file_lang_cert', $edMA->id, 18, 'شهادة إتقان اللغة الإنكليزية', 'lang_cert');
-        $uploadAndAttach('file_icdl_cert', $edMA->id, 19, 'شهادة قيادة الحاسوب الدولية (ICDL)', 'icdl_cert');
-        $uploadAndAttach('file_cv', $edMA->id, 20, 'السيرة الذاتية للمرشح', 'cv');
-        $uploadAndAttach('file_payment', $edMA->id, 6, 'إيصال تسديد رسم تعادل 100,000 ل.س', 'payment');
-        $uploadAndAttach('file_uni_request', $edMA->id, 21, 'كتاب طلب التقويم الصادر عن الجامعة رقم ' . $request->req_no . ' تاريخ ' . $request->req_date, 'uni_request');
+        // مرفقات الماجستير (شهادة 6 / تواريخ وقرارات 7 / ملخص 8)
+        $uploadAndAttach('file_ma_cert', $edMA->id, 6, 'نسخة مصدقة عن شهادة الماجستير', 'ma_cert');
+        $uploadAndAttach('file_ma_dates', $edMA->id, 7, 'وثيقة تواريخ وقرارات المجلس للماجستير', 'ma_dates');
+        $uploadAndAttach('file_thesis_summary', $edMA->id, 8, 'ملخص رسالة الماجستير باللغة العربية', 'thesis_summary');
 
-        if ($request->hasFile('file_exp_cert') || isset($existingAttachments['exp_cert'])) {
-            $uploadAndAttach('file_exp_cert', $edMA->id, 22, 'شهادة خبرة تدريسية لا تقل عن سنتين', 'exp_cert');
+        // الوثائق العامة والرسوم (السيرة 14 / كتاب الجامعة 15 / رسم الماجستير 16)
+        $uploadAndAttach('file_cv', $edMA->id, 14, 'السيرة الذاتية للمرشح', 'cv');
+        $uploadAndAttach('file_uni_request', $edMA->id, 15, 'كتاب طلب التقويم الصادر عن الجامعة رقم ' . $request->req_no . ' تاريخ ' . $request->req_date, 'uni_request');
+        $uploadAndAttach('file_payment', $edMA->id, 16, 'إيصال تسديد رسم تعادل الماجستير (100,000 ل.س)', 'payment');
+
+        // الوثائق الاختيارية (اللغة 18 / الحاسوب 19 / خبرة 20 / عقود 21 / مكتبة 22 / أخرى 23)
+        if ($request->hasFile('file_lang_cert') || isset($existingAttachments[18]) || isset($existingAttachments['lang_cert'])) {
+            $uploadAndAttach('file_lang_cert', $edMA->id, 18, 'شهادة إتقان اللغة الإنكليزية', 'lang_cert');
         }
-        if ($request->hasFile('file_contracts') || isset($existingAttachments['contracts'])) {
-            $uploadAndAttach('file_contracts', $edMA->id, 23, 'العقود وإيصالات الرواتب المصدقة', 'contracts');
+        if ($request->hasFile('file_icdl_cert') || isset($existingAttachments[19]) || isset($existingAttachments['icdl_cert'])) {
+            $uploadAndAttach('file_icdl_cert', $edMA->id, 19, 'شهادة مهارات الحاسوب (ICDL)', 'icdl_cert');
         }
-        if ($request->hasFile('file_other_attachments') || isset($existingAttachments['other_attachments'])) {
-            $uploadAndAttach('file_other_attachments', $edMA->id, 24, 'مرفقات أخرى', 'other_attachments');
+        if ($request->hasFile('file_exp_cert') || isset($existingAttachments[20]) || isset($existingAttachments['exp_cert'])) {
+            $uploadAndAttach('file_exp_cert', $edMA->id, 20, 'شهادة خبرة تدريسية', 'exp_cert');
+        }
+        if ($request->hasFile('file_contracts') || $hasContracts) {
+            $uploadAndAttach('file_contracts', $edMA->id, 21, 'العقود وإيصالات الرواتب المصدقة', 'contracts');
+        }
+        if ($request->hasFile('file_nat_library_receipt') || isset($existingAttachments[22]) || isset($existingAttachments['nat_library_receipt'])) {
+            $uploadAndAttach('file_nat_library_receipt', $edMA->id, 22, 'إيصال المكتبة الوطنية لاستلام الرسالة / الأطروحة', 'nat_library_receipt');
+        }
+        if ($request->hasFile('file_other_attachments') || isset($existingAttachments[23]) || isset($existingAttachments['other_attachments'])) {
+            $uploadAndAttach('file_other_attachments', $edMA->id, 23, 'مرفقات ووثائق أخرى', 'other_attachments');
         }
 
+        // 9. التوجيه والرسائل
         if ($isDraft) {
-            return redirect()->route('university.dashboard')
-                ->with('success', 'تم حفظ معاملة (' . $requestType . ') كمسودة بنجاح! للطلب رقم: ' . $appNo . '. يمكنك استكمال رفع المرفقات والوثائق الناقصة في أي وقت من قسم المسودات.');
+            if ($request->filled('redirect_to')) {
+                return redirect($request->input('redirect_to'))
+                    ->with('success', 'تم حفظ بيانات طلب المرشح كمسودة تلقائياً بنجاح! يمكنك استكمالها في أي وقت من قسم المسودات المحفوظة.');
+            }
+            return redirect()->route('university.drafts.index')
+                ->with('success', 'تم حفظ معاملة (' . $requestType . ') كمسودة بنجاح! للطلب رقم: ' . $appNo . '. يمكنك استكمال رفع المرفقات والوثائق الناقصة في أي وقت من هنا.');
         }
 
         if ($wasAwaitingDocs) {
             $candidateName = $profile ? $profile->full_name : ($application->candidate ? $application->candidate->full_name : '');
             $uniName = Auth::user()->university ? Auth::user()->university->name : 'الجامعة';
 
-            // 1. Notification to Admin
             ApplicationMessage::create([
                 'application_id' => $application->id,
                 'sender_id' => Auth::id(),
@@ -625,7 +702,6 @@ class ApplicationWizardController extends Controller
                 'is_read' => false,
             ]);
 
-            // 2. Notification to University
             $systemAdminId = User::whereHas('role', function($q) {
                 $q->where('name', 'admin');
             })->where('id', '!=', Auth::id())->value('id') ?? 1;
@@ -643,7 +719,6 @@ class ApplicationWizardController extends Controller
             ->with('submitted_app_id', $application->id)
             ->with('submitted_app_no', $appNo);
     }
-
     public function showSyrianDoctorateWizard(Request $request)
     {
         if (\App\Models\SiteSetting::get('site_locked', '0') === '1') {
@@ -725,11 +800,95 @@ class ApplicationWizardController extends Controller
         }
 
         $isExisting = ($existingApp !== null);
-        $fileRule = $isExisting ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048';
-
         $isDraft = $request->input('action') === 'save_draft';
         $syriaCountry = LookupCountry::where('name', 'سوريا')->first();
         $syriaId = $syriaCountry ? $syriaCountry->id : null;
+
+        // تجميع المرفقات السابقة المحفوظة بالأرقام الجديدة وبالنصوص
+        $existingAttachments = [];
+        if ($existingApp) {
+            foreach ($existingApp->educations as $ed) {
+                foreach ($ed->attachments as $att) {
+                    if ($att->attachment_type_id) {
+                        $existingAttachments[$att->attachment_type_id] = $att->file_path;
+                    }
+                    if ($att->notes) {
+                        $existingAttachments[$att->notes] = $att->file_path;
+                        if (str_contains($att->notes, 'هوية') || str_contains($att->notes, 'شخصية') || str_contains($att->notes, 'جواز')) {
+                            $existingAttachments[13] = $att->file_path;
+                            $existingAttachments['national_id'] = $att->file_path;
+                        } elseif (str_contains($att->notes, 'ثانوية') && !str_contains($att->notes, 'قرار')) {
+                            $existingAttachments[1] = $att->file_path;
+                            $existingAttachments['hs_cert'] = $att->file_path;
+                        } elseif (str_contains($att->notes, 'قرار') && str_contains($att->notes, 'ثانوية')) {
+                            $existingAttachments[2] = $att->file_path;
+                            $existingAttachments['hs_decision'] = $att->file_path;
+                        } elseif (str_contains($att->notes, 'الإجازة') && !str_contains($att->notes, 'قرار')) {
+                            $existingAttachments[3] = $att->file_path;
+                            $existingAttachments['ba_cert'] = $att->file_path;
+                        } elseif (str_contains($att->notes, 'قرار') && (str_contains($att->notes, 'الإجازة') || str_contains($att->notes, 'الجامعية'))) {
+                            $existingAttachments[4] = $att->file_path;
+                            $existingAttachments['ba_decision'] = $att->file_path;
+                        } elseif (str_contains($att->notes, 'دبلوم')) {
+                            $existingAttachments[5] = $att->file_path;
+                            $existingAttachments['diploma_cert'] = $att->file_path;
+                        } elseif (str_contains($att->notes, 'شهادة الماجستير') || str_contains($att->notes, 'شهادة ماجستير')) {
+                            $existingAttachments[6] = $att->file_path;
+                            $existingAttachments['ma_cert'] = $att->file_path;
+                        } elseif (str_contains($att->notes, 'تواريخ') || (str_contains($att->notes, 'مجلس') && str_contains($att->notes, 'ماجستير'))) {
+                            $existingAttachments[7] = $att->file_path;
+                            $existingAttachments['ma_council_decisions'] = $att->file_path;
+                        } elseif (str_contains($att->notes, 'قرار') && str_contains($att->notes, 'ماجستير')) {
+                            $existingAttachments[9] = $att->file_path;
+                            $existingAttachments['ma_decision'] = $att->file_path;
+                        } elseif (str_contains($att->notes, 'شهادة الدكتوراه') || (str_contains($att->notes, 'دكتوراه') && str_contains($att->notes, 'شهادة'))) {
+                            $existingAttachments[10] = $att->file_path;
+                            $existingAttachments['phd_cert'] = $att->file_path;
+                        } elseif (str_contains($att->notes, 'مجلس الجامعة للدكتوراه') || (str_contains($att->notes, 'مجلس') && str_contains($att->notes, 'دكتوراه'))) {
+                            $existingAttachments[11] = $att->file_path;
+                            $existingAttachments['phd_council_decisions'] = $att->file_path;
+                        } elseif (str_contains($att->notes, 'ملخص') && (str_contains($att->notes, 'دكتوراه') || str_contains($att->notes, 'الأطروحة'))) {
+                            $existingAttachments[12] = $att->file_path;
+                            $existingAttachments['thesis_summary'] = $att->file_path;
+                        } elseif (str_contains($att->notes, 'السيرة') || str_contains($att->notes, 'سيرة')) {
+                            $existingAttachments[14] = $att->file_path;
+                            $existingAttachments['cv'] = $att->file_path;
+                        } elseif (str_contains($att->notes, 'طلب') || str_contains($att->notes, 'كتاب الجامعة')) {
+                            $existingAttachments[15] = $att->file_path;
+                            $existingAttachments['uni_request'] = $att->file_path;
+                        } elseif (str_contains($att->notes, 'إيصال') || str_contains($att->notes, 'رسوم') || str_contains($att->notes, '125')) {
+                            $existingAttachments[17] = $att->file_path;
+                            $existingAttachments['payment'] = $att->file_path;
+                        } elseif (str_contains($att->notes, 'اللغة') || str_contains($att->notes, 'إنكليزية')) {
+                            $existingAttachments[18] = $att->file_path;
+                            $existingAttachments['english_test'] = $att->file_path;
+                        } elseif (str_contains($att->notes, 'ICDL') || str_contains($att->notes, 'حاسوب')) {
+                            $existingAttachments[19] = $att->file_path;
+                            $existingAttachments['icdl'] = $att->file_path;
+                        } elseif (str_contains($att->notes, 'المكتبة')) {
+                            $existingAttachments[22] = $att->file_path;
+                            $existingAttachments['nat_library_receipt'] = $att->file_path;
+                        } elseif (str_contains($att->notes, 'أخرى') || str_contains($att->notes, 'اخرى')) {
+                            $existingAttachments[23] = $att->file_path;
+                            $existingAttachments['other_attachments'] = $att->file_path;
+                        }
+                    }
+                }
+            }
+        }
+
+        // دالة مساعدة لتحديد إلزامية المرفق: معفى إذا كان مرفوعاً مسبقاً
+        $isUploaded = function($typeId, $alias = null) use ($existingAttachments) {
+            return isset($existingAttachments[$typeId]) || ($alias && isset($existingAttachments[$alias]));
+        };
+
+        // قاعدة الفحص العامة
+        $fileRuleFor = function($typeId, $alias = null) use ($isExisting, $isUploaded) {
+            if ($isExisting || $isUploaded($typeId, $alias)) {
+                return 'nullable|file|mimes:pdf|max:2048';
+            }
+            return 'required|file|mimes:pdf|max:2048';
+        };
 
         // 1. Validation of all sections
         if ($isDraft) {
@@ -757,6 +916,7 @@ class ApplicationWizardController extends Controller
                 'ba_country_id' => 'nullable|exists:lookup_countries,id',
                 'ba_university_id' => 'nullable|exists:lookup_universities,id',
                 'ba_university_other' => 'nullable|string|max:255',
+                'ba_university_text' => 'nullable|string|max:255',
                 'ba_faculty' => 'nullable|string',
                 'ba_department' => 'nullable|string',
                 'ba_specialization' => 'nullable|string|max:255',
@@ -769,7 +929,9 @@ class ApplicationWizardController extends Controller
                 'has_diploma' => 'nullable|boolean',
                 'dip_country_id' => 'nullable|exists:lookup_countries,id',
                 'dip_university_id' => 'nullable|exists:lookup_universities,id',
+                'dip_university_text' => 'nullable|string|max:255',
                 'dip_faculty' => 'nullable|string|max:255',
+                'dip_specialization' => 'nullable|string|max:255',
                 'dip_grant_date' => 'nullable|date',
                 'dip_rank' => 'nullable|string|max:100',
 
@@ -778,6 +940,7 @@ class ApplicationWizardController extends Controller
                 'ma_university_other' => 'nullable|string|max:255',
                 'ma_faculty' => 'nullable|string',
                 'ma_department' => 'nullable|string',
+                'ma_general_specialization' => 'nullable|string|max:255',
                 'ma_specialization' => 'nullable|string|max:255',
                 'ma_registration_date' => 'nullable|date',
                 'ma_defense_date' => 'nullable|date',
@@ -791,6 +954,7 @@ class ApplicationWizardController extends Controller
                 'phd_university_id' => 'nullable|exists:lookup_universities,id',
                 'phd_faculty' => 'nullable|string',
                 'phd_department' => 'nullable|string',
+                'phd_general_specialization' => 'nullable|string|max:255',
                 'phd_specialization' => 'nullable|string|max:255',
                 'phd_registration_date' => 'nullable|date',
                 'phd_defense_date' => 'nullable|date',
@@ -799,11 +963,6 @@ class ApplicationWizardController extends Controller
                 'phd_supervisor' => 'nullable|string',
                 'phd_thesis_title' => 'nullable|string',
 
-                'has_experience' => 'nullable|boolean',
-                'exp_place' => 'nullable|string|max:255',
-                'exp_from_year' => 'nullable|date',
-                'exp_to_year' => 'nullable|date',
-
                 'req_no' => 'nullable',
                 'req_date' => 'nullable|date',
                 'is_first_time' => 'nullable|boolean',
@@ -811,9 +970,12 @@ class ApplicationWizardController extends Controller
                 'file_uni_request' => 'nullable|file|mimes:pdf|max:2048',
                 'file_national_id' => 'nullable|file|mimes:pdf|max:2048',
                 'file_hs_cert' => 'nullable|file|mimes:pdf|max:2048',
+                'hs_decision_file' => 'nullable|file|mimes:pdf|max:2048',
                 'file_ba_cert' => 'nullable|file|mimes:pdf|max:2048',
+                'ba_decision_file' => 'nullable|file|mimes:pdf|max:2048',
                 'file_diploma_cert' => 'nullable|file|mimes:pdf|max:2048',
                 'file_ma_cert' => 'nullable|file|mimes:pdf|max:2048',
+                'ma_decision_file' => 'nullable|file|mimes:pdf|max:2048',
                 'file_phd_cert' => 'nullable|file|mimes:pdf|max:2048',
                 'file_thesis_summary' => 'nullable|file|mimes:pdf|max:2048',
                 'file_phd_council_decisions' => 'nullable|file|mimes:pdf|max:2048',
@@ -822,6 +984,7 @@ class ApplicationWizardController extends Controller
                 'file_english_test' => 'nullable|file|mimes:pdf|max:2048',
                 'file_cv' => 'nullable|file|mimes:pdf|max:2048',
                 'file_payment' => 'nullable|file|mimes:pdf|max:2048',
+                'file_nat_library_receipt' => 'nullable|file|mimes:pdf|max:2048',
                 'file_other_attachments' => 'nullable|file|mimes:pdf|max:2048',
             ];
             $messages = [];
@@ -842,15 +1005,11 @@ class ApplicationWizardController extends Controller
                 'gender' => 'required|string|in:ذكر,أنثى',
                 'is_syrian' => 'required|boolean',
 
-                // Step 1: University Request Details & Repeats
+                // Step 1: University Request Details
                 'req_no' => 'required',
                 'req_date' => 'required|date',
                 'is_first_time' => 'required|in:0,1',
                 'parent_application_id' => 'nullable|required_if:is_first_time,0|exists:applications,id',
-                'courses' => 'nullable|array',
-                'courses.*.name' => 'nullable|string|max:255',
-                'courses.*.faculty' => 'nullable|string|max:255',
-                'courses.*.department' => 'nullable|string|max:255',
 
                 // Step 2: High School Info
                 'hs_country_id' => 'required|exists:lookup_countries,id',
@@ -858,36 +1017,40 @@ class ApplicationWizardController extends Controller
                 'hs_grant_date' => 'required|numeric|digits:4|min:1950|max:' . date('Y'),
                 'hs_decision_no' => ($request->hs_country_id != $syriaId) ? 'required|string|max:100' : 'nullable|string|max:100',
                 'hs_decision_date' => ($request->hs_country_id != $syriaId) ? 'required|date' : 'nullable|date',
-                'hs_decision_file' => ($request->hs_country_id != $syriaId && !$isExisting) ? 'required|file|mimes:pdf|max:2048' : 'nullable|file|mimes:pdf|max:2048',
+                'hs_decision_file' => ($request->hs_country_id != $syriaId && !$isUploaded(2, 'hs_decision')) ? 'required|file|mimes:pdf|max:2048' : 'nullable|file|mimes:pdf|max:2048',
 
                 // Step 3: Bachelor's Degree Info
                 'ba_country_id' => 'required|exists:lookup_countries,id',
                 'ba_university_id' => 'nullable|exists:lookup_universities,id',
                 'ba_university_other' => 'nullable|string|max:255',
+                'ba_university_text' => 'required|string|max:255',
                 'ba_faculty' => 'required|string|max:255',
-                'ba_department' => 'nullable|string|max:255',
+                'ba_department' => 'required|string|max:255',
                 'ba_specialization' => 'nullable|string|max:255',
-                'ba_registration_date' => 'required|date',
-                'ba_grant_date' => 'required|date|after:ba_registration_date|before_or_equal:today',
+                'ba_registration_date' => 'nullable|date',
+                'ba_grant_date' => 'required|date|before_or_equal:today',
                 'ba_rank' => 'required|string|max:100',
                 'ba_decision_no' => ($request->ba_country_id != $syriaId) ? 'required|string|max:100' : 'nullable|string|max:100',
                 'ba_decision_date' => ($request->ba_country_id != $syriaId) ? 'required|date' : 'nullable|date',
-                'ba_decision_file' => ($request->ba_country_id != $syriaId && !$isExisting) ? 'required|file|mimes:pdf|max:2048' : 'nullable|file|mimes:pdf|max:2048',
+                'ba_decision_file' => ($request->ba_country_id != $syriaId && !$isUploaded(4, 'ba_decision')) ? 'required|file|mimes:pdf|max:2048' : 'nullable|file|mimes:pdf|max:2048',
 
                 // Optional Diploma
                 'has_diploma' => 'nullable|boolean',
                 'dip_country_id' => 'nullable|required_if:has_diploma,1|exists:lookup_countries,id',
                 'dip_university_id' => 'nullable|exists:lookup_universities,id',
+                'dip_university_text' => 'nullable|string|max:255',
                 'dip_faculty' => 'nullable|string|max:255',
+                'dip_specialization' => 'nullable|string|max:255',
                 'dip_grant_date' => 'nullable|date',
                 'dip_rank' => 'nullable|string|max:100',
 
                 // Step 4: Master's Degree Info
                 'ma_country_id' => 'required|exists:lookup_countries,id',
-                'ma_university_id' => 'nullable|exists:lookup_universities,id',
-                'ma_university_other' => 'nullable|string|max:255',
+                'ma_university_id' => ($request->ma_country_id == $syriaId) ? 'required|exists:lookup_universities,id' : 'nullable',
+                'ma_university_other' => ($request->ma_country_id != $syriaId) ? 'required|string|max:255' : 'nullable|string|max:255',
                 'ma_faculty' => 'required|string|max:255',
-                'ma_department' => 'nullable|string|max:255',
+                'ma_department' => 'required|string|max:255',
+                'ma_general_specialization' => 'required|string|max:255',
                 'ma_specialization' => 'nullable|string|max:255',
                 'ma_registration_date' => 'required|date',
                 'ma_defense_date' => 'required|date|after:ma_registration_date',
@@ -897,14 +1060,13 @@ class ApplicationWizardController extends Controller
                 'ma_thesis_title' => 'required|string',
                 'ma_decision_no' => 'nullable|string|max:100',
                 'ma_decision_date' => 'nullable|date',
-                'ma_decision_file' => ($request->filled('ma_decision_no') || $request->filled('ma_decision_date'))
-                    ? ((isset($existingAttachments['ma_decision']) || $isExisting) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048')
-                    : 'nullable|file|mimes:pdf|max:2048',
+                'ma_decision_file' => 'nullable|file|mimes:pdf|max:2048', // اختياري دائماً في الدكتوراه السورية
 
                 // Step 5: Syrian Doctorate Degree Info
                 'phd_university_id' => 'required|exists:lookup_universities,id',
                 'phd_faculty' => 'required|string|max:255',
-                'phd_department' => 'nullable|string|max:255',
+                'phd_department' => 'required|string|max:255',
+                'phd_general_specialization' => 'required|string|max:255',
                 'phd_specialization' => 'nullable|string|max:255',
                 'phd_registration_date' => 'required|date',
                 'phd_defense_date' => 'required|date|after:phd_registration_date',
@@ -913,23 +1075,25 @@ class ApplicationWizardController extends Controller
                 'phd_supervisor' => 'required|string|max:255',
                 'phd_thesis_title' => 'required|string',
 
-                // Step 6: Attachments Upload (CV + Uni request + Certificates)
-                'file_national_id' => $fileRule,
-                'file_hs_cert' => $fileRule,
-                'file_ba_cert' => $fileRule,
+                // Step 6: Attachments Upload (معفاة تلقائياً إذا كانت مرفوعة مسبقاً)
+                'file_national_id' => $fileRuleFor(13, 'national_id'),
+                'file_hs_cert' => $fileRuleFor(1, 'hs_cert'),
+                'file_ba_cert' => $fileRuleFor(3, 'ba_cert'),
                 'file_diploma_cert' => 'nullable|file|mimes:pdf|max:2048',
-                'file_ma_cert' => $fileRule,
-                'file_phd_cert' => $fileRule,
-                'file_thesis_summary' => $fileRule,
-                'file_phd_council_decisions' => $fileRule,
-                'file_ma_council_decisions' => $fileRule,
-                'file_icdl' => $fileRule,
-                'file_english_test' => $fileRule,
-                'file_payment' => $fileRule,
+                'file_ma_cert' => $fileRuleFor(6, 'ma_cert'),
+                'file_ma_council_decisions' => $fileRuleFor(7, 'ma_council_decisions'),
+                'file_phd_cert' => $fileRuleFor(10, 'phd_cert'),
+                'file_phd_council_decisions' => $fileRuleFor(11, 'phd_council_decisions'),
+                'file_thesis_summary' => $fileRuleFor(12, 'thesis_summary'),
+                'file_cv' => $fileRuleFor(14, 'cv'),
+                'file_uni_request' => $fileRuleFor(15, 'uni_request'),
+                'file_payment' => $fileRuleFor(17, 'payment'),
+                'file_english_test' => 'nullable|file|mimes:pdf|max:2048',
+                'file_icdl' => 'nullable|file|mimes:pdf|max:2048',
+                'file_nat_library_receipt' => 'nullable|file|mimes:pdf|max:2048',
                 'file_other_attachments' => 'nullable|file|mimes:pdf|max:2048',
-                'file_uni_request' => $fileRule,
-                'file_cv' => $fileRule,
             ];
+
             $messages = [
                 'mobile.regex' => 'رقم الهاتف المحمول يجب أن يتكون من 10 أرقام.',
                 'phone.regex' => 'رقم الهاتف الأرضي يجب أن يتكون من 10 أرقام.',
@@ -941,7 +1105,6 @@ class ApplicationWizardController extends Controller
                 'ba_decision_no.required' => 'يرجى إدخال رقم قرار تعادل الإجازة الجامعية غير السورية.',
                 'ba_decision_date.required' => 'يرجى إدخال تاريخ قرار تعادل الإجازة الجامعية غير السورية.',
                 'ba_decision_file.required' => 'يرجى رفع صورة عن قرار معادلة الإجازة الجامعية غير السورية (PDF).',
-                'ba_grant_date.after' => 'تاريخ التخرج من الإجازة يجب أن يكون بعد تاريخ التسجيل بالإجازة.',
                 'ba_grant_date.before_or_equal' => 'تاريخ التخرج من الإجازة يجب أن يكون قبل أو يساوي اليوم الحالي.',
                 'ma_defense_date.after' => 'تاريخ المناقشة للماجستير يجب أن يكون بعد تاريخ التسجيل بالدرجة.',
                 'ma_grant_date.after' => 'تاريخ منح الماجستير يجب أن يكون بعد تاريخ المناقشة.',
@@ -952,15 +1115,13 @@ class ApplicationWizardController extends Controller
                 'file_hs_cert.required' => 'يرجى رفع صورة مصدقة عن الشهادة الثانوية العامة (PDF).',
                 'file_ba_cert.required' => 'يرجى رفع صورة مصدقة عن شهادة الإجازة الجامعية الأولى (PDF).',
                 'file_ma_cert.required' => 'يرجى رفع صورة عن شهادة الماجستير (PDF).',
+                'file_ma_council_decisions.required' => 'يرجى رفع وثيقة قرارات وتواريخ مجلس الجامعة للماجستير (PDF).',
                 'file_phd_cert.required' => 'يرجى رفع صورة مصدقة أصولاً عن شهادة الدكتوراه السورية (PDF).',
-                'file_thesis_summary.required' => 'يرجى رفع ملخص أطروحة الدكتوراه باللغة العربية (PDF).',
                 'file_phd_council_decisions.required' => 'يرجى رفع قرارات مجلس الجامعة للدكتوراه (وثيقة تواريخ التسجيل والمناقشة والمنح) (PDF).',
-                'file_ma_council_decisions.required' => 'يرجى رفع قرارات مجلس الجامعة للماجستير (وثيقة تواريخ التسجيل والمناقشة والمنح) (PDF).',
-                'file_icdl.required' => 'يرجى رفع شهادة ICDL (PDF).',
-                'file_english_test.required' => 'يرجى رفع شهادة اختبار اللغة الإنكليزية (PDF).',
-                'file_payment.required' => 'يرجى رفع إيصال تسديد رسم تعادل الدكتوراه (PDF).',
-                'file_uni_request.required' => 'يرجى رفع كتاب طلب التقويم الصادر عن الجامعة (PDF).',
+                'file_thesis_summary.required' => 'يرجى رفع ملخص أطروحة الدكتوراه باللغة العربية (PDF).',
                 'file_cv.required' => 'يرجى رفع السيرة الذاتية للمرشح (PDF).',
+                'file_uni_request.required' => 'يرجى رفع كتاب طلب التقويم الصادر عن الجامعة (PDF).',
+                'file_payment.required' => 'يرجى رفع إيصال تسديد رسم تعادل الدكتوراه 125,000 ل.س (PDF).',
                 'max' => 'حجم الملف المرفق يتجاوز الحد الأقصى المسموح به (2 ميغابايت).',
             ];
         }
@@ -1009,69 +1170,13 @@ class ApplicationWizardController extends Controller
         // 3. Save Application
         $appNo = ($existingApp && $existingApp->application_no) ? $existingApp->application_no : ('PHD-SY-' . rand(100000, 999999));
         $requestType = 'دكتورة داخلي';
-
         $wasAwaitingDocs = ($existingApp && in_array($existingApp->status, ['بانتظار الوثائق', 'بانتظار استكمال الوثائق', 'بانتظار الوثائق الناقصة', 3]));
-
-        if ($isDraft) {
-            $appStatus = 'مسودة';
-        } else {
-            $appStatus = 'تحت التدقيق الأولي';
-        }
+        $appStatus = $isDraft ? 'مسودة' : 'تحت التدقيق الأولي';
+        $isFirstTime = $request->input('is_first_time', 1);
 
         $application = $existingApp;
-        $existingAttachments = [];
 
         if ($application) {
-            foreach ($application->educations as $ed) {
-                foreach ($ed->attachments as $att) {
-                    if ($att->notes) {
-                        $existingAttachments[$att->notes] = $att->file_path;
-                        if (str_contains($att->notes, 'هوية') || str_contains($att->notes, 'شخصية')) {
-                            $existingAttachments['national_id'] = $att->file_path;
-                            $existingAttachments['file_national_id'] = $att->file_path;
-                        } elseif (str_contains($att->notes, 'ثانوية') && !str_contains($att->notes, 'قرار')) {
-                            $existingAttachments['hs_cert'] = $att->file_path;
-                        } elseif (str_contains($att->notes, 'قرار معادلة الشهادة الثانوية')) {
-                            $existingAttachments['hs_decision'] = $att->file_path;
-                        } elseif (str_contains($att->notes, 'الإجازة') && !str_contains($att->notes, 'قرار')) {
-                            $existingAttachments['ba_cert'] = $att->file_path;
-                        } elseif (str_contains($att->notes, 'قرار معادلة الشهادة الجامعية')) {
-                            $existingAttachments['ba_decision'] = $att->file_path;
-                        } elseif (str_contains($att->notes, 'دبلوم')) {
-                            $existingAttachments['diploma_cert'] = $att->file_path;
-                        } elseif (str_contains($att->notes, 'شهادة الماجستير') || str_contains($att->notes, 'شهادة ماجستير')) {
-                            $existingAttachments['ma_cert'] = $att->file_path;
-                        } elseif (str_contains($att->notes, 'قرار معادلة شهادة الماجستير')) {
-                            $existingAttachments['ma_decision'] = $att->file_path;
-                        } elseif (str_contains($att->notes, 'شهادة الدكتوراه')) {
-                            $existingAttachments['phd_cert'] = $att->file_path;
-                        } elseif (str_contains($att->notes, 'ملخص')) {
-                            $existingAttachments['thesis_summary'] = $att->file_path;
-                        } elseif (str_contains($att->notes, 'مكتبة الأسد') || str_contains($att->notes, 'مكتبة الاسد')) {
-                            $existingAttachments['assad_library'] = $att->file_path;
-                        } elseif (str_contains($att->notes, 'قرارات مجلس الجامعة للدكتوراه')) {
-                            $existingAttachments['phd_council_decisions'] = $att->file_path;
-                        } elseif (str_contains($att->notes, 'قرارات مجلس الجامعة للماجستير')) {
-                            $existingAttachments['ma_council_decisions'] = $att->file_path;
-                        } elseif (str_contains($att->notes, 'ICDL') || str_contains($att->notes, 'حاسوب')) {
-                            $existingAttachments['icdl'] = $att->file_path;
-                        } elseif (str_contains($att->notes, 'اللغة') || str_contains($att->notes, 'إنكليزية')) {
-                            $existingAttachments['english_test'] = $att->file_path;
-                        } elseif (str_contains($att->notes, 'كتاب الجامعة')) {
-                            $existingAttachments['uni_request'] = $att->file_path;
-                        } elseif (str_contains($att->notes, 'السيرة')) {
-                            $existingAttachments['cv'] = $att->file_path;
-                        } elseif (str_contains($att->notes, 'إيصال') || str_contains($att->notes, 'رسوم التعادل')) {
-                            $existingAttachments['payment'] = $att->file_path;
-                        } elseif (str_contains($att->notes, 'أخرى') || str_contains($att->notes, 'اخرى')) {
-                            $existingAttachments['other_attachments'] = $att->file_path;
-                        }
-                    }
-                }
-            }
-
-            $isFirstTime = $request->input('is_first_time', 1);
-
             $application->update([
                 'candidate_id' => $profile->id,
                 'parent_application_id' => ($isFirstTime == 0) ? $request->parent_application_id : null,
@@ -1088,7 +1193,6 @@ class ApplicationWizardController extends Controller
             Education::where('application_id', $application->id)->delete();
             $appNo = $application->application_no ?? $appNo;
         } else {
-            $isFirstTime = $request->input('is_first_time', 1);
             $application = Application::create([
                 'candidate_id' => $profile->id,
                 'parent_application_id' => ($isFirstTime == 0) ? $request->parent_application_id : null,
@@ -1107,21 +1211,6 @@ class ApplicationWizardController extends Controller
             ]);
         }
 
-        // 4. Save Courses
-        if ($request->has('courses') && is_array($request->courses)) {
-            foreach ($request->courses as $course) {
-                if (!empty($course['name'])) {
-                    ApplicationCourse::create([
-                        'application_id' => $application->id,
-                        'faculty' => $course['faculty'] ?? '',
-                        'department' => $course['department'] ?? '',
-                        'course_name' => $course['name'],
-                        'course_status' => 'مطلوب تدريسه',
-                    ]);
-                }
-            }
-        }
-
         // Get Education Levels
         $lvlHS = LookupEducationLevel::where('name', 'like', '%ثانوية%')->first();
         $lvlBA = LookupEducationLevel::where('name', 'like', '%إجازة%')->first();
@@ -1135,7 +1224,7 @@ class ApplicationWizardController extends Controller
         $maLevelId = $lvlMA ? $lvlMA->id : 2;
         $phdLevelId = $lvlPhD ? $lvlPhD->id : 3;
 
-        // 5. Create Educations records
+        // 4. Create Educations records
         // A. High School
         $hsNotes = null;
         if ($request->hs_decision_no) {
@@ -1164,16 +1253,36 @@ class ApplicationWizardController extends Controller
             }
         }
 
+        $baUniId = null;
+        $baUniName = trim($request->input('ba_university_text', ''));
+        if ($baUniName === '') {
+            $baUniName = trim($request->input('ba_university_other', ''));
+        }
+
+        if ($baUniName !== '') {
+            $uni = \App\Models\LookupUniversity::where('name', $baUniName)->first()
+                ?: \App\Models\LookupUniversity::where('name', 'like', "%{$baUniName}%")->first();
+            if (!$uni) {
+                $uni = \App\Models\LookupUniversity::create([
+                    'name' => $baUniName,
+                    'country_id' => $request->ba_country_id ?: $syriaId,
+                ]);
+            }
+            $baUniId = $uni->id;
+        } elseif ($request->filled('ba_university_id')) {
+            $baUniId = $request->ba_university_id;
+        }
+
         $edBA = Education::create([
             'application_id' => $application->id,
             'education_level_id' => $baLevelId,
             'country_id' => $request->ba_country_id,
-            'university_id' => $request->ba_university_id,
+            'university_id' => $baUniId,
             'faculty' => $request->ba_faculty,
             'department' => $request->ba_department,
-            'section_name' => $request->ba_specialization ?: ($request->ba_university_other ?? null),
+            'section_name' => $request->ba_specialization ?: null,
             'general_specialization' => $request->ba_faculty,
-            'exact_specialization' => $request->ba_department,
+            'exact_specialization' => $request->ba_specialization ?: $request->ba_department,
             'registration_date' => $request->ba_registration_date,
             'grant_date' => $request->ba_grant_date,
             'rank' => $request->ba_rank,
@@ -1182,16 +1291,28 @@ class ApplicationWizardController extends Controller
 
         // C. Postgraduate Diploma (if applicable)
         $edDIP = null;
-        if ($request->boolean('has_diploma') || $request->filled('dip_faculty') || $request->filled('dip_university_id') || $request->filled('dip_grant_date')) {
+        if ($request->boolean('has_diploma') || $request->filled('dip_faculty') || $request->filled('dip_university_id') || $request->filled('dip_university_text') || $request->filled('dip_grant_date')) {
+            $dipUniId = $request->dip_university_id;
+            $dipUniName = trim($request->input('dip_university_text', ''));
+            if (!$dipUniId && $dipUniName !== '') {
+                $uni = \App\Models\LookupUniversity::where('name', $dipUniName)->first()
+                    ?: \App\Models\LookupUniversity::create([
+                        'name' => $dipUniName,
+                        'country_id' => $request->dip_country_id ?? $syriaId,
+                    ]);
+                $dipUniId = $uni->id;
+            }
+
             $edDIP = Education::create([
                 'application_id' => $application->id,
                 'education_level_id' => $dipLevelId,
                 'country_id' => $request->dip_country_id ?? $syriaId,
-                'university_id' => $request->dip_university_id,
+                'university_id' => $dipUniId,
                 'faculty' => $request->dip_faculty,
-                'department' => $request->dip_department ?? null,
+                'department' => $request->dip_specialization ?? null,
+                'section_name' => $request->dip_specialization ?? null,
                 'general_specialization' => $request->dip_faculty,
-                'exact_specialization' => $request->dip_department ?? null,
+                'exact_specialization' => $request->dip_specialization ?? null,
                 'grant_date' => $request->dip_grant_date,
                 'rank' => $request->dip_rank,
                 'notes' => 'دبلوم دراسات عليا / تأهيل وتخصص',
@@ -1207,16 +1328,32 @@ class ApplicationWizardController extends Controller
             }
         }
 
+        $maUniId = null;
+        if ($request->ma_country_id == $syriaId) {
+            $maUniId = $request->ma_university_id;
+        } else {
+            $maUniName = trim($request->input('ma_university_other', ''));
+            if ($maUniName !== '') {
+                $createdMaUni = \App\Models\LookupUniversity::firstOrCreate([
+                    'name' => $maUniName,
+                ], [
+                    'country_id' => $request->ma_country_id ?? $syriaId,
+                ]);
+                $maUniId = $createdMaUni->id;
+            }
+        }
+
         $edMA = Education::create([
             'application_id' => $application->id,
             'education_level_id' => $maLevelId,
             'country_id' => $request->ma_country_id ?? $syriaId,
-            'university_id' => $request->ma_university_id,
+            'university_id' => $maUniId,
+            'university_other' => $request->ma_university_other,
             'faculty' => $request->ma_faculty,
             'department' => $request->ma_department,
-            'section_name' => $request->ma_specialization ?: ($request->ma_university_other ?? null),
-            'general_specialization' => $request->ma_faculty,
-            'exact_specialization' => $request->ma_department,
+            'section_name' => $request->ma_specialization ?: null,
+            'general_specialization' => $request->ma_general_specialization ?: $request->ma_faculty,
+            'exact_specialization' => $request->ma_specialization ?: $request->ma_department,
             'registration_date' => $request->ma_registration_date,
             'defense_date' => $request->ma_defense_date,
             'grant_date' => $request->ma_grant_date,
@@ -1235,20 +1372,18 @@ class ApplicationWizardController extends Controller
             'faculty' => $request->phd_faculty,
             'department' => $request->phd_department,
             'section_name' => $request->phd_specialization ?? null,
-            'general_specialization' => $request->phd_faculty,
-            'exact_specialization' => $request->phd_department,
+            'general_specialization' => $request->phd_general_specialization ?: $request->phd_faculty,
+            'exact_specialization' => $request->phd_specialization ?: $request->phd_department,
             'registration_date' => $request->phd_registration_date,
             'defense_date' => $request->phd_defense_date,
             'grant_date' => $request->phd_grant_date,
             'rank' => $request->phd_rank,
             'supervisor_name' => $request->phd_supervisor,
             'thesis_title' => $request->phd_thesis_title,
-            'experience_from_year' => null,
-            'experience_to_year' => null,
             'notes' => null,
         ]);
 
-        // 6. Handle File Uploads & Attachments
+        // 5. Handle File Uploads & Attachments (الأرقام المعيارية الجديدة 1 - 23)
         $folder = 'attachments/' . $application->id;
 
         $uploadAndAttachPhd = function($fileKey, $educationId, $typeId, $notes, $existingKey = null) use ($request, $folder, $existingAttachments) {
@@ -1262,7 +1397,11 @@ class ApplicationWizardController extends Controller
                     'notes' => $notes,
                 ]);
             } else {
-                $oldPath = $existingAttachments[$notes] ?? ($existingKey && isset($existingAttachments[$existingKey]) ? $existingAttachments[$existingKey] : null);
+                // البحث بالأولوية: بالـ ID الجديد أولاً، ثم بالاسم الرمزي، ثم بالنص
+                $oldPath = $existingAttachments[$typeId]
+                    ?? ($existingKey && isset($existingAttachments[$existingKey]) ? $existingAttachments[$existingKey] : null)
+                    ?? ($existingAttachments[$notes] ?? null);
+
                 if ($oldPath) {
                     EducationAttachment::create([
                         'education_id' => $educationId,
@@ -1274,59 +1413,68 @@ class ApplicationWizardController extends Controller
             }
         };
 
-        // Personal ID (Mandatory)
-        $uploadAndAttachPhd('file_national_id', $edPhD->id, 11, 'صورة عن الهوية الشخصية', 'national_id');
-
-        // 1. High School
+        // 1. الثانوية العامة وقرارها
         $uploadAndAttachPhd('file_hs_cert', $edHS->id, 1, 'نسخة مصدقة عن الشهادة الثانوية', 'hs_cert');
-        if ($request->hasFile('hs_decision_file') || isset($existingAttachments['hs_decision'])) {
-            $uploadAndAttachPhd('hs_decision_file', $edHS->id, 13, 'قرار معادلة الشهادة الثانوية', 'hs_decision');
+        if ($request->hasFile('hs_decision_file') || isset($existingAttachments[2]) || isset($existingAttachments['hs_decision'])) {
+            $uploadAndAttachPhd('hs_decision_file', $edHS->id, 2, 'قرار معادلة الشهادة الثانوية غير السورية', 'hs_decision');
         }
 
-        // 2. Bachelor's
-        $uploadAndAttachPhd('file_ba_cert', $edBA->id, 2, 'شهادة الإجازة الجامعية', 'ba_cert');
-        if ($request->hasFile('ba_decision_file') || isset($existingAttachments['ba_decision'])) {
-            $uploadAndAttachPhd('ba_decision_file', $edBA->id, 2, 'قرار معادلة الشهادة الجامعية الأولى', 'ba_decision');
+        // 2. الإجازة الجامعية الأولى وقرارها
+        $uploadAndAttachPhd('file_ba_cert', $edBA->id, 3, 'مصدقة الإجازة الجامعية الأولى', 'ba_cert');
+        if ($request->hasFile('ba_decision_file') || isset($existingAttachments[4]) || isset($existingAttachments['ba_decision'])) {
+            $uploadAndAttachPhd('ba_decision_file', $edBA->id, 4, 'قرار معادلة الإجازة الجامعية الأولى غير السورية', 'ba_decision');
         }
 
-        // 3. Diploma (if provided)
-        if ($edDIP && ($request->hasFile('file_diploma_cert') || isset($existingAttachments['diploma_cert']))) {
-            $uploadAndAttachPhd('file_diploma_cert', $edDIP->id, 2, 'شهادة دبلوم إن وجد', 'diploma_cert');
+        // 3. الدبلوم إن وجد
+        if ($edDIP && ($request->hasFile('file_diploma_cert') || isset($existingAttachments[5]) || isset($existingAttachments['diploma_cert']))) {
+            $uploadAndAttachPhd('file_diploma_cert', $edDIP->id, 5, 'شهادة دبلوم دراسات عليا / تأهيل وتخصص', 'diploma_cert');
         }
 
-        // 4. Master's
-        $uploadAndAttachPhd('file_ma_cert', $edMA->id, 3, 'شهادة ماجستير', 'ma_cert');
-        if ($request->hasFile('ma_decision_file') || isset($existingAttachments['ma_decision'])) {
-            $uploadAndAttachPhd('ma_decision_file', $edMA->id, 3, 'قرار معادلة شهادة الماجستير', 'ma_decision');
+        // 4. الماجستير (الشهادة 6 / قرارات المجلس 7 / قرار التعادل غير السوري 9)
+        $uploadAndAttachPhd('file_ma_cert', $edMA->id, 6, 'نسخة مصدقة عن شهادة الماجستير', 'ma_cert');
+        $uploadAndAttachPhd('file_ma_council_decisions', $edMA->id, 7, 'وثيقة تواريخ وقرارات المجلس للماجستير', 'ma_council_decisions');
+        if ($request->hasFile('ma_decision_file') || isset($existingAttachments[9]) || isset($existingAttachments['ma_decision'])) {
+            $uploadAndAttachPhd('ma_decision_file', $edMA->id, 9, 'قرار معادلة شهادة الماجستير غير السورية', 'ma_decision');
         }
-        $uploadAndAttachPhd('file_ma_council_decisions', $edMA->id, 3, 'قرارات مجلس الجامعة للماجستير', 'ma_council_decisions');
 
-        // 5. Syrian Doctorate & Rest of Items
-        $uploadAndAttachPhd('file_phd_cert', $edPhD->id, 8, 'نسخة مصدقة أصولاً عن شهادة الدكتوراه', 'phd_cert');
-        $uploadAndAttachPhd('file_thesis_summary', $edPhD->id, 5, 'ملخص باللغة العربية عن الأطروحة', 'thesis_summary');
-        $uploadAndAttachPhd('file_phd_council_decisions', $edPhD->id, 8, 'قرارات مجلس الجامعة للدكتوراه', 'phd_council_decisions');
-        $uploadAndAttachPhd('file_icdl', $edPhD->id, 19, 'شهادة قيادة الحاسوب الدولية (ICDL)', 'icdl');
-        $uploadAndAttachPhd('file_english_test', $edPhD->id, 18, 'شهادة إتقان اللغة الإنكليزية', 'english_test');
-        $uploadAndAttachPhd('file_payment', $edPhD->id, 10, 'إيصال تسديد رسم تعادل 125,000 ل.س', 'payment');
-        
-        $uploadAndAttachPhd('file_uni_request', $edPhD->id, 21, 'كتاب طلب التقويم الصادر عن الجامعة رقم ' . $request->req_no . ' تاريخ ' . $request->req_date, 'uni_request');
-        $uploadAndAttachPhd('file_cv', $edPhD->id, 20, 'السيرة الذاتية للمرشح', 'cv');
+        // 5. الدكتوراه السورية (الشهادة 10 / قرارات المجلس 11 / ملخص الأطروحة 12)
+        $uploadAndAttachPhd('file_phd_cert', $edPhD->id, 10, 'نسخة مصدقة أصولاً عن شهادة الدكتوراه السورية', 'phd_cert');
+        $uploadAndAttachPhd('file_phd_council_decisions', $edPhD->id, 11, 'وثيقة تواريخ وقرارات المجلس للدكتوراه', 'phd_council_decisions');
+        $uploadAndAttachPhd('file_thesis_summary', $edPhD->id, 12, 'ملخص أطروحة الدكتوراه باللغة العربية', 'thesis_summary');
 
-        // 13. Other Attachments (Optional)
-        if ($request->hasFile('file_other_attachments') || isset($existingAttachments['other_attachments'])) {
-            $uploadAndAttachPhd('file_other_attachments', $edPhD->id, 24, 'مرفقات أخرى', 'other_attachments');
+        // 6. الوثائق العامة والشخصية والرسوم
+        $uploadAndAttachPhd('file_national_id', $edPhD->id, 13, 'صورة عن الهوية الشخصية / جواز السفر', 'national_id');
+        $uploadAndAttachPhd('file_cv', $edPhD->id, 14, 'السيرة الذاتية للمرشح', 'cv');
+        $uploadAndAttachPhd('file_uni_request', $edPhD->id, 15, 'كتاب طلب التقويم الصادر عن الجامعة', 'uni_request');
+        $uploadAndAttachPhd('file_payment', $edPhD->id, 17, 'إيصال تسديد رسم تعادل الدكتوراه (125,000 ل.س)', 'payment');
+
+        // 7. الوثائق الاختيارية والإضافية
+        if ($request->hasFile('file_english_test') || isset($existingAttachments[18]) || isset($existingAttachments['english_test'])) {
+            $uploadAndAttachPhd('file_english_test', $edPhD->id, 18, 'شهادة إتقان اللغة الإنكليزية', 'english_test');
+        }
+        if ($request->hasFile('file_icdl') || isset($existingAttachments[19]) || isset($existingAttachments['icdl'])) {
+            $uploadAndAttachPhd('file_icdl', $edPhD->id, 19, 'شهادة مهارات الحاسوب (ICDL)', 'icdl');
+        }
+        if ($request->hasFile('file_nat_library_receipt') || isset($existingAttachments[22]) || isset($existingAttachments['nat_library_receipt'])) {
+            $uploadAndAttachPhd('file_nat_library_receipt', $edPhD->id, 22, 'إيصال المكتبة الوطنية لاستلام الرسالة / الأطروحة', 'nat_library_receipt');
+        }
+        if ($request->hasFile('file_other_attachments') || isset($existingAttachments[23]) || isset($existingAttachments['other_attachments'])) {
+            $uploadAndAttachPhd('file_other_attachments', $edPhD->id, 23, 'مرفقات ووثائق أخرى', 'other_attachments');
         }
 
         if ($isDraft) {
-            return redirect()->route('university.dashboard')
-                ->with('success', 'تم حفظ معاملة (' . $requestType . ') كمسودة بنجاح! للطلب رقم: ' . $appNo . '. يمكنك استكمال رفع المرفقات والوثائق الناقصة في أي وقت من قسم المسودات.');
+            if ($request->filled('redirect_to')) {
+                return redirect($request->input('redirect_to'))
+                    ->with('success', 'تم حفظ بيانات طلب المرشح كمسودة تلقائياً بنجاح! يمكنك استكمالها في أي وقت من قسم المسودات المحفوظة.');
+            }
+            return redirect()->route('university.drafts.index')
+                ->with('success', 'تم حفظ معاملة (' . $requestType . ') كمسودة بنجاح! للطلب رقم: ' . $appNo . '. يمكنك استكمال رفع المرفقات والوثائق الناقصة في أي وقت من هنا.');
         }
 
         if ($wasAwaitingDocs) {
             $candidateName = $profile ? $profile->full_name : ($application->candidate ? $application->candidate->full_name : '');
             $uniName = Auth::user()->university ? Auth::user()->university->name : 'الجامعة';
 
-            // 1. Notification to Admin
             ApplicationMessage::create([
                 'application_id' => $application->id,
                 'sender_id' => Auth::id(),
@@ -1334,7 +1482,6 @@ class ApplicationWizardController extends Controller
                 'is_read' => false,
             ]);
 
-            // 2. Notification to University
             $systemAdminId = User::whereHas('role', function($q) {
                 $q->where('name', 'admin');
             })->where('id', '!=', Auth::id())->value('id') ?? 1;
@@ -1352,7 +1499,6 @@ class ApplicationWizardController extends Controller
             ->with('submitted_app_id', $application->id)
             ->with('submitted_app_no', $appNo);
     }
-
     // =========================================================================
     // FOREIGN MASTER'S EQUIVALENCE WIZARD (معاملة الماجستير الخارجي - غير السوري)
     // =========================================================================
@@ -1448,7 +1594,8 @@ class ApplicationWizardController extends Controller
                     if ($att->attachment_type_id == 15 || str_contains($note, 'جواز السفر') || str_contains($note, 'جواز')) $existingFilesMap['file_passport'] = true;
                     if ($att->attachment_type_id == 16 || str_contains($note, 'معادلة الشهادة الثانوية') || str_contains($note, 'معادلة الثانوية')) $existingFilesMap['file_hs_decision'] = true;
                     if ($att->attachment_type_id == 17 || str_contains($note, 'معادلة الإجازة') || str_contains($note, 'معادلة البكالوريوس')) $existingFilesMap['file_ba_decision'] = true;
-                    if ($att->attachment_type_id == 18 || str_contains($note, 'الإيفاد')) $existingFilesMap['file_envoy_decision'] = true;
+                    // تم ربط وثيقة حركة الهجرة والجوازات بالرقم 24
+                    if ($att->attachment_type_id == 24 || str_contains($note, 'الهجرة والجوازات') || str_contains($note, 'حركة الهجرة')) $existingFilesMap['file_immigration_movement'] = true;
                 }
             }
         }
@@ -1501,6 +1648,7 @@ class ApplicationWizardController extends Controller
                 'ma_university_other' => 'nullable|string|max:255',
                 'ma_faculty' => 'nullable|string|max:255',
                 'ma_department' => 'nullable|string|max:255',
+                'ma_general_specialization' => 'nullable|string|max:255',
                 'ma_specialization' => 'nullable|string|max:255',
                 'ma_study_system' => 'nullable|string',
                 'ma_study_language' => 'nullable|string|max:100',
@@ -1511,9 +1659,6 @@ class ApplicationWizardController extends Controller
                 'ma_rank' => 'nullable|string',
                 'ma_thesis_title' => 'nullable|string',
                 'ma_supervisor' => 'nullable|string|max:255',
-                'is_envoy' => 'nullable',
-                'envoy_decision' => 'nullable|string|max:100',
-                'envoy_date' => 'nullable',
 
                 'has_syrian_experience' => 'nullable',
                 'syrian_exp_years' => 'nullable',
@@ -1529,7 +1674,6 @@ class ApplicationWizardController extends Controller
                 'file_ba_decision' => 'nullable|file|mimes:pdf|max:2048',
                 'file_prev_qual_cert' => 'nullable|file|mimes:pdf|max:2048',
                 'file_master_cert' => 'nullable|file|mimes:pdf|max:2048',
-                'file_envoy_decision' => 'nullable|file|mimes:pdf|max:2048',
                 'file_master_transcript' => 'nullable|file|mimes:pdf|max:2048',
                 'file_thesis_abstract' => 'nullable|file|mimes:pdf|max:2048',
                 'file_library_receipt' => 'nullable|file|mimes:pdf|max:2048',
@@ -1541,6 +1685,7 @@ class ApplicationWizardController extends Controller
                 'file_english_cert' => 'nullable|file|mimes:pdf|max:2048',
                 'file_fees_receipt' => 'nullable|file|mimes:pdf|max:2048',
                 'file_passport' => 'nullable|file|mimes:pdf|max:2048',
+                'file_immigration_movement' => 'nullable|file|mimes:pdf|max:2048',
                 'file_other_attachments' => 'nullable|file|mimes:pdf|max:2048',
             ];
             $messages = [];
@@ -1548,7 +1693,6 @@ class ApplicationWizardController extends Controller
             $isExpYes = $request->input('has_syrian_experience') === 'yes';
             $isHsForeign = ($request->input('hs_country_id') && $request->input('hs_country_id') != $syriaId);
             $isBaForeign = ($request->input('ba_country_id') && $request->input('ba_country_id') != $syriaId);
-            $isEnvoy = $request->boolean('is_envoy');
 
             $rules = [
                 // Step 1: Personal & Uni Request
@@ -1582,7 +1726,7 @@ class ApplicationWizardController extends Controller
                 'ba_university_id' => 'nullable',
                 'ba_university_other' => 'required|string|max:255',
                 'ba_faculty' => 'required|string|max:255',
-                'ba_department' => 'nullable|string|max:255',
+                'ba_department' => 'required|string|max:255',
                 'ba_specialization' => 'nullable|string|max:255',
                 'ba_registration_date' => 'nullable|date',
                 'ba_grant_date' => 'required|date|before_or_equal:today',
@@ -1603,20 +1747,18 @@ class ApplicationWizardController extends Controller
                 'ma_country_other' => 'nullable|string|max:255',
                 'ma_university_other' => 'required|string|max:255',
                 'ma_faculty' => 'required|string|max:255',
-                'ma_department' => 'nullable|string|max:255',
+                'ma_department' => 'required|string|max:255',
+                'ma_general_specialization' => 'required|string|max:255',
                 'ma_specialization' => 'nullable|string|max:255',
                 'ma_study_system' => 'nullable|string|max:100',
                 'ma_study_language' => 'nullable|string|max:100',
                 'ma_duration_years' => 'nullable|numeric',
-                'ma_registration_date' => 'nullable|date',
-                'ma_defense_date' => 'nullable|date',
+                'ma_registration_date' => 'required|date',
+                'ma_defense_date' => 'required|date',
                 'ma_grant_date' => 'required|date|before_or_equal:today',
                 'ma_rank' => 'required|string|max:50',
                 'ma_thesis_title' => 'required|string|max:500',
-                'ma_supervisor' => 'nullable|string|max:255',
-                'is_envoy' => 'nullable|boolean',
-                'envoy_decision' => $isEnvoy ? 'required|string|max:100' : 'nullable|string|max:100',
-                'envoy_date' => $isEnvoy ? 'required|date' : 'nullable|date',
+                'ma_supervisor' => 'required|string|max:255',
 
                 'has_syrian_experience' => 'required|in:yes,no',
                 'syrian_exp_years' => 'nullable|numeric',
@@ -1633,7 +1775,6 @@ class ApplicationWizardController extends Controller
                 'file_ba_decision' => ($isBaForeign && empty($existingFilesMap['file_ba_decision']) && !$isExisting) ? 'required|file|mimes:pdf|max:2048' : 'nullable|file|mimes:pdf|max:2048',
                 'file_prev_qual_cert' => 'nullable|file|mimes:pdf|max:2048',
                 'file_master_cert' => (!empty($existingFilesMap['file_master_cert']) || $isExisting) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
-                'file_envoy_decision' => ($isEnvoy && empty($existingFilesMap['file_envoy_decision']) && !$isExisting) ? 'required|file|mimes:pdf|max:2048' : 'nullable|file|mimes:pdf|max:2048',
                 'file_master_transcript' => 'nullable|file|mimes:pdf|max:2048',
                 'file_thesis_abstract' => (!empty($existingFilesMap['file_thesis_abstract']) || $isExisting) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
                 'file_library_receipt' => 'nullable|file|mimes:pdf|max:2048',
@@ -1641,10 +1782,12 @@ class ApplicationWizardController extends Controller
                 'file_experience_cert' => ($isExpYes && empty($existingFilesMap['file_experience_cert']) && !$isExisting) ? 'required|file|mimes:pdf|max:2048' : 'nullable|file|mimes:pdf|max:2048',
                 'file_private_uni_contracts' => 'nullable|file|mimes:pdf|max:2048',
                 'file_salary_receipts' => 'nullable|file|mimes:pdf|max:2048',
-                'file_icdl_cert' => (!empty($existingFilesMap['file_icdl_cert']) || $isExisting) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
-                'file_english_cert' => (!empty($existingFilesMap['file_english_cert']) || $isExisting) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
+                'file_icdl_cert' => 'nullable|file|mimes:pdf|max:2048',
+                'file_english_cert' => 'nullable|file|mimes:pdf|max:2048',
                 'file_fees_receipt' => (!empty($existingFilesMap['file_fees_receipt']) || $isExisting) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
                 'file_passport' => (!empty($existingFilesMap['file_passport']) || $isExisting) ? 'nullable|file|mimes:pdf|max:2048' : 'required|file|mimes:pdf|max:2048',
+                // وثيقة حركة الهجرة والجوازات (اختياري)
+                'file_immigration_movement' => 'nullable|file|mimes:pdf|max:2048',
                 'file_other_attachments' => 'nullable|file|mimes:pdf|max:2048',
             ];
 
@@ -1678,15 +1821,12 @@ class ApplicationWizardController extends Controller
                 'ma_grant_date.required' => 'يرجى إدخال تاريخ منح شهادة الماجستير.',
                 'ma_rank.required' => 'يرجى اختيار تقدير شهادة الماجستير.',
                 'ma_thesis_title.required' => 'يرجى إدخال عنوان أطروحة الماجستير.',
-                'envoy_decision.required' => 'يرجى إدخال رقم قرار الإيفاد للمرشح الموفد.',
-                'envoy_date.required' => 'يرجى إدخال تاريخ قرار الإيفاد للمرشح الموفد.',
                 'has_syrian_experience.required' => 'يرجى تحديد ما إذا كان المرشح يمتلك خبرة تدريسية سنتين فأكثر داخل الجامعات السورية.',
                 'file_secondary_cert.required' => 'يرجى إرفاق نسخة مصدقة عن الشهادة الثانوية.',
                 'file_hs_decision.required' => 'يرجى إرفاق قرار معادلة الشهادة الثانوية غير السورية.',
                 'file_bachelor_cert.required' => 'يرجى إرفاق نسخة مصدقة عن الإجازة الجامعية الأولى.',
                 'file_ba_decision.required' => 'يرجى إرفاق قرار معادلة الإجازة الجامعية الأولى غير السورية.',
                 'file_master_cert.required' => 'يرجى إرفاق نسخة مصدقة أصولاً عن شهادة الماجستير الخارجي.',
-                'file_envoy_decision.required' => 'يرجى إرفاق قرار الإيفاد الرسمي للدراسة في الخارج.',
                 'file_thesis_abstract.required' => 'يرجى إرفاق ملخص أطروحة الماجستير باللغة العربية.',
                 'file_reg_defense_doc.required' => 'يرجى إرفاق وثيقة تواريخ التسجيل والمباشرة والمناقشة.',
                 'file_experience_cert.required' => 'يرجى إرفاق شهادة الخبرة التدريسية المثبتة داخل الجامعات السورية لمسار التدريس النظري.',
@@ -1853,7 +1993,7 @@ class ApplicationWizardController extends Controller
                 'department' => $request->filled('ba_department') ? $request->ba_department : (optional($existingBaEd)->department ?? ''),
                 'general_specialization' => $request->filled('ba_faculty') ? $request->ba_faculty : (optional($existingBaEd)->general_specialization ?? ''),
                 'exact_specialization' => $request->filled('ba_department') ? $request->ba_department : (optional($existingBaEd)->exact_specialization ?? ''),
-                'section_name' => $request->filled('ba_specialization') ? $request->ba_specialization : ($request->filled('ba_university_other') ? $request->ba_university_other : (optional($existingBaEd)->section_name ?? '')),
+                'section_name' => $request->filled('ba_specialization') ? $request->ba_specialization : (optional($existingBaEd)->section_name ?? null),
                 'registration_date' => $request->filled('ba_registration_date') ? $request->ba_registration_date : optional($existingBaEd)->registration_date,
                 'grant_date' => $request->filled('ba_grant_date') ? $request->ba_grant_date : optional($existingBaEd)->grant_date,
                 'rank' => $request->filled('ba_rank') ? $request->ba_rank : (optional($existingBaEd)->rank ?? 'جيد'),
@@ -1898,7 +2038,7 @@ class ApplicationWizardController extends Controller
                 'university_other' => $request->filled('ma_university_other') ? $request->ma_university_other : (optional($existingMaEd)->university_other ?? ''),
                 'faculty' => $request->filled('ma_faculty') ? $request->ma_faculty : (optional($existingMaEd)->faculty ?? ''),
                 'department' => $request->filled('ma_department') ? $request->ma_department : (optional($existingMaEd)->department ?? ''),
-                'general_specialization' => $request->filled('ma_faculty') ? $request->ma_faculty : (optional($existingMaEd)->general_specialization ?? ''),
+                'general_specialization' => $request->filled('ma_general_specialization') ? $request->ma_general_specialization : ($request->filled('ma_faculty') ? $request->ma_faculty : (optional($existingMaEd)->general_specialization ?? '')),
                 'exact_specialization' => $request->filled('ma_specialization') ? $request->ma_specialization : (optional($existingMaEd)->exact_specialization ?? ''),
                 'section_name' => $request->filled('ma_specialization') ? $request->ma_specialization : (optional($existingMaEd)->section_name ?? ''),
                 'study_language' => $request->filled('ma_study_language') ? $request->ma_study_language : (optional($existingMaEd)->study_language ?? 'العربية'),
@@ -1909,8 +2049,6 @@ class ApplicationWizardController extends Controller
                 'rank' => $request->filled('ma_rank') ? $request->ma_rank : (optional($existingMaEd)->rank ?? 'جيد جداً'),
                 'thesis_title' => $request->filled('ma_thesis_title') ? $request->ma_thesis_title : (optional($existingMaEd)->thesis_title ?? 'شهادة الماجستير الخارجي'),
                 'supervisor_name' => $request->filled('ma_supervisor') ? $request->ma_supervisor : optional($existingMaEd)->supervisor_name,
-                'envoy_decision' => $request->filled('envoy_decision') ? $request->envoy_decision : optional($existingMaEd)->envoy_decision,
-                'envoy_date' => $request->filled('envoy_date') ? $request->envoy_date : optional($existingMaEd)->envoy_date,
                 'experience_from_year' => $request->filled('syrian_exp_from') ? $request->syrian_exp_from : optional($existingMaEd)->experience_from_year,
                 'experience_to_year' => $request->filled('syrian_exp_to') ? $request->syrian_exp_to : optional($existingMaEd)->experience_to_year,
                 'notes' => $expNotes ?: optional($existingMaEd)->notes,
@@ -1919,7 +2057,6 @@ class ApplicationWizardController extends Controller
 
         // 4.4 Store / Update Education Residences (حركات الإقامة والدخول والخروج)
         if ($request->has('residences') && is_array($request->residences)) {
-            // Delete old residences and re-create
             EducationResidence::where('education_id', $maEd->id)->delete();
 
             foreach ($request->residences as $resData) {
@@ -1937,7 +2074,7 @@ class ApplicationWizardController extends Controller
             }
         }
 
-        // 5. Attachment File Uploads
+        // 5. Attachment File Uploads (تم استبدال الإيفاد بوثيقة حركة الهجرة والجوازات رقم 24)
         $fileInputs = [
             'file_secondary_cert' => ['id' => 1, 'notes' => 'نسخة مصدقة عن الشهادة الثانوية', 'ed_id' => $hsEd->id],
             'file_hs_decision' => ['id' => 16, 'notes' => 'قرار معادلة الشهادة الثانوية غير السورية', 'ed_id' => $hsEd->id],
@@ -1945,7 +2082,6 @@ class ApplicationWizardController extends Controller
             'file_ba_decision' => ['id' => 17, 'notes' => 'قرار معادلة الإجازة الجامعية الأولى غير السورية', 'ed_id' => $baEd->id],
             'file_prev_qual_cert' => ['id' => 3, 'notes' => 'الشهادة قبل المؤهل العلمي الأخير', 'ed_id' => $maEd->id],
             'file_master_cert' => ['id' => 4, 'notes' => 'نسخة مصدقة أصولاً عن شهادة الماجستير الخارجي', 'ed_id' => $maEd->id],
-            'file_envoy_decision' => ['id' => 18, 'notes' => 'قرار الإيفاد الرسمي للدراسة في الخارج', 'ed_id' => $maEd->id],
             'file_master_transcript' => ['id' => 5, 'notes' => 'كشف علامات الماجستير', 'ed_id' => $maEd->id],
             'file_thesis_abstract' => ['id' => 6, 'notes' => 'ملخص عن الأطروحة باللغة العربية', 'ed_id' => $maEd->id],
             'file_library_receipt' => ['id' => 7, 'notes' => 'إيصال إيداع الأطروحة لدى المكتبة الوطنية', 'ed_id' => $maEd->id],
@@ -1957,6 +2093,8 @@ class ApplicationWizardController extends Controller
             'file_english_cert' => ['id' => 13, 'notes' => 'وثيقة اجتياز اختبار اللغة الإنكليزية', 'ed_id' => $maEd->id],
             'file_fees_receipt' => ['id' => 14, 'notes' => 'إيصال تسديد رسم تعادل الماجستير الخارجي (100,000 ل.س)', 'ed_id' => $maEd->id],
             'file_passport' => ['id' => 15, 'notes' => 'صورة جواز السفر وصفحات الإقامة والأختام', 'ed_id' => $maEd->id],
+            // هنا المرفق الجديد رقم 24
+            'file_immigration_movement' => ['id' => 24, 'notes' => 'وثيقة حركة الهجرة والجوازات', 'ed_id' => $maEd->id],
         ];
 
         foreach ($fileInputs as $inputKey => $meta) {
@@ -1996,8 +2134,12 @@ class ApplicationWizardController extends Controller
         }
 
         if ($isDraft) {
-            return redirect()->route('university.dashboard')
-                ->with('success', '💾 تم حفظ مسودة معاملة الماجستير الخارجي بنجاح برقم: ' . $appNo . '. يمكنك العودة لتعديلها أو استكمالها في أي وقت.');
+            if ($request->filled('redirect_to')) {
+                return redirect($request->input('redirect_to'))
+                    ->with('success', 'تم حفظ بيانات طلب المرشح كمسودة تلقائياً بنجاح! يمكنك استكمالها في أي وقت من قسم المسودات المحفوظة.');
+            }
+            return redirect()->route('university.drafts.index')
+                ->with('success', '💾 تم حفظ مسودة معاملة الماجستير الخارجي بنجاح برقم: ' . $appNo . '. يمكنك العودة لتعديلها أو استكمالها في أي وقت من هنا.');
         }
 
         // Notify Admin and University if documents were updated from awaiting documents
@@ -2466,8 +2608,12 @@ class ApplicationWizardController extends Controller
         }
 
         if ($isDraft) {
-            return redirect()->route('university.dashboard')
-                ->with('success', '💾 تم حفظ المسودة بنجاح برقم: ' . $appNo . '. يمكنك العودة لتعديلها أو استكمالها في أي وقت.');
+            if ($request->filled('redirect_to')) {
+                return redirect($request->input('redirect_to'))
+                    ->with('success', 'تم حفظ بيانات طلب المرشح كمسودة تلقائياً بنجاح! يمكنك استكمالها في أي وقت من قسم المسودات المحفوظة.');
+            }
+            return redirect()->route('university.drafts.index')
+                ->with('success', '💾 تم حفظ المسودة بنجاح برقم: ' . $appNo . '. يمكنك العودة لتعديلها أو استكمالها في أي وقت من هنا.');
         }
 
         // Notify Admin and University if documents were updated from awaiting documents

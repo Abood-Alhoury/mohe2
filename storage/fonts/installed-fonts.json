@@ -6,5 +6,13 @@
     "tajawal": {
         "normal": "C:\\Users\\UsEr\\Desktop\\MoheArchive\\mohe2\\storage\\fonts\/tajawal_normal_9e16f8066a27559bf837fa183c90b76a",
         "bold": "tajawal_bold_9e16f8066a27559bf837fa183c90b76a"
+    },
+    "ibm plex sans arabic": {
+        "normal": "C:\\Users\\UsEr\\Desktop\\MoheArchive\\mohe2\\storage\\fonts\/ibm_plex_sans_arabic_normal_096edeee20a6caa28c5c2554233321eb",
+        "bold": "ibm_plex_sans_arabic_bold_0b7eaddc904e43c1b9ea8d1c7b9446fd"
+    },
+    "ibmplexarabic": {
+        "normal": "C:\\Users\\UsEr\\Desktop\\MoheArchive\\mohe2\\storage\\fonts\/ibmplexarabic_normal_096edeee20a6caa28c5c2554233321eb",
+        "bold": "ibmplexarabic_bold_0b7eaddc904e43c1b9ea8d1c7b9446fd"
     }
 }

@@ -124,33 +124,55 @@
                 </h5>
                 <div class="row g-3 fs-7">
                     <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">بلد الدراسة:</span>
-                        <strong>{{ optional(optional($masterEd)->country)->name ?? (optional($masterEd)->university_other ?? '---') }}</strong>
+                        <span class="text-muted d-block fs-8">1. بلد دراسة الماجستير:</span>
+                        <strong>{{ optional(optional($masterEd)->country)->name ?? '---' }}</strong>
                     </div>
                     <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">الجامعة المانحة:</span>
+                        <span class="text-muted d-block fs-8">الجامعة الخارجية المانحة:</span>
                         <strong>{{ optional($masterEd)->university_other ?: (optional(optional($masterEd)->university)->name ?? '---') }}</strong>
                     </div>
                     <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">الكلية:</span>
+                        <span class="text-muted d-block fs-8">2. الكلية:</span>
                         <strong>{{ optional($masterEd)->faculty ?? '---' }}</strong>
                     </div>
                     <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">القسم / الاختصاص العام:</span>
-                        <strong>{{ optional($masterEd)->department ?: (optional($masterEd)->general_specialization ?: '---') }}</strong>
+                        <span class="text-muted d-block fs-8">3. القسم:</span>
+                        <strong>{{ optional($masterEd)->department ?? '---' }}</strong>
                     </div>
                     <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">الاختصاص الدقيق:</span>
+                        <span class="text-muted d-block fs-8">4. الاختصاص العام:</span>
+                        <strong>{{ optional($masterEd)->general_specialization ?? '---' }}</strong>
+                    </div>
+                    <div class="col-sm-6">
+                        <span class="text-muted d-block fs-8">5. الاختصاص الدقيق:</span>
                         <strong>{{ optional($masterEd)->section_name ?: (optional($masterEd)->exact_specialization ?: '---') }}</strong>
                     </div>
                     <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">تاريخ المنح:</span>
-                        <strong>{{ format_sys_date(optional($masterEd)->grant_date) }}</strong>
+                        <span class="text-muted d-block fs-8">6. اسم الأستاذ المشرف:</span>
+                        <strong>{{ optional($masterEd)->supervisor_name ?? '---' }}</strong>
                     </div>
                     <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">المعدل / التقدير:</span>
+                        <span class="text-muted d-block fs-8">7. التقدير:</span>
                         <strong>{{ optional($masterEd)->rank ?? '---' }}</strong>
                     </div>
+                    <div class="col-sm-4">
+                        <span class="text-muted d-block fs-8">8. تاريخ التسجيل:</span>
+                        <strong>{{ format_sys_date(optional($masterEd)->registration_date) }}</strong>
+                    </div>
+                    <div class="col-sm-4">
+                        <span class="text-muted d-block fs-8">9. تاريخ المناقشة:</span>
+                        <strong>{{ format_sys_date(optional($masterEd)->defense_date) }}</strong>
+                    </div>
+                    <div class="col-sm-4">
+                        <span class="text-muted d-block fs-8">10. تاريخ منح الدرجة:</span>
+                        <strong>{{ format_sys_date(optional($masterEd)->grant_date) }}</strong>
+                    </div>
+                    @if(optional($masterEd)->thesis_title)
+                    <div class="col-12">
+                        <span class="text-muted d-block fs-8">11. عنوان رسالة الماجستير (الأطروحة):</span>
+                        <strong style="color: var(--imperial-navy);">{{ optional($masterEd)->thesis_title }}</strong>
+                    </div>
+                    @endif
                     <div class="col-sm-6">
                         <span class="text-muted d-block fs-8">إيفاد رسمي:</span>
                         @if(optional($masterEd)->envoy_decision)
@@ -159,12 +181,6 @@
                             <span class="text-muted">غير موفد</span>
                         @endif
                     </div>
-                    @if(optional($masterEd)->thesis_title)
-                    <div class="col-12">
-                        <span class="text-muted d-block fs-8">عنوان الرسالة / الأطروحة:</span>
-                        <strong style="color: var(--imperial-navy);">{{ optional($masterEd)->thesis_title }}</strong>
-                    </div>
-                    @endif
                     <div class="col-12">
                         <span class="text-muted d-block fs-8 mb-1">مسار الطلب:</span>
                         @if($hasExp)
@@ -244,16 +260,21 @@
         @if($bachelorEd)
         <!-- درجة الإجازة الجامعية الأولى -->
         <div class="col-12">
-            <div class="card p-4 shadow-sm border-0" style="background: #ffffff;">
+            <div class="card p-4 shadow-sm border-0" style="background: #ffffff; border-top: 3.5px solid var(--heritage-gold) !important;">
                 <h5 class="fw-bold mb-3 pb-2 border-bottom" style="color: var(--imperial-navy);">
                     <i class="fa-solid fa-graduation-cap me-2 text-success"></i> بيانات الإجازة الجامعية الأولى (البكالوريوس)
                 </h5>
                 <div class="row g-3 fs-7">
-                    <div class="col-sm-4"><span class="text-muted d-block fs-8">بلد الإجازة:</span><strong>{{ optional($bachelorEd->country)->name ?? '---' }}</strong></div>
-                    <div class="col-sm-4"><span class="text-muted d-block fs-8">الجامعة والكلية:</span><strong>{{ $bachelorEd->faculty }} ({{ optional($bachelorEd->university)->name ?? ($bachelorEd->university_other ?? '---') }})</strong></div>
-                    <div class="col-sm-4"><span class="text-muted d-block fs-8">التقدير / المعدل:</span><strong>{{ $bachelorEd->rank ?? '---' }}</strong></div>
-                    <div class="col-sm-4"><span class="text-muted d-block fs-8">تاريخ المنح:</span><strong>{{ format_sys_date($bachelorEd->grant_date) }}</strong></div>
-                    <div class="col-sm-8"><span class="text-muted d-block fs-8">ملاحظات وقرار المعادلة:</span><strong>{{ $bachelorEd->notes ?: 'لا يوجد' }}</strong></div>
+                    <div class="col-sm-4"><span class="text-muted d-block fs-8">1. الدولة المانحة:</span><strong>{{ optional($bachelorEd->country)->name ?? '---' }}</strong></div>
+                    <div class="col-sm-4"><span class="text-muted d-block fs-8">2. الجامعة المانحة:</span><strong>{{ optional($bachelorEd->university)->name ?: ($bachelorEd->university_other ?: '---') }}</strong></div>
+                    <div class="col-sm-4"><span class="text-muted d-block fs-8">3. الكلية:</span><strong>{{ $bachelorEd->faculty ?: '---' }}</strong></div>
+                    <div class="col-sm-4"><span class="text-muted d-block fs-8">4. القسم:</span><strong>{{ $bachelorEd->department ?: '---' }}</strong></div>
+                    <div class="col-sm-4"><span class="text-muted d-block fs-8">5. اختصاص:</span><strong>{{ $bachelorEd->section_name ?: ($bachelorEd->exact_specialization ?: '---') }}</strong></div>
+                    <div class="col-sm-4"><span class="text-muted d-block fs-8">6. التقدير:</span><strong>{{ $bachelorEd->rank ?? '---' }}</strong></div>
+                    <div class="col-sm-4"><span class="text-muted d-block fs-8">7. تاريخ الحصول على الدرجة:</span><strong>{{ format_sys_date($bachelorEd->grant_date) }}</strong></div>
+                    @if($bachelorEd->notes)
+                    <div class="col-sm-8"><span class="text-muted d-block fs-8">قرار المعادلة السوري:</span><strong>{{ $bachelorEd->notes }}</strong></div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -351,48 +372,72 @@
             <i class="fa-solid fa-scroll me-2" style="color: var(--heritage-gold);"></i>3. الشهادات والمؤهلات العلمية المسجلة
         </h5>
         
-        <div class="row g-4">
+        <div class="row g-3">
             @if($highSchoolEd)
-            <div class="col-md-6 col-lg-3">
-                <div class="p-3 rounded border bg-light h-100">
+            <div class="col-12">
+                <div class="p-3 rounded border bg-light">
                     <h6 class="fw-bold text-primary mb-2"><i class="fa-solid fa-school me-1"></i> الثانوية العامة</h6>
-                    <div class="fs-8 text-muted">الدولة: <strong>{{ optional($highSchoolEd->country)->name ?? 'غ/م' }}</strong></div>
-                    <div class="fs-8 text-muted">الفرع: <strong>{{ $highSchoolEd->hs_type ?? 'علمي' }}</strong></div>
-                    <div class="fs-8 text-muted">سنة الحصول: <strong>{{ format_sys_date($highSchoolEd->grant_date) }}</strong></div>
+                    <div class="row g-2 fs-8">
+                        <div class="col-sm-4"><span class="text-muted">الدولة:</span> <strong>{{ optional($highSchoolEd->country)->name ?? 'سوريا' }}</strong></div>
+                        <div class="col-sm-4"><span class="text-muted">الفرع:</span> <strong>{{ $highSchoolEd->hs_type ?? 'علمي' }}</strong></div>
+                        <div class="col-sm-4"><span class="text-muted">سنة الحصول:</span> <strong>{{ format_sys_date($highSchoolEd->grant_date) }}</strong></div>
+                    </div>
                 </div>
             </div>
             @endif
 
             @if($bachelorEd)
-            <div class="col-md-6 col-lg-3">
-                <div class="p-3 rounded border bg-light h-100">
-                    <h6 class="fw-bold text-success mb-2"><i class="fa-solid fa-graduation-cap me-1"></i> الإجازة الجامعية (البكالوريوس)</h6>
-                    <div class="fs-8 text-muted">الكلية والجامعة: <strong>{{ $bachelorEd->faculty }} ({{ optional($bachelorEd->university)->name ?? $bachelorEd->university_other ?? 'غ/م' }})</strong></div>
-                    <div class="fs-8 text-muted">التقدير/المرتبة: <strong>{{ $bachelorEd->rank ?? 'غ/م' }}</strong></div>
-                    <div class="fs-8 text-muted">سنة التخرج: <strong>{{ format_sys_date($bachelorEd->grant_date) }}</strong></div>
+            <div class="col-12">
+                <div class="p-3 rounded border bg-light">
+                    <h6 class="fw-bold text-success mb-2"><i class="fa-solid fa-graduation-cap me-1"></i> الإجازة الجامعية الأولى (البكالوريوس)</h6>
+                    <div class="row g-2 fs-8">
+                        <div class="col-sm-4"><span class="text-muted d-block">1. الدولة المانحة:</span> <strong>{{ optional($bachelorEd->country)->name ?? 'سوريا' }}</strong></div>
+                        <div class="col-sm-4"><span class="text-muted d-block">2. الجامعة المانحة:</span> <strong>{{ optional($bachelorEd->university)->name ?: ($bachelorEd->university_other ?: '---') }}</strong></div>
+                        <div class="col-sm-4"><span class="text-muted d-block">3. الكلية:</span> <strong>{{ $bachelorEd->faculty ?: '---' }}</strong></div>
+                        <div class="col-sm-4"><span class="text-muted d-block">4. القسم:</span> <strong>{{ $bachelorEd->department ?: '---' }}</strong></div>
+                        <div class="col-sm-4"><span class="text-muted d-block">5. اختصاص:</span> <strong>{{ $bachelorEd->section_name ?: ($bachelorEd->exact_specialization ?: '---') }}</strong></div>
+                        <div class="col-sm-4"><span class="text-muted d-block">6. التقدير:</span> <strong>{{ $bachelorEd->rank ?: '---' }}</strong></div>
+                        <div class="col-sm-4"><span class="text-muted d-block">7. تاريخ الحصول على الدرجة:</span> <strong>{{ format_sys_date($bachelorEd->grant_date) }}</strong></div>
+                        @if($bachelorEd->notes)
+                        <div class="col-sm-8"><span class="text-muted d-block">قرار المعادلة السوري:</span> <strong>{{ $bachelorEd->notes }}</strong></div>
+                        @endif
+                    </div>
                 </div>
             </div>
             @endif
 
             @if($masterEd)
-            <div class="col-md-6 col-lg-3">
-                <div class="p-3 rounded border bg-light h-100">
-                    <h6 class="fw-bold text-warning mb-2"><i class="fa-solid fa-award me-1"></i> درجة الماجستير</h6>
-                    <div class="fs-8 text-muted">الجامعة والكلية: <strong>{{ optional($masterEd->university)->name ?? 'غ/م' }} - {{ $masterEd->faculty }}</strong></div>
-                    <div class="fs-8 text-muted">التقدير والمشرف: <strong>{{ $masterEd->rank }} | أشراف: {{ $masterEd->supervisor_name }}</strong></div>
-                    <div class="fs-8 text-muted">تاريخ منح الدرجة: <strong>{{ format_sys_date($masterEd->grant_date) }}</strong></div>
-                    <div class="fs-8 text-muted mt-1 text-truncate" title="{{ $masterEd->thesis_title }}">العنوان: <strong>{{ $masterEd->thesis_title }}</strong></div>
+            <div class="col-12">
+                <div class="p-3 rounded border bg-light">
+                    <h6 class="fw-bold text-warning-emphasis mb-2"><i class="fa-solid fa-award me-1"></i> درجة الماجستير</h6>
+                    <div class="row g-2 fs-8">
+                        <div class="col-sm-4"><span class="text-muted d-block">1. الجامعة المانحة:</span> <strong>{{ optional($masterEd->university)->name ?: ($masterEd->university_other ?: '---') }}</strong></div>
+                        <div class="col-sm-4"><span class="text-muted d-block">2. الكلية:</span> <strong>{{ $masterEd->faculty ?: '---' }}</strong></div>
+                        <div class="col-sm-4"><span class="text-muted d-block">3. القسم:</span> <strong>{{ $masterEd->department ?: '---' }}</strong></div>
+                        <div class="col-sm-4"><span class="text-muted d-block">4. الاختصاص العام:</span> <strong>{{ $masterEd->general_specialization ?: '---' }}</strong></div>
+                        <div class="col-sm-4"><span class="text-muted d-block">5. الاختصاص الدقيق:</span> <strong>{{ $masterEd->section_name ?: ($masterEd->exact_specialization ?: '---') }}</strong></div>
+                        <div class="col-sm-4"><span class="text-muted d-block">6. اسم الأستاذ المشرف:</span> <strong>{{ $masterEd->supervisor_name ?: '---' }}</strong></div>
+                        <div class="col-sm-4"><span class="text-muted d-block">7. التقدير:</span> <strong>{{ $masterEd->rank ?: '---' }}</strong></div>
+                        <div class="col-sm-4"><span class="text-muted d-block">8. تاريخ التسجيل بالدرجة:</span> <strong>{{ format_sys_date($masterEd->registration_date) }}</strong></div>
+                        <div class="col-sm-4"><span class="text-muted d-block">9. تاريخ المناقشة:</span> <strong>{{ format_sys_date($masterEd->defense_date) }}</strong></div>
+                        <div class="col-sm-4"><span class="text-muted d-block">10. تاريخ منح الدرجة:</span> <strong>{{ format_sys_date($masterEd->grant_date) }}</strong></div>
+                        @if($masterEd->thesis_title)
+                        <div class="col-12"><span class="text-muted d-block">11. عنوان رسالة الماجستير (الأطروحة):</span> <strong>{{ $masterEd->thesis_title }}</strong></div>
+                        @endif
+                    </div>
                 </div>
             </div>
             @endif
 
             @if($phdEd)
-            <div class="col-md-6 col-lg-3">
-                <div class="p-3 rounded border bg-light h-100">
+            <div class="col-12">
+                <div class="p-3 rounded border bg-light">
                     <h6 class="fw-bold text-danger mb-2"><i class="fa-solid fa-user-graduate me-1"></i> درجة الدكتوراه</h6>
-                    <div class="fs-8 text-muted">الجامعة والكلية: <strong>{{ optional($phdEd->university)->name ?? 'غ/م' }} - {{ $phdEd->faculty }}</strong></div>
-                    <div class="fs-8 text-muted">التقدير: <strong>{{ $phdEd->rank }}</strong></div>
-                    <div class="fs-8 text-muted">تاريخ منح الدرجة: <strong>{{ format_sys_date($phdEd->grant_date) }}</strong></div>
+                    <div class="row g-2 fs-8">
+                        <div class="col-sm-4"><span class="text-muted d-block">الجامعة والكلية:</span> <strong>{{ optional($phdEd->university)->name ?? 'غ/م' }} - {{ $phdEd->faculty }}</strong></div>
+                        <div class="col-sm-4"><span class="text-muted d-block">التقدير:</span> <strong>{{ $phdEd->rank }}</strong></div>
+                        <div class="col-sm-4"><span class="text-muted d-block">تاريخ منح الدرجة:</span> <strong>{{ format_sys_date($phdEd->grant_date) }}</strong></div>
+                    </div>
                 </div>
             </div>
             @endif

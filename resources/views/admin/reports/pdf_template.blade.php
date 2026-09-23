@@ -61,11 +61,11 @@ body {
 }
 .emblem-td { 
     text-align: left; 
-    width: 80px; 
+    width: 95px; 
 }
 .emblem-img { 
-    width: 70px; 
-    height: 70px; 
+    width: 88px; 
+    height: 88px; 
     object-fit: contain;
 }
 
@@ -168,7 +168,7 @@ body {
                 <div class="ar-title">وزارة التعليم العالي والبحث العلمي</div>
                 <div class="en-title">MINISTRY OF HIGHER EDUCATION AND SCIENTIFIC RESEARCH</div>
             </td>
-            <td style="width: 70px; vertical-align: middle; text-align: left;">
+            <td style="width: 95px; vertical-align: middle; text-align: left;">
                 <img src="{{ public_path('assets/report_logo.png') }}" class="emblem-img" alt="شعار الجمهورية العربية السورية">
             </td>
         </tr>
