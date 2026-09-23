@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\PdfReportController;
 use App\Http\Controllers\Admin\DecisionsController;
 use App\Http\Controllers\Admin\GeneratedDecisionController;
 use App\Http\Controllers\Admin\InterviewsController;
+use App\Http\Controllers\Admin\ScientificProductionController;
 use App\Http\Controllers\University\DashboardController as UniDashboardController;
 use App\Http\Controllers\University\ApplicationWizardController;
 use App\Http\Controllers\PageController;
@@ -74,6 +75,10 @@ Route::get('/admin/attachments/{id}/view/{filename?}', [\App\Http\Controllers\Ad
     Route::get('/committee', [CommitteeController::class, 'index'])->name('admin.committee.index');
     Route::patch('/committee/{id}', [CommitteeController::class, 'decide'])->name('admin.committee.decide');
 
+    // Scientific Production Management ('بانتظار لجنة إنتاج علمي')
+    Route::get('/scientific-production', [ScientificProductionController::class, 'index'])->name('admin.scientific_production.index');
+    Route::patch('/scientific-production/{id}/decide', [ScientificProductionController::class, 'decide'])->name('admin.scientific_production.decide');
+
     // Advanced Search (Redirected to applications index)
     Route::get('/search', function() {
         return redirect()->route('admin.applications.index');
@@ -110,6 +115,10 @@ Route::get('/admin/attachments/{id}/view/{filename?}', [\App\Http\Controllers\Ad
     // Foreign Master Theoretical Decisions Upload & Issue (تعادل الماجستير الخارجي النظري - مع قرار الأهلية)
     Route::get('/foreign-master-theoretical-decisions', [DecisionsController::class, 'foreignMasterTheoreticalIndex'])->name('admin.foreign_master_theoretical_decisions.index');
     Route::post('/foreign-master-theoretical-decisions', [DecisionsController::class, 'foreignMasterTheoreticalStore'])->name('admin.foreign_master_theoretical_decisions.store');
+
+    // Foreign Doctorate Decisions Upload & Issue (تعادل الدكتوراه الخارجية غير السورية)
+    Route::get('/foreign-doctorate-decisions', [DecisionsController::class, 'foreignDoctorateIndex'])->name('admin.foreign_doctorate_decisions.index');
+    Route::post('/foreign-doctorate-decisions', [DecisionsController::class, 'foreignDoctorateStore'])->name('admin.foreign_doctorate_decisions.store');
 
     // Legacy Route Alias for backwards compatibility
     Route::get('/foreign-master-decisions', function () {
@@ -154,6 +163,10 @@ Route::prefix('university')->middleware(['auth', 'role:university'])->group(func
     // Wizard: Foreign Master's step-by-step (معاملة الماجستير الخارجي - غير السوري)
     Route::get('/apply/foreign-masters', [ApplicationWizardController::class, 'showForeignMastersWizard'])->name('university.apply.foreign_masters');
     Route::post('/apply/foreign-masters', [ApplicationWizardController::class, 'submitForeignMastersWizard'])->name('university.apply.foreign_masters.submit');
+
+    // Wizard: Foreign Doctorate step-by-step (معاملة الدكتوراه غير السورية - الخارجية)
+    Route::get('/apply/foreign-doctorate', [ApplicationWizardController::class, 'showForeignDoctorateWizard'])->name('university.apply.foreign_doctorate');
+    Route::post('/apply/foreign-doctorate', [ApplicationWizardController::class, 'submitForeignDoctorateWizard'])->name('university.apply.foreign_doctorate.submit');
 
     // Wizard: Faculty Permission step-by-step (معاملة السماح لأعضاء الهيئة التدريسية)
     Route::get('/apply/faculty-permission', [ApplicationWizardController::class, 'showFacultyPermissionWizard'])->name('university.apply.faculty_permission');

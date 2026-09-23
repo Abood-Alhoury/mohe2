@@ -202,7 +202,7 @@
         <div style="margin-bottom: 3px;">وعلى قرار مجلس التعليم العالي رقم /236/ تاريخ 2007/7/15.</div>
         <div style="margin-bottom: 3px;">وعلى قرار مجلس التعليم العالي رقم /175/ تاريخ 2022/6/16 وتعديلاته.</div>
         <div>وعلى كتاب {{ $uniName }} رقم {{ $uniReqNo ?: '        ' }} تاريخ {{ $uniReqDate ?: '        ' }}</div>
-        @if($decisionType === 'foreign_master_theoretical')
+        @if($decisionType === 'foreign_doctorate' || $decisionType === 'foreign_master_theoretical')
             <div style="margin-top: 3px;">وعلى قرار لجنة التأهيل ومعادلة الدرجات العلمية المنعقدة في {{ $committeeDate ?? ($decisionDate ?? '') }}</div>
         @endif
     </div>
@@ -220,6 +220,8 @@
                 <strong>المادة 1-</strong> السماح {{ $candidateTitlePrep ?? 'للسيد الدكتور' }} {{ $candidateName }} (عضو الهيئة التدريسية في {{ $govFaculty }} بجامعة {{ $govUni }}) بالتدريس باختصاص {{ $teachingDept }} في الجامعات الخاصة السورية.
             @elseif(!empty($isResearchCenter))
                 <strong>المادة 1-</strong> تعدّ درجة الدكتوراه في {{ $phdSpec }} الممنوحة {{ $candidateTitlePrep ?? 'للدكتور' }} {{ $candidateName }} ({{ $appointedResearcherWord ?? 'والمعين باحث' }} لدى {{ $rcCenterName ?? 'مركز الدراسات والبحوث العلمية' }}) عام {{ $phdYear }} من {{ $phdUni }}، مؤهلة للتدريس باختصاص {{ $teachingDept }} بالجامعات الخاصة السورية.
+            @elseif(!empty($isForeignDoctorate) || $decisionType === 'foreign_doctorate')
+                <strong>المادة 1-</strong> تعدّ درجة الدكتوراه في {{ $phdDepartment ?: ($phdFaculty ?: $phdSpec) }} شعبة {{ $phdExact ?: $phdSpec }} الممنوحة {{ $candidateTitlePrep ?? 'للدكتور' }} <strong>{{ $candidateName }}</strong> عام {{ $phdYear }} من {{ preg_match('/^(جامعة|جامعه)\s+/u', $phdUni) ? $phdUni : 'جامعة ' . $phdUni }} في {{ $phdCountry ?: '---' }}، والمسبوقة بدرجة الماجستير في {{ $masterDepartment ?: ($masterFaculty ?: $masterGeneral) }} اختصاص {{ $masterExact ?: $masterSpec }} الممنوحة عام {{ $masterYear }} من {{ preg_match('/^(جامعة|جامعه)\s+/u', $masterUni) ? $masterUni : 'جامعة ' . $masterUni }}{{ !empty($masterCountry) ? ' في ' . $masterCountry : '' }}، ودرجة الإجازة في {{ $baSpec ?: ($baFaculty ?: $baGeneral) }} الممنوحة عام {{ $baYear }} من {{ preg_match('/^(جامعة|جامعه)\s+/u', $baUni) ? $baUni : 'جامعة ' . $baUni }}{{ (!empty($baCountry) && $baCountry !== 'سوريا') ? ' في ' . $baCountry : '' }}، معادلة ومؤهلة لدرجة الدكتوراه المطلوبة للتعيين والتدريس باختصاص {{ $teachingDept }} بالجامعات الخاصة السورية.
             @elseif(!empty($isDoctorate))
                 <strong>المادة 1-</strong> تعدّ درجة الدكتوراه في {{ $phdSpec }} الممنوحة {{ $candidateTitlePrep ?? 'للدكتور' }} {{ $candidateName }} عام {{ $phdYear }} من جامعة {{ $phdUni }}، والمسبوقة بدرجة الماجستير في {{ $masterSpec }} الممنوحة عام {{ $masterYear }} من جامعة {{ $masterUni }}، ودرجة الإجازة في {{ $baGeneral }}{{ $baSection ? '/' . $baSection : '' }} الممنوحة عام {{ $baYear }} من جامعة {{ $baUni }}، مؤهلة للتعيين والتدريس باختصاص {{ $teachingDept }} بالجامعات الخاصة السورية.
             @elseif($decisionType === 'foreign_master_applied' || $decisionType === 'applied_master' || (!empty($isApplied) && empty($isDoctorate)))

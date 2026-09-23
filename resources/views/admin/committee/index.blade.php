@@ -31,13 +31,16 @@
                     @forelse($committeeApps as $app)
                     @php
                         $lastEducation = $app->educations->last();
-                        $isForeignMaster = str_contains($app->request_type ?? '', 'خارجي') || str_contains($app->request_type ?? '', 'غير سوري');
-                        $isTheoretical = $isForeignMaster && str_contains($app->request_type ?? '', 'نظري');
+                        $reqType = $app->request_type ?? '';
+                        $isForeignDoctorate = str_contains($reqType, 'دكتورة خارجية') || str_contains($reqType, 'دكتوراه خارجية')
+                            || ((str_contains($reqType, 'دكتوراه') || str_contains($reqType, 'دكتورة')) && str_contains($reqType, 'خارجي'));
+                        $isForeignMaster = !$isForeignDoctorate && (str_contains($reqType, 'خارجي') || str_contains($reqType, 'غير سوري'));
+                        $isTheoretical = $isForeignMaster && str_contains($reqType, 'نظري');
                     @endphp
                     <tr>
                         <td class="fw-bold text-secondary">{{ $app->id }}</td>
                         <td>
-                            <span class="badge {{ $isForeignMaster ? 'bg-primary-subtle text-primary border border-primary' : 'bg-light text-dark border' }}">
+                            <span class="badge {{ ($isForeignDoctorate || $isForeignMaster) ? 'bg-primary-subtle text-primary border border-primary' : 'bg-light text-dark border' }}">
                                 {{ $app->request_type ?? 'تعادل' }}
                             </span>
                         </td>
@@ -49,7 +52,7 @@
                             <span class="badge bg-warning text-dark border border-warning fs-7"><i class="fa-solid fa-users-rectangle me-1"></i> {{ $app->status }}</span>
                         </td>
                         <td class="text-center">
-                            @if($isForeignMaster)
+                            @if($isForeignDoctorate || $isForeignMaster)
                                 <button type="button" class="btn btn-sm btn-primary fw-bold px-3 py-1 shadow-xs" data-bs-toggle="modal" data-bs-target="#decisionModal-{{ $app->id }}">
                                     <i class="fa-solid fa-gavel me-1"></i> اتخاذ القرار
                                 </button>
@@ -73,8 +76,8 @@
                         </td>
                     </tr>
 
-                    {{-- Modal اتخاذ القرار للماجستير الخارجي --}}
-                    @if($isForeignMaster)
+                    {{-- Modal اتخاذ القرار للمعاملات الخارجية (دكتوراه / ماجستير) --}}
+                    @if($isForeignDoctorate || $isForeignMaster)
                     <div class="modal fade" id="decisionModal-{{ $app->id }}" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered">
                             <div class="modal-content border-0 shadow">
@@ -100,7 +103,15 @@
                                             <select name="decision_action" id="decision_select_{{ $app->id }}" class="form-select fw-bold academic-input" onchange="handleDecisionChange('{{ $app->id }}', this.value)" required>
                                                 <option value="" disabled selected>-- اختر القرار من القائمة --</option>
                                                 
-                                                @if($isTheoretical)
+                                                @if($isForeignDoctorate)
+                                                    {{-- خيارات الدكتوراه الخارجية حصراً --}}
+                                                    <option value="approved_to_scientific_production" class="text-success fw-bold">
+                                                        1. موافقة وإحالة إلى لجنة الإنتاج العلمي (← إنتاج علمي)
+                                                    </option>
+                                                    <option value="rejected" class="text-danger fw-bold">
+                                                        2. رفض التعادل (عدم الموافقة)
+                                                    </option>
+                                                @elseif($isTheoretical)
                                                     {{-- الخيارات الثلاثة للماجستير النظري --}}
                                                     <option value="approved_theoretical" class="text-success">
                                                         1. مقبول (مسار نظري - اعتماد خبرة سنتين فأكثر ← بانتظار المقابلة)

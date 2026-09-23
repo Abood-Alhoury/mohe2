@@ -303,6 +303,21 @@
                     <span class="sidebar-text-label">مواضيع اللجنة العامة</span>
                 </a>
 
+                <a href="{{ route('admin.scientific_production.index') }}" 
+                   class="sidebar-link {{ request()->routeIs('admin.scientific_production*') ? 'active' : '' }}"
+                   :title="!isExpanded ? 'لجنة الإنتاج العلمي' : ''">
+                    <div class="sidebar-icon-tile" style="background: #f3e8ff; color: #7e22ce; border: 1px solid #e9d5ff;">
+                        <i class="fa-solid fa-flask"></i>
+                    </div>
+                    <span class="sidebar-text-label">لجنة الإنتاج العلمي</span>
+                    @php
+                        $awaitingSpBadge = \App\Models\Application::where('status', 'بانتظار لجنة إنتاج علمي')->count();
+                    @endphp
+                    @if($awaitingSpBadge > 0)
+                        <span class="badge rounded-pill ms-auto" style="font-size: 0.72rem; background-color: #7e22ce !important; color: #ffffff !important;">{{ $awaitingSpBadge }}</span>
+                    @endif
+                </a>
+
                 <a href="{{ route('admin.reports.index') }}" 
                    class="sidebar-link {{ request()->routeIs('admin.reports*') ? 'active' : '' }}"
                    :title="!isExpanded ? 'التقارير السنوية' : ''">

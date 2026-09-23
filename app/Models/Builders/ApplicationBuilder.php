@@ -20,6 +20,10 @@ class ApplicationBuilder extends Builder
 
         if ($isStatusCol && is_string($value) && !is_numeric($value)) {
             $lowerOp = strtolower(trim((string)$operator));
+            if ($value === 'إنتاج علمي' || $value === 'بانتظار لجنة الإنتاج العلمي') {
+                $statusId = ApplicationStatus::where('name', 'بانتظار لجنة إنتاج علمي')->value('id') ?? 5;
+                return parent::where($column, $operator, $statusId, $boolean);
+            }
             if ($lowerOp === 'like') {
                 $ids = ApplicationStatus::where('name', 'like', $value)->pluck('id')->toArray();
                 return parent::whereIn($column, $ids, $boolean);
@@ -36,6 +40,10 @@ class ApplicationBuilder extends Builder
 
         if ($isTypeCol && is_string($value) && !is_numeric($value)) {
             $lowerOp = strtolower(trim((string)$operator));
+            if ($value === 'دكتوراه خارجية') {
+                $typeId = ApplicationRequestType::where('name', 'دكتورة خارجية')->value('id') ?? 7;
+                return parent::where($column, $operator, $typeId, $boolean);
+            }
             if ($lowerOp === 'like') {
                 $ids = ApplicationRequestType::where('name', 'like', $value)->pluck('id')->toArray();
                 return parent::whereIn($column, $ids, $boolean);
@@ -59,7 +67,11 @@ class ApplicationBuilder extends Builder
             $transformed = [];
             foreach ($values as $val) {
                 if (is_string($val) && !is_numeric($val)) {
-                    $id = ApplicationStatus::where('name', $val)->value('id');
+                    if ($val === 'إنتاج علمي' || $val === 'بانتظار لجنة الإنتاج العلمي') {
+                        $id = ApplicationStatus::where('name', 'بانتظار لجنة إنتاج علمي')->value('id') ?? 5;
+                    } else {
+                        $id = ApplicationStatus::where('name', $val)->value('id');
+                    }
                     if ($id) {
                         $transformed[] = $id;
                     }
@@ -74,7 +86,11 @@ class ApplicationBuilder extends Builder
             $transformed = [];
             foreach ($values as $val) {
                 if (is_string($val) && !is_numeric($val)) {
-                    $id = ApplicationRequestType::where('name', $val)->value('id');
+                    if ($val === 'دكتوراه خارجية') {
+                        $id = ApplicationRequestType::where('name', 'دكتورة خارجية')->value('id') ?? 7;
+                    } else {
+                        $id = ApplicationRequestType::where('name', $val)->value('id');
+                    }
                     if ($id) {
                         $transformed[] = $id;
                     }

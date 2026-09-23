@@ -72,6 +72,15 @@ class DecisionsController extends Controller
                     ->toArray();
                 return !empty($ids) ? $ids : [6];
 
+            case 'foreign_doctorate':
+                $ids = ApplicationRequestType::where(function($q) {
+                    $q->where('name', 'like', '%دكتور%')
+                      ->where('name', 'like', '%خارجي%');
+                })
+                ->pluck('id')
+                ->toArray();
+                return !empty($ids) ? $ids : [7];
+
             default:
                 return [];
         }
@@ -758,6 +767,123 @@ class DecisionsController extends Controller
         ]);
 
         return redirect()->route('admin.foreign_master_theoretical_decisions.index')->with('success', 'تم تسجيل وإرسال قرار تعادل الماجستير الخارجي النظري والأهلية وإشعار الجامعة المعنية بنجاح.');
+    }
+
+    // =========================================================================
+    // FOREIGN DOCTORATE EQUIVALENCE DECISIONS (تعادل الدكتوراه الخارجية غير السورية)
+    // =========================================================================
+    public function foreignDoctorateIndex(Request $request)
+    {
+        $typeIds = $this->getRequestTypeIds('foreign_doctorate');
+
+        // Applications ready for Foreign Doctorate decision issuing
+        $approvedApps = Application::with(['candidate', 'workUniversity', 'latestDecision'])
+            ->whereIn('status', ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 7])
+            ->whereIn('request_type', $typeIds)
+            ->latest()
+            ->get();
+
+        if ($request->filled('app_id')) {
+            $targetApp = Application::with(['candidate', 'workUniversity', 'latestDecision'])->find($request->query('app_id'));
+            if ($targetApp && in_array($targetApp->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 7]) && !$approvedApps->contains('id', $targetApp->id)) {
+                $approvedApps->prepend($targetApp);
+            }
+        }
+
+        $search = $request->query('search');
+
+        $issuedDecisions = ApplicationDecision::with('application.candidate', 'application.workUniversity')
+            ->whereHas('application', function ($q) use ($typeIds) {
+                $q->whereIn('request_type', $typeIds);
+            })
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($q2) use ($search) {
+                    $q2->whereHas('application.candidate', function ($q) use ($search) {
+                        $q->where('full_name', 'like', '%' . $search . '%');
+                    })
+                    ->orWhereHas('application.workUniversity', function ($q) use ($search) {
+                        $q->where('name', 'like', '%' . $search . '%');
+                    })
+                    ->orWhereHas('application', function ($q) use ($search) {
+                        $q->where('application_no', 'like', '%' . $search . '%');
+                    })
+                    ->orWhere('decision_no', 'like', '%' . $search . '%')
+                    ->orWhere('eligibility_decision_no', 'like', '%' . $search . '%');
+                });
+            })
+            ->latest()
+            ->get();
+
+        return view('admin.decisions.foreign_doctorate_index', compact('approvedApps', 'issuedDecisions', 'search'));
+    }
+
+    public function foreignDoctorateStore(Request $request)
+    {
+        $request->validate([
+            'application_id'           => 'required|exists:applications,id',
+            'eligibility_decision_no'   => 'nullable|string',
+            'eligibility_decision_date' => 'nullable|date',
+            'eligibility_decision_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'decision_no'              => 'required|string',
+            'decision_date'            => 'required|date',
+            'decision_file'            => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'notes'                    => 'nullable|string',
+        ]);
+
+        $app = Application::findOrFail($request->application_id);
+
+        if (!in_array($app->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار'])) {
+            return redirect()->back()->with('error', 'لا يمكن إرفاق قرار لطلب حالته حالياً (' . $app->status . '). إصدار القرارات متاح فقط للطلبات بحالة (بانتظار إصدار القرار).');
+        }
+
+        $safeAppNo = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $app->application_no ?? ('App_' . $app->id));
+        $safeDecNo = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $request->decision_no);
+        $candidateName = $app->candidate ? preg_replace('/[^\p{L}\p{N}\s\-_]/u', '', $app->candidate->full_name) : '';
+        $cleanCandidateName = trim(preg_replace('/\s+/', '_', $candidateName));
+
+        // 1. Process Eligibility Decision File if uploaded
+        $eligibilityPath = null;
+        if ($request->hasFile('eligibility_decision_file')) {
+            $eligFile = $request->file('eligibility_decision_file');
+            $safeEligDecNo = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $request->eligibility_decision_no ?? 'Elig');
+            $extElig = $eligFile->getClientOriginalExtension();
+            $eligFileName = 'Foreign_Doctorate_Eligibility_No' . $safeEligDecNo . '_' . $safeAppNo . ($cleanCandidateName ? '_' . $cleanCandidateName : '') . '.' . $extElig;
+            $eligibilityPath = $eligFile->storeAs('decisions', $eligFileName, 'public');
+        }
+
+        // 2. Process Foreign Doctorate Equivalence Decision File
+        $ext = $request->file('decision_file')->getClientOriginalExtension();
+        $decisionFileName = 'Foreign_Doctorate_Official_Decision_No' . $safeDecNo . '_' . $safeAppNo . ($cleanCandidateName ? '_' . $cleanCandidateName : '') . '.' . $ext;
+        $path = $request->file('decision_file')->storeAs('decisions', $decisionFileName, 'public');
+
+        // 3. Create Decision Record
+        $decision = ApplicationDecision::create([
+            'application_id'            => $request->application_id,
+            'eligibility_decision_no'   => $request->eligibility_decision_no,
+            'eligibility_decision_date' => $request->eligibility_decision_date,
+            'eligibility_file_path'     => $eligibilityPath,
+            'decision_no'               => $request->decision_no,
+            'decision_date'             => $request->decision_date,
+            'file_path'                 => $path,
+            'notes'                     => $request->notes ?? 'قرار معادلة دكتوراه غير سورية (خارجية) صادر رسمياً من مجلس التعليم العالي',
+        ]);
+
+        // Automatically update application status
+        $app->status = 'تم الصدور';
+        $app->save();
+
+        // Send automated notification message to university
+        $candidateFullName = $app->candidate ? $app->candidate->full_name : '';
+        $eligibilityInfoText = $request->eligibility_decision_no ? " وقرار الأهلية برقم ({$request->eligibility_decision_no})" : "";
+
+        ApplicationMessage::create([
+            'application_id' => $app->id,
+            'sender_id' => Auth::id() ?? 1,
+            'message' => "📜 [إشعار رسمي - صدور قرار تعادل دكتوراه غير سورية]: تم صدور قرار معادلة الدكتوراه الخارجية رسمياً برقم ({$request->decision_no}){$eligibilityInfoText} للطلب رقم (#{$app->application_no}) للمرشح ({$candidateFullName}). يمكنك الاطلاع على نسخة القرارات وتحميلها أصولاً.",
+            'is_read' => false,
+        ]);
+
+        return redirect()->route('admin.foreign_doctorate_decisions.index')->with('success', 'تم تسجيل وإرسال قرار الأهلية وقرار تعادل الدكتوراه الخارجية الرسمي وإشعار الجامعة المعنية بنجاح.');
     }
 
     // Legacy methods

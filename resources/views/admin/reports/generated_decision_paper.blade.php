@@ -182,6 +182,26 @@
 
    
 
+    @elseif(!empty($isForeignDoctorate) || $decisionType === 'foreign_doctorate')
+        {{-- نموذج تعادل دكتوراه غير سورية (خارجية) مطابق للوثيقة الرسمية --}}
+        <div class="preamble-div" style="font-size: 15px; margin-bottom: 12px; text-align: justify; line-height: 1.6;">
+            <div style="margin-bottom: 5px;">رئيس لجنة التأهيل ومعادلة الدرجات العلمية.</div>
+            <div style="margin-bottom: 5px;">بناءً على أحكام قانون تنظيم الجامعات رقم 6 لعام 2006 ولائحته التنفيذية وتعديلاتهما.</div>
+            <div style="margin-bottom: 5px;">وعلى قرار مجلس التعليم العالي رقم /236/ تاريخ 2007/7/15.</div>
+            <div style="margin-bottom: 5px;">وعلى قرار مجلس التعليم العالي رقم /175/ تاريخ 2022/6/16 وتعديلاته.</div>
+            <div style="margin-bottom: 5px;">وعلى كتاب {{ $uniName }} رقم <span contenteditable="true" id="live-uni-req-no" style="outline:none;">{!! $uniReqNo ?: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' !!}</span> تاريخ <span contenteditable="true" id="live-uni-req-date" style="outline:none;">{!! $uniReqDate ?: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' !!}</span></div>
+            <div style="margin-bottom: 5px;">وعلى قرار لجنة التأهيل ومعادلة الدرجات العلمية المنعقدة في <span contenteditable="true" style="outline:none;">{{ $committeeDate ?? ($decisionDate ?? '') }}</span>.</div>
+            <div style="margin-bottom: 5px;" contenteditable="true"></div>
+        </div>
+
+        <div class="decree-header-div" style="text-align: center; font-size: 16px; font-weight: bold; margin: 15px 0 12px; text-decoration: underline;">
+            يقرر ما يأتي:
+        </div>
+
+        <div class="article-div" id="live-article-body" contenteditable="true" title="انقر هنا لتعديل نص القرار مباشرة" style="font-size: 16px; margin-bottom: 14px; text-align: justify; line-height: 2.2; outline: none;">
+            <strong>المادة 1-</strong> تعدّ درجة الدكتوراه في <span contenteditable="true" style="outline:none;">{{ $phdDepartment ?: ($phdFaculty ?: $phdSpec) }}</span> شعبة <span contenteditable="true" style="outline:none;">{{ $phdExact ?: $phdSpec }}</span> الممنوحة <span contenteditable="true" style="outline:none;">{{ $candidateTitlePrep ?? 'للدكتور' }}</span> <strong><span contenteditable="true" style="outline:none;">{{ $candidateName }}</span></strong> عام <span contenteditable="true" style="outline:none;">{{ $phdYear }}</span> من <span contenteditable="true" style="outline:none;">{{ preg_match('/^(جامعة|جامعه)\s+/u', $phdUni) ? $phdUni : 'جامعة ' . $phdUni }}</span> في <span contenteditable="true" style="outline:none;">{{ $phdCountry ?: '---' }}</span>، والمسبوقة بدرجة الماجستير في <span contenteditable="true" style="outline:none;">{{ $masterDepartment ?: ($masterFaculty ?: $masterGeneral) }}</span> اختصاص <span contenteditable="true" style="outline:none;">{{ $masterExact ?: $masterSpec }}</span> الممنوحة عام <span contenteditable="true" style="outline:none;">{{ $masterYear }}</span> من <span contenteditable="true" style="outline:none;">{{ preg_match('/^(جامعة|جامعه)\s+/u', $masterUni) ? $masterUni : 'جامعة ' . $masterUni }}</span>{{ !empty($masterCountry) ? ' في ' . $masterCountry : '' }}، ودرجة الإجازة في <span contenteditable="true" style="outline:none;">{{ $baSpec ?: ($baFaculty ?: $baGeneral) }}</span> الممنوحة عام <span contenteditable="true" style="outline:none;">{{ $baYear }}</span> من <span contenteditable="true" style="outline:none;">{{ preg_match('/^(جامعة|جامعه)\s+/u', $baUni) ? $baUni : 'جامعة ' . $baUni }}</span>{{ (!empty($baCountry) && $baCountry !== 'سوريا') ? ' في ' . $baCountry : '' }}، معادلة ومؤهلة لدرجة الدكتوراه المطلوبة للتعيين والتدريس باختصاص <span contenteditable="true" style="outline:none;">{{ $teachingDept }}</span> بالجامعات الخاصة السورية.
+        </div>
+
     @elseif(!empty($isDoctorate))
         {{-- نموذج تعادل الدكتوراه السورية --}}
         <div class="preamble-div" style="font-size: 15px; margin-bottom: 12px; text-align: justify; line-height: 1.6;">

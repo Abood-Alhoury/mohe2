@@ -19,6 +19,13 @@
         <span>الدكتوراه الداخلية</span>
     </a>
 
+    <a href="{{ route('admin.foreign_doctorate_decisions.index') }}" 
+       class="btn {{ ($active === 'foreign_doctorate' || $currentRoute === 'admin.foreign_doctorate_decisions.index') ? 'btn-solid-navy' : 'btn-outline-navy bg-white' }} fw-bold px-3 py-1.5 rounded-pill shadow-xs fs-7 d-inline-flex align-items-center gap-1.5"
+       title="إصدار قرارات الدكتوراه الخارجية غير السورية">
+        <i class="fa-solid fa-award" style="{{ ($active === 'foreign_doctorate' || $currentRoute === 'admin.foreign_doctorate_decisions.index') ? 'color: var(--heritage-gold-light);' : '' }} font-size: 0.82rem;"></i>
+        <span>الدكتوراه الخارجية</span>
+    </a>
+
     <a href="{{ route('admin.applied_decisions.index') }}" 
        class="btn {{ ($active === 'applied' || $currentRoute === 'admin.applied_decisions.index') ? 'btn-solid-navy' : 'btn-outline-navy bg-white' }} fw-bold px-3 py-1.5 rounded-pill shadow-xs fs-7 d-inline-flex align-items-center gap-1.5"
        title="إصدار قرارات الماجستير التطبيقي">

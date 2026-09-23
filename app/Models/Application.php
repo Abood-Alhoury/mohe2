@@ -30,6 +30,10 @@ class Application extends Model
         'user_id',
         'committee_track',
         'experience_approved',
+        'scientific_production_approved',
+        'scientific_production_date',
+        'scientific_production_decision_no',
+        'scientific_production_notes',
         'rejection_reason',
     ];
 
@@ -49,7 +53,11 @@ class Application extends Model
     public function setStatusAttribute($value)
     {
         if (is_string($value) && !is_numeric($value)) {
-            $id = ApplicationStatus::where('name', $value)->value('id');
+            if ($value === 'إنتاج علمي' || $value === 'بانتظار لجنة الإنتاج العلمي') {
+                $id = ApplicationStatus::where('name', 'بانتظار لجنة إنتاج علمي')->value('id') ?? 5;
+            } else {
+                $id = ApplicationStatus::where('name', $value)->value('id');
+            }
             $this->attributes['status'] = $id ?? 2;
         } else {
             $this->attributes['status'] = $value ?? 2;
@@ -198,5 +206,13 @@ class Application extends Model
     public function isAppliedApproved(): bool
     {
         return $this->committee_track === 'applied' || $this->committee_track === 'تطبيقي';
+    }
+
+    /**
+     * هل تم اعتماد الإنتاج العلمي من قبل اللجنة؟
+     */
+    public function isScientificProductionApproved(): bool
+    {
+        return (bool) $this->scientific_production_approved;
     }
 }

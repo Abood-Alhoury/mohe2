@@ -479,11 +479,18 @@ class DashboardController extends Controller
             return redirect()->route('university.apply.faculty_permission', ['draft_id' => $application->id]);
         }
 
-        if (str_contains($application->request_type, 'خارجي') || str_contains($application->request_type, 'غير سوري')) {
+        $isDoctorate = str_contains($application->request_type, 'دكتوراه') || str_contains($application->request_type, 'دكتورة') || $application->educations()->whereHas('level', function($q) { $q->where('name', 'like', '%دكتور%'); })->exists();
+        $isForeign = str_contains($application->request_type, 'خارجي') || str_contains($application->request_type, 'غير سوري');
+
+        if ($isDoctorate && $isForeign) {
+            return redirect()->route('university.apply.foreign_doctorate', ['draft_id' => $application->id]);
+        }
+
+        if ($isForeign) {
             return redirect()->route('university.apply.foreign_masters', ['draft_id' => $application->id]);
         }
 
-        if (str_contains($application->request_type, 'دكتوراه') || $application->educations()->whereHas('level', function($q) { $q->where('name', 'like', '%دكتوراه%'); })->exists()) {
+        if ($isDoctorate) {
             return redirect()->route('university.apply.syrian_doctorate', ['draft_id' => $application->id]);
         }
 
