@@ -15,11 +15,16 @@ class CommitteeController extends Controller
     {
         $committeeApps = Application::where('status', 'لجنة عامة')
             ->orWhere('status', 4)
-            ->with(['candidate', 'workUniversity', 'educations.level'])
+            ->with(['candidate', 'workUniversity', 'educations.level', 'educations.university', 'educations.country'])
             ->latest('id')
             ->get();
 
-        return view('admin.committee.index', compact('committeeApps'));
+        $totalCount = $committeeApps->count();
+        $pendingCount = $totalCount;
+        $approvedCount = Application::whereIn('status', ['بانتظار المقابلة', 'بانتظار إصدار القرار', 'بانتظار لجنة إنتاج علمي', 'تم الصدور'])->count();
+        $rejectedCount = Application::where('status', 'مرفوض')->count();
+
+        return view('admin.committee.index', compact('committeeApps', 'totalCount', 'pendingCount', 'approvedCount', 'rejectedCount'));
     }
 
     /**

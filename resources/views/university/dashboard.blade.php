@@ -1,230 +1,615 @@
 @extends('layouts.university')
 
-@section('title', 'الرئيسية - لوحة تحكم الجامعة')
+@section('title', 'الرئيسية - بوابة الجامعات للتعادل الأكاديمي')
+
+@push('styles')
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --primary-navy: #091322;
+        --secondary-navy: #0e1e38;
+        --accent-gold: #c59b27;
+        --accent-gold-light: #f5d77f;
+        --accent-gold-glow: rgba(197, 155, 39, 0.25);
+        --emerald-accent: #10b981;
+        --emerald-glow: rgba(16, 185, 129, 0.2);
+        --bg-page: #f1f5f9;
+        --surface-card: #ffffff;
+        --border-subtle: #e2e8f0;
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+    }
+
+    .dashboard-bento-wrapper {
+        font-family: 'Tajawal', sans-serif;
+    }
+
+    /* HERO BENTO BANNER */
+    .hero-bento-card {
+        background: linear-gradient(135deg, var(--secondary-navy) 0%, #13284c 100%);
+        border-radius: 16px;
+        padding: 24px 30px;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 8px 30px rgba(14, 30, 56, 0.12);
+        border: 1px solid rgba(255,255,255,0.08);
+        margin-bottom: 22px;
+    }
+
+    .hero-bento-card::before {
+        content: '';
+        position: absolute;
+        top: -50px;
+        left: -50px;
+        width: 200px;
+        height: 200px;
+        background: radial-gradient(circle, rgba(197,155,39,0.15) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+
+    .hero-welcome-text h2 {
+        font-size: 1.5rem;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 6px;
+        color: #ffffff;
+    }
+
+    .hero-welcome-text p {
+        color: #94a3b8;
+        font-size: 0.9rem;
+        margin-bottom: 0;
+    }
+
+    .hero-cta-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: linear-gradient(135deg, var(--accent-gold) 0%, #aa841d 100%);
+        color: #0b1526 !important;
+        font-weight: 800;
+        font-size: 0.95rem;
+        padding: 12px 24px;
+        border-radius: 10px;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 4px 15px var(--accent-gold-glow);
+        transition: all 0.25s ease;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .hero-cta-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(197, 155, 39, 0.4);
+        color: #0b1526 !important;
+    }
+
+    /* 3. METRIC KPI CARDS (BENTO STYLE) */
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .metric-card {
+        background: var(--surface-card);
+        border-radius: 14px;
+        padding: 20px;
+        border: 1px solid var(--border-subtle);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: all 0.25s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .metric-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.06);
+        border-color: #cbd5e1;
+    }
+
+    .metric-data span {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        display: block;
+        margin-bottom: 6px;
+    }
+
+    .metric-data strong {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--text-main);
+        font-family: 'Plus Jakarta Sans', 'Tajawal', sans-serif;
+    }
+
+    .metric-icon-box {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+    }
+
+    /* 4. QUICK ACTION SHORTCUTS (4 CARDS) */
+    .quick-actions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 16px;
+        margin-bottom: 28px;
+    }
+
+    .action-card {
+        background: var(--surface-card);
+        border: 1.5px solid var(--border-subtle);
+        border-radius: 12px;
+        padding: 18px 20px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        text-decoration: none;
+        color: var(--text-main) !important;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    }
+
+    .action-card:hover {
+        border-color: var(--accent-gold);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+        color: var(--text-main) !important;
+    }
+
+    .action-icon-circle {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        color: var(--secondary-navy);
+        transition: all 0.2s;
+        flex-shrink: 0;
+    }
+
+    .action-card:hover .action-icon-circle {
+        background: var(--secondary-navy);
+        color: var(--accent-gold-light);
+    }
+
+    .action-card-text h4 {
+        font-size: 0.95rem;
+        font-weight: 800;
+        margin-bottom: 3px;
+        color: var(--text-main);
+    }
+
+    .action-card-text p {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        margin-bottom: 0;
+    }
+
+    /* 5. DATA GRID & APPLICATIONS TABLE */
+    .table-slab-container {
+        background: var(--surface-card);
+        border-radius: 16px;
+        border: 1px solid var(--border-subtle);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        overflow: hidden;
+    }
+
+    .table-slab-header {
+        padding: 18px 24px;
+        border-bottom: 1px solid var(--border-subtle);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+        background: #ffffff;
+    }
+
+    .slab-title h3 {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: var(--secondary-navy);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 0;
+    }
+
+    .table-interactive-tools {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .search-pill-box {
+        position: relative;
+        width: 340px;
+        max-width: 100%;
+    }
+
+    .search-pill-box input {
+        width: 100%;
+        padding: 10px 42px 10px 16px;
+        border: 1.5px solid var(--border-subtle);
+        border-radius: 30px;
+        font-size: 0.88rem;
+        outline: none;
+        background: #f8fafc;
+        transition: all 0.2s;
+    }
+
+    .search-pill-box input:focus {
+        background: #fff;
+        border-color: var(--secondary-navy);
+        box-shadow: 0 0 0 3px rgba(14, 30, 56, 0.08);
+    }
+
+    .search-pill-box i {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+    }
+
+    /* Modern Table Style */
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    table.modern-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: right;
+        margin-bottom: 0;
+    }
+
+    table.modern-table th {
+        background: #f8fafc;
+        color: var(--text-muted);
+        font-size: 0.82rem;
+        font-weight: 700;
+        padding: 14px 20px;
+        border-bottom: 1.5px solid var(--border-subtle);
+        white-space: nowrap;
+    }
+
+    table.modern-table td {
+        padding: 16px 20px;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 0.92rem;
+        vertical-align: middle;
+    }
+
+    table.modern-table tr:hover td {
+        background: #fafcff;
+    }
+
+    /* Badges */
+    .status-badge-issued {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--emerald-glow);
+        color: #047857;
+        border: 1px solid rgba(16, 185, 129, 0.4);
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.82rem;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .status-badge-study {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(2, 132, 199, 0.1);
+        color: #0284c7;
+        border: 1px solid rgba(2, 132, 199, 0.3);
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.82rem;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .status-badge-paper {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(217, 119, 6, 0.1);
+        color: #d97706;
+        border: 1px solid rgba(217, 119, 6, 0.3);
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.82rem;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .status-badge-suspended {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(100, 116, 139, 0.1);
+        color: #64748b;
+        border: 1px solid rgba(100, 116, 139, 0.3);
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.82rem;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .pill-degree {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: #f5f3ff;
+        color: #7c3aed;
+        border: 1px solid #ddd6fe;
+        padding: 3px 10px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    /* Action Buttons */
+    .action-cell-cluster {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        justify-content: center;
+    }
+
+    .btn-stamp-action {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, var(--accent-gold) 0%, #a07812 100%);
+        color: #0e1e38 !important;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 2px 8px var(--accent-gold-glow);
+        transition: all 0.2s;
+        font-size: 16px;
+        text-decoration: none;
+    }
+
+    .btn-stamp-action:hover {
+        transform: scale(1.08);
+        box-shadow: 0 4px 14px rgba(197, 155, 39, 0.4);
+        color: #0e1e38 !important;
+    }
+
+    .btn-soft-action {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: 1px solid var(--border-subtle);
+        background: white;
+        color: #475569 !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        font-size: 14px;
+    }
+
+    .btn-soft-action:hover {
+        background: var(--secondary-navy);
+        color: white !important;
+        border-color: var(--secondary-navy);
+    }
+</style>
+@endpush
 
 @section('content')
+<div class="dashboard-bento-wrapper">
 
-<!-- 1. INSTITUTIONAL WELCOME BANNER -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card border-0 shadow-sm text-white p-4" style="background: linear-gradient(135deg, var(--primary), var(--primary-container)); border-radius: 8px; border-top: 3px solid var(--heritage-gold);">
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="d-none d-md-flex align-items-center justify-content-center bg-white bg-opacity-10 rounded-circle" style="width: 56px; height: 56px; border: 1.5px solid var(--heritage-gold);">
-                        <i class="fa-solid fa-graduation-cap fs-3" style="color: var(--heritage-gold-light);"></i>
-                    </div>
-                    <div>
-                        <h3 class="fw-bold mb-1 text-white" style="font-size: 1.5rem; text-shadow: 0 0.5pt 1px rgba(197, 160, 89, 0.4);">
-                            مرحباً بك، {{ $universityName }}!
-                        </h3>
-                        <p class="mb-0 text-white-50 fs-7">
-                            البوابة الإلكترونية المخصصة للجامعات السورية لتقديم ومتابعة معاملات تعادل الشهادات العلمية والتدريس.
-                        </p>
-                    </div>
-                </div>
-                <div class="bg-white bg-opacity-10 p-2.5 px-3 rounded text-center border" style="border-color: rgba(197, 160, 89, 0.3) !important;">
-                    <span class="fs-8 text-white-50 d-block mb-1 fw-medium">حالة الاعتماد الأكاديمي</span>
-                    @if($user->card_status === 'yellow_card')
-                        <span class="badge-status badge-paper fs-7 px-3 py-1.5 fw-bold">
-                            <i class="fa-solid fa-triangle-exclamation me-1"></i> بطاقة صفراء (مراجعة الإدارة)
-                        </span>
-                    @else
-                        <span class="badge-status badge-approved fs-7 px-3 py-1.5 fw-bold">
-                            <i class="fa-solid fa-circle-check me-1"></i> معتمد ونشط رسمياً
-                        </span>
-                    @endif
-                </div>
-            </div>
+    <!-- Site Closed Alert Notice -->
+    @if(!empty($siteLocked) && $siteLocked)
+    <div class="alert border-0 shadow-sm d-flex align-items-center mb-4 p-3.5" role="alert" style="background-color: #FEE2E2; color: #991B1B; border-right: 4px solid #DC2626 !important; border-radius: 12px;">
+        <i class="fa-solid fa-lock fs-3 me-3 text-danger"></i>
+        <div>
+            <h6 class="alert-heading fw-bold mb-1 text-danger"><i class="fa-solid fa-ban me-1"></i> تقديم الطلبات الجديدة مغلق حالياً لجميع الجامعات بقرار الإدارة</h6>
+            <p class="mb-0 small" style="color: #7F1D1D;">{{ $siteNotice ?: 'الموقع مغلق حالياً من قبل الإدارة لتلقي طلبات جديدة. يمكنك تصفح طلباتك السابقة، طباعة البيانات والـ PDF، وإرسال المراسلات مع الوزارة بشكل طبيعي.' }}</p>
         </div>
     </div>
+    @endif
 
-<!-- Site Closed Alert Notice -->
-@if(!empty($siteLocked) && $siteLocked)
-<div class="alert border-0 shadow-sm d-flex align-items-center mb-4 p-3.5" role="alert" style="background-color: #FEE2E2; color: #991B1B; border-right: 4px solid #DC2626 !important; border-radius: 6px;">
-    <i class="fa-solid fa-lock fs-3 me-3 text-danger"></i>
-    <div>
-        <h6 class="alert-heading fw-bold mb-1 text-danger"><i class="fa-solid fa-ban me-1"></i> تقديم الطلبات الجديدة مغلق حالياً لجميع الجامعات بقرار الإدارة</h6>
-        <p class="mb-0 small" style="color: #7F1D1D;">{{ $siteNotice ?: 'الموقع مغلق حالياً من قبل الإدارة لتلقي طلبات جديدة. يمكنك تصفح طلباتك السابقة، طباعة البيانات والـ PDF، وإرسال المراسلات مع الوزارة بشكل طبيعي.' }}</p>
-    </div>
-</div>
-@endif
-
-<!-- Yellow Card Alert Notice -->
-@if($user->card_status === 'yellow_card')
-<div class="alert border-0 shadow-sm d-flex align-items-center mb-4 p-3" role="alert" style="background-color: var(--warning-container); color: var(--on-warning-container); border-right: 4px solid var(--heritage-gold) !important; border-radius: 4px;">
-    <i class="fa-solid fa-circle-exclamation fs-3 me-3" style="color: var(--warning);"></i>
-    <div>
-        <h6 class="alert-heading fw-bold mb-1" style="color: var(--warning);">⚠️ تنبيه رسمي: حساب الجامعة لديه بطاقة صفراء مؤقتة</h6>
-        <p class="mb-0 small">يمكنك مواصلة تقديم ومتابعة الطلبات، ولكن يرجى استكمال النواقص المطلوبة والتواصل مع إدارة التعادل لرفع التجميد الجزئي.</p>
-    </div>
-</div>
-@endif
-
-<!-- 2. SECTION 1: KPI CARDS (MATCHING ADMIN DASHBOARD CARDS & ICON STYLES EXACTLY) -->
-<div class="row g-4 mb-4">
-    <!-- Card 1: Total Applications -->
-    <div class="col-12 col-sm-6 col-lg-3">
-        <div class="kpi-card-academic">
-            <div class="d-flex justify-content-between align-items-start">
-                <span class="kpi-title">إجمالي معاملات التعادل</span>
-                <i class="fa-solid fa-folder-open kpi-icon"></i>
-            </div>
-            <div class="kpi-number">{{ number_format($totalApps) }}</div>
+    <!-- Yellow Card Alert Notice -->
+    @if(isset($user) && $user->card_status === 'yellow_card')
+    <div class="alert border-0 shadow-sm d-flex align-items-center mb-4 p-3" role="alert" style="background-color: #fef3c7; color: #92400e; border-right: 4px solid var(--accent-gold) !important; border-radius: 12px;">
+        <i class="fa-solid fa-circle-exclamation fs-3 me-3 text-warning"></i>
+        <div>
+            <h6 class="alert-heading fw-bold mb-1 text-warning">⚠️ تنبيه رسمي: حساب الجامعة لديه بطاقة صفراء مؤقتة</h6>
+            <p class="mb-0 small">يمكنك مواصلة تقديم ومتابعة الطلبات، ولكن يرجى استكمال النواقص المطلوبة والتواصل مع إدارة التعادل لرفع التجميد الجزئي.</p>
         </div>
     </div>
+    @endif
 
-    <!-- Card 2: Under Study Count -->
-    <div class="col-12 col-sm-6 col-lg-3">
-        <div class="kpi-card-academic">
-            <div class="d-flex justify-content-between align-items-start">
-                <span class="kpi-title">طلبات قيد الدراسة</span>
-                <i class="fa-solid fa-hourglass-half kpi-icon"></i>
-            </div>
-            <div class="kpi-number">{{ number_format($underStudyCount) }}</div>
+    <!-- 1. HERO BENTO WELCOME BANNER -->
+    <section class="hero-bento-card">
+        <div class="hero-welcome-text">
+            <h2>
+                أهلاً بك، {{ $universityName }}!
+                <span style="font-size: 0.8rem; background: rgba(255,255,255,0.12); padding: 3px 10px; border-radius: 20px; font-weight: 600;">
+                    جلسة معتمدة 2026
+                </span>
+            </h2>
+            <p>مرحباً بك في البوابة الإلكترونية المخصصة لتقديم ومتابعة معاملات تعادل الشهادات العلمية والتدريس.</p>
         </div>
-    </div>
-
-    <!-- Card 3: Suspended / Committee Count -->
-    <div class="col-12 col-sm-6 col-lg-3">
-        <div class="kpi-card-academic">
-            <div class="d-flex justify-content-between align-items-start">
-                <span class="kpi-title">مواضيع اللجنة العامة (معلق)</span>
-                <i class="fa-solid fa-pause kpi-icon"></i>
-            </div>
-            <div class="kpi-number">{{ number_format($suspendedCount) }}</div>
+        <div>
+            @if(!empty($siteLocked) && $siteLocked)
+                <button class="hero-cta-btn opacity-50" style="cursor: not-allowed;" title="تقديم الطلبات الجديدة مغلق حالياً لجميع الجامعات بقرار الإدارة" disabled>
+                    <i class="fa-solid fa-lock"></i> التقديم مغلق حالياً
+                </button>
+            @else
+                <a href="{{ route('university.apply.options') }}" class="hero-cta-btn">
+                    <i class="fa-solid fa-plus-circle"></i> تقديم معاملة تعادل جديدة
+                </a>
+            @endif
         </div>
-    </div>
+    </section>
 
-    <!-- Card 4: Approved Decisions -->
-    <div class="col-12 col-sm-6 col-lg-3">
-        <div class="kpi-card-academic">
-            <div class="d-flex justify-content-between align-items-start">
-                <span class="kpi-title">الطلبات المقبولة / الصادرة</span>
-                <i class="fa-solid fa-circle-check kpi-icon"></i>
+    <!-- 2. KPI METRICS (BENTO GRID) -->
+    <section class="kpi-grid">
+        <div class="metric-card">
+            <div class="metric-data">
+                <span>إجمالي معاملات التعادل</span>
+                <strong>{{ number_format($totalApps) }}</strong>
             </div>
-            <div class="kpi-number">{{ number_format($approvedCount) }}</div>
+            <div class="metric-icon-box" style="background: #eff6ff; color: #1d4ed8;">
+                <i class="fa-solid fa-folder-open"></i>
+            </div>
         </div>
-    </div>
-</div>
 
-<!-- 3. QUICK ACTION PORTALS (GRID) -->
-<div class="d-flex align-items-center justify-content-between mb-3">
-    <h5 class="headline-md mb-0" style="font-size: 1.15rem; color: #1A2A44;">
-        <i class="fa-solid fa-cubes me-2" style="color: #C5A059;"></i> بوابات الإجراءات السريعة
-    </h5>
-    <span class="label-sm text-muted">خدمات تعادل الشهادات والتدريس</span>
-</div>
+        <div class="metric-card">
+            <div class="metric-data">
+                <span>طلبات قيد الدراسة</span>
+                <strong>{{ number_format($underStudyCount) }}</strong>
+            </div>
+            <div class="metric-icon-box" style="background: #fefce8; color: #ca8a04;">
+                <i class="fa-solid fa-hourglass-half"></i>
+            </div>
+        </div>
 
-<div class="row g-3 mb-4">
-    <!-- Quick Action 1: New Equivalence -->
-    <div class="col-12 col-sm-6 col-md-3">
+        <div class="metric-card">
+            <div class="metric-data">
+                <span>مواضيع اللجنة العامة (معلق)</span>
+                <strong>{{ number_format($suspendedCount) }}</strong>
+            </div>
+            <div class="metric-icon-box" style="background: #f1f5f9; color: #475569;">
+                <i class="fa-solid fa-pause"></i>
+            </div>
+        </div>
+
+        <a href="{{ route('university.archive') }}" class="metric-card" style="border-right: 4px solid var(--emerald-accent); text-decoration: none; color: inherit;" title="الانتقال إلى أرشيف القرارات والمعاملات الصادرة">
+            <div class="metric-data">
+                <span>القرارات الصادرة (الأرشيف)</span>
+                <strong style="color: #059669;">{{ number_format($approvedCount) }}</strong>
+            </div>
+            <div class="metric-icon-box" style="background: var(--emerald-glow); color: var(--emerald-accent);">
+                <i class="fa-solid fa-stamp"></i>
+            </div>
+        </a>
+    </section>
+
+    <!-- 3. QUICK ACTION CARDS (4 SHORTCUTS) -->
+    <section class="quick-actions-grid">
         @if(!empty($siteLocked) && $siteLocked)
-            <div class="action-portal-card text-center opacity-75 position-relative" style="background-color: #f8fafc; border-color: #cbd5e1; cursor: not-allowed;" title="تقديم الطلبات الجديدة مغلق حالياً لجميع الجامعات بقرار الإدارة">
-                <span class="position-absolute top-0 end-0 badge bg-danger m-2 fs-9"><i class="fa-solid fa-lock"></i> مغلق</span>
-                <i class="fa-solid fa-file-circle-plus fs-2 mb-2 text-muted"></i>
-                <h6 class="fw-bold mb-1 text-muted" style="font-size: 0.92rem;">تقديم طلب تعادل جديد</h6>
-                <p class="label-sm text-danger fw-bold mb-0">مغلق للتقديم الجديد حالياً</p>
+            <div class="action-card opacity-75" style="cursor: not-allowed;" title="تقديم الطلبات الجديدة مغلق حالياً لجميع الجامعات بقرار الإدارة">
+                <div class="action-icon-circle">
+                    <i class="fa-solid fa-lock text-danger"></i>
+                </div>
+                <div class="action-card-text">
+                    <h4 class="text-muted">تقديم طلب تعادل جديد</h4>
+                    <p class="text-danger fw-bold">مغلق للتقديم الجديد حالياً</p>
+                </div>
             </div>
         @else
-            <a href="{{ route('university.apply.options') }}" class="action-portal-card text-center">
-                <i class="fa-solid fa-file-circle-plus fs-2 mb-2" style="color: #1A2A44;"></i>
-                <h6 class="fw-bold mb-1" style="color: #1A2A44; font-size: 0.92rem;">تقديم طلب تعادل جديد</h6>
-                <p class="label-sm text-muted mb-0">اختر نوع درجة التعادل للبدء</p>
+            <a href="{{ route('university.apply.options') }}" class="action-card">
+                <div class="action-icon-circle">
+                    <i class="fa-solid fa-file-circle-plus"></i>
+                </div>
+                <div class="action-card-text">
+                    <h4>تقديم طلب تعادل جديد</h4>
+                    <p>اختر نوع درجة التعادل للبدء الفوري</p>
+                </div>
             </a>
         @endif
-    </div>
 
-    <!-- Quick Action 2: Messages -->
-    <div class="col-12 col-sm-6 col-md-3">
-        <a href="{{ route('university.messages') }}" class="action-portal-card text-center">
-            <div class="position-relative d-inline-block mb-2">
-                <i class="fa-solid fa-comments fs-2" style="color: #1A2A44;"></i>
-                @if($notifications->count() > 0)
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
+        <a href="{{ route('university.messages') }}" class="action-card position-relative">
+            <div class="action-icon-circle position-relative">
+                <i class="fa-solid fa-comments"></i>
+                @if(isset($notifications) && $notifications->count() > 0)
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;">
                         {{ $notifications->count() }}
                     </span>
                 @endif
             </div>
-            <h6 class="fw-bold mb-1" style="color: #1A2A44; font-size: 0.92rem;">المراسلات والإشعارات</h6>
-            <p class="label-sm text-muted mb-0">التواصل مع الوزارة ومتابعة الردود</p>
+            <div class="action-card-text">
+                <h4>المراسلات والإشعارات</h4>
+                <p>التواصل المباشر ومتابعة ردود الوزارة</p>
+            </div>
         </a>
-    </div>
 
-    <!-- Quick Action 3: Drafts Management (إدارة المسودات) -->
-    <div class="col-12 col-sm-6 col-md-3">
-        <a href="{{ route('university.drafts.index') }}" class="action-portal-card text-center position-relative">
-            <div class="position-relative d-inline-block mb-2">
-                <i class="fa-solid fa-floppy-disk fs-2" style="color: #1A2A44;"></i>
+        <a href="{{ route('university.drafts.index') }}" class="action-card position-relative">
+            <div class="action-icon-circle position-relative">
+                <i class="fa-solid fa-box-archive"></i>
                 @if(isset($draftsCount) && $draftsCount > 0)
                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark fw-bold" style="font-size: 0.65rem;">
                         {{ $draftsCount }}
                     </span>
                 @endif
             </div>
-            <h6 class="fw-bold mb-1" style="color: #1A2A44; font-size: 0.92rem;">المسودات المحفوظة</h6>
-            <p class="label-sm text-muted mb-0">متابعة واستكمال الطلبات غير المكتملة</p>
+            <div class="action-card-text">
+                <h4>المسودات المحفوظة</h4>
+                <p>متابعة واستكمال الطلبات غير المكتملة</p>
+            </div>
         </a>
-    </div>
 
-    <!-- Quick Action 4: Required Documents -->
-    <div class="col-12 col-sm-6 col-md-3">
-        <a href="{{ route('university.required_documents') }}" class="action-portal-card text-center">
-            <i class="fa-solid fa-folder-closed fs-2 mb-2" style="color: #1A2A44;"></i>
-            <h6 class="fw-bold mb-1" style="color: #1A2A44; font-size: 0.92rem;">الأوراق والشهادات المطلوبة</h6>
-            <p class="label-sm text-muted mb-0">دليل الثبوتيات والمستندات أصولاً</p>
+        <a href="{{ route('university.required_documents') }}" class="action-card" data-bs-toggle="modal" data-bs-target="#requiredPapersModal">
+            <div class="action-icon-circle">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <div class="action-card-text">
+                <h4>الأوراق والشهادات المطلوبة</h4>
+                <p>دليل الثبوتيات والمستندات أصولاً</p>
+            </div>
         </a>
-    </div>
-</div>
+    </section>
 
-<!-- 4. RECENT APPLICATIONS DATA TABLE WITH NUDGE (حث الطلب) SERVICE -->
-<div class="card-academic-table mb-4" id="recent-applications-section">
-    <div class="table-header-slab d-flex flex-wrap align-items-center justify-content-between gap-3">
-        <!-- 1. RIGHT: SECTION TITLE -->
-        <div class="d-flex align-items-center gap-2">
-            <i class="fa-solid fa-list-check fs-5" style="color: #C5A059;"></i>
-            <h6 class="fw-bold mb-0" style="color: #1A2A44; font-size: 1.05rem;">
-                آخر الطلبات المقدمة من الجامعة لمجلس التعليم العالي
-            </h6>
-        </div>
+    <!-- 4. DATA GRID: APPLICATIONS TABLE -->
+    <section class="table-slab-container" id="recent-applications-section">
+        <div class="table-slab-header">
+            <div class="slab-title">
+                <h3><i class="fa-solid fa-table-cells" style="color: var(--accent-gold);"></i> آخر الطلبات المقدمة من الجامعة لمجلس التعليم العالي</h3>
+            </div>
 
-        <!-- 2. CENTER: SEARCH BOX (LIVE AJAX SEARCH) -->
-        <div class="flex-grow-1 mx-md-3" style="max-width: 420px;">
-            <form id="recent-apps-search-form" action="{{ route('university.dashboard') }}#recent-applications-section" method="GET" class="position-relative m-0">
-                <div class="input-group input-group-sm shadow-sm" style="border-radius: 4px; overflow: hidden; border: 1px solid #C5C6CE;">
-                    <span class="input-group-text bg-white border-0 ps-3 pe-2 text-muted">
-                        <i class="fa-solid fa-magnifying-glass" id="search-spinner-icon" style="color: #C5A059;"></i>
-                    </span>
-                    <input type="text" 
-                           id="recent-apps-search-input"
-                           name="search" 
-                           value="{{ request('search', '') }}" 
-                           class="form-control border-0 bg-white shadow-none ps-1" 
-                           placeholder="البحث باسم المرشح أو رقم المعاملة أو الكلية..." 
-                           style="font-size: 0.88rem;"
-                           autocomplete="off">
-                    <button type="button" 
-                            id="recent-apps-clear-btn"
-                            class="input-group-text bg-white border-0 text-muted px-2" 
-                            title="مسح البحث"
-                            style="cursor: pointer; display: {{ request('search') ? 'inline-flex' : 'none' }};">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
-                    <button type="submit" id="recent-apps-submit-btn" class="btn btn-gold-cta px-3 fw-bold border-0">بحث</button>
+            <div class="table-interactive-tools">
+                <div class="search-pill-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="live-filter" placeholder="ابحث باسم المرشح، الكلية، أو رقم المعاملة..." onkeyup="filterTable()">
                 </div>
-            </form>
+            </div>
         </div>
 
-        <!-- 3. LEFT: NEW APPLICATION BUTTON -->
-        <div>
-            <a href="{{ route('university.apply.options') }}" class="btn btn-gold-cta py-1.5 px-3 btn-sm">
-                <i class="fa-solid fa-plus me-1"></i> تقديم طلب جديد
-            </a>
+        <div class="table-responsive" id="recent-applications-table-wrapper">
+            @include('university.partials._recent_applications_table')
         </div>
-    </div>
+    </section>
 
-    <div id="recent-applications-table-wrapper">
-        @include('university.partials._recent_applications_table')
-    </div>
 </div>
 
 <!-- ================= MODALS ================= -->
@@ -238,14 +623,14 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center py-4">
-                <div class="p-3 rounded-circle d-inline-flex mb-3" style="background-color: var(--secondary-container);">
-                    <i class="fa-solid fa-hourglass-start fs-2" style="color: var(--heritage-gold-dark);"></i>
+                <div class="p-3 rounded-circle d-inline-flex mb-3" style="background-color: var(--secondary-container, #e2e8f0);">
+                    <i class="fa-solid fa-hourglass-start fs-2" style="color: var(--accent-gold);"></i>
                 </div>
-                <h6 class="fw-bold mb-2" style="color: var(--primary-container);">بوابة تحويل المعاملات بين الجامعات قيد التطوير</h6>
+                <h6 class="fw-bold mb-2" style="color: var(--secondary-navy);">بوابة تحويل المعاملات بين الجامعات قيد التطوير</h6>
                 <p class="text-muted small mb-0">يرجى مراجعة إدارة التعادل يدوياً في الوزارة لحين إتاحة الخدمة الإلكترونية المباشرة.</p>
             </div>
             <div class="modal-footer bg-light p-2 justify-content-end">
-                <button type="button" class="btn btn-sm btn-outline-navy" data-bs-dismiss="modal">إغلاق</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">إغلاق</button>
             </div>
         </div>
     </div>
@@ -260,14 +645,14 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center py-4">
-                <div class="p-3 rounded-circle d-inline-flex mb-3" style="background-color: var(--secondary-container);">
-                    <i class="fa-solid fa-hourglass-start fs-2" style="color: var(--heritage-gold-dark);"></i>
+                <div class="p-3 rounded-circle d-inline-flex mb-3" style="background-color: var(--secondary-container, #e2e8f0);">
+                    <i class="fa-solid fa-hourglass-start fs-2" style="color: var(--accent-gold);"></i>
                 </div>
-                <h6 class="fw-bold mb-2" style="color: var(--primary-container);">بوابة تعديل المقررات بعد تقديم الطلب</h6>
+                <h6 class="fw-bold mb-2" style="color: var(--secondary-navy);">بوابة تعديل المقررات بعد تقديم الطلب</h6>
                 <p class="text-muted small mb-0">يمكنك تحديد وإضافة مقررات المرشح التدريسية حالياً أثناء إنشاء المعاملة في الخطوة الخامسة من المنشئ.</p>
             </div>
             <div class="modal-footer bg-light p-2 justify-content-end">
-                <button type="button" class="btn btn-sm btn-outline-navy" data-bs-dismiss="modal">إغلاق</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">إغلاق</button>
             </div>
         </div>
     </div>
@@ -277,10 +662,10 @@
 <div class="modal fade" id="requiredPapersModal" tabindex="-1" aria-labelledby="requiredPapersModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header text-white" style="background: linear-gradient(135deg, #071526 0%, #152B47 100%); border-bottom: 3.5px solid var(--heritage-gold);">
+            <div class="modal-header text-white" style="background: linear-gradient(135deg, #071526 0%, #152B47 100%); border-bottom: 3.5px solid var(--accent-gold);">
                 <div class="d-flex align-items-center gap-2">
-                    <div class="d-inline-flex align-items-center justify-content-center p-1.5 rounded-circle bg-white shadow-sm" style="border: 2px solid var(--heritage-gold); width: 44px; height: 44px;">
-                        <i class="fa-solid fa-folder-open fs-5" style="color: var(--imperial-navy);"></i>
+                    <div class="d-inline-flex align-items-center justify-content-center p-1.5 rounded-circle bg-white shadow-sm" style="border: 2px solid var(--accent-gold); width: 44px; height: 44px;">
+                        <i class="fa-solid fa-folder-open fs-5" style="color: var(--secondary-navy);"></i>
                     </div>
                     <div>
                         <h6 class="modal-title fw-bold text-white mb-0" id="requiredPapersModalLabel">
@@ -333,7 +718,7 @@
                     
                     <!-- 1. M.Sc Syrian -->
                     <div class="tab-pane fade show active" id="modal-sy-master" role="tabpanel">
-                        <div class="bg-white p-3.5 rounded border shadow-sm" style="border-top: 4px solid var(--imperial-navy) !important;">
+                        <div class="bg-white p-3.5 rounded border shadow-sm" style="border-top: 4px solid var(--secondary-navy) !important;">
                             <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
                                 <h6 class="fw-bold mb-0 text-dark">الوثائق المطلوبة لتعادل درجة الماجستير (جامعة سورية):</h6>
                                 <span class="badge bg-success-subtle text-success fs-8">الرسم: 100,000 ل.س</span>
@@ -380,7 +765,7 @@
 
                     <!-- 3. Ph.D Syrian -->
                     <div class="tab-pane fade" id="modal-sy-phd" role="tabpanel">
-                        <div class="bg-white p-3.5 rounded border shadow-sm" style="border-top: 4px solid var(--heritage-gold) !important;">
+                        <div class="bg-white p-3.5 rounded border shadow-sm" style="border-top: 4px solid var(--accent-gold) !important;">
                             <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
                                 <h6 class="fw-bold mb-0 text-dark">الوثائق المطلوبة لتعادل درجة الدكتوراه (جامعة سورية):</h6>
                                 <span class="badge bg-success-subtle text-success fs-8">الرسم: 125,000 ل.س</span>
@@ -472,7 +857,7 @@
 
             </div>
             <div class="modal-footer bg-white d-flex justify-content-between align-items-center">
-                <a href="{{ route('university.required_documents') }}" class="btn btn-solid-navy btn-sm fw-bold">
+                <a href="{{ route('university.required_documents') }}" class="btn btn-dark btn-sm fw-bold" style="background-color: var(--secondary-navy);">
                     <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> فتح الصفحة الكاملة للثبوتيات والطباعة
                 </a>
                 <button type="button" class="btn btn-secondary btn-sm px-4" data-bs-dismiss="modal">إغلاق النافذة</button>
@@ -480,128 +865,57 @@
         </div>
     </div>
 </div>
-
 @endsection
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // 1. Smoothly scroll to the applications table if arriving with a search query or hash
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('search') || window.location.hash === '#recent-applications-section') {
-        const tableSection = document.getElementById('recent-applications-section');
-        if (tableSection) {
-            setTimeout(function() {
-                tableSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100);
-        }
-    }
+    function filterTable() {
+        const query = (document.getElementById('live-filter')?.value || '').toLowerCase().trim();
+        const rows = document.querySelectorAll('#dashboard-table tbody tr');
 
-    // 2. Live AJAX Search without page reload
-    const searchForm = document.getElementById('recent-apps-search-form');
-    const searchInput = document.getElementById('recent-apps-search-input');
-    const clearBtn = document.getElementById('recent-apps-clear-btn');
-    const spinnerIcon = document.getElementById('search-spinner-icon');
-    const tableWrapper = document.getElementById('recent-applications-table-wrapper');
-
-    let debounceTimer = null;
-    let abortController = null;
-
-    function executeAjaxSearch(query) {
-        if (!tableWrapper) return;
-
-        // Toggle clear button
-        if (clearBtn) {
-            clearBtn.style.display = query ? 'inline-flex' : 'none';
-        }
-
-        // Cancel pending request if any
-        if (abortController) {
-            abortController.abort();
-        }
-        abortController = new AbortController();
-
-        // Show spinner
-        if (spinnerIcon) {
-            spinnerIcon.className = 'fa-solid fa-circle-notch fa-spin';
-            spinnerIcon.style.color = '#C5A059';
-        }
-
-        // Build target URL
-        const fetchUrl = new URL("{{ route('university.dashboard') }}", window.location.origin);
-        if (query) {
-            fetchUrl.searchParams.set('search', query);
-        }
-        fetchUrl.searchParams.set('ajax', '1');
-
-        fetch(fetchUrl.toString(), {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'text/html'
-            },
-            signal: abortController.signal
-        })
-        .then(response => {
-            if (!response.ok) throw new Error('Search request failed');
-            return response.text();
-        })
-        .then(html => {
-            tableWrapper.innerHTML = html;
-
-            // Sync URL without reloading or scrolling
-            const newUrl = new URL(window.location.href);
-            if (query) {
-                newUrl.searchParams.set('search', query);
-            } else {
-                newUrl.searchParams.delete('search');
-            }
-            window.history.replaceState({}, '', newUrl.toString());
-        })
-        .catch(err => {
-            if (err.name !== 'AbortError') {
-                console.error('Search error:', err);
-            }
-        })
-        .finally(() => {
-            if (spinnerIcon) {
-                spinnerIcon.className = 'fa-solid fa-magnifying-glass';
-                spinnerIcon.style.color = '#C5A059';
-            }
+        rows.forEach(row => {
+            if (row.querySelector('td[colspan]')) return;
+            const text = row.innerText.toLowerCase();
+            row.style.display = text.includes(query) ? '' : 'none';
         });
     }
 
-    if (searchForm && searchInput) {
-        // Prevent full form submission and page reload on Enter or click 'بحث'
-        searchForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            if (debounceTimer) clearTimeout(debounceTimer);
-            executeAjaxSearch(searchInput.value.trim());
-        });
+    document.addEventListener('DOMContentLoaded', function() {
+        const liveFilter = document.getElementById('live-filter');
+        const tableWrapper = document.getElementById('recent-applications-table-wrapper');
+        let debounceTimer = null;
 
-        // Instant Live Search while typing (debounced by 350ms)
-        searchInput.addEventListener('input', function() {
-            const val = this.value.trim();
-            if (clearBtn) {
-                clearBtn.style.display = val ? 'inline-flex' : 'none';
-            }
-            if (debounceTimer) clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(function() {
-                executeAjaxSearch(val);
-            }, 350);
-        });
+        if (liveFilter && tableWrapper) {
+            liveFilter.addEventListener('input', function() {
+                filterTable();
 
-        // Clear button click
-        if (clearBtn) {
-            clearBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                searchInput.value = '';
-                this.style.display = 'none';
-                if (debounceTimer) clearTimeout(debounceTimer);
-                executeAjaxSearch('');
-                searchInput.focus();
+                clearTimeout(debounceTimer);
+                const term = this.value.trim();
+                debounceTimer = setTimeout(() => {
+                    const fetchUrl = new URL("{{ route('university.dashboard') }}", window.location.origin);
+                    if (term) {
+                        fetchUrl.searchParams.set('search', term);
+                    }
+                    fetchUrl.searchParams.set('ajax', '1');
+
+                    fetch(fetchUrl.toString(), {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'text/html'
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Search failed');
+                        return response.text();
+                    })
+                    .then(html => {
+                        tableWrapper.innerHTML = html;
+                        filterTable();
+                    })
+                    .catch(() => {});
+                }, 400);
             });
         }
-    }
-});
+    });
 </script>
 @endpush

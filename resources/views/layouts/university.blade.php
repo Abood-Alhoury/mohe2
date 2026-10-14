@@ -75,6 +75,399 @@
                 border-top: none !important;
             }
         }
+
+        /* ==========================================================================
+           MODERN CYBER-GOV / LUXURY NAVY & GOLD SIDEBAR
+           ========================================================================== */
+        .modern-cyber-sidebar {
+            width: 76px;
+            background: #ffffff;
+            border-left: 1px solid rgba(226, 232, 240, 0.85);
+            box-shadow: -4px 0 24px rgba(14, 30, 56, 0.04);
+            transition: width 0.28s cubic-bezier(0.34, 1.25, 0.64, 1);
+            position: sticky;
+            top: 0;
+            min-height: calc(100vh - 75px);
+            z-index: 50;
+            overflow: visible !important;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modern-cyber-sidebar.expanded {
+            width: 275px;
+        }
+
+        /* Floating Pill Collapse Trigger */
+        .sidebar-pill-toggle {
+            position: absolute;
+            top: 24px;
+            left: -14px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(14, 30, 56, 0.92);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1.5px solid #c59b27;
+            color: #f5d77f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(14, 30, 56, 0.25), 0 0 10px rgba(197, 155, 39, 0.2);
+            z-index: 105;
+            transition: all 0.25s ease;
+            outline: none !important;
+        }
+
+        .sidebar-pill-toggle:hover {
+            transform: scale(1.15);
+            background: #0e1e38;
+            box-shadow: 0 4px 16px rgba(197, 155, 39, 0.45);
+            color: #ffffff;
+        }
+
+        .sidebar-pill-toggle i {
+            font-size: 0.72rem;
+            transition: transform 0.3s ease;
+            color: #f5d77f;
+        }
+
+        .sidebar-pill-toggle i.rotated {
+            transform: rotate(180deg);
+        }
+
+        /* University Profile Header */
+        .sidebar-uni-brand {
+            padding: 22px 14px 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: all 0.25s ease;
+        }
+
+        .modern-cyber-sidebar:not(.expanded) .sidebar-uni-brand {
+            padding: 20px 8px 10px;
+        }
+
+        /* Gold Halo Glow Frame */
+        .uni-avatar-frame {
+            position: relative;
+            width: 58px;
+            height: 58px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #0e1e38 0%, #1a365d 100%);
+            border: 2px solid #c59b27;
+            box-shadow: 0 0 0 3px rgba(197, 155, 39, 0.18), 0 0 18px rgba(197, 155, 39, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+        }
+
+        .modern-cyber-sidebar:not(.expanded) .uni-avatar-frame {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            margin-bottom: 0;
+        }
+
+        .uni-icon-wrap {
+            font-size: 1.45rem;
+            color: #f5d77f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modern-cyber-sidebar:not(.expanded) .uni-icon-wrap {
+            font-size: 1.2rem;
+        }
+
+        /* Online Indicator with Green Pulse */
+        .online-indicator {
+            position: absolute;
+            bottom: -2px;
+            left: -2px;
+            width: 12px;
+            height: 12px;
+            background: #10b981;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.8);
+            animation: pulseOnline 2s infinite;
+        }
+
+        @keyframes pulseOnline {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 5px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        /* Identity Text */
+        .uni-identity-text {
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .modern-cyber-sidebar:not(.expanded) .uni-identity-text {
+            display: none;
+        }
+
+        .uni-username {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: #0e1e38;
+            margin: 0 0 2px;
+            letter-spacing: -0.2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .uni-fullname {
+            font-size: 0.76rem;
+            color: #64748b;
+            display: block;
+            margin-bottom: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Verified Badge */
+        .uni-status-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(16, 185, 129, 0.1);
+            color: #047857;
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            border-radius: 12px;
+            padding: 2px 10px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        /* Faded Gradient Divider */
+        .sidebar-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(197, 155, 39, 0.35), transparent);
+            margin: 8px 16px 14px;
+            border: none;
+        }
+
+        .modern-cyber-sidebar:not(.expanded) .sidebar-divider {
+            margin: 10px 8px;
+        }
+
+        /* Navigation List */
+        .sidebar-nav-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 0 10px;
+        }
+
+        .modern-cyber-sidebar:not(.expanded) .sidebar-nav-list {
+            padding: 0 8px;
+            gap: 10px;
+        }
+
+        /* Nav Link Item */
+        .nav-item-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            border-radius: 12px;
+            text-decoration: none !important;
+            transition: all 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            color: #334155;
+        }
+
+        .modern-cyber-sidebar:not(.expanded) .nav-item-link {
+            justify-content: center;
+            padding: 6px 0;
+        }
+
+        .nav-item-link .nav-text {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #334155;
+            white-space: nowrap;
+            transition: color 0.2s ease;
+            flex: 1;
+        }
+
+        .modern-cyber-sidebar:not(.expanded) .nav-item-link .nav-text {
+            display: none;
+        }
+
+        /* Active State */
+        .nav-item-link.active {
+            background: rgba(14, 30, 56, 0.04) !important;
+        }
+
+        .nav-item-link.active .nav-text {
+            color: #0e1e38;
+            font-weight: 800;
+        }
+
+        .nav-item-link.active::before {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 24px;
+            background: #c59b27;
+            border-radius: 4px 0 0 4px;
+            box-shadow: 0 0 10px rgba(197, 155, 39, 0.65);
+        }
+
+        /* Micro-Interactions on Hover */
+        .nav-item-link:hover {
+            transform: translateX(-4px);
+            background: rgba(14, 30, 56, 0.03);
+        }
+
+        .nav-item-link:hover .nav-text {
+            color: #0e1e38;
+        }
+
+        .modern-cyber-sidebar:not(.expanded) .nav-item-link:hover {
+            transform: scale(1.06);
+        }
+
+        /* Squircle Icon Base */
+        .nav-icon-squircle {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            flex-shrink: 0;
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+        }
+
+        .nav-item-link:hover .nav-icon-squircle {
+            transform: scale(1.08);
+        }
+
+        /* Squircle Color Themes */
+        /* 1. Dashboard: Navy & Gold */
+        .nav-icon-squircle.icon-navy {
+            background: linear-gradient(135deg, #0e1e38 0%, #1e3a68 100%);
+            color: #f5d77f;
+            box-shadow: 0 3px 10px rgba(14, 30, 56, 0.22);
+        }
+        .nav-item-link:hover .icon-navy {
+            box-shadow: 0 4px 15px rgba(197, 155, 39, 0.35);
+        }
+
+        /* 2. New Application: Emerald */
+        .nav-icon-squircle.icon-emerald {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(16, 185, 129, 0.24) 100%);
+            color: #059669;
+            border: 1px solid rgba(16, 185, 129, 0.25);
+        }
+        .nav-item-link:hover .icon-emerald {
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);
+        }
+
+        /* 3. Saved Drafts: Amber */
+        .nav-icon-squircle.icon-amber {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.24) 100%);
+            color: #d97706;
+            border: 1px solid rgba(245, 158, 11, 0.25);
+        }
+        .nav-item-link:hover .icon-amber {
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35);
+        }
+
+        /* 4. Messages & Notifications: Sky */
+        .nav-icon-squircle.icon-sky {
+            background: linear-gradient(135deg, rgba(2, 132, 199, 0.12) 0%, rgba(2, 132, 199, 0.24) 100%);
+            color: #0284c7;
+            border: 1px solid rgba(2, 132, 199, 0.25);
+        }
+        .nav-item-link:hover .icon-sky {
+            box-shadow: 0 4px 15px rgba(2, 132, 199, 0.35);
+        }
+
+        /* 5. Required Documents: Rose */
+        .nav-icon-squircle.icon-rose {
+            background: linear-gradient(135deg, rgba(244, 63, 94, 0.12) 0%, rgba(244, 63, 94, 0.24) 100%);
+            color: #e11d48;
+            border: 1px solid rgba(244, 63, 94, 0.25);
+        }
+        .nav-item-link:hover .icon-rose {
+            box-shadow: 0 4px 15px rgba(244, 63, 94, 0.35);
+        }
+
+        /* 6. Support: Cyan */
+        .nav-icon-squircle.icon-cyan {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.12) 0%, rgba(6, 182, 212, 0.24) 100%);
+            color: #0891b2;
+            border: 1px solid rgba(6, 182, 212, 0.25);
+        }
+        .nav-item-link:hover .icon-cyan {
+            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.35);
+        }
+
+        /* 7. Archive: Gold */
+        .nav-icon-squircle.icon-gold {
+            background: linear-gradient(135deg, rgba(197, 155, 39, 0.15) 0%, rgba(197, 155, 39, 0.28) 100%);
+            color: #b48518;
+            border: 1px solid rgba(197, 155, 39, 0.35);
+        }
+        .nav-item-link:hover .icon-gold {
+            box-shadow: 0 4px 15px rgba(197, 155, 39, 0.35);
+        }
+
+        /* Counter Badges */
+        .nav-counter-badge {
+            padding: 2px 7px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .nav-counter-badge.danger {
+            background: #ef4444;
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.35);
+        }
+
+        .nav-counter-badge.emerald {
+            background: #10b981;
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(16, 185, 129, 0.35);
+        }
+
+        .nav-counter-badge.amber {
+            background: #f59e0b;
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(245, 158, 11, 0.35);
+        }
+
+        .modern-cyber-sidebar:not(.expanded) .nav-counter-badge {
+            position: absolute;
+            top: 4px;
+            right: 14px;
+            padding: 2px 5px;
+            font-size: 0.65rem;
+        }
     </style>
 
     @stack('styles')
@@ -209,91 +602,8 @@
     <!-- 2. MAIN LAYOUT WITH COLLAPSED-BY-DEFAULT SIDEBAR & CANVAS -->
     <div class="d-flex flex-1">
         
-        <!-- GLOBAL SIDEBAR FOR UNIVERSITY PORTAL (COLLAPSED BY DEFAULT) -->
-        <aside class="sidebar-container" :class="{ 'expanded': isExpanded }">
-            <!-- MIDDLE-EDGE TOGGLE ARROW BUTTON -->
-            <button type="button" 
-                    @click="isExpanded = !isExpanded" 
-                    class="sidebar-edge-toggle" 
-                    :title="isExpanded ? 'طَي القائمة الجانبية' : 'توسيع القائمة الجانبية'">
-                <i class="fa-solid fa-chevron-left" :class="{ 'rotated': isExpanded }"></i>
-            </button>
-            
-            <!-- University User Profile Box -->
-            <div class="sidebar-profile-box text-center p-3 mb-2 border-bottom border-secondary-subtle">
-                <div class="d-inline-flex align-items-center justify-content-center p-1.5 rounded-circle bg-white shadow-sm mb-2" style="border: 2px solid var(--heritage-gold); width: 60px; height: 60px;">
-                    <i class="fa-solid fa-university fs-3" style="color: var(--imperial-navy);"></i>
-                </div>
-                <h6 class="fw-bold mb-0 text-truncate" style="color: var(--imperial-navy);">{{ Auth::user()->name }}</h6>
-                <small class="text-muted text-truncate d-block">{{ Auth::user()->university->name ?? 'الجامعة المسجلة' }}</small>
-            </div>
-
-            <!-- University Sidebar Links -->
-            <nav class="d-flex flex-column gap-2 p-2">
-                <!-- 1. Dashboard -->
-                <a href="{{ route('university.dashboard') }}" 
-                   class="sidebar-link {{ request()->routeIs('university.dashboard') ? 'active' : '' }}"
-                   :title="!isExpanded ? 'لوحة التحكم الرئيسية' : ''">
-                    <div class="sidebar-icon-tile tile-indigo">
-                        <i class="fa-solid fa-chart-line"></i>
-                    </div>
-                    <span class="sidebar-text-label">لوحة التحكم الرئيسية</span>
-                </a>
-
-                <!-- 2. Apply New -->
-                <a href="{{ route('university.apply.options') }}" 
-                   class="sidebar-link {{ request()->routeIs('university.apply*') ? 'active' : '' }}"
-                   :title="!isExpanded ? 'تقديم معاملة تعادل جديدة' : ''">
-                    <div class="sidebar-icon-tile tile-emerald">
-                        <i class="fa-solid fa-file-circle-plus"></i>
-                    </div>
-                    <span class="sidebar-text-label">تقديم معاملة تعادل</span>
-                </a>
-
-                <!-- 3. Drafts -->
-                <a href="{{ route('university.drafts.index') }}" 
-                   class="sidebar-link {{ request()->routeIs('university.drafts*') ? 'active' : '' }}"
-                   :title="!isExpanded ? 'إدارة المسودات والمعاملات غير المكتملة' : ''">
-                    <div class="sidebar-icon-tile tile-amber">
-                        <i class="fa-solid fa-floppy-disk"></i>
-                    </div>
-                    <span class="sidebar-text-label">إدارة المسودات المحفوظة</span>
-                </a>
-
-                <!-- 5. Messages & Notifications -->
-                <a href="{{ route('university.messages') }}" 
-                   class="sidebar-link {{ request()->routeIs('university.messages') ? 'active' : '' }}"
-                   :title="!isExpanded ? 'المراسلات والإشعارات' : ''">
-                    <div class="sidebar-icon-tile tile-sky">
-                        <i class="fa-solid fa-comments"></i>
-                    </div>
-                    <span class="sidebar-text-label">المراسلات والإشعارات</span>
-                    @if(isset($notifications) && $notifications->count() > 0)
-                        <span class="badge bg-danger rounded-pill ms-auto sidebar-text-label">{{ $notifications->count() }}</span>
-                    @endif
-                </a>
-
-                <!-- 6. Required Documents -->
-                <a href="{{ route('university.required_documents') }}" 
-                   class="sidebar-link {{ request()->routeIs('university.required_documents') ? 'active' : '' }}"
-                   :title="!isExpanded ? 'الأوراق والشهادات المطلوبة' : ''">
-                    <div class="sidebar-icon-tile tile-rose">
-                        <i class="fa-solid fa-file-circle-check"></i>
-                    </div>
-                    <span class="sidebar-text-label">الأوراق المطلوبة للتعادل</span>
-                </a>
-
-                <!-- 7. Support -->
-                <a href="{{ route('contact') }}" 
-                   class="sidebar-link {{ request()->routeIs('contact') ? 'active' : '' }}"
-                   :title="!isExpanded ? 'الدعم والتواصل المؤسسي' : ''">
-                    <div class="sidebar-icon-tile tile-teal">
-                        <i class="fa-solid fa-headset"></i>
-                    </div>
-                    <span class="sidebar-text-label">الدعم والتواصل المؤسسي</span>
-                </a>
-            </nav>
-        </aside>
+        <!-- GLOBAL SIDEBAR FOR UNIVERSITY PORTAL -->
+        @include('university.layouts.sidebar')
 
         <!-- MAIN CANVAS -->
         <main class="flex-grow-1 p-4">
@@ -334,16 +644,36 @@
     <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Global Max 2MB File Size Validation -->
+    <!-- Global File Size Validation (5MB for Theses/Dissertations/Abstracts, 2MB for Standard Files) -->
     <script>
         document.addEventListener('change', function(e) {
             if (e.target && e.target.tagName === 'INPUT' && e.target.type === 'file') {
                 const file = e.target.files[0];
                 if (file) {
-                    const maxBytes = 2 * 1024 * 1024; // 2 MB
+                    const name = (e.target.name || '').toLowerCase();
+                    const id = (e.target.id || '').toLowerCase();
+                    const labelText = (e.target.closest('div')?.querySelector('label')?.textContent || '') + ' ' +
+                                      (e.target.closest('.field-group')?.querySelector('label')?.textContent || '') + ' ' +
+                                      (e.target.closest('.border')?.querySelector('label')?.textContent || '') + ' ' +
+                                      (e.target.closest('.upload-field-row')?.querySelector('span')?.textContent || '') + ' ' +
+                                      (e.target.getAttribute('title') || '');
+
+                    // 5MB allowed for Master's thesis / PhD dissertation / abstracts / full thesis
+                    const is5MB = (
+                        e.target.dataset.maxMb === '5' ||
+                        e.target.dataset.maxSize === '5' ||
+                        ['file_thesis_summary', 'file_thesis_abstract', 'file_master_thesis_abstract', 'file_phd_thesis_abstract', 'file_phd_full_thesis', 'file_ma_thesis_summary', 'file_thesis', 'file_dissertation'].includes(name) ||
+                        name.includes('thesis') || name.includes('abstract') || name.includes('dissertation') ||
+                        id.includes('thesissummary') || id.includes('thesisabstract') || id.includes('fullthesis') ||
+                        ((labelText.includes('رسالة') || labelText.includes('أطروحة') || labelText.includes('ملخص')) && !labelText.includes('إيصال') && !name.includes('receipt'))
+                    );
+
+                    const maxLimitMB = is5MB ? 5 : 2;
+                    const maxBytes = maxLimitMB * 1024 * 1024;
+
                     if (file.size > maxBytes) {
                         const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-                        alert('⚠️ عذراً! حجم الملف المرفق (' + fileSizeMB + ' ميغابايت) يتجاوز الحد الأقصى المسموح به (2 ميغابايت).\nيرجى اختيار ملف بحجم أصغر لضمان عدم امتلاء السيرفر.');
+                        alert('⚠️ عذراً! حجم الملف المرفق (' + fileSizeMB + ' ميغابايت) يتجاوز الحد الأقصى المسموح به (' + maxLimitMB + ' ميغابايت).\nيرجى اختيار ملف بحجم أصغر لضمان عدم امتلاء السيرفر.');
                         e.target.value = '';
                     }
                 }

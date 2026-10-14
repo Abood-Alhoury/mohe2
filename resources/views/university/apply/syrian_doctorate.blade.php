@@ -59,6 +59,12 @@
             }
         }
     }
+
+    $isAwaitingDocs = $draft && (
+        $draft->status_id == 3 || 
+        in_array($draft->status, ['بانتظار الوثائق', 'بانتظار استكمال الوثائق', 'بانتظار تصحيح الوثائق', 'بانتظار الوثائق الناقصة'])
+    );
+    $canSaveDraft = !$draft || ($draft->status_id == 1 || $draft->status === 'مسودة');
 @endphp
 
 <style>
@@ -78,16 +84,43 @@
                 <li class="breadcrumb-item active text-muted" aria-current="page">دكتوراه سورية</li>
             </ol>
         </nav>
-        <h3 class="headline-md text-prestigious mb-1" style="font-size: 1.5rem;">
-            <i class="fa-solid fa-user-graduate me-2" style="color: var(--heritage-gold);"></i> معاملة تعادل درجة دكتوراه سورية
-        </h3>
-        <p class="body-md text-muted mb-0">الرجاء إدخال البيانات المطلوبة بدقة والتنقل بين الخطوات لرفع المستندات وإرسال الطلب لمجلس التعليم العالي.</p>
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div>
+                <h3 class="headline-md text-prestigious mb-1" style="font-size: 1.5rem;">
+                    <i class="fa-solid fa-user-graduate me-2" style="color: var(--heritage-gold);"></i> معاملة تعادل درجة دكتوراه سورية
+                </h3>
+                <p class="body-md text-muted mb-0">الرجاء إدخال البيانات المطلوبة بدقة والتنقل بين الخطوات لرفع المستندات وإرسال الطلب لمجلس التعليم العالي.</p>
+            </div>
+            @if($draft)
+                <div>
+                    @if($isAwaitingDocs)
+                        <span class="badge bg-warning text-dark px-3 py-2 border border-warning fs-7 fw-bold">
+                            <i class="fa-solid fa-file-circle-exclamation me-1"></i> بانتظار استكمال الوثائق: #{{ $draft->application_no }}
+                        </span>
+                    @else
+                        <span class="badge px-3 py-2 border fs-7 fw-bold" style="background-color: #FAF6EE; color: #8A651E; border-color: #D9C394 !important;">
+                            <i class="fa-solid fa-file-pen me-1"></i> تعديل مسودة طلب: #{{ $draft->application_no }}
+                        </span>
+                    @endif
+                </div>
+            @endif
+        </div>
     </div>
 </div>
 
 <!-- WIZARD MAIN CONTAINER -->
 <div class="card border-0 shadow-sm" style="border-radius: 8px; border-top: 3px solid var(--heritage-gold) !important; border: 1px solid var(--outline-variant) !important; background-color: #ffffff;">
     <div class="card-body p-4 p-md-5">
+
+        @if($isAwaitingDocs)
+            <div class="alert alert-warning border-warning shadow-sm d-flex align-items-center gap-3 mb-4 p-3 rounded" style="background-color: #fff8e1; border-right: 4px solid #f59e0b !important;">
+                <i class="fa-solid fa-file-circle-exclamation fs-3 text-warning"></i>
+                <div>
+                    <div class="fw-bold fs-6 text-dark">معاملة معادة لاستكمال وتصحيح الوثائق (طلب رقم: #{{ $draft->application_no }})</div>
+                    <div class="small text-muted">حالة المعاملة الحالية هي "بانتظار الوثائق". يرجى استكمال المرفقات والبيانات المطلوبة ثم الضغط على زر الإرسال. لا يمكن حفظ هذا الطلب كمسودة لأنه مسجل ومقدم رسمياً.</div>
+                </div>
+            </div>
+        @endif
         
         @if ($errors->any())
             <div class="alert alert-danger mb-4 shadow-sm border-0 rounded" style="border-right: 4px solid #ba1a1a !important;">
@@ -627,15 +660,15 @@
                 
                 <div class="alert alert-info py-2 px-3 mb-4 d-flex align-items-center gap-2" style="background-color: #f0f7ff; border-color: #93c5fd; border-radius: 4px;">
                     <i class="fa-solid fa-circle-info text-primary fs-5"></i>
-                    <span class="fs-8 text-dark">يجب أن تكون جميع المرفقات بصيغة ملفات <strong>(PDF)</strong> واضحة، وبحجم أقصى <strong>2 ميغابايت</strong> لكل ملف.</span>
+                    <span class="fs-8 text-dark">يجب أن تكون جميع المرفقات بصيغة ملفات <strong>(PDF)</strong> واضحة، وبحجم أقصى <strong>2 ميغابايت</strong> للوثائق الثبوتية، وحتى <strong>5 ميغابايت</strong> لملخص الأطروحة.</span>
                 </div>
 
                 <div class="row g-3">
-                    <!-- صورة الهوية الشخصية -->
+                    <!-- صورة الهوية الشخصية / إثبات الشخصية -->
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">صورة عن الهوية الشخصية <span class="text-danger">*</span></label>
-                        <input type="file" name="file_national_id" id="input-fileNationalId" class="form-control academic-input" accept=".pdf">
-                        @if(isset($existingFiles['file_national_id']))
+                        <label class="form-label label-md fw-medium text-dark">صورة الهوية الشخصية / إثبات الشخصية (إلزامي) <span class="text-danger">*</span></label>
+                        <input type="file" name="file_national_id" id="input-fileNationalId" class="form-control academic-input" accept=".pdf" {{ empty($existingFiles['file_national_id']) ? 'required' : '' }}>
+                        @if(!empty($existingFiles['file_national_id']))
                             <div class="mt-1 d-flex align-items-center gap-2">
                                 <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
                                 <a href="{{ asset('storage/' . $existingFiles['file_national_id']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
@@ -717,8 +750,8 @@
 
                     <!-- ملخص عن الأطروحة -->
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">6. ملخص عن أطروحة الدكتوراه باللغة العربية <span class="text-danger">*</span></label>
-                        <input type="file" name="file_thesis_summary" id="input-fileThesisSummary" class="form-control academic-input" accept=".pdf">
+                        <label class="form-label label-md fw-medium text-dark">6. ملخص عن أطروحة الدكتوراه باللغة العربية <span class="badge bg-light text-primary border ms-1 fs-9">حتى 5MB</span> <span class="text-danger">*</span></label>
+                        <input type="file" name="file_thesis_summary" id="input-fileThesisSummary" data-max-mb="5" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['file_thesis_summary']))
                             <div class="mt-1 d-flex align-items-center gap-2">
                                 <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
@@ -1057,9 +1090,11 @@
                     </button>
                     <div id="spacer-prev"></div>
 
+                    @if($canSaveDraft)
                     <button type="submit" formnovalidate name="action" value="save_draft" class="btn btn-outline-warning px-3 py-2 fw-bold" id="btn-draft" title="حفظ البيانات المعبأة كمسودة للعودة إليها لاحقاً برقم الطلب">
                         <i class="fa-solid fa-floppy-disk me-1"></i> حفظ كمسودة ومتابعة لاحقاً
                     </button>
+                    @endif
                 </div>
 
                 <div class="d-flex align-items-center gap-2">
@@ -1072,7 +1107,11 @@
                     </button>
 
                     <button type="submit" formnovalidate name="action" value="submit_final" class="btn btn-gold-cta px-5 py-2 fw-bold shadow-sm" id="btn-submit" style="display: none;">
-                        إنهاء وإرسال الطلب للوزارة <i class="fa-solid fa-paper-plane ms-1"></i>
+                        @if($isAwaitingDocs)
+                            إعادة إرسال الطلب بعد استكمال الوثائق <i class="fa-solid fa-paper-plane ms-1"></i>
+                        @else
+                            إنهاء وإرسال الطلب للوزارة <i class="fa-solid fa-paper-plane ms-1"></i>
+                        @endif
                     </button>
                 </div>
             </div>

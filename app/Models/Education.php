@@ -65,6 +65,11 @@ class Education extends Model
         return $this->hasMany(EducationResidence::class, 'education_id');
     }
 
+    public function experiences()
+    {
+        return $this->hasMany(ApplicationExperience::class, 'education_id');
+    }
+
     public function getUniversityNameAttribute()
     {
         return optional($this->university)->name ?? ($this->section_name ?? '');
@@ -105,4 +110,37 @@ class Education extends Model
         }
         return 'لا يوجد';
     }
+
+    /**
+     * تنسيق نص الاختصاص الكامل للشهادة عند ذكرها في بداية المادة 1
+     */
+    public function formatDegreeSpecialization($isBachelor = false)
+    {
+        return \App\Http\Controllers\Admin\GeneratedDecisionController::formatDegreeSpecialization($this, $isBachelor);
+    }
+
+    /**
+     * استخراج اختصاص التعيين والتدريس النهائي
+     */
+    public function getTeachingSpecialization($fallback = '')
+    {
+        return \App\Http\Controllers\Admin\GeneratedDecisionController::getTeachingSpecialization($this, $fallback);
+    }
+
+    /**
+     * تنسيق اسم الجامعة والبلد
+     */
+    public function formatUniAndCountry()
+    {
+        return \App\Http\Controllers\Admin\GeneratedDecisionController::formatUniAndCountry($this);
+    }
+
+    /**
+     * سنة منح الشهادة
+     */
+    public function getGrantYear()
+    {
+        return \App\Http\Controllers\Admin\GeneratedDecisionController::getGrantYear($this);
+    }
 }
+

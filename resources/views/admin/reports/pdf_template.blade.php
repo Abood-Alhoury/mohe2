@@ -444,6 +444,46 @@ body {
         <div class="wblock">لا توجد حركات إقامة مسجلة لهذه المعاملة.</div>
         @endif
 
+        {{-- 6. تفاصيل فترات الخبرة التدريسية المعتمدة (داخل سوريا) إن وجدت --}}
+        @if($application->experiences && $application->experiences->count() > 0)
+        @php
+            $expDays = $application->total_experience_days;
+            $expYears = floor($expDays / 365);
+            $expMonths = floor(($expDays % 365) / 30);
+            $expRemDays = ($expDays % 365) % 30;
+            $isTheoretical = $application->has_two_years_experience;
+        @endphp
+        <div class="moz-section">بيان فترات الخبرة التدريسية المعتمدة داخل الجمهورية العربية السورية :</div>
+        <div style="font-size: 11px; font-weight: bold; color: #1A2A44; background: {{ $isTheoretical ? '#DCFCE7' : '#E5EBF5' }}; border: 1px solid {{ $isTheoretical ? '#86EFAC' : '#C5C6CE' }}; padding: 5px 8px; margin-bottom: 6px; text-align: center;">
+            إجمالي الخبرة: {{ $expYears }} سنة و {{ $expMonths }} شهر و {{ $expRemDays }} يوم ({{ $expDays }} يوماً) - {{ $isTheoretical ? 'ماجستير نظري (مستوفي شرط السنتين ≥ 730 يوماً)' : 'ماجستير تطبيقي' }}
+        </div>
+
+        <table class="ct">
+            <thead>
+                <tr>
+                    <th style="width: 22%;">المدة المحسوبة</th>
+                    <th style="width: 13%;">تاريخ الانتهاء</th>
+                    <th style="width: 13%;">تاريخ البدء</th>
+                    <th style="width: 20%;">الصفة أو المقرر التدريسي</th>
+                    <th style="width: 27%;">الجامعة / الكلية / الجهة التعليمية</th>
+                    <th style="width: 5%;">#</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($application->experiences as $idx => $exp)
+                    <tr>
+                        <td><strong>{{ $exp->formatted_duration }}</strong></td>
+                        <td>{{ format_sys_date($exp->end_date) }}</td>
+                        <td>{{ format_sys_date($exp->start_date) }}</td>
+                        <td>{{ $exp->role_or_subject ?: '---' }}</td>
+                        <td><strong>{{ $exp->institution_name }}</strong></td>
+                        <td>{{ $idx + 1 }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+        @endif
+
     @else
         {{-- =========================================================================
              STANDARD PDF MOZHAKKARA FOR MASTERS / PHD / EQUIVALENCE
@@ -529,6 +569,46 @@ body {
         <table class="mt">
             <tr><td>{{ $application->work_faculty }} - {{ $application->work_department }}</td><td class="l">الكلية والفرع :</td><td style="font-weight:bold; color: #1A2A44;">{{ optional($application->workUniversity)->name }}</td><td class="l">الجامعة المعنية :</td></tr>
         </table>
+
+        {{-- 7. بيان فترات الخبرة التدريسية المعتمدة ومسار الماجستير (إن وجدت) --}}
+        @if($application->experiences && $application->experiences->count() > 0)
+        @php
+            $expDays = $application->total_experience_days;
+            $expYears = floor($expDays / 365);
+            $expMonths = floor(($expDays % 365) / 30);
+            $expRemDays = ($expDays % 365) % 30;
+            $isTheoretical = $application->has_two_years_experience;
+        @endphp
+        <div class="moz-section">بيان فترات الخبرة التدريسية المعتمدة ومسار الماجستير :</div>
+        <div style="font-size: 11px; font-weight: bold; color: #1A2A44; background: {{ $isTheoretical ? '#DCFCE7' : '#E5EBF5' }}; border: 1px solid {{ $isTheoretical ? '#86EFAC' : '#C5C6CE' }}; padding: 5px 8px; margin-bottom: 6px; text-align: center;">
+            إجمالي الخبرة: {{ $expYears }} سنة و {{ $expMonths }} شهر و {{ $expRemDays }} يوم ({{ $expDays }} يوماً) - {{ $isTheoretical ? 'ماجستير نظري (مستوفي شرط السنتين ≥ 730 يوماً)' : 'ماجستير تطبيقي' }}
+        </div>
+
+        <table class="ct">
+            <thead>
+                <tr>
+                    <th style="width: 22%;">المدة المحسوبة</th>
+                    <th style="width: 13%;">تاريخ الانتهاء</th>
+                    <th style="width: 13%;">تاريخ البدء</th>
+                    <th style="width: 20%;">الصفة أو المقرر التدريسي</th>
+                    <th style="width: 27%;">الجامعة / الكلية / الجهة التعليمية</th>
+                    <th style="width: 5%;">#</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($application->experiences as $idx => $exp)
+                    <tr>
+                        <td><strong>{{ $exp->formatted_duration }}</strong></td>
+                        <td>{{ format_sys_date($exp->end_date) }}</td>
+                        <td>{{ format_sys_date($exp->start_date) }}</td>
+                        <td>{{ $exp->role_or_subject ?: '---' }}</td>
+                        <td><strong>{{ $exp->institution_name }}</strong></td>
+                        <td>{{ $idx + 1 }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+        @endif
     @endif
 
 

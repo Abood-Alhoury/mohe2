@@ -326,17 +326,24 @@
                         @endforelse
                     </div>
 
-                    <!-- Send Message Form -->
-                    <form action="{{ route('admin.applications.send_message', $app->id) }}" method="POST">
-                        @csrf
-                        <div class="mb-3">
-                            <label class="form-label fw-bold" style="color: #1A2A44;">إرسال رسالة/إشعار موجه للجامعة بخصوص هذا الطلب :</label>
-                            <textarea name="message" class="form-control" rows="3" placeholder="اكتب ملاحظاتك أو طلب الاستكمال هنا..." required></textarea>
+                    <!-- Send Message Form or Read-Only Notice -->
+                    @if($app->isArchived())
+                        <div class="alert alert-light border d-flex align-items-center justify-content-center gap-2 py-3 mb-0 text-muted fw-bold">
+                            <i class="fa-solid fa-lock text-warning"></i>
+                            <span>المعاملة مؤرشفة رسمياً ومغلقة (للاطلاع فقط)</span>
                         </div>
-                        <div class="text-end">
-                            <button type="submit" class="btn btn-gold-cta px-4 py-2"><i class="fa-solid fa-paper-plane me-1"></i> إرسال الرسالة للجامعة</button>
-                        </div>
-                    </form>
+                    @else
+                        <form action="{{ route('admin.applications.send_message', $app->id) }}" method="POST">
+                            @csrf
+                            <div class="mb-3">
+                                <label class="form-label fw-bold" style="color: #1A2A44;">إرسال رسالة/إشعار موجه للجامعة بخصوص هذا الطلب :</label>
+                                <textarea name="message" class="form-control" rows="3" placeholder="اكتب ملاحظاتك أو طلب الاستكمال هنا..." required></textarea>
+                            </div>
+                            <div class="text-end">
+                                <button type="submit" class="btn btn-gold-cta px-4 py-2"><i class="fa-solid fa-paper-plane me-1"></i> إرسال الرسالة للجامعة</button>
+                            </div>
+                        </form>
+                    @endif
                 </div>
             </div>
         </div>

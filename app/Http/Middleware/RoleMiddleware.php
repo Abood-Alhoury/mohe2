@@ -15,10 +15,15 @@ class RoleMiddleware
         }
 
         $user = Auth::user();
-        if (!$user->role || $user->role->name !== $role) {
-            if ($user->role && $user->role->name === 'admin') {
-                return redirect()->route('admin.dashboard');
-            } elseif ($user->role && $user->role->name === 'university') {
+        $userRole = $user->role ? $user->role->name : null;
+
+        // Admin has super-user access to preview and manage both portals
+        if ($userRole === 'admin') {
+            return $next($request);
+        }
+
+        if ($userRole !== $role) {
+            if ($userRole === 'university') {
                 return redirect()->route('university.dashboard');
             }
             Auth::logout();

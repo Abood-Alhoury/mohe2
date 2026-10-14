@@ -235,22 +235,31 @@
             </div>
 
             <!-- 3. WhatsApp-Style Message Input Dock -->
-            <div class="mohe-chat-dock">
-                <form action="{{ route('admin.applications.send_message', $selectedApp->id) }}" method="POST" id="adminChatReplyForm" class="d-flex align-items-center w-100 gap-2 m-0">
-                    @csrf
-                    <textarea name="message" 
-                              id="adminChatInputText"
-                              class="form-control mohe-chat-textarea" 
-                              rows="1" 
-                              placeholder="اكتب توجيهكم أو طلب استكمال الأوراق للجامعة هنا... (Enter للإرسال، Shift+Enter لسطر جديد)" 
-                              required></textarea>
-                    
-                    <!-- Circular Send Button -->
-                    <button type="submit" class="mohe-chat-send-btn" title="إرسال التوجيه للجامعة">
-                        <i class="fa-solid fa-paper-plane"></i>
-                    </button>
-                </form>
-            </div>
+            @if($selectedApp->isArchived())
+                <div class="mohe-chat-dock justify-content-center bg-light text-muted py-3 px-4 border-top">
+                    <div class="d-flex align-items-center gap-2 text-secondary fw-bold fs-7">
+                        <i class="fa-solid fa-lock text-warning"></i>
+                        <span>المعاملة مؤرشفة رسمياً ومغلقة (للاطلاع فقط)</span>
+                    </div>
+                </div>
+            @else
+                <div class="mohe-chat-dock">
+                    <form action="{{ route('admin.applications.send_message', $selectedApp->id) }}" method="POST" id="adminChatReplyForm" class="d-flex align-items-center w-100 gap-2 m-0">
+                        @csrf
+                        <textarea name="message" 
+                                  id="adminChatInputText"
+                                  class="form-control mohe-chat-textarea" 
+                                  rows="1" 
+                                  placeholder="اكتب توجيهكم أو طلب استكمال الأوراق للجامعة هنا... (Enter للإرسال، Shift+Enter لسطر جديد)" 
+                                  required></textarea>
+                        
+                        <!-- Circular Send Button -->
+                        <button type="submit" class="mohe-chat-send-btn" title="إرسال التوجيه للجامعة">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            @endif
         @else
             <!-- WhatsApp Desktop Empty State -->
             <div class="mohe-chat-empty-state">

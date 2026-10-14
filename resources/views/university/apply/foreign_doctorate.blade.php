@@ -11,6 +11,12 @@
         $draftNatId = '';
     }
 
+    $isAwaitingDocs = $draft && (
+        $draft->status_id == 3 || 
+        in_array($draft->status, ['بانتظار الوثائق', 'بانتظار استكمال الوثائق', 'بانتظار تصحيح الوثائق', 'بانتظار الوثائق الناقصة'])
+    );
+    $canSaveDraft = !$draft || ($draft->status_id == 1 || $draft->status === 'مسودة');
+
     $todayDate = date('Y-m-d');
     $currentYear = date('Y');
 
@@ -86,7 +92,15 @@
                 if ($typeId === 11 || str_contains($note, 'مجلس') || str_contains($note, 'تواريخ التسجيل والمناقشة')) $existingFilesMap['file_phd_council_decisions'] = $att;
                 if ($typeId === 12 || (str_contains($note, 'ملخص أطروحة') && !str_contains($note, 'كاملة'))) $existingFilesMap['file_phd_thesis_abstract'] = $att;
                 if ($typeId === 25 || str_contains($note, 'أطروحة الدكتوراه كاملة') || str_contains($note, 'النسخة الكاملة لأطروحة الدكتوراه')) $existingFilesMap['file_phd_full_thesis'] = $att;
-                if ($typeId === 13 || str_contains($note, 'جواز السفر') || str_contains($note, 'جواز')) $existingFilesMap['file_passport'] = $att;
+                if (str_contains($note, 'هوية') || str_contains($note, 'شخصية')) {
+                    $existingFilesMap['file_national_id'] = $att;
+                }
+                if ($typeId === 13 || str_contains($note, 'جواز السفر') || str_contains($note, 'جواز')) {
+                    $existingFilesMap['file_passport'] = $att;
+                    if (empty($existingFilesMap['file_national_id']) && !str_contains($note, 'جواز')) {
+                        $existingFilesMap['file_national_id'] = $att;
+                    }
+                }
                 if ($typeId === 24 || str_contains($note, 'حركة الهجرة والجوازات') || str_contains($note, 'الهجرة والجوازات')) $existingFilesMap['file_immigration_movement'] = $att;
                 if ($typeId === 17 || str_contains($note, '125,000') || str_contains($note, 'رسم تعادل الدكتوراه')) $existingFilesMap['file_fees_receipt'] = $att;
                 if ($typeId === 22 || str_contains($note, 'المكتبة الوطنية') || str_contains($note, 'مكتبة الأسد')) $existingFilesMap['file_library_receipt'] = $att;
@@ -114,14 +128,22 @@
                 <p class="body-md text-muted mb-0">لتعادل وتقييم درجة الدكتوراه الممنوحة من جامعات عربية أو أجنبية (فحص الإقامة، تقييم الإنتاج العلمي، ومقابلة الأهلية).</p>
             </div>
             <div class="d-flex align-items-center gap-2">
+                @if($canSaveDraft)
                 <button type="button" class="btn btn-outline-warning px-3 py-2 fw-bold shadow-2xs d-inline-flex align-items-center gap-1.5" onclick="triggerSaveDraft()" formnovalidate title="حفظ البيانات المدخلة كمسودة للعودة إليها لاحقاً">
                     <i class="fa-solid fa-floppy-disk"></i>
                     <span>حفظ كمسودة ومتابعة لاحقاً</span>
                 </button>
+                @endif
                 @if($draft)
-                    <span class="badge px-3 py-2 border fs-7 fw-bold" style="background-color: #FAF6EE; color: #8A651E; border-color: #D9C394 !important;">
-                        <i class="fa-solid fa-file-pen me-1"></i> تعديل مسودة طلب: #{{ $draft->application_no }}
-                    </span>
+                    @if($isAwaitingDocs)
+                        <span class="badge bg-warning text-dark px-3 py-2 border border-warning fs-7 fw-bold">
+                            <i class="fa-solid fa-file-circle-exclamation me-1"></i> بانتظار استكمال الوثائق: #{{ $draft->application_no }}
+                        </span>
+                    @else
+                        <span class="badge px-3 py-2 border fs-7 fw-bold" style="background-color: #FAF6EE; color: #8A651E; border-color: #D9C394 !important;">
+                            <i class="fa-solid fa-file-pen me-1"></i> تعديل مسودة طلب: #{{ $draft->application_no }}
+                        </span>
+                    @endif
                 @endif
             </div>
         </div>
@@ -131,6 +153,16 @@
 <!-- WIZARD MAIN CONTAINER -->
 <div class="card border-0 shadow-sm" style="border-radius: 8px; border-top: 3px solid var(--heritage-gold) !important; border: 1px solid var(--outline-variant) !important; background-color: #ffffff;">
     <div class="card-body p-4 p-md-5">
+
+        @if($isAwaitingDocs)
+            <div class="alert alert-warning border-warning shadow-sm d-flex align-items-center gap-3 mb-4 p-3 rounded" style="background-color: #fff8e1; border-right: 4px solid #f59e0b !important;">
+                <i class="fa-solid fa-file-circle-exclamation fs-3 text-warning"></i>
+                <div>
+                    <div class="fw-bold fs-6 text-dark">معاملة معادة لاستكمال وتصحيح الوثائق (طلب رقم: #{{ $draft->application_no }})</div>
+                    <div class="small text-muted">حالة المعاملة الحالية هي "بانتظار الوثائق". يرجى استكمال المرفقات والبيانات المطلوبة ثم الضغط على زر الإرسال. لا يمكن حفظ هذا الطلب كمسودة لأنه مسجل ومقدم رسمياً.</div>
+                </div>
+            </div>
+        @endif
         
         @if ($errors->any())
             <div class="alert alert-danger mb-4 shadow-sm border-0 rounded" style="border-right: 4px solid #ba1a1a !important;">
@@ -750,10 +782,24 @@
             ========================================================================= --}}
             <div class="form-section" id="step-7" style="display: none;">
                 <h5 class="fw-bold border-bottom pb-2 mb-4 d-flex align-items-center gap-2" style="color: var(--primary-container); border-bottom-color: var(--outline-variant) !important;">
-                    <i class="fa-solid fa-paperclip fs-5" style="color: var(--heritage-gold);"></i> الخطوة 7: المرفقات والمستندات الثبوتية المطلوبة (PDF فقط - حد أقصى 20 ميغابايت للأطروحة و10 للوثائق)
+                    <i class="fa-solid fa-paperclip fs-5" style="color: var(--heritage-gold);"></i> الخطوة 7: المرفقات والمستندات الثبوتية المطلوبة (PDF فقط - حد أقصى 5 ميغابايت للأطروحة والملخصات و2 ميغابايت لباقي الثبوتيات)
                 </h5>
 
                 <div class="row g-3">
+                    <!-- صورة الهوية الشخصية / إثبات الشخصية (ID 13) -->
+                    <div class="col-md-6">
+                        <div class="border rounded p-3 bg-light h-100">
+                            <label class="form-label label-sm fw-bold">صورة الهوية الشخصية / إثبات الشخصية (إلزامي) <span class="text-danger">*</span></label>
+                            <input type="file" name="file_national_id" id="input_file_national_id" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_national_id']) ? 'required' : '' }}>
+                            @if(!empty($existingFilesMap['file_national_id']))
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                    <a href="{{ asset('storage/' . $existingFilesMap['file_national_id']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold"><i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي</a>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
                     <!-- 1. الشهادة الثانوية (ID 1) -->
                     <div class="col-md-6">
                         <div class="border rounded p-3 bg-light h-100">
@@ -841,8 +887,8 @@
                     <!-- 5. ملخص عن رسالة الماجستير باللغة العربية (ID 8) -->
                     <div class="col-md-6">
                         <div class="border rounded p-3 bg-light h-100">
-                            <label class="form-label label-sm fw-bold">5. ملخص عن رسالة الماجستير باللغة العربية <span class="text-danger">*</span></label>
-                            <input type="file" name="file_master_thesis_abstract" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_master_thesis_abstract']) ? 'required' : '' }}>
+                            <label class="form-label label-sm fw-bold">5. ملخص عن رسالة الماجستير باللغة العربية <span class="badge bg-light text-primary border ms-1 fs-9">حتى 5MB</span> <span class="text-danger">*</span></label>
+                            <input type="file" name="file_master_thesis_abstract" data-max-mb="5" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_master_thesis_abstract']) ? 'required' : '' }}>
                             @if(!empty($existingFilesMap['file_master_thesis_abstract']))
                                 <div class="mt-1 d-flex align-items-center gap-2">
                                     <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
@@ -883,8 +929,8 @@
                     <!-- 8. ملخص أطروحة الدكتوراه باللغة العربية (ID 12) -->
                     <div class="col-md-6">
                         <div class="border rounded p-3 bg-light h-100">
-                            <label class="form-label label-sm fw-bold">8. ملخص عن أطروحة الدكتوراه باللغة العربية <span class="text-danger">*</span></label>
-                            <input type="file" name="file_phd_thesis_abstract" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_phd_thesis_abstract']) ? 'required' : '' }}>
+                            <label class="form-label label-sm fw-bold">8. ملخص عن أطروحة الدكتوراه باللغة العربية <span class="badge bg-light text-primary border ms-1 fs-9">حتى 5MB</span> <span class="text-danger">*</span></label>
+                            <input type="file" name="file_phd_thesis_abstract" data-max-mb="5" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_phd_thesis_abstract']) ? 'required' : '' }}>
                             @if(!empty($existingFilesMap['file_phd_thesis_abstract']))
                                 <div class="mt-1 d-flex align-items-center gap-2">
                                     <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
@@ -897,8 +943,8 @@
                     <!-- 9. أطروحة الدكتوراه كاملة باللغة العربية (ID 25) -->
                     <div class="col-md-6">
                         <div class="border rounded p-3 bg-light h-100 border-primary">
-                            <label class="form-label label-sm fw-bold ">9. النسخة الكاملة لأطروحة الدكتوراه باللغة العربية (PDF) <span class="text-danger">*</span></label>
-                            <input type="file" name="file_phd_full_thesis" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_phd_full_thesis']) ? 'required' : '' }}>
+                            <label class="form-label label-sm fw-bold ">9. النسخة الكاملة لأطروحة الدكتوراه باللغة العربية (PDF) <span class="badge bg-light text-primary border ms-1 fs-9">حتى 5MB</span> <span class="text-danger">*</span></label>
+                            <input type="file" name="file_phd_full_thesis" data-max-mb="5" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_phd_full_thesis']) ? 'required' : '' }}>
                             @if(!empty($existingFilesMap['file_phd_full_thesis']))
                                 <div class="mt-1 d-flex align-items-center gap-2">
                                     <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
@@ -1157,9 +1203,11 @@
                     </button>
                     <div id="spacer-prev"></div>
 
+                    @if($canSaveDraft)
                     <button type="button" class="btn btn-outline-warning px-3 py-2 fw-bold" id="btn-draft" onclick="triggerSaveDraft()" formnovalidate title="حفظ البيانات المعبأة كمسودة للعودة إليها لاحقاً برقم الطلب">
                         <i class="fa-solid fa-floppy-disk me-1"></i> حفظ كمسودة ومتابعة لاحقاً
                     </button>
+                    @endif
                 </div>
 
                 <div class="d-flex align-items-center gap-2">
@@ -1172,7 +1220,11 @@
                     </button>
 
                     <button type="submit" formnovalidate name="action" value="submit_final" class="btn btn-gold-cta px-5 py-2" id="btn-submit" style="display: none;">
-                        إنهاء وإرسال الطلب للوزارة <i class="fa-solid fa-paper-plane ms-1"></i>
+                        @if($isAwaitingDocs)
+                            إعادة إرسال الطلب بعد استكمال الوثائق <i class="fa-solid fa-paper-plane ms-1"></i>
+                        @else
+                            إنهاء وإرسال الطلب للوزارة <i class="fa-solid fa-paper-plane ms-1"></i>
+                        @endif
                     </button>
                 </div>
             </div>

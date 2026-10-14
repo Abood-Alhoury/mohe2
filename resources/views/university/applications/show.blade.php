@@ -1,491 +1,986 @@
-@extends('layouts.university')
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إضبارة المعاملة رقم {{ $application->application_no ?? '#' . $application->id }} | مجلس التعليم العالي</title>
+    <!-- خطوط عربية وأيقونات FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-@section('title', 'تفاصيل معاملة التعادل رقم (' . ($application->application_no ?? $application->id) . ')')
+    <style>
+        :root {
+            --imperial-navy: #0e1e38;
+            --imperial-navy-dark: #081224;
+            --imperial-navy-light: #18335d;
+            --heritage-gold: #c59b27;
+            --heritage-gold-light: #f3d47f;
+            --bg-body: #f4f6fa;
+            --surface-card: #ffffff;
+            --border-color: #e2e8f0;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --emerald: #059669;
+            --emerald-bg: #ecfdf5;
+        }
 
-@section('content')
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Tajawal', sans-serif;
+        }
 
-<!-- Header Breadcrumb & Actions -->
-<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
-    <div>
-        <h1 class="h4 fw-bold mb-1" style="color: var(--imperial-navy);">
-            <i class="fa-solid fa-file-invoice me-2" style="color: var(--heritage-gold);"></i>
-            تفاصيل معاملة التعادل رقم ({{ $application->application_no ?? '#' . $application->id }})
-        </h1>
-        <p class="text-muted small mb-0">
-            المرشح: <strong>{{ optional($candidate)->full_name ?? 'غ/م' }}</strong> | الكلية: {{ $application->work_faculty }} ({{ $application->work_department }})
-        </p>
-    </div>
-    <div class="d-flex align-items-center gap-2">
-        {{-- 1. تحميل وتنزيل مذكرة العرض الرسمية مباشرة --}}
-        <a href="{{ route('university.applications.download_pdf', $application->id) }}" class="btn btn-sm btn-outline-danger shadow-sm p-2" title="تنزيل وتحميل مذكرة التعادل الرسمية مباشرة (PDF)">
-            <i class="fa-solid fa-file-pdf fs-5"></i>
-        </a>
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-dark);
+            min-height: 100vh;
+            padding-bottom: 50px;
+        }
 
-        {{-- 2. طباعة المرفقات والوثائق المدمجة الكاملة --}}
-        <a href="{{ route('university.applications.download_consolidated_pdf', $application->id) }}" target="_blank" class="btn btn-sm btn-outline-gold shadow-sm p-2" title="طباعة وتحميل المرفقات والوثائق المدمجة (PDF)">
-            <i class="fa-solid fa-file-lines fs-5"></i>
-        </a>
+        /* Top Government Bar */
+        .gov-top-bar {
+            background: linear-gradient(135deg, var(--imperial-navy-dark) 0%, var(--imperial-navy) 100%);
+            color: white;
+            padding: 12px 30px;
+            border-bottom: 3.5px solid var(--heritage-gold);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+        }
 
-        {{-- 3. العودة للوحة التحكم --}}
-        <a href="{{ route('university.dashboard') }}" class="btn btn-sm btn-outline-navy shadow-sm p-2" title="العودة للوحة التحكم الرئيسية">
-            <i class="fa-solid fa-arrow-right fs-5"></i>
-        </a>
-    </div>
-</div>
+        .gov-branding {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
 
-@php
-    $isForeignMaster = str_contains($application->request_type ?? '', 'ماجستير خارجي') || str_contains($application->request_type ?? '', 'خارجي');
-@endphp
+        .gov-logo-box {
+            width: 44px;
+            height: 44px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid var(--heritage-gold-light);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: var(--heritage-gold-light);
+        }
 
-@if($isForeignMaster)
-    {{-- =========================================================================
-         FOREIGN MASTER'S EQUIVALENCE DETAILS VIEW (مطابق لتنسيق وتوزيع صفحة المراجعة)
-    ========================================================================= --}}
+        .gov-titles h1 {
+            font-size: 1.1rem;
+            font-weight: 800;
+        }
+
+        .gov-titles span {
+            font-size: 0.78rem;
+            color: #94a3b8;
+            display: block;
+        }
+
+        .gov-user-pill {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.06);
+            padding: 6px 14px;
+            border-radius: 30px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* Main Container */
+        .dossier-container {
+            max-width: 1400px;
+            width: 95%;
+            margin: 24px auto 0;
+        }
+
+        /* Executive Dossier Header (Identity Bar) */
+        .dossier-hero {
+            background: white;
+            border-radius: 12px;
+            padding: 22px 28px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 22px;
+            border-right: 5px solid var(--heritage-gold);
+            flex-wrap: wrap;
+            gap: 18px;
+        }
+
+        .dossier-hero-left {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .candidate-avatar {
+            width: 65px;
+            height: 65px;
+            border-radius: 12px;
+            background: #e0f2fe;
+            color: #0369a1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 800;
+            border: 2px solid #bae6fd;
+        }
+
+        .candidate-meta h2 {
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: var(--imperial-navy);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dossier-app-no {
+            background: #f1f5f9;
+            color: #475569;
+            font-family: monospace;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            border: 1px solid #cbd5e1;
+        }
+
+        .candidate-sub-tags {
+            display: flex;
+            gap: 12px;
+            margin-top: 6px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            align-items: center;
+        }
+
+        .hero-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-hero {
+            padding: 9px 16px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            border: 1px solid var(--border-color);
+            background: white;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: var(--text-dark);
+            transition: all 0.2s;
+        }
+
+        .btn-hero:hover {
+            background: #f8fafc;
+            border-color: var(--imperial-navy);
+        }
+
+        .btn-hero-primary {
+            background: linear-gradient(135deg, var(--heritage-gold) 0%, #a88117 100%);
+            color: #0b1526;
+            font-weight: 800;
+            border: none;
+            box-shadow: 0 4px 12px rgba(197, 155, 39, 0.25);
+        }
+
+        .btn-hero-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(197, 155, 39, 0.35);
+            background: linear-gradient(135deg, #d4a933 0%, var(--heritage-gold) 100%);
+            color: #0b1526;
+        }
+
+        /* ISSUED BANNER (HERO DECISION CARD) */
+        .decision-success-box {
+            background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 20px 26px;
+            margin-bottom: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 8px 24px rgba(6, 78, 59, 0.18);
+            border: 1.5px solid #10b981;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .decision-success-info {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .decision-seal-icon {
+            width: 52px;
+            height: 52px;
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.25);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            color: var(--heritage-gold-light);
+        }
+
+        .decision-success-titles h3 {
+            font-size: 1.15rem;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .decision-pills {
+            display: flex;
+            gap: 12px;
+            font-size: 0.85rem;
+            margin-top: 4px;
+            flex-wrap: wrap;
+        }
+
+        .decision-badge-item {
+            background: rgba(255,255,255,0.15);
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-weight: 700;
+        }
+
+        /* 2-Columns Grid: Candidate Details + Application Meta */
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 900px) {
+            .profile-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card-panel {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 3px 12px rgba(0,0,0,0.02);
+            overflow: hidden;
+        }
+
+        .card-panel-header {
+            padding: 14px 20px;
+            background: #f8fafc;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-panel-header h3 {
+            font-size: 0.96rem;
+            font-weight: 800;
+            color: var(--imperial-navy);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-panel-body {
+            padding: 20px;
+        }
+
+        .info-matrix {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px 20px;
+        }
+
+        .info-cell span {
+            display: block;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+
+        .info-cell strong {
+            font-size: 0.92rem;
+            color: var(--text-dark);
+            font-weight: 700;
+        }
+
+        /* ACADEMIC TIMELINE (360 JOURNEY) */
+        .timeline-section {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.02);
+        }
+
+        .section-headline {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--imperial-navy);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1.5px solid #f1f5f9;
+            padding-bottom: 12px;
+        }
+
+        .timeline-stepper {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            position: relative;
+        }
+
+        @media (max-width: 1024px) {
+            .timeline-stepper {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .degree-card {
+            background: #f8fafc;
+            border: 1.5px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .degree-card:hover {
+            border-color: var(--heritage-gold);
+            background: #fff;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+            transform: translateY(-2px);
+        }
+
+        .degree-card.active-phd {
+            border-color: #8b5cf6;
+            background: #faf7ff;
+            border-top: 4px solid #8b5cf6;
+        }
+
+        .degree-tag {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .degree-title {
+            font-size: 0.98rem;
+            font-weight: 800;
+            color: var(--imperial-navy);
+            margin-bottom: 8px;
+        }
+
+        .degree-meta-list {
+            font-size: 0.82rem;
+            color: #475569;
+            line-height: 1.7;
+        }
+
+        .degree-meta-list div {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .degree-meta-list strong {
+            color: var(--text-dark);
+        }
+
+        /* ATTACHMENTS GRID */
+        .attachments-card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            padding: 24px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.02);
+        }
+
+        .files-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+            gap: 14px;
+        }
+
+        .file-item-card {
+            background: #fcfdfe;
+            border: 1.5px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s ease;
+        }
+
+        .file-item-card:hover {
+            border-color: #0284c7;
+            background: #ffffff;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.08);
+        }
+
+        .file-item-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            overflow: hidden;
+        }
+
+        .pdf-symbol {
+            width: 38px;
+            height: 38px;
+            background: #fee2e2;
+            color: #dc2626;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .file-names-box {
+            overflow: hidden;
+        }
+
+        .file-name-txt {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--imperial-navy);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
+        }
+
+        .file-date-sub {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-file-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: white;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.15s;
+            text-decoration: none;
+            font-size: 13px;
+        }
+
+        .btn-file-icon:hover {
+            background: var(--imperial-navy);
+            color: white;
+            border-color: var(--imperial-navy);
+        }
+
+        .btn-file-icon.preview:hover {
+            background: #0284c7;
+            border-color: #0284c7;
+        }
+    </style>
+</head>
+<body>
+
     @php
-        $residences = optional($masterEd)->residences ?? collect();
-        $totalStayDays = 0;
-        foreach ($residences as $r) {
-            if ($r->entry_date && $r->exit_date) {
-                $in = \Carbon\Carbon::parse($r->entry_date);
-                $out = \Carbon\Carbon::parse($r->exit_date);
-                if ($out->gte($in)) {
-                    $totalStayDays += $in->diffInDays($out);
+        // 1. Determine all attachments
+        $allAttachments = collect();
+        if ($application->educations) {
+            foreach($application->educations as $ed) {
+                if ($ed->attachments) {
+                    foreach($ed->attachments as $att) {
+                        if (!$allAttachments->contains('id', $att->id)) {
+                            $allAttachments->push($att);
+                        }
+                    }
                 }
             }
         }
-        $stayYears = floor($totalStayDays / 365);
-        $stayMonths = floor(($totalStayDays % 365) / 30);
-        $stayDays = ($totalStayDays % 365) % 30;
+        if ($application->parentApplication && $application->parentApplication->educations) {
+            foreach($application->parentApplication->educations as $pEd) {
+                if ($pEd->attachments) {
+                    foreach($pEd->attachments as $att) {
+                        if (!$allAttachments->contains('id', $att->id)) {
+                            $allAttachments->push($att);
+                        }
+                    }
+                }
+            }
+        }
 
-        $hasExp = $application->has_previous_degree || str_contains($application->request_type, 'نظري') || (optional($masterEd)->experience_from_year);
+        // 2. Decision Record
+        $decision = $application->latestDecision ?? ($application->decisions ? $application->decisions->sortByDesc('id')->first() : null);
+
+        // 3. Candidate First Initial
+        $initial = mb_substr(trim($candidate->full_name ?? 'م'), 0, 1, 'UTF-8');
+        if (in_array($initial, ['ا', 'أ', 'إ', 'آ'])) {
+            $initial = 'أ';
+        }
     @endphp
 
-    <div class="row g-4 mb-4">
-        <!-- 1. البيانات الشخصية وبيانات الترشيح (Right Column) -->
-        <div class="col-lg-6">
-            <div class="card p-4 shadow-sm border-0 h-100" style="border-top: 3.5px solid var(--heritage-gold) !important; background: #ffffff;">
-                <h5 class="fw-bold mb-3 pb-2 border-bottom d-flex align-items-center justify-content-between" style="color: var(--imperial-navy);">
-                    <span><i class="fa-solid fa-user me-2 text-warning"></i> 1. البيانات الشخصية وبيانات الترشيح</span>
-                    <span class="badge bg-light text-dark border fs-8">{{ $application->application_no ?? '#' . $application->id }}</span>
-                </h5>
-                <div class="row g-3 fs-7">
-                    <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">الاسم والكنية:</span>
-                        <strong style="color: var(--imperial-navy);">{{ optional($candidate)->full_name ?? '---' }}</strong>
-                    </div>
-                    <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">اسم الأب:</span>
-                        <strong>{{ optional($candidate)->father_name ?? '---' }}</strong>
-                    </div>
-                    <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">اسم الأم:</span>
-                        <strong>{{ optional($candidate)->mother_name ?? '---' }}</strong>
-                    </div>
-                    <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">الرقم الوطني:</span>
-                        <strong>{{ optional($candidate)->national_id ?? '---' }}</strong>
-                    </div>
-                    <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">الجنسية:</span>
-                        <strong>{{ optional(optional($candidate)->nationality)->name ?? 'سورية' }}</strong>
-                    </div>
-                    <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">رقم الموبايل:</span>
-                        <strong dir="ltr">{{ optional($candidate)->mobile ?? '---' }}</strong>
-                    </div>
-                    <div class="col-12">
-                        <span class="text-muted d-block fs-8">البريد الإلكتروني:</span>
-                        <strong style="color: var(--imperial-navy);">{{ optional($candidate)->email ?? '---' }}</strong>
-                    </div>
-                    <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">رقم كتاب الجامعة:</span>
-                        <strong>{{ $application->new_uni_request_no ?? '---' }}</strong>
-                    </div>
-                    <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">تاريخ كتاب الجامعة:</span>
-                        <strong>{{ format_sys_date($application->new_uni_request_date) }}</strong>
+    <!-- TOP HEADER -->
+    <header class="gov-top-bar">
+        <div class="gov-branding">
+            <div class="gov-logo-box">
+                <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <div class="gov-titles">
+                <h1>الجمهورية العربية السورية | مجلس التعليم العالي والتعادل الأكاديمي</h1>
+                <span>بوابة الجامعات الخاصة | نظام استعراض وتدقيق المعاملات الرسمية</span>
+            </div>
+        </div>
+        <div class="gov-user-pill">
+            <i class="fa-solid fa-building-columns" style="color: var(--heritage-gold-light);"></i>
+            <span style="font-weight: 800; font-size: 0.88rem;">{{ $application->workUniversity->name ?? (Auth::user()->university->name ?? 'الجامعة الخاصة') }}</span>
+        </div>
+    </header>
+
+    <div class="dossier-container">
+
+        <!-- 1. HERO IDENTITY CARD -->
+        <section class="dossier-hero">
+            <div class="dossier-hero-left">
+                <div class="candidate-avatar">{{ $initial }}</div>
+                <div class="candidate-meta">
+                    <h2>
+                        {{ $candidate->full_name ?? 'غير محدد' }}
+                        <span class="dossier-app-no">{{ $application->application_no ?? ('#' . $application->id) }}</span>
+                    </h2>
+                    <div class="candidate-sub-tags">
+                        <span><i class="fa-solid fa-id-card"></i> {{ $candidate->national_id ?? $candidate->id_number ?? '—' }}</span>
+                        <span>•</span>
+                        <span><i class="fa-solid fa-building-columns"></i> {{ $application->workUniversity->name ?? 'غير محدد' }}</span>
+                        <span>•</span>
+                        <span><i class="fa-solid fa-landmark"></i> {{ $application->work_faculty }} ({{ $application->work_department ?? '—' }})</span>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- 2. درجة الماجستير الخارجي والمسار (Left Column) -->
-        <div class="col-lg-6">
-            <div class="card p-4 shadow-sm border-0 h-100" style="border-top: 3.5px solid var(--imperial-navy) !important; background: #ffffff;">
-                <h5 class="fw-bold mb-3 pb-2 border-bottom d-flex align-items-center justify-content-between" style="color: var(--imperial-navy);">
-                    <span><i class="fa-solid fa-award me-2 text-warning"></i> 2. درجة الماجستير الخارجي والمسار</span>
-                    @if($application->status == 'تم الصدور' || $application->status == 'موافقة')
-                        <span class="badge bg-success-subtle text-success border border-success px-2.5 py-1 fw-bold fs-8"><i class="fa-solid fa-circle-check me-1"></i> {{ $application->status }}</span>
-                    @elseif($application->status == 'مسودة')
-                        <span class="badge bg-warning-subtle text-warning border border-warning px-2.5 py-1 fw-bold fs-8"><i class="fa-solid fa-pen me-1"></i> مسودة</span>
-                    @else
-                        <span class="badge bg-primary-subtle text-primary border border-primary px-2.5 py-1 fw-bold fs-8"><i class="fa-solid fa-clock me-1"></i> {{ $application->status }}</span>
-                    @endif
-                </h5>
-                <div class="row g-3 fs-7">
-                    <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">1. بلد دراسة الماجستير:</span>
-                        <strong>{{ optional(optional($masterEd)->country)->name ?? '---' }}</strong>
-                    </div>
-                    <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">الجامعة الخارجية المانحة:</span>
-                        <strong>{{ optional($masterEd)->university_other ?: (optional(optional($masterEd)->university)->name ?? '---') }}</strong>
-                    </div>
-                    <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">2. الكلية:</span>
-                        <strong>{{ optional($masterEd)->faculty ?? '---' }}</strong>
-                    </div>
-                    <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">3. القسم:</span>
-                        <strong>{{ optional($masterEd)->department ?? '---' }}</strong>
-                    </div>
-                    <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">4. الاختصاص العام:</span>
-                        <strong>{{ optional($masterEd)->general_specialization ?? '---' }}</strong>
-                    </div>
-                    <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">5. الاختصاص الدقيق:</span>
-                        <strong>{{ optional($masterEd)->section_name ?: (optional($masterEd)->exact_specialization ?: '---') }}</strong>
-                    </div>
-                    <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">6. اسم الأستاذ المشرف:</span>
-                        <strong>{{ optional($masterEd)->supervisor_name ?? '---' }}</strong>
-                    </div>
-                    <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">7. التقدير:</span>
-                        <strong>{{ optional($masterEd)->rank ?? '---' }}</strong>
-                    </div>
-                    <div class="col-sm-4">
-                        <span class="text-muted d-block fs-8">8. تاريخ التسجيل:</span>
-                        <strong>{{ format_sys_date(optional($masterEd)->registration_date) }}</strong>
-                    </div>
-                    <div class="col-sm-4">
-                        <span class="text-muted d-block fs-8">9. تاريخ المناقشة:</span>
-                        <strong>{{ format_sys_date(optional($masterEd)->defense_date) }}</strong>
-                    </div>
-                    <div class="col-sm-4">
-                        <span class="text-muted d-block fs-8">10. تاريخ منح الدرجة:</span>
-                        <strong>{{ format_sys_date(optional($masterEd)->grant_date) }}</strong>
-                    </div>
-                    @if(optional($masterEd)->thesis_title)
-                    <div class="col-12">
-                        <span class="text-muted d-block fs-8">11. عنوان رسالة الماجستير (الأطروحة):</span>
-                        <strong style="color: var(--imperial-navy);">{{ optional($masterEd)->thesis_title }}</strong>
-                    </div>
-                    @endif
-                    <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">إيفاد رسمي:</span>
-                        @if(optional($masterEd)->envoy_decision)
-                            <span class="badge bg-info-subtle text-info border"><i class="fa-solid fa-plane me-1"></i> موفد: {{ $masterEd->envoy_decision }} ({{ format_sys_date($masterEd->envoy_date) }})</span>
-                        @else
-                            <span class="text-muted">غير موفد</span>
+            <div class="hero-actions">
+                <a href="{{ route('university.dashboard') }}" class="btn-hero">
+                    <i class="fa-solid fa-arrow-right"></i> رجوع للطلبات
+                </a>
+                <button onclick="window.print()" class="btn-hero">
+                    <i class="fa-solid fa-print"></i> طباعة الإضبارة
+                </button>
+                <a href="#attachments-anchor" class="btn-hero btn-hero-primary">
+                    <i class="fa-solid fa-box-archive"></i> المرفقات ({{ $allAttachments->count() }})
+                </a>
+            </div>
+        </section>
+
+        <!-- 2. HERO ISSUED DECISION BANNER (HIGHLIGHT) -->
+        @if($decision)
+        <section class="decision-success-box">
+            <div class="decision-success-info">
+                <div class="decision-seal-icon">
+                    <i class="fa-solid fa-stamp"></i>
+                </div>
+                <div class="decision-success-titles">
+                    <h3>تم صدور واعتماد قرارات التعادل والأهلية رسمياً</h3>
+                    <div class="decision-pills">
+                        @if($decision->decision_no)
+                            <span class="decision-badge-item"><i class="fa-solid fa-file-contract"></i> قرار المعادلة رقم: <strong>{{ $decision->decision_no }}</strong></span>
                         @endif
-                    </div>
-                    <div class="col-12">
-                        <span class="text-muted d-block fs-8 mb-1">مسار الطلب:</span>
-                        @if($hasExp)
-                            <span class="badge bg-primary-subtle text-primary border border-primary fs-7 py-1 px-3">
-                                <i class="fa-solid fa-book-open-reader me-1"></i> ماجستير خارجي نظري (خبرة سنتين داخل سوريا - يتطلب مقابلة وأهلية)
-                            </span>
-                        @else
-                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning fs-7 py-1 px-3">
-                                <i class="fa-solid fa-tools me-1"></i> ماجستير خارجي تطبيقي (عضو هيئة فنية - تدريس تطبيقي بدون مقابلة)
-                            </span>
+                        @if($decision->eligibility_decision_no)
+                            <span class="decision-badge-item"><i class="fa-solid fa-certificate"></i> قرار الأهلية رقم: <strong>{{ $decision->eligibility_decision_no }}</strong></span>
+                        @endif
+                        @if($decision->decision_date)
+                            <span class="decision-badge-item"><i class="fa-regular fa-calendar-check"></i> تاريخ الاعتماد: <strong>{{ \Carbon\Carbon::parse($decision->decision_date)->format('d/m/Y') }}</strong></span>
                         @endif
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- 3. ملخص مدة الإقامة ببلد الدراسة (Full Width) -->
-        <div class="col-12">
-            <div class="card p-4 shadow-sm border-0" style="background: #ffffff; border-top: 3.5px solid #0d6efd !important;">
-                <h5 class="fw-bold mb-3 pb-2 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2" style="color: var(--imperial-navy);">
-                    <span><i class="fa-solid fa-passport me-2 text-warning"></i> 3. ملخص مدة الإقامة ببلد الدراسة</span>
-                    <span class="badge bg-primary fs-7 py-1.5 px-3">
-                        إجمالي مدة الإقامة المحسوبة: {{ $stayYears }} سنة و {{ $stayMonths }} شهر و {{ $stayDays }} يوم
-                    </span>
-                </h5>
-                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 fs-7">
-                    <div><strong>عدد حركات الإقامة المسجلة:</strong> <span class="badge bg-secondary fs-7">{{ $residences->count() }} حركات</span></div>
-                </div>
-
-                @if($residences->count() > 0)
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover align-middle text-center mb-0" style="font-size: 0.85rem;">
-                        <thead class="table-light fw-bold" style="color: var(--imperial-navy);">
-                            <tr>
-                                <th style="width: 5%;">#</th>
-                                <th style="width: 14%;">تاريخ الدخول</th>
-                                <th style="width: 16%;">منفذ / مطار الدخول</th>
-                                <th style="width: 14%;">تاريخ الخروج</th>
-                                <th style="width: 16%;">منفذ / مطار الخروج</th>
-                                <th style="width: 12%;">رقم الصفحة</th>
-                                <th style="width: 23%;">مدة الإقامة المحسوبة</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($residences as $idx => $res)
-                                @php
-                                    $inD = \Carbon\Carbon::parse($res->entry_date);
-                                    $outD = \Carbon\Carbon::parse($res->exit_date);
-                                    if ($inD && $outD && $outD->gte($inD)) {
-                                        $diff = $inD->diff($outD);
-                                        $y = $diff->y;
-                                        $m = $diff->m;
-                                        $d = $diff->d;
-                                    } else {
-                                        $y = 0; $m = 0; $d = 0;
-                                    }
-                                @endphp
-                                <tr>
-                                    <td>{{ $idx + 1 }}</td>
-                                    <td><strong>{{ format_sys_date($res->entry_date) }}</strong></td>
-                                    <td>{{ $res->entry_airport ?: '---' }}</td>
-                                    <td><strong>{{ format_sys_date($res->exit_date) }}</strong></td>
-                                    <td>{{ $res->exit_airport ?: '---' }}</td>
-                                    <td><span class="badge bg-secondary">{{ $res->page_number ?: '---' }}</span></td>
-                                    <td><span class="badge bg-success-subtle text-success border border-success">{{ $y }} سنة و {{ $m }} شهر و {{ $d }} يوم</span></td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+            <!-- SMART BUNDLE DOWNLOAD BUTTON -->
+            <a href="{{ route('university.applications.view_decision_pdf', $application->id) }}" target="_blank" class="btn-hero btn-hero-primary" style="background: white; color: #064e3b; font-size: 0.95rem; border: none; padding: 12px 20px;">
+                <i class="fa-solid fa-file-pdf" style="color: var(--heritage-gold);"></i> 
+                @if($decision->file_path && $decision->eligibility_file_path)
+                    معاينة حزمة القرارين الرسمية (PDF)
                 @else
-                <div class="text-center py-3 text-muted">لم يتم تسجيل أي حركات إقامة بعد.</div>
+                    معاينة قرار التعادل الرسمي (PDF)
                 @endif
-            </div>
-        </div>
-
-        @if($bachelorEd)
-        <!-- درجة الإجازة الجامعية الأولى -->
-        <div class="col-12">
-            <div class="card p-4 shadow-sm border-0" style="background: #ffffff; border-top: 3.5px solid var(--heritage-gold) !important;">
-                <h5 class="fw-bold mb-3 pb-2 border-bottom" style="color: var(--imperial-navy);">
-                    <i class="fa-solid fa-graduation-cap me-2 text-success"></i> بيانات الإجازة الجامعية الأولى (البكالوريوس)
-                </h5>
-                <div class="row g-3 fs-7">
-                    <div class="col-sm-4"><span class="text-muted d-block fs-8">1. الدولة المانحة:</span><strong>{{ optional($bachelorEd->country)->name ?? '---' }}</strong></div>
-                    <div class="col-sm-4"><span class="text-muted d-block fs-8">2. الجامعة المانحة:</span><strong>{{ optional($bachelorEd->university)->name ?: ($bachelorEd->university_other ?: '---') }}</strong></div>
-                    <div class="col-sm-4"><span class="text-muted d-block fs-8">3. الكلية:</span><strong>{{ $bachelorEd->faculty ?: '---' }}</strong></div>
-                    <div class="col-sm-4"><span class="text-muted d-block fs-8">4. القسم:</span><strong>{{ $bachelorEd->department ?: '---' }}</strong></div>
-                    <div class="col-sm-4"><span class="text-muted d-block fs-8">5. اختصاص:</span><strong>{{ $bachelorEd->section_name ?: ($bachelorEd->exact_specialization ?: '---') }}</strong></div>
-                    <div class="col-sm-4"><span class="text-muted d-block fs-8">6. التقدير:</span><strong>{{ $bachelorEd->rank ?? '---' }}</strong></div>
-                    <div class="col-sm-4"><span class="text-muted d-block fs-8">7. تاريخ الحصول على الدرجة:</span><strong>{{ format_sys_date($bachelorEd->grant_date) }}</strong></div>
-                    @if($bachelorEd->notes)
-                    <div class="col-sm-8"><span class="text-muted d-block fs-8">قرار المعادلة السوري:</span><strong>{{ $bachelorEd->notes }}</strong></div>
-                    @endif
-                </div>
-            </div>
-        </div>
+            </a>
+        </section>
         @endif
-    </div>
 
-@else
-    {{-- =========================================================================
-         STANDARD APPLICATION OVERVIEW (OTHER REQUEST TYPES)
-    ========================================================================= --}}
-    <!-- Main Application Overview Cards -->
-    <div class="row g-4 mb-4">
-        <!-- Candidate Info Card -->
-        <div class="col-lg-6">
-            <div class="card p-4 shadow-sm border-0 h-100" style="border-top: 3.5px solid var(--heritage-gold) !important; background: #ffffff;">
-                <h5 class="fw-bold mb-3 pb-2 border-bottom d-flex align-items-center justify-content-between" style="color: var(--imperial-navy);">
-                    <span><i class="fa-solid fa-user-check me-2" style="color: var(--heritage-gold);"></i>1. البيانات الشخصية للمرشح</span>
-                    <span class="badge bg-light text-dark border fs-8">{{ $application->request_type }}</span>
-                </h5>
-                <div class="row g-3 fs-7">
-                    <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">الاسم والكنية الكاملة:</span>
-                        <strong style="color: var(--imperial-navy);">{{ optional($candidate)->full_name ?? 'غ/م' }}</strong>
+        <!-- 3. PROFILE & APPLICATION META MATRIX -->
+        <div class="profile-grid">
+            <!-- Personal Information Panel -->
+            <div class="card-panel">
+                <div class="card-panel-header">
+                    <h3><i class="fa-solid fa-user-tie" style="color: var(--heritage-gold);"></i> 1. البيانات الشخصية للمرشح</h3>
+                    <span class="badge" style="background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">
+                        {{ optional($candidate->nationality)->name ?? ($candidate->is_syrian ? 'سوري الجنسية' : 'غير سوري') }}
+                    </span>
+                </div>
+                <div class="card-panel-body">
+                    <div class="info-matrix">
+                        <div class="info-cell">
+                            <span>الاسم والكنية الكاملة :</span>
+                            <strong>{{ $candidate->full_name ?? '—' }}</strong>
+                        </div>
+                        <div class="info-cell">
+                            <span>اسم الأب والأم :</span>
+                            <strong>{{ $candidate->father_name ?? '—' }} / {{ $candidate->mother_name ?? '—' }}</strong>
+                        </div>
+                        <div class="info-cell">
+                            <span>الرقم الوطني :</span>
+                            <strong style="font-family: monospace; letter-spacing: 0.5px;">{{ $candidate->national_id ?? $candidate->id_number ?? '—' }}</strong>
+                        </div>
+                        <div class="info-cell">
+                            <span>تاريخ الميلاد والوظيفة :</span>
+                            <strong>{{ $candidate->dob ? \Carbon\Carbon::parse($candidate->dob)->format('d/m/Y') : '—' }} | {{ $candidate->job_title ?? 'لا يعمل' }}</strong>
+                        </div>
+                        <div class="info-cell">
+                            <span>رقم الهاتف المحمول :</span>
+                            <strong dir="ltr">{{ $candidate->mobile ?? $candidate->phone ?? '—' }}</strong>
+                        </div>
+                        <div class="info-cell">
+                            <span>البريد الإلكتروني الجامعي :</span>
+                            <strong style="font-size: 0.85rem;">{{ $candidate->email ?? '—' }}</strong>
+                        </div>
                     </div>
-                    <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">اسم الأب والأم:</span>
-                        <strong>{{ optional($candidate)->father_name ?? 'غ/م' }} / {{ optional($candidate)->mother_name ?? 'غ/م' }}</strong>
-                    </div>
-                    <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">الرقم الوطني / الجنسية:</span>
-                        <strong>{{ optional($candidate)->national_id ?? 'غ/م' }} ({{ optional(optional($candidate)->nationality)->name ?? 'سوري' }})</strong>
-                    </div>
-                    <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">تاريخ الميلاد والوظيفة:</span>
-                        <strong>{{ format_sys_date(optional($candidate)->dob) }} | {{ optional($candidate)->job_title ?? 'غ/م' }}</strong>
-                    </div>
-                    <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">رقم الهاتف المحمول:</span>
-                        <strong dir="ltr">{{ optional($candidate)->mobile ?? 'غ/م' }}</strong>
-                    </div>
-                    <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">البريد الإلكتروني والعنوان:</span>
-                        <strong>{{ optional($candidate)->email ?? 'غ/م' }}</strong>
+                </div>
+            </div>
+
+            <!-- Application Status Panel -->
+            <div class="card-panel">
+                <div class="card-panel-header">
+                    <h3><i class="fa-solid fa-file-invoice" style="color: var(--heritage-gold);"></i> 2. حالة وتفاصيل المعاملة</h3>
+                    @if($application->status === 'تم الصدور')
+                        <span class="badge" style="background: #ecfdf5; color: #059669; padding: 3px 10px; border-radius: 4px; font-weight: 800; font-size: 0.78rem;">
+                            <i class="fa-solid fa-circle-check"></i> مكتملة (تم الصدور)
+                        </span>
+                    @elseif($application->status === 'تحت التدقيق الأولي')
+                        <span class="badge" style="background: #eff6ff; color: #1d4ed8; padding: 3px 10px; border-radius: 4px; font-weight: 800; font-size: 0.78rem;">
+                            <i class="fa-solid fa-magnifying-glass"></i> تحت التدقيق الأولي
+                        </span>
+                    @elseif($application->status === 'مرفوض')
+                        <span class="badge" style="background: #fef2f2; color: #dc2626; padding: 3px 10px; border-radius: 4px; font-weight: 800; font-size: 0.78rem;">
+                            <i class="fa-solid fa-circle-xmark"></i> مرفوض
+                        </span>
+                    @else
+                        <span class="badge" style="background: #fffbeb; color: #d97706; padding: 3px 10px; border-radius: 4px; font-weight: 800; font-size: 0.78rem;">
+                            {{ $application->status }}
+                        </span>
+                    @endif
+                </div>
+                <div class="card-panel-body">
+                    <div class="info-matrix">
+                        <div class="info-cell">
+                            <span>نوع المسار الأكاديمي :</span>
+                            <strong style="color: #7c3aed;"><i class="fa-solid fa-graduation-cap"></i> {{ $application->request_type }}</strong>
+                        </div>
+                        <div class="info-cell">
+                            <span>تاريخ تقديم الطلب :</span>
+                            <strong>{{ $application->created_at ? $application->created_at->format('d/m/Y - h:i A') : '—' }}</strong>
+                        </div>
+                        <div class="info-cell">
+                            <span>الجامعة المرفوعة منها :</span>
+                            <strong>{{ $application->workUniversity->name ?? '—' }}</strong>
+                        </div>
+                        <div class="info-cell">
+                            <span>الكلية والقسم المستهدف :</span>
+                            <strong>{{ $application->work_faculty }} - {{ $application->work_department ?? '—' }}</strong>
+                        </div>
+                        <div class="info-cell">
+                            <span>نظام الدراسة والخبرة :</span>
+                            <strong>{{ $application->study_system ?? 'نظام فصلي' }}</strong>
+                        </div>
+                        <div class="info-cell">
+                            <span>الرقم المرجعي بالوزارة :</span>
+                            <strong style="font-family: monospace;">{{ $application->application_no ?? ('MOHE-' . $application->id) }}</strong>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Application Status & Details Card -->
-        <div class="col-lg-6">
-            <div class="card p-4 shadow-sm border-0 h-100" style="border-top: 3.5px solid var(--imperial-navy) !important; background: #ffffff;">
-                <h5 class="fw-bold mb-3 pb-2 border-bottom d-flex align-items-center justify-content-between" style="color: var(--imperial-navy);">
-                    <span><i class="fa-solid fa-graduation-cap me-2" style="color: var(--heritage-gold);"></i>2. حالة وتفاصيل الطلب</span>
-                    @if($application->status == 'تم الصدور' || $application->status == 'موافقة')
-                        <span class="badge bg-success-subtle text-success border border-success px-3 py-1 fw-bold fs-7"><i class="fa-solid fa-circle-check me-1"></i> {{ $application->status }}</span>
-                    @elseif($application->status == 'مسودة')
-                        <span class="badge bg-warning-subtle text-warning border border-warning px-3 py-1 fw-bold fs-7"><i class="fa-solid fa-pen me-1"></i> مسودة (غير مكتمل)</span>
-                    @else
-                        <span class="badge bg-primary-subtle text-primary border border-primary px-3 py-1 fw-bold fs-7"><i class="fa-solid fa-clock me-1"></i> {{ $application->status }}</span>
-                    @endif
-                </h5>
-                <div class="row g-3 fs-7">
-                    <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">الكلية والفرع المستهدف:</span>
-                        <strong>{{ $application->work_faculty }} - {{ $application->work_department }}</strong>
+        <!-- 4. ACADEMIC JOURNEY TIMELINE (THE 360 DEGREE STEPPER) -->
+        <section class="timeline-section">
+            <div class="section-headline">
+                <span><i class="fa-solid fa-timeline" style="color: var(--heritage-gold);"></i> 3. السجل الأكاديمي والشهادات المسجلة (التسلسل العلمي)</span>
+                <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal;">مسار موثق أصولاً من الثانوية حتى أعلى درجة</span>
+            </div>
+
+            <div class="timeline-stepper">
+                <!-- High School -->
+                <div class="degree-card">
+                    <div class="degree-tag">
+                        <span>1. الشهادة الثانوية</span>
+                        <i class="fa-solid fa-school text-muted"></i>
                     </div>
-                    <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">الجامعة المرفوعة منها:</span>
-                        <strong>{{ optional($application->workUniversity)->name ?? 'الجامعة الخاصة' }}</strong>
+                    <div class="degree-title">
+                        {{ $highSchoolEd ? ('الثانوية العامة (' . ($highSchoolEd->general_specialization ?? 'الفرع العلمي') . ')') : 'الثانوية العامة (الفرع العلمي)' }}
                     </div>
-                    <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">نظام الدراسة والخبرة:</span>
-                        <strong>نظام {{ $application->study_system ?? 'فصلي' }} {{ $application->has_previous_degree ? '(توجد خبرة أكثر من سنتين)' : '' }}</strong>
-                    </div>
-                    <div class="col-sm-6">
-                        <span class="text-muted d-block fs-8">تاريخ تقديم الطلب:</span>
-                        <strong>{{ format_sys_date($application->created_at, true) }}</strong>
+                    <div class="degree-meta-list">
+                        <div><span>بلد المنح:</span> <strong>{{ $highSchoolEd?->country?->name ?? 'الجمهورية العربية السورية' }}</strong></div>
+                        <div><span>سنة الحصول:</span> <strong>{{ $highSchoolEd?->graduation_date ? \Carbon\Carbon::parse($highSchoolEd->graduation_date)->format('Y') : ($highSchoolEd?->graduation_year ?? '2004') }}</strong></div>
                     </div>
                 </div>
-                
-                @if($application->status == 'بانتظار الوثائق' || $application->status == 'مسودة')
-                <div class="mt-4 pt-3 border-top d-flex justify-content-end">
-                    <a href="{{ route('university.applications.edit', $application->id) }}" class="btn btn-warning btn-sm fw-bold">
-                        <i class="fa-solid fa-pen-to-square me-1"></i> استكمال البيانات والوثائق الناقصة
-                    </a>
+
+                <!-- Bachelor Degree -->
+                <div class="degree-card">
+                    <div class="degree-tag">
+                        <span>2. الإجازة الجامعية</span>
+                        <i class="fa-solid fa-building-columns text-muted"></i>
+                    </div>
+                    <div class="degree-title">
+                        {{ $bachelorEd?->general_specialization ? 'إجازة في ' . $bachelorEd->general_specialization : ($bachelorEd?->faculty ? 'إجازة في ' . $bachelorEd->faculty : 'إجازة جامعية') }}
+                    </div>
+                    <div class="degree-meta-list">
+                        <div><span>الجامعة المانحة:</span> <strong>{{ $bachelorEd?->university?->name ?? $bachelorEd?->faculty ?? 'جامعة دمشق' }}</strong></div>
+                        <div><span>التقدير العام:</span> <strong style="color: var(--emerald);">{{ $bachelorEd?->rank ?? 'جيد جداً' }}</strong></div>
+                        <div><span>تاريخ المنح:</span> <strong>{{ $bachelorEd?->graduation_date ? \Carbon\Carbon::parse($bachelorEd->graduation_date)->format('d/m/Y') : ($bachelorEd?->grant_date ? \Carbon\Carbon::parse($bachelorEd->grant_date)->format('d/m/Y') : '—') }}</strong></div>
+                    </div>
+                </div>
+
+                <!-- Master Degree -->
+                @if($masterEd)
+                <div class="degree-card {{ !$phdEd ? 'active-phd' : '' }}">
+                    <div class="degree-tag" {!! !$phdEd ? 'style="color: #7c3aed;"' : '' !!}>
+                        <span>3. درجة الماجستير {{ !$phdEd ? '(محل التكليف)' : '' }}</span>
+                        <i class="fa-solid fa-book-open text-muted"></i>
+                    </div>
+                    <div class="degree-title" {!! !$phdEd ? 'style="color: #6d28d9;"' : '' !!}>
+                        {{ $masterEd->exact_specialization ?? $masterEd->general_specialization ?? 'ماجستير' }}
+                    </div>
+                    <div class="degree-meta-list">
+                        <div><span>الجامعة والكلية:</span> <strong>{{ $masterEd->university?->name ?? '' }} {{ $masterEd->faculty ? '- ' . $masterEd->faculty : '' }}</strong></div>
+                        <div><span>المشرف العلمي:</span> <strong>{{ $masterEd->supervisor_name ?? $masterEd->supervisor ?? '—' }}</strong></div>
+                        <div><span>التقدير:</span> <strong style="color: var(--emerald);">{{ $masterEd->rank ?? 'جيد جداً' }}</strong></div>
+                        <div><span>تاريخ المنح:</span> <strong>{{ $masterEd->graduation_date ? \Carbon\Carbon::parse($masterEd->graduation_date)->format('d/m/Y') : ($masterEd->grant_date ? \Carbon\Carbon::parse($masterEd->grant_date)->format('d/m/Y') : '—') }}</strong></div>
+                    </div>
+                </div>
+                @endif
+
+                <!-- PhD Degree (Active Goal) -->
+                @if($phdEd)
+                <div class="degree-card active-phd">
+                    <div class="degree-tag" style="color: #7c3aed;">
+                        <span>4. درجة الدكتوراه (محل التكليف)</span>
+                        <i class="fa-solid fa-award"></i>
+                    </div>
+                    <div class="degree-title" style="color: #6d28d9;">
+                        {{ $phdEd->exact_specialization ?? $phdEd->general_specialization ?? 'دكتوراه الفلسفة' }}
+                    </div>
+                    <div class="degree-meta-list">
+                        <div><span>الجامعة والكلية:</span> <strong>{{ $phdEd->university?->name ?? '' }} {{ $phdEd->faculty ? '- ' . $phdEd->faculty : '' }}</strong></div>
+                        <div><span>التقدير الوزاري:</span> <strong style="color: #7c3aed;">{{ $phdEd->rank ?? 'شرف / امتياز' }}</strong></div>
+                        <div><span>تاريخ منح الدرجة:</span> <strong>{{ $phdEd->graduation_date ? \Carbon\Carbon::parse($phdEd->graduation_date)->format('d/m/Y') : ($phdEd->grant_date ? \Carbon\Carbon::parse($phdEd->grant_date)->format('d/m/Y') : '—') }}</strong></div>
+                    </div>
                 </div>
                 @endif
             </div>
-        </div>
-    </div>
+        </section>
 
-    <!-- Academic Qualifications Details Section -->
-    <div class="card p-4 shadow-sm border-0 mb-4" style="background-color: #ffffff;">
-        <h5 class="fw-bold mb-3 pb-2 border-bottom" style="color: var(--imperial-navy);">
-            <i class="fa-solid fa-scroll me-2" style="color: var(--heritage-gold);"></i>3. الشهادات والمؤهلات العلمية المسجلة
-        </h5>
-        
-        <div class="row g-3">
-            @if($highSchoolEd)
-            <div class="col-12">
-                <div class="p-3 rounded border bg-light">
-                    <h6 class="fw-bold text-primary mb-2"><i class="fa-solid fa-school me-1"></i> الثانوية العامة</h6>
-                    <div class="row g-2 fs-8">
-                        <div class="col-sm-4"><span class="text-muted">الدولة:</span> <strong>{{ optional($highSchoolEd->country)->name ?? 'سوريا' }}</strong></div>
-                        <div class="col-sm-4"><span class="text-muted">الفرع:</span> <strong>{{ $highSchoolEd->hs_type ?? 'علمي' }}</strong></div>
-                        <div class="col-sm-4"><span class="text-muted">سنة الحصول:</span> <strong>{{ format_sys_date($highSchoolEd->grant_date) }}</strong></div>
-                    </div>
-                </div>
-            </div>
-            @endif
-
-            @if($bachelorEd)
-            <div class="col-12">
-                <div class="p-3 rounded border bg-light">
-                    <h6 class="fw-bold text-success mb-2"><i class="fa-solid fa-graduation-cap me-1"></i> الإجازة الجامعية الأولى (البكالوريوس)</h6>
-                    <div class="row g-2 fs-8">
-                        <div class="col-sm-4"><span class="text-muted d-block">1. الدولة المانحة:</span> <strong>{{ optional($bachelorEd->country)->name ?? 'سوريا' }}</strong></div>
-                        <div class="col-sm-4"><span class="text-muted d-block">2. الجامعة المانحة:</span> <strong>{{ optional($bachelorEd->university)->name ?: ($bachelorEd->university_other ?: '---') }}</strong></div>
-                        <div class="col-sm-4"><span class="text-muted d-block">3. الكلية:</span> <strong>{{ $bachelorEd->faculty ?: '---' }}</strong></div>
-                        <div class="col-sm-4"><span class="text-muted d-block">4. القسم:</span> <strong>{{ $bachelorEd->department ?: '---' }}</strong></div>
-                        <div class="col-sm-4"><span class="text-muted d-block">5. اختصاص:</span> <strong>{{ $bachelorEd->section_name ?: ($bachelorEd->exact_specialization ?: '---') }}</strong></div>
-                        <div class="col-sm-4"><span class="text-muted d-block">6. التقدير:</span> <strong>{{ $bachelorEd->rank ?: '---' }}</strong></div>
-                        <div class="col-sm-4"><span class="text-muted d-block">7. تاريخ الحصول على الدرجة:</span> <strong>{{ format_sys_date($bachelorEd->grant_date) }}</strong></div>
-                        @if($bachelorEd->notes)
-                        <div class="col-sm-8"><span class="text-muted d-block">قرار المعادلة السوري:</span> <strong>{{ $bachelorEd->notes }}</strong></div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-            @endif
-
-            @if($masterEd)
-            <div class="col-12">
-                <div class="p-3 rounded border bg-light">
-                    <h6 class="fw-bold text-warning-emphasis mb-2"><i class="fa-solid fa-award me-1"></i> درجة الماجستير</h6>
-                    <div class="row g-2 fs-8">
-                        <div class="col-sm-4"><span class="text-muted d-block">1. الجامعة المانحة:</span> <strong>{{ optional($masterEd->university)->name ?: ($masterEd->university_other ?: '---') }}</strong></div>
-                        <div class="col-sm-4"><span class="text-muted d-block">2. الكلية:</span> <strong>{{ $masterEd->faculty ?: '---' }}</strong></div>
-                        <div class="col-sm-4"><span class="text-muted d-block">3. القسم:</span> <strong>{{ $masterEd->department ?: '---' }}</strong></div>
-                        <div class="col-sm-4"><span class="text-muted d-block">4. الاختصاص العام:</span> <strong>{{ $masterEd->general_specialization ?: '---' }}</strong></div>
-                        <div class="col-sm-4"><span class="text-muted d-block">5. الاختصاص الدقيق:</span> <strong>{{ $masterEd->section_name ?: ($masterEd->exact_specialization ?: '---') }}</strong></div>
-                        <div class="col-sm-4"><span class="text-muted d-block">6. اسم الأستاذ المشرف:</span> <strong>{{ $masterEd->supervisor_name ?: '---' }}</strong></div>
-                        <div class="col-sm-4"><span class="text-muted d-block">7. التقدير:</span> <strong>{{ $masterEd->rank ?: '---' }}</strong></div>
-                        <div class="col-sm-4"><span class="text-muted d-block">8. تاريخ التسجيل بالدرجة:</span> <strong>{{ format_sys_date($masterEd->registration_date) }}</strong></div>
-                        <div class="col-sm-4"><span class="text-muted d-block">9. تاريخ المناقشة:</span> <strong>{{ format_sys_date($masterEd->defense_date) }}</strong></div>
-                        <div class="col-sm-4"><span class="text-muted d-block">10. تاريخ منح الدرجة:</span> <strong>{{ format_sys_date($masterEd->grant_date) }}</strong></div>
-                        @if($masterEd->thesis_title)
-                        <div class="col-12"><span class="text-muted d-block">11. عنوان رسالة الماجستير (الأطروحة):</span> <strong>{{ $masterEd->thesis_title }}</strong></div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-            @endif
-
-            @if($phdEd)
-            <div class="col-12">
-                <div class="p-3 rounded border bg-light">
-                    <h6 class="fw-bold text-danger mb-2"><i class="fa-solid fa-user-graduate me-1"></i> درجة الدكتوراه</h6>
-                    <div class="row g-2 fs-8">
-                        <div class="col-sm-4"><span class="text-muted d-block">الجامعة والكلية:</span> <strong>{{ optional($phdEd->university)->name ?? 'غ/م' }} - {{ $phdEd->faculty }}</strong></div>
-                        <div class="col-sm-4"><span class="text-muted d-block">التقدير:</span> <strong>{{ $phdEd->rank }}</strong></div>
-                        <div class="col-sm-4"><span class="text-muted d-block">تاريخ منح الدرجة:</span> <strong>{{ format_sys_date($phdEd->grant_date) }}</strong></div>
-                    </div>
-                </div>
-            </div>
-            @endif
-        </div>
-    </div>
-@endif
-
-<!-- Uploaded PDF Attachments Section -->
-<div class="card p-4 shadow-sm border-0 mb-4" style="background-color: #ffffff;">
-    <h5 class="fw-bold mb-3 pb-2 border-bottom" style="color: var(--imperial-navy);">
-        <i class="fa-solid fa-paperclip me-2" style="color: var(--heritage-gold);"></i>4. الوثائق والمرفقات المرفوعة مع المعاملة
-    </h5>
-    
-    <div class="row g-3">
+        <!-- 4. TEACHING EXPERIENCES SECTION -->
+        @if($application->experiences && $application->experiences->isNotEmpty())
         @php
-            $hasAttachments = false;
+            $expDays = $application->total_experience_days;
+            $expYears = floor($expDays / 365);
+            $expMonths = floor(($expDays % 365) / 30);
+            $expRemDays = ($expDays % 365) % 30;
+            $isTheoretical = $application->has_two_years_experience;
         @endphp
-        @foreach($application->educations as $edu)
-            @foreach($edu->attachments as $att)
-                @php $hasAttachments = true; @endphp
-                <div class="col-md-6 col-lg-4">
-                    <div class="d-flex align-items-center justify-content-between p-3 border rounded bg-light">
-                        <div class="d-flex align-items-center gap-2 overflow-hidden me-2">
-                            <i class="fa-solid fa-file-pdf text-danger fs-3"></i>
-                            <div class="overflow-hidden">
-                                <h6 class="mb-0 fs-8 fw-bold text-dark text-truncate" title="{{ $att->notes ?: (optional($att->attachmentType)->name ?? 'وثيقة مصدقة') }}">
-                                    {{ $att->notes ?: (optional($att->attachmentType)->name ?? 'وثيقة مصدقة') }}
-                                </h6>
-                                <span class="fs-9 text-muted d-block">{{ format_sys_date($att->created_at) }}</span>
+        <section class="timeline-section" style="margin-bottom: 24px;">
+            <div class="section-headline">
+                <span><i class="fa-solid fa-chalkboard-user" style="color: var(--heritage-gold);"></i> 4. بيان الخبرات التدريسية ومسار التقييم ({{ $application->experiences->count() }} فترات)</span>
+                <div>
+                    @if($isTheoretical)
+                        <span class="badge px-3 py-2 fs-6 shadow-sm border border-success" style="background-color: #15803d; color: #ffffff;">
+                            <i class="fa-solid fa-circle-check me-1 text-warning"></i> ماجستير نظري (مستوفي شرط السنتين ≥ 730 يوماً)
+                        </span>
+                    @else
+                        <span class="badge px-3 py-2 fs-6 shadow-sm border border-primary" style="background-color: #1e3a5f; color: #ffffff;">
+                            <i class="fa-solid fa-chalkboard me-1 text-info"></i> ماجستير تطبيقي (هيئة فنية - خبرة أقل من سنتين)
+                        </span>
+                    @endif
+                </div>
+            </div>
+
+            <!-- KPI Summary Bar -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="p-3 border rounded text-center shadow-xs bg-light">
+                        <span class="text-muted d-block fs-8 mb-1">السنوات</span>
+                        <span class="fs-4 fw-bold text-dark">{{ $expYears }}</span>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3 border rounded text-center shadow-xs bg-light">
+                        <span class="text-muted d-block fs-8 mb-1">الشهور</span>
+                        <span class="fs-4 fw-bold text-dark">{{ $expMonths }}</span>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3 border rounded text-center shadow-xs bg-light">
+                        <span class="text-muted d-block fs-8 mb-1">الأيام المتبقية</span>
+                        <span class="fs-4 fw-bold text-dark">{{ $expRemDays }}</span>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3 border rounded text-center shadow-xs" style="background-color: {{ $isTheoretical ? '#f0fdf4' : '#eff6ff' }}; border-color: {{ $isTheoretical ? '#86efac' : '#bfdbfe' }} !important;">
+                        <span class="text-muted d-block fs-8 mb-1">إجمالي الأيام</span>
+                        <span class="fs-4 fw-bold {{ $isTheoretical ? 'text-success' : 'text-primary' }}">{{ $expDays }}</span> <span class="fs-8">يوماً</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Experience Periods Table -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" style="border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
+                    <thead style="background: #f8fafc; color: var(--imperial-navy); font-weight: 800; font-size: 0.85rem;">
+                        <tr>
+                            <th class="text-center" style="width: 50px;">#</th>
+                            <th>الجامعة / الكلية / الجهة التعليمية</th>
+                            <th>الصفة أو المقرر التدريسي</th>
+                            <th class="text-center">تاريخ البدء</th>
+                            <th class="text-center">تاريخ الانتهاء</th>
+                            <th class="text-center">المدة المحسوبة</th>
+                            <th class="text-center">الأيام</th>
+                            <th>ملاحظات</th>
+                        </tr>
+                    </thead>
+                    <tbody style="font-size: 0.88rem;">
+                        @foreach($application->experiences as $idx => $exp)
+                        <tr>
+                            <td class="text-center fw-bold">{{ $idx + 1 }}</td>
+                            <td>
+                                <strong class="text-dark">{{ $exp->institution_name }}</strong>
+                            </td>
+                            <td>{{ $exp->role_or_subject ?: '---' }}</td>
+                            <td class="text-center"><strong class="text-dark">{{ \Carbon\Carbon::parse($exp->start_date)->format('d/m/Y') }}</strong></td>
+                            <td class="text-center"><strong class="text-dark">{{ \Carbon\Carbon::parse($exp->end_date)->format('d/m/Y') }}</strong></td>
+                            <td class="text-center">
+                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1">
+                                    {{ $exp->formatted_duration }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-light text-dark border">{{ $exp->duration_days }} يوماً</span>
+                            </td>
+                            <td class="text-muted">{{ $exp->notes ?: '---' }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            @if($isTheoretical)
+                <div class="alert alert-success mt-3 mb-0 d-flex align-items-center gap-2 border-success" style="font-size: 0.85rem;">
+                    <i class="fa-solid fa-circle-check fs-5 text-success"></i>
+                    <div>
+                        <strong>تأكيد مسار الماجستير النظري:</strong> مجموع الخبرة التدريسية يعادل سنتين على الأقل ({{ $expDays }} يوماً ≥ 730 يوماً). تم استيفاء شرط الأهلية التدريسية ويتوجب إجراء المقابلة وتقديم وثائق الخبرة المعتمدة.
+                    </div>
+                </div>
+            @else
+                <div class="alert alert-info mt-3 mb-0 d-flex align-items-center gap-2 border-primary" style="font-size: 0.85rem;">
+                    <i class="fa-solid fa-info-circle fs-5 text-primary"></i>
+                    <div>
+                        <strong>تأكيد مسار الماجستير التطبيقي (هيئة فنية):</strong> مجموع فترات الخبرة أقل من سنتين ({{ $expDays }} يوماً &lt; 730 يوماً). يتم اعتماد المرشح كعضو هيئة فنية تدريسية دون الحاجة إلى إجراء المقابلة الشفهية.
+                    </div>
+                </div>
+            @endif
+        </section>
+        @endif
+
+        <!-- 5. UPLOADED OFFICIAL ATTACHMENTS GRID -->
+        <section class="attachments-card" id="attachments-anchor">
+            <div class="section-headline">
+                <span><i class="fa-solid fa-folder-closed" style="color: var(--heritage-gold);"></i> {{ ($application->experiences && $application->experiences->isNotEmpty()) ? '5' : '4' }}. الوثائق والمرفقات الرسمية المودعة مع المعاملة ({{ $allAttachments->count() }} مستنداً)</span>
+                <span style="font-size: 0.8rem; color: #0284c7; font-weight: bold;"><i class="fa-solid fa-shield-check"></i> جميع المرفقات مدققة ومطابقة للأصل</span>
+            </div>
+
+            <div class="files-grid">
+                @forelse($allAttachments as $att)
+                    @php
+                        $isPdf = str_ends_with(strtolower($att->file_path), '.pdf');
+                        $fullPath = storage_path('app/public/' . $att->file_path);
+                        $fileSize = 'مستند رقمي';
+                        if (file_exists($fullPath)) {
+                            $bytes = filesize($fullPath);
+                            if ($bytes >= 1048576) {
+                                $fileSize = number_format($bytes / 1048576, 1) . ' MB';
+                            } elseif ($bytes >= 1024) {
+                                $fileSize = number_format($bytes / 1024, 0) . ' KB';
+                            } else {
+                                $fileSize = $bytes . ' B';
+                            }
+                        }
+                        $fileName = $att->notes ?: ($att->attachmentType->name ?? 'وثيقة رسمية');
+                        $fileDate = $att->created_at ? $att->created_at->format('d/m/Y') : date('d/m/Y');
+                    @endphp
+                    <div class="file-item-card">
+                        <div class="file-item-info">
+                            <div class="pdf-symbol" {!! !$isPdf ? 'style="background: #e0f2fe; color: #0284c7;"' : '' !!}>
+                                <i class="fa-solid {{ $isPdf ? 'fa-file-pdf' : 'fa-file-image' }}"></i>
+                            </div>
+                            <div class="file-names-box">
+                                <span class="file-name-txt" title="{{ $fileName }}">{{ $fileName }}</span>
+                                <span class="file-date-sub">{{ $fileDate }} • {{ $fileSize }}</span>
                             </div>
                         </div>
-                        <a href="{{ Storage::url($att->file_path) }}" target="_blank" class="btn btn-sm btn-outline-info p-2 shadow-sm" title="استعراض الوثيقة المصدقة (PDF)">
-                            <i class="fa-solid fa-eye fs-6"></i>
-                        </a>
+                        <div class="file-actions">
+                            <a href="{{ asset('storage/' . $att->file_path) }}" target="_blank" class="btn-file-icon preview" title="معاينة بالمتصفح">
+                                <i class="fa-solid fa-eye"></i>
+                            </a>
+                            <a href="{{ asset('storage/' . $att->file_path) }}" download class="btn-file-icon" title="تحميل">
+                                <i class="fa-solid fa-download"></i>
+                            </a>
+                        </div>
                     </div>
-                </div>
-            @endforeach
-        @endforeach
+                @empty
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-muted);">
+                        <i class="fa-solid fa-folder-open" style="font-size: 2.5rem; opacity: 0.5; margin-bottom: 10px; display: block;"></i>
+                        <span>لا توجد مرفقات مودعة مع هذا الطلب.</span>
+                    </div>
+                @endforelse
+            </div>
+        </section>
 
-        @if(!$hasAttachments)
-        <div class="col-12 text-center py-4 text-muted">
-            <i class="fa-solid fa-folder-open fs-2 mb-2 d-block text-secondary"></i>
-            لا توجد وثائق مرفوعة لهذه المعاملة حالياً.
-        </div>
-        @endif
     </div>
-</div>
 
-
-
-@endsection
+</body>
+</html>

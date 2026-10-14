@@ -1,252 +1,714 @@
 @extends('layouts.admin')
 
-@section('title', 'إدارة وتحديد مواعيد المقابلات - بانتظار المقابلة')
+@section('title', 'إدارة وحجز مواعيد المقابلات الشفهية والعملية - مجلس التعليم العالي')
+
+@push('styles')
+<style>
+    :root {
+        --imperial-navy: #0e1e38;
+        --imperial-navy-dark: #081224;
+        --heritage-gold: #c59b27;
+        --heritage-gold-light: #f5d77f;
+        --heritage-gold-glow: rgba(197, 155, 39, 0.25);
+        --emerald: #10b981;
+        --emerald-bg: #ecfdf5;
+        --rose: #ef4444;
+        --rose-bg: #fef2f2;
+        --amber: #f59e0b;
+        --amber-bg: #fffbeb;
+        --bg-page: #f1f5f9;
+        --surface-card: #ffffff;
+        --border-subtle: #e2e8f0;
+        --text-dark: #0f172a;
+        --text-muted: #64748b;
+    }
+
+    /* Hero Header Card */
+    .interviews-hero {
+        background: white;
+        border-radius: 14px;
+        padding: 22px 28px;
+        border: 1px solid var(--border-subtle);
+        box-shadow: 0 4px 18px rgba(0,0,0,0.02);
+        border-right: 5px solid var(--heritage-gold);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .hero-info-side {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+    }
+
+    .hero-icon-box {
+        width: 58px;
+        height: 58px;
+        border-radius: 14px;
+        background: #eff6ff;
+        border: 1.5px solid #bfdbfe;
+        color: #1d4ed8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+        box-shadow: 0 4px 12px rgba(29, 78, 216, 0.1);
+        flex-shrink: 0;
+    }
+
+    .hero-titles h2 {
+        font-size: 1.25rem;
+        font-weight: 900;
+        color: var(--imperial-navy);
+        margin-bottom: 4px;
+    }
+
+    .hero-titles p {
+        font-size: 0.86rem;
+        color: var(--text-muted);
+        margin-bottom: 0;
+    }
+
+    /* KPI Bento Grid */
+    .kpi-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+        margin-bottom: 22px;
+    }
+
+    .kpi-card {
+        background: var(--surface-card);
+        border-radius: 12px;
+        padding: 18px 22px;
+        border: 1.5px solid var(--border-subtle);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        transition: all 0.2s ease;
+    }
+
+    .kpi-card:hover {
+        transform: translateY(-2px);
+        border-color: #cbd5e1;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+    }
+
+    .kpi-data span {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    .kpi-data strong {
+        font-size: 1.8rem;
+        font-weight: 900;
+        color: var(--text-dark);
+        font-family: 'IBM Plex Sans Arabic', sans-serif;
+    }
+
+    .kpi-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+
+    /* DYNAMIC SCHEDULING ACTION BAR (SMART SCHEDULER) */
+    .smart-scheduler-panel {
+        background: linear-gradient(135deg, var(--imperial-navy) 0%, #152c50 100%);
+        border-radius: 14px;
+        padding: 20px 24px;
+        color: white;
+        box-shadow: 0 8px 25px rgba(14, 30, 56, 0.12);
+        border: 1.5px solid rgba(197, 155, 39, 0.4);
+        margin-bottom: 22px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .scheduler-top-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        padding-bottom: 10px;
+    }
+
+    .scheduler-title {
+        font-size: 0.95rem;
+        font-weight: 800;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .selected-pill-counter {
+        background: rgba(197, 155, 39, 0.2);
+        color: var(--heritage-gold-light);
+        border: 1px solid var(--heritage-gold);
+        padding: 4px 14px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 800;
+    }
+
+    .scheduler-inputs-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1.6fr auto;
+        gap: 14px;
+        align-items: end;
+    }
+
+    @media (max-width: 980px) {
+        .scheduler-inputs-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .input-block label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #cbd5e1;
+        margin-bottom: 6px;
+    }
+
+    .input-block input, .input-block select {
+        width: 100%;
+        padding: 10px 14px;
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.15);
+        background: rgba(255,255,255,0.08);
+        color: #ffffff;
+        font-size: 0.88rem;
+        outline: none;
+        transition: all 0.2s;
+    }
+
+    .input-block input:focus, .input-block select:focus {
+        background: rgba(255,255,255,0.16);
+        border-color: var(--heritage-gold);
+        box-shadow: 0 0 0 3px rgba(197, 155, 39, 0.2);
+    }
+
+    .input-block input::placeholder {
+        color: #94a3b8;
+    }
+
+    .btn-confirm-schedule {
+        background: linear-gradient(135deg, var(--heritage-gold) 0%, #aa841d 100%);
+        color: #081224;
+        font-weight: 800;
+        font-size: 0.92rem;
+        padding: 11px 22px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 14px var(--heritage-gold-glow);
+        transition: all 0.2s;
+        height: 42px;
+        white-space: nowrap;
+    }
+
+    .btn-confirm-schedule:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(197, 155, 39, 0.4);
+        color: #081224;
+    }
+
+    /* UNIFIED SEARCH & FILTER PANEL */
+    .filter-panel {
+        background: white;
+        border-radius: 12px;
+        padding: 14px 20px;
+        border: 1px solid var(--border-subtle);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .search-pill {
+        flex: 1;
+        min-width: 300px;
+        position: relative;
+    }
+
+    .search-pill input {
+        width: 100%;
+        padding: 10px 42px 10px 16px;
+        border: 1.5px solid var(--border-subtle);
+        border-radius: 30px;
+        font-size: 0.88rem;
+        background: #f8fafc;
+        outline: none;
+        transition: all 0.2s;
+    }
+
+    .search-pill input:focus {
+        background: #fff;
+        border-color: var(--imperial-navy);
+        box-shadow: 0 0 0 3px rgba(14, 30, 56, 0.08);
+    }
+
+    .search-pill i {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+    }
+
+    .select-filter-pill {
+        padding: 9px 16px;
+        border: 1.5px solid var(--border-subtle);
+        border-radius: 30px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        background: #f8fafc;
+        outline: none;
+        cursor: pointer;
+    }
+
+    /* ELEVATED CANDIDATES TABLE */
+    .table-card-container {
+        background: white;
+        border-radius: 14px;
+        border: 1px solid var(--border-subtle);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+        overflow: hidden;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    table.modern-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: right;
+    }
+
+    table.modern-table th {
+        background: #f8fafc;
+        color: var(--text-muted);
+        font-size: 0.82rem;
+        font-weight: 700;
+        padding: 14px 18px;
+        border-bottom: 1.5px solid var(--border-subtle);
+        white-space: nowrap;
+    }
+
+    table.modern-table td {
+        padding: 16px 18px;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 0.9rem;
+        vertical-align: middle;
+    }
+
+    table.modern-table tr:hover td {
+        background: #fafcff;
+    }
+
+    table.modern-table tr.row-selected td {
+        background: #f0f7ff;
+    }
+
+    .custom-checkbox {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: var(--imperial-navy);
+    }
+
+    /* Candidate Info Cluster */
+    .cand-info-box {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .cand-avatar-mini {
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+        background: #e0f2fe;
+        color: #0284c7;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: 800;
+        flex-shrink: 0;
+    }
+
+    .cand-names strong {
+        font-size: 0.95rem;
+        color: var(--imperial-navy);
+        display: block;
+    }
+
+    .cand-names span {
+        font-size: 0.76rem;
+        color: var(--text-muted);
+        font-family: monospace;
+    }
+
+    /* Status Pills */
+    .status-pill-pending {
+        background: #fffbeb;
+        color: #d97706;
+        border: 1px solid #fde68a;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+
+    .status-pill-scheduled {
+        background: #f0f9ff;
+        color: #0284c7;
+        border: 1px solid #bae6fd;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.78rem;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+
+    /* Row Action Triggers */
+    .actions-cluster {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        justify-content: center;
+    }
+
+    .btn-eval {
+        border: none;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.78rem;
+        font-weight: 800;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.15s ease;
+        text-decoration: none;
+    }
+
+    .btn-pass {
+        background: #ecfdf5;
+        color: #059669;
+        border: 1px solid #a7f3d0;
+    }
+
+    .btn-pass:hover {
+        background: #059669;
+        color: white;
+    }
+
+    .btn-fail {
+        background: #fef2f2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+    }
+
+    .btn-fail:hover {
+        background: #dc2626;
+        color: white;
+    }
+
+    .btn-edit-sched {
+        background: #f8fafc;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+        padding: 6px 10px;
+    }
+
+    .btn-edit-sched:hover {
+        background: var(--imperial-navy);
+        color: white;
+        border-color: var(--imperial-navy);
+    }
+</style>
+@endpush
 
 @section('content')
-<div class="container-fluid px-4 py-3" dir="rtl">
+<div class="container-fluid px-0" dir="rtl">
 
-    <!-- PAGE HEADER -->
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 p-3.5 bg-white shadow-xs rounded border border-secondary-subtle">
-        <div>
-            <h4 class="fw-bold mb-1 d-flex align-items-center gap-2" style="color: var(--imperial-navy);">
-                <i class="fa-solid fa-calendar-check text-cyan" style="color: #0891b2;"></i>
-                <span>إدارة وحجز مواعيد المقابلات الشفهية والعملية</span>
-            </h4>
-            <p class="text-muted mb-0 small">تجميع كافة المرشحين بحالة (بانتظار المقابلة)، تحديد موعد وساعة المقابلة، وتوليد قرار الأهلية لتقديم المقابلة.</p>
-        </div>
-
-        <div class="d-flex align-items-center gap-2">
-            <span class="badge bg-info-subtle text-info border border-info-subtle px-3 py-2 fs-7 rounded-pill">
-                <i class="fa-solid fa-users me-1"></i> إجمالي بانتظار المقابلة: <strong>{{ $totalAwaitingCount }}</strong>
-            </span>
-            <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 fs-7 rounded-pill">
-                <i class="fa-solid fa-clock-check me-1"></i> تم تحديد الموعد لهم: <strong>{{ $scheduledCount }}</strong>
-            </span>
-        </div>
-    </div>
-
-    <!-- BATCH SCHEDULING FORM CARD -->
-    <form action="{{ route('admin.interviews.batch_schedule') }}" method="POST" id="batchInterviewForm">
-        @csrf
-        <div class="card border-0 shadow-sm mb-4" style="border-top: 3.5px solid #0891b2 !important; border-radius: 6px;">
-            <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center border-bottom">
-                <h6 class="fw-bold mb-0" style="color: var(--imperial-navy);">
-                    <i class="fa-solid fa-business-time me-1.5" style="color: #0891b2;"></i>
-                    <span>تحديد موعد وساعة المقابلة الموحدة للمرشحين المحددين</span>
-                </h6>
-                <span class="text-muted fs-8">قم بتحديد المرشحين من الجدول أدناه ثم أدخل التاريخ والوقت واضغط حفظ.</span>
+    <!-- 1. HERO HEADER CARD -->
+    <section class="interviews-hero">
+        <div class="hero-info-side">
+            <div class="hero-icon-box">
+                <i class="fa-solid fa-calendar-days"></i>
             </div>
-            <div class="card-body p-4 bg-light-subtle">
-                <div class="row g-3 align-items-end">
+            <div class="hero-titles">
+                <h2>منظومة حجز وجدولة المقابلات الشفهية والعملية</h2>
+                <p>تحديد مواعيد ولجان المقابلات للمرشحين بحالة (بانتظار المقابلة)، ورصد نتائج اجتياز الأهلية التدريسية.</p>
+            </div>
+        </div>
+        <div>
+            <span class="badge" style="background: rgba(14,30,56,0.06); color: var(--imperial-navy); border: 1px solid var(--border-subtle); padding: 8px 14px; border-radius: 30px; font-weight: 700; font-size: 0.82rem;">
+                <i class="fa-solid fa-calendar-check text-warning me-1"></i> دورة مقابلات {{ date('Y') }}
+            </span>
+        </div>
+    </section>
 
-                    <!-- 1. Interview Date -->
-                    <div class="col-md-3">
-                        <label class="form-label fw-bold small text-dark mb-1">
-                            <i class="fa-regular fa-calendar me-1 text-primary"></i> تاريخ المقابلة :
-                        </label>
-                        <input type="date" name="interview_date" class="form-control fw-bold" value="{{ date('Y-m-d', strtotime('+3 days')) }}" required>
-                    </div>
+    <!-- 2. KPI METRICS -->
+    <section class="kpi-row">
+        <div class="kpi-card">
+            <div class="kpi-data">
+                <span>إجمالي بانتظار المقابلة</span>
+                <strong style="color: #0284c7;">{{ $totalAwaitingCount }}</strong>
+            </div>
+            <div class="kpi-icon" style="background: #e0f2fe; color: #0284c7;">
+                <i class="fa-solid fa-user-clock"></i>
+            </div>
+        </div>
 
-                    <!-- 2. Interview Time -->
-                    <div class="col-md-3">
-                        <label class="form-label fw-bold small text-dark mb-1">
-                            <i class="fa-regular fa-clock me-1 text-primary"></i> ساعة/وقت المقابلة :
-                        </label>
-                        <input type="text" name="interview_time" class="form-control fw-bold" placeholder="مثال: الساعة 10:00 صباحاً" value="الساعة 10:00 صباحاً" required>
-                    </div>
+        <div class="kpi-card">
+            <div class="kpi-data">
+                <span>تم تحديد الموعد لهم</span>
+                <strong style="color: var(--amber);">{{ $scheduledCount }}</strong>
+            </div>
+            <div class="kpi-icon" style="background: var(--amber-bg); color: var(--amber);">
+                <i class="fa-solid fa-calendar-check"></i>
+            </div>
+        </div>
 
-                    <!-- 3. Additional Notes -->
-                    <div class="col-md-4">
-                        <label class="form-label fw-bold small text-dark mb-1">
-                            <i class="fa-solid fa-location-dot me-1 text-danger"></i> مكان / ملاحظات المقابلة :
-                        </label>
-                        <input type="text" name="interview_notes" class="form-control" placeholder="مبنى وزارة التعليم العالي - القاعة الرئيسية" value="مبنى وزارة التعليم العالي والبحث العلمي - القاعة الرئيسية">
-                    </div>
+        <div class="kpi-card">
+            <div class="kpi-data">
+                <span>اجتازوا المقابلة (مؤهلون)</span>
+                <strong style="color: var(--emerald);">{{ $passedCount ?? 0 }}</strong>
+            </div>
+            <div class="kpi-icon" style="background: var(--emerald-bg); color: var(--emerald);">
+                <i class="fa-solid fa-user-check"></i>
+            </div>
+        </div>
 
-                    <!-- 4. Submit Button -->
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-solid-navy w-100 fw-bold py-2 shadow-xs d-flex align-items-center justify-content-center gap-1.5">
-                            <i class="fa-solid fa-save me-1" style="color: var(--heritage-gold-light);"></i>
-                            <span>تثبيت الموعد</span>
-                        </button>
-                    </div>
+        <div class="kpi-card">
+            <div class="kpi-data">
+                <span>لم يجتازوا المقابلة</span>
+                <strong style="color: var(--rose);">{{ $failedCount ?? 0 }}</strong>
+            </div>
+            <div class="kpi-icon" style="background: var(--rose-bg); color: var(--rose);">
+                <i class="fa-solid fa-user-xmark"></i>
+            </div>
+        </div>
+    </section>
 
+    <!-- 3. SMART DYNAMIC SCHEDULER PANEL -->
+    <form action="{{ route('admin.interviews.batch_schedule') }}" method="POST" id="batchInterviewForm" onsubmit="return validateBatchSchedule()">
+        @csrf
+        <section class="smart-scheduler-panel">
+            <div class="scheduler-top-meta">
+                <div class="scheduler-title">
+                    <i class="fa-solid fa-clock" style="color: var(--heritage-gold-light);"></i>
+                    تحديد موعد وساعة المقابلة الموحدة للمرشحين المحددين
+                </div>
+                <span class="selected-pill-counter" id="selectedCounter">
+                    <i class="fa-solid fa-check-double"></i> <span id="countNum">0</span> مرشح محدد
+                </span>
+            </div>
+
+            <div class="scheduler-inputs-grid">
+                <div class="input-block">
+                    <label><i class="fa-regular fa-calendar"></i> تاريخ المقابلة :</label>
+                    <input type="date" name="interview_date" value="{{ date('Y-m-d', strtotime('+3 days')) }}" required>
+                </div>
+                <div class="input-block">
+                    <label><i class="fa-regular fa-clock"></i> توقيت المقابلة :</label>
+                    <input type="text" name="interview_time" value="الساعة 10:00 صباحاً" required>
+                </div>
+                <div class="input-block">
+                    <label><i class="fa-solid fa-location-dot"></i> مكان / ملاحظات القاعة :</label>
+                    <input type="text" name="interview_notes" value="مبنى وزارة التعليم العالي والبحث العلمي - القاعة الرئيسية">
+                </div>
+                <div>
+                    <button type="submit" class="btn-confirm-schedule">
+                        <i class="fa-solid fa-floppy-disk"></i> تثبيت وحفظ الموعد
+                    </button>
                 </div>
             </div>
-        </div>
+        </section>
     </form>
 
-    <!-- SEARCH AND FILTER BAR -->
-    <div class="bg-white p-3 rounded shadow-xs border mb-4">
-        <div class="row g-2 align-items-center">
-            <div class="col-md-6">
-                <div class="input-group">
-                    <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
-                    <input type="text" name="search" form="filterForm" class="form-control border-start-0" placeholder="إبحث باسم المرشح، الرقم الوطني، أو رقم الطلب..." value="{{ $searchQuery ?? '' }}">
-                </div>
-            </div>
-            <div class="col-md-4">
-                <select name="university_id" form="filterForm" class="form-select" onchange="document.getElementById('filterForm').submit()">
-                    <option value="">-- كافة الجامعات --</option>
-                    @foreach($universities as $u)
-                        <option value="{{ $u->id }}" {{ $universityFilter == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-2">
-                <button type="submit" form="filterForm" class="btn btn-outline-navy w-100 fw-bold">تصفية</button>
-            </div>
+    <!-- 4. SEARCH & FILTER PANEL -->
+    <section class="filter-panel">
+        <div class="search-pill">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="candSearch" placeholder="ابحث باسم المرشح، الرقم الوطني، أو رقم المعاملة..." onkeyup="filterCandidates()">
         </div>
-    </div>
+        <select class="select-filter-pill" id="uniFilter" onchange="filterCandidates()">
+            <option value="">-- كافة الجامعات الطالبة --</option>
+            @foreach($universities as $u)
+                <option value="{{ $u->name }}" {{ $universityFilter == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
+            @endforeach
+        </select>
+    </section>
 
-    <!-- CANDIDATES AWAITING INTERVIEWS TABLE -->
-    <div class="card border-0 shadow-sm overflow-hidden mb-4">
+    <!-- 5. CANDIDATES DATA GRID -->
+    <section class="table-card-container">
         <div class="table-responsive">
-            <table class="table mohe-table align-middle text-center mb-0">
-                <thead style="background-color: var(--imperial-navy); color: #ffffff;">
+            <table class="modern-table" id="candidatesTable">
+                <thead>
                     <tr>
-                        <th style="width: 40px;">
-                            <input type="checkbox" id="selectAll" class="form-check-input" onclick="toggleSelectAll(this)">
+                        <th style="width: 40px; text-align: center;">
+                            <input type="checkbox" class="custom-checkbox" id="selectAllMaster" onchange="toggleSelectAll(this)">
                         </th>
-                        <th>معرف الطلب والكلمة</th>
+                        <th>معرّف الطلب</th>
                         <th>المرشح والمعلومات</th>
                         <th>الجامعة والكلية</th>
-                        <th>المؤهل العلمي</th>
+                        <th>المؤهل الأكاديمي المطلوب</th>
                         <th>موعد المقابلة المعتمد</th>
-                        <th>الإجراءات وقرار الأهلية</th>
+                        <th style="text-align: center;">الإجراءات وقرار الأهلية</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($applications as $app)
                     @php
                         $lastEd = $app->educations->last();
+                        $firstLetter = mb_substr($app->candidate->full_name ?? 'م', 0, 1, 'UTF-8');
                     @endphp
-                    <tr>
-                        <!-- Checkbox -->
-                        <td>
-                            <input type="checkbox" name="application_ids[]" value="{{ $app->id }}" form="batchInterviewForm" class="form-check-input app-checkbox">
+                    <tr id="row-{{ $app->id }}">
+                        <td style="text-align: center;">
+                            <input type="checkbox" name="application_ids[]" value="{{ $app->id }}" form="batchInterviewForm" class="custom-checkbox row-check" onchange="handleRowCheck(this)">
                         </td>
-
-                            <!-- Application ID & Code -->
-                            <td>
-                                <div class="fw-bold" style="color: var(--imperial-navy);">{{ $app->application_no }}</div>
-                                <span class="badge bg-light text-dark border fs-8">{{ $app->request_type ?? 'تعادل جديد' }}</span>
-                            </td>
-
-                            <!-- Candidate Name -->
-                            <td>
-                                <div class="fw-bold text-dark fs-6">{{ $app->candidate->full_name ?? 'غ/م' }}</div>
-                                <small class="text-muted d-block fs-8"><i class="fa-regular fa-id-card me-1"></i> {{ $app->candidate->national_id ?? '---' }}</small>
-                            </td>
-
-                            <!-- University & Faculty -->
-                            <td>
-                                <div class="fw-semibold text-dark">{{ $app->workUniversity->name ?? 'غير محددة' }}</div>
-                                <small class="text-muted fs-8">{{ $app->work_faculty ?? 'إدارة جامعة' }}</small>
-                            </td>
-
-                            <!-- Degree Level & Specialization -->
-                            <td>
-                                <div class="fw-bold" style="color: #0369a1;">{{ $lastEd->level->name ?? 'إجازة' }}</div>
-                                <small class="text-muted fs-8">{{ $lastEd->exact_specialization ?? ($lastEd->general_specialization ?? '') }}</small>
-                            </td>
-
-                            <!-- Scheduled Interview Date & Time -->
-                            <td>
-                                @if($app->interview_date)
-                                    <div class="p-2 rounded bg-cyan-subtle border border-cyan-subtle d-inline-block text-start" style="background-color: #ecfeff; border-color: #a5f3fc !important; color: #0891b2;">
-                                        <div class="fw-bold fs-7 mb-0.5">
-                                            <i class="fa-regular fa-calendar-check me-1"></i> {{ format_sys_date($app->interview_date) }}
-                                        </div>
-                                        <div class="small fw-semibold fs-8" style="color: #0e7490;">
-                                            <i class="fa-regular fa-clock me-1"></i> {{ $app->interview_time ?? '10:00 AM' }}
-                                        </div>
-                                    </div>
-                                @else
-                                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2.5 py-1.5 fs-8">
-                                        <i class="fa-solid fa-hourglass-start me-1"></i> لم يحدد الموعد بعد
-                                    </span>
-                                @endif
-                            </td>
-
-                            <!-- Actions, Outcome (Pass / Fail) & Eligibility Decision -->
-                            <td>
-                                <div class="d-flex flex-column gap-1.5 align-items-center justify-content-center" style="max-width: 140px; margin: 0 auto;">
-                                    <!-- PASS BUTTON FORM -->
-                                    <form action="{{ route('admin.interviews.decide_outcome', $app->id) }}" method="POST" class="w-100" onsubmit="return confirm('هل أنت تأكد من اعتماد نجاح المرشح بالمقابلة وترحيل الطلب إلى حالة (بانتظار إصدار القرار)؟');">
-                                        @csrf
-                                        @method('PATCH')
-                                        <input type="hidden" name="outcome" value="pass">
-                                        <button type="submit" class="btn btn-xs btn-success fw-bold py-1 px-2 shadow-2xs w-100 d-inline-flex align-items-center justify-content-center gap-1" style="font-size: 0.76rem;" title="اعتماد نجاح المرشح بالمقابلة وتحويل الحالة إلى (بانتظار إصدار القرار)">
-                                            <i class="fa-solid fa-circle-check text-white fs-9"></i> موافقة (اجتياز)
-                                        </button>
-                                    </form>
-
-                                    <!-- REJECT BUTTON -->
-                                    <button type="button" class="btn btn-xs btn-outline-danger fw-bold py-1 px-2 shadow-2xs w-100 d-inline-flex align-items-center justify-content-center gap-1" style="font-size: 0.76rem;" data-bs-toggle="modal" data-bs-target="#rejectModal{{ $app->id }}" title="اعتماد عدم اجتياز المرشح للمقابلة وتحويل الحالة إلى (مرفوض)">
-                                        <i class="fa-solid fa-circle-xmark text-danger fs-9"></i> رفض (لم يجتز)
-                                    </button>
-
-                                    <!-- Quick Individual Schedule Button -->
-                                    <button type="button" class="btn btn-xs btn-link text-decoration-none py-0.5 text-secondary w-100" style="font-size: 0.72rem;" data-bs-toggle="modal" data-bs-target="#singleScheduleModal{{ $app->id }}">
-                                        <i class="fa-solid fa-pen-to-square me-1"></i> تعديل الموعد
-                                    </button>
+                        <td>
+                            <strong style="font-family: monospace; color: #475569;">{{ $app->application_no }}</strong>
+                            <span style="display: block; font-size: 0.72rem; color: #0284c7; font-weight: 700;">{{ $app->request_type ?? 'تعادل جديد' }}</span>
+                        </td>
+                        <td>
+                            <div class="cand-info-box">
+                                <div class="cand-avatar-mini">{{ $firstLetter }}</div>
+                                <div class="cand-names">
+                                    <strong>{{ $app->candidate->full_name ?? 'غ/م' }}</strong>
+                                    <span>{{ $app->candidate->national_id ?? '---' }}</span>
                                 </div>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="7" class="text-center py-5 text-muted">
-                                <i class="fa-solid fa-calendar-xmark fs-2 mb-2 d-block text-cyan" style="color: #0891b2;"></i>
-                                لا يوجد مرشحين بانتظار المقابلة حالياً.
-                            </td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+                            </div>
+                        </td>
+                        <td>
+                            <strong style="color: var(--imperial-navy);">{{ $app->workUniversity->name ?? 'غير محددة' }}</strong>
+                            <span style="display: block; font-size: 0.76rem; color: var(--text-muted);">{{ $app->work_faculty ?? 'إدارة جامعة' }}</span>
+                        </td>
+                        <td>
+                            <span style="font-weight: 700; color: #0284c7;"><i class="fa-solid fa-graduation-cap"></i> {{ $lastEd->level->name ?? 'إجازة' }}</span>
+                            <span style="display: block; font-size: 0.76rem; color: var(--text-muted);">{{ $lastEd->exact_specialization ?? ($lastEd->general_specialization ?? 'تخصص عام') }}</span>
+                        </td>
+                        <td>
+                            @if($app->interview_date)
+                                <span class="status-pill-scheduled">
+                                    <i class="fa-regular fa-calendar-check"></i> {{ format_sys_date($app->interview_date) }} - {{ $app->interview_time ?? '10:00 ص' }}
+                                </span>
+                            @else
+                                <span class="status-pill-pending">
+                                    <i class="fa-solid fa-hourglass-start"></i> لم يحدد الموعد بعد
+                                </span>
+                            @endif
+                        </td>
+                        <td style="text-align: center;">
+                            <div class="actions-cluster">
+                                <!-- Pass button (PATCH form) -->
+                                <form action="{{ route('admin.interviews.decide_outcome', $app->id) }}" method="POST" class="d-inline" onsubmit="return confirm('هل أنت متأكد من اعتماد اجتياز المرشح ({{ $app->candidate->full_name ?? '' }}) للمقابلة وتحويله إلى (بانتظار إصدار القرار)؟');">
+                                    @csrf
+                                    @method('PATCH')
+                                    <input type="hidden" name="outcome" value="pass">
+                                    <button type="submit" class="btn-eval btn-pass" title="اعتماد اجتياز المقابلة وثبوت الأهلية">
+                                        <i class="fa-solid fa-circle-check"></i> موافقة (اجتياز)
+                                    </button>
+                                </form>
 
-            @if($applications->hasPages())
-            <div class="card-footer bg-white py-3 border-top">
-                {{ $applications->withQueryString()->links() }}
-            </div>
-            @endif
+                                <!-- Fail button (opens modal) -->
+                                <button type="button" class="btn-eval btn-fail" data-bs-toggle="modal" data-bs-target="#rejectModal{{ $app->id }}" title="رصد عدم اجتياز المقابلة">
+                                    <i class="fa-solid fa-circle-xmark"></i> رفض (لم يجتز)
+                                </button>
+
+                                <!-- Edit schedule button -->
+                                <button type="button" class="btn-eval btn-edit-sched" data-bs-toggle="modal" data-bs-target="#singleScheduleModal{{ $app->id }}" title="تعديل الموعد">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-calendar-xmark fs-2 mb-2 d-block" style="color: #94a3b8;"></i>
+                            لا يوجد مرشحين بانتظار المقابلة حالياً.
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
 
-</div>
+        @if($applications->hasPages())
+        <div class="p-3 border-top bg-light">
+            {{ $applications->withQueryString()->links() }}
+        </div>
+        @endif
+    </section>
 
-<!-- HIDDEN FILTER FORM -->
-<form action="{{ route('admin.interviews.index') }}" method="GET" id="filterForm" class="d-none"></form>
+</div>
 
 <!-- INDIVIDUAL SCHEDULE MODALS -->
 @foreach($applications as $app)
 <div class="modal fade" id="singleScheduleModal{{ $app->id }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg" style="border-top: 4px solid #0891b2 !important; border-radius: 6px;">
+        <div class="modal-content border-0 shadow-lg" style="border-top: 4px solid var(--heritage-gold) !important; border-radius: 12px;">
             <form action="{{ route('admin.interviews.batch_schedule') }}" method="POST">
                 @csrf
                 <input type="hidden" name="application_ids[]" value="{{ $app->id }}">
                 
                 <div class="modal-header bg-light">
-                    <h6 class="modal-title fw-bold text-navy">
-                        <i class="fa-solid fa-user-clock me-1.5" style="color: #0891b2;"></i>
-                        تحديد موعد المقابلة للمرشح: {{ $app->candidate->full_name ?? '' }}
+                    <h6 class="modal-title fw-bold" style="color: var(--imperial-navy);">
+                        <i class="fa-solid fa-user-clock me-1.5" style="color: var(--heritage-gold);"></i>
+                        تحديد موعد المقابلة: {{ $app->candidate->full_name ?? '' }}
                     </h6>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 
-                <div class="modal-body p-4">
-                    <div class="mb-3 text-start">
+                <div class="modal-body p-4 text-start">
+                    <div class="mb-3">
                         <label class="form-label fw-bold small text-dark">تاريخ المقابلة :</label>
                         <input type="date" name="interview_date" class="form-control fw-bold" value="{{ $app->interview_date ?? date('Y-m-d', strtotime('+3 days')) }}" required>
                     </div>
 
-                    <div class="mb-3 text-start">
+                    <div class="mb-3">
                         <label class="form-label fw-bold small text-dark">ساعة / وقت المقابلة :</label>
                         <input type="text" name="interview_time" class="form-control fw-bold" value="{{ $app->interview_time ?? 'الساعة 10:00 صباحاً' }}" required>
                     </div>
 
-                    <div class="mb-3 text-start">
+                    <div class="mb-3">
                         <label class="form-label fw-bold small text-dark">المكان / الملاحظات :</label>
                         <input type="text" name="interview_notes" class="form-control" value="{{ $app->interview_notes ?? 'مبنى وزارة التعليم العالي والبحث العلمي - القاعة الرئيسية' }}">
                     </div>
@@ -254,19 +716,17 @@
                 
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal">إلغاء</button>
-                    <button type="submit" class="btn btn-solid-navy px-4 fw-bold">حفظ الموعد</button>
+                    <button type="submit" class="btn px-4 fw-bold" style="background: var(--imperial-navy); color: white;">حفظ الموعد</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
-@endforeach
 
-<!-- REJECTION CONFIRMATION MODALS -->
-@foreach($applications as $app)
+<!-- REJECTION CONFIRMATION MODAL -->
 <div class="modal fade" id="rejectModal{{ $app->id }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg" style="border-top: 4px solid #dc2626 !important; border-radius: 6px;">
+        <div class="modal-content border-0 shadow-lg" style="border-top: 4px solid #dc2626 !important; border-radius: 12px;">
             <form action="{{ route('admin.interviews.decide_outcome', $app->id) }}" method="POST">
                 @csrf
                 @method('PATCH')
@@ -275,17 +735,17 @@
                 <div class="modal-header bg-light">
                     <h6 class="modal-title fw-bold text-danger">
                         <i class="fa-solid fa-circle-xmark me-1.5"></i>
-                        تأكيد عدم اجتياز المقابلة للمرشح: {{ $app->candidate->full_name ?? '' }}
+                        تأكيد عدم اجتياز المقابلة: {{ $app->candidate->full_name ?? '' }}
                     </h6>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 
                 <div class="modal-body p-4 text-start">
-                    <p class="small text-muted mb-3">سيتم تغيير حالة الطلب رسمياً إلى <strong class="text-danger">(مرفوض)</strong> بناءً على نتيجة المقابلة الشفهية/العملية.</p>
+                    <p class="small text-muted mb-3">سيتم تغيير حالة الطلب رسمياً إلى <strong class="text-danger">(مرفوض)</strong> بناءً على نتيجة المقابلة الشفهية والعملية.</p>
 
                     <div class="mb-3">
                         <label class="form-label fw-bold small text-dark">ملاحظات / سبب عدم الاجتياز (اختياري) :</label>
-                        <textarea name="notes" class="form-control" rows="3" placeholder="أدخل أسباب عدم اجتياز المقابلة الشفهية..."></textarea>
+                        <textarea name="notes" class="form-control" rows="3" placeholder="أدخل أسباب عدم اجتياز المقابلة..."></textarea>
                     </div>
                 </div>
                 
@@ -300,9 +760,50 @@
 @endforeach
 
 <script>
-function toggleSelectAll(master) {
-    const checkboxes = document.querySelectorAll('.app-checkbox');
-    checkboxes.forEach(cb => cb.checked = master.checked);
-}
+    function handleRowCheck(box) {
+        const row = box.closest('tr');
+        if (box.checked) {
+            row.classList.add('row-selected');
+        } else {
+            row.classList.remove('row-selected');
+        }
+        updateCounter();
+    }
+
+    function toggleSelectAll(masterBox) {
+        const checks = document.querySelectorAll('.row-check');
+        checks.forEach(chk => {
+            chk.checked = masterBox.checked;
+            handleRowCheck(chk);
+        });
+    }
+
+    function updateCounter() {
+        const count = document.querySelectorAll('.row-check:checked').length;
+        const countEl = document.getElementById('countNum');
+        if (countEl) countEl.innerText = count;
+    }
+
+    function validateBatchSchedule() {
+        const count = document.querySelectorAll('.row-check:checked').length;
+        if (count === 0) {
+            alert('يرجى تحديد مرشح واحد على الأقل من الجدول أولاً.');
+            return false;
+        }
+        return true;
+    }
+
+    function filterCandidates() {
+        const query = (document.getElementById('candSearch')?.value || '').toLowerCase().trim();
+        const uniFilter = (document.getElementById('uniFilter')?.value || '').toLowerCase().trim();
+        const rows = document.querySelectorAll('#candidatesTable tbody tr');
+
+        rows.forEach(r => {
+            const text = r.innerText.toLowerCase();
+            const matchesQuery = !query || text.includes(query);
+            const matchesUni = !uniFilter || text.includes(uniFilter);
+            r.style.display = (matchesQuery && matchesUni) ? '' : 'none';
+        });
+    }
 </script>
 @endsection

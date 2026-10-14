@@ -22,7 +22,10 @@ class ApplicationsController extends Controller
         $requestTypeFilter = $request->query('request_type');
         $searchQuery = $request->query('search');
 
-        $query = Application::where('status', '!=', 'مسودة')->with(['candidate.applications', 'workUniversity', 'user', 'messages', 'decisions', 'requestTypeRelation', 'statusRelation']);
+        // Exclude finalized/archived transactions (تم الصدور, مرفوض) and drafts (مسودة)
+        $archivedStatuses = ['تم الصدور', 8, '8', 'مرفوض', 9, '9', 10, '10'];
+        $query = Application::whereNotIn('status', array_merge(['مسودة', 1, '1'], $archivedStatuses))
+            ->with(['candidate.applications', 'workUniversity', 'user', 'messages', 'decisions', 'requestTypeRelation', 'statusRelation']);
 
         if ($statusFilter) {
             $query->where(function($q) use ($statusFilter) {
@@ -44,11 +47,20 @@ class ApplicationsController extends Controller
 
         if ($searchQuery) {
             $query->where(function($q) use ($searchQuery) {
-                $q->whereHas('candidate', function($cq) use ($searchQuery) {
-                    $cq->where('full_name', 'like', '%'.$searchQuery.'%');
-                })
-                ->orWhere('application_no', 'like', '%'.$searchQuery.'%')
-                ->orWhere('work_faculty', 'like', '%'.$searchQuery.'%');
+                $q->where('application_no', 'like', '%'.$searchQuery.'%')
+                  ->orWhere('work_faculty', 'like', '%'.$searchQuery.'%')
+                  ->orWhere('work_department', 'like', '%'.$searchQuery.'%')
+                  ->orWhereHas('candidate', function($cq) use ($searchQuery) {
+                      $cq->where('full_name', 'like', '%'.$searchQuery.'%')
+                        ->orWhere('national_id', 'like', '%'.$searchQuery.'%');
+                  });
+            });
+        }
+
+        if ($request->filled('national_id')) {
+            $natId = trim($request->query('national_id'));
+            $query->whereHas('candidate', function($cq) use ($natId) {
+                $cq->where('national_id', 'like', '%'.$natId.'%');
             });
         }
 
@@ -64,9 +76,9 @@ class ApplicationsController extends Controller
         $universities = LookupUniversity::all();
         $requestTypesList = ApplicationRequestType::where('name', '!=', 'مسودة')->get();
 
-        // Load statuses dynamically from application_statuses table
-        $filterStatusesList = ApplicationStatus::whereNotIn('name', ['مسودة'])->pluck('name')->toArray();
-        $statusesList = ApplicationStatus::whereNotIn('name', ['مسودة', 'تم الصدور'])->pluck('name')->toArray();
+        // Load statuses dynamically from application_statuses table (Operational statuses only)
+        $filterStatusesList = ApplicationStatus::whereNotIn('name', ['مسودة', 'تم الصدور', 'مرفوض'])->pluck('name')->toArray();
+        $statusesList = ApplicationStatus::whereNotIn('name', ['مسودة', 'تم الصدور', 'مرفوض'])->pluck('name')->toArray();
 
         if ($request->ajax() || $request->has('ajax')) {
             return view('admin.applications.partials._table', compact(
@@ -155,6 +167,9 @@ class ApplicationsController extends Controller
         ]);
 
         $app = Application::findOrFail($id);
+        if ($app->isArchived()) {
+            return redirect()->back()->with('error', 'المعاملة مؤرشفة رسمياً ومغلقة (للاطلاع فقط). لا يمكن إرسال رسائل جديدة.');
+        }
 
         ApplicationMessage::create([
             'application_id' => $app->id,

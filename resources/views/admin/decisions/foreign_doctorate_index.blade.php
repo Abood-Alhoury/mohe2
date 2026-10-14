@@ -7,21 +7,22 @@
 <!-- NAV TABS FOR DECISION TYPES -->
 @include('admin.decisions._nav_tabs', ['active' => 'foreign_doctorate'])
 
+<div class="container-fluid px-1 px-md-2">
 <div class="row g-3" dir="rtl">
 
     {{-- ============================================================
          العمود الأيمن: نموذج إصدار قرارات تعادل الدكتوراه الخارجية والأهلية
     ============================================================ --}}
     <div class="col-xl-4 col-lg-5 col-md-12">
-        <div class="card border-0 shadow-sm overflow-hidden h-100" style="border-top: 3.5px solid var(--heritage-gold) !important; border-radius: 4px;">
+        <div class="card rounded-3xl border border-slate-200/90 bg-white p-6 pb-6 shadow-sm overflow-hidden space-y-5">
             <!-- Header -->
-            <div class="card-header py-2.5 px-3 text-white" style="background-color: var(--imperial-navy) !important;">
-                <h5 class="mb-0 fs-6 fw-bold text-white d-flex align-items-center gap-2 text-start" dir="rtl">
-                    <i class="fa-solid fa-file-signature" style="color: var(--heritage-gold-light);"></i>
+            <div class="card-header p-0 pb-3 bg-transparent border-bottom d-flex align-items-center justify-content-between text-start" dir="rtl">
+                <h5 class="mb-0 fs-6 fw-bold d-flex align-items-center gap-2" style="color: var(--imperial-navy);">
+                    <i class="fa-solid fa-file-signature" style="color: var(--heritage-gold);"></i>
                     <span>إصدار ورصد قرارات الدكتوراه الخارجية والأهلية</span>
                 </h5>
             </div>
-            <div class="card-body p-3.5 bg-white" dir="rtl">
+            <div class="card-body p-0 pt-2 bg-white" dir="rtl">
                 <form action="{{ route('admin.foreign_doctorate_decisions.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
 
@@ -136,7 +137,7 @@
                     </div>
 
                     {{-- 1. بيانات قرار الأهلية --}}
-                    <div class="p-2.5 rounded mb-3 border text-start" style="background-color: #F8FAFC; border-color: #E2E8F0 !important;">
+                    <div class="rounded-2xl border border-slate-200 p-4 bg-slate-50/50 mb-4 text-start">
                         <span class="badge bg-navy text-gold mb-2 d-inline-flex align-items-center gap-1 py-1 px-2">
                             <i class="fa-solid fa-user-check"></i> مستند 1: قرار الأهلية العلمية
                         </span>
@@ -158,7 +159,7 @@
                     </div>
 
                     {{-- 2. بيانات قرار التعادل الرسمي --}}
-                    <div class="p-2.5 rounded mb-3 border text-start" style="background-color: #FAF6EE; border-color: #EBDCB9 !important;">
+                    <div class="rounded-2xl border border-slate-200 p-4 bg-slate-50/50 mb-4 text-start">
                         <span class="badge mb-2 d-inline-flex align-items-center gap-1 py-1 px-2" style="background-color: var(--heritage-gold); color: #000;">
                             <i class="fa-solid fa-stamp"></i> مستند 2: قرار تعادل الدكتوراه غير السورية الرسمي <span class="text-danger">*</span>
                         </span>
@@ -170,7 +171,7 @@
                             </div>
                             <div class="col-6">
                                 <label class="form-label small fw-bold mb-1">تاريخ القرار <span class="text-danger">*</span></label>
-                                <input type="date" name="decision_date" class="form-control form-control-sm text-start" value="{{ date('Y-m-d') }}" required>
+                                <input type="date" name="decision_date" class="form-control-sm form-control text-start" value="{{ date('Y-m-d') }}" required>
                             </div>
                             <div class="col-12">
                                 <label class="form-label small fw-bold mb-1">ملف قرار التعادل المعتمد (PDF) <span class="text-danger">*</span></label>
@@ -184,9 +185,9 @@
                         <textarea name="notes" class="form-control form-control-sm text-start" rows="2" placeholder="ملاحظات حول قرار تعادل الدكتوراه الخارجية..."></textarea>
                     </div>
 
-                    <button type="submit" class="btn btn-solid-navy w-100 py-2 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-xs">
-                        <i class="fa-solid fa-paper-plane" style="color: var(--heritage-gold-light);"></i>
-                        <span>تثبيت القرارات وإشعار الجامعة فوراً</span>
+                    <button type="submit" class="w-full py-3.5 px-4 rounded-xl bg-[#c59b27] hover:bg-[#b0891e] text-white font-extrabold text-sm shadow-md transition flex items-center justify-center gap-2 mt-4">
+                        <i class="fa-solid fa-circle-check"></i>
+                        اعتماد ورصد القرار نهائياً
                     </button>
                 </form>
             </div>
@@ -321,5 +322,5 @@
 
     </div>
 
-</div>
+</div>{{-- /container-fluid --}}
 @endsection

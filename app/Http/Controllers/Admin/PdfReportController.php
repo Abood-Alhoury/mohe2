@@ -15,6 +15,7 @@ class PdfReportController extends Controller
             'candidate.nationality',
             'workUniversity',
             'courses',
+            'experiences',
             'parentApplication.workUniversity',
             'parentApplication.latestDecision',
             'parentApplication.courses',
@@ -50,6 +51,7 @@ class PdfReportController extends Controller
             'candidate.nationality',
             'workUniversity',
             'courses',
+            'experiences',
             'parentApplication.workUniversity',
             'parentApplication.latestDecision',
             'parentApplication.courses',
@@ -126,6 +128,7 @@ class PdfReportController extends Controller
             'candidate.nationality',
             'workUniversity',
             'courses',
+            'experiences',
             'parentApplication.workUniversity',
             'parentApplication.latestDecision',
             'parentApplication.courses',
@@ -156,6 +159,7 @@ class PdfReportController extends Controller
             'candidate.nationality',
             'workUniversity',
             'courses',
+            'experiences',
             'parentApplication.workUniversity',
             'parentApplication.latestDecision',
             'parentApplication.courses',
@@ -271,9 +275,13 @@ class PdfReportController extends Controller
         $mergedContent = $merger->Output('S');
         @unlink($mozhakkaraTmpPath);
 
+        $disposition = request()->has('download') ? 'attachment' : 'inline';
+
         return response($mergedContent, 200, [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="' . $fileName . '"; filename*=UTF-8\'\'' . rawurlencode($fileName),
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => $disposition . '; filename="' . $fileName . '"; filename*=UTF-8\'\'' . rawurlencode($fileName),
+            'Cache-Control'       => 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0',
+            'Pragma'              => 'public',
         ]);
     }
 }

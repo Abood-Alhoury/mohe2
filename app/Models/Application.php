@@ -117,6 +117,23 @@ class Application extends Model
         return $this->belongsTo(EquivalenceProfile::class, 'candidate_id');
     }
 
+    /**
+     * Alias for candidate relationship for developer ergonomics
+     */
+    public function profile()
+    {
+        return $this->belongsTo(EquivalenceProfile::class, 'candidate_id');
+    }
+
+    /**
+     * Check if application is finalized / archived
+     */
+    public function isArchived(): bool
+    {
+        $status = $this->attributes['status'] ?? $this->status;
+        return in_array($status, [8, '8', 'تم الصدور', 9, '9', 'مرفوض', 10, '10']);
+    }
+
     public function workUniversity()
     {
         return $this->belongsTo(LookupUniversity::class, 'work_university_id');
@@ -135,6 +152,37 @@ class Application extends Model
     public function educations()
     {
         return $this->hasMany(Education::class, 'application_id');
+    }
+
+    public function experiences()
+    {
+        return $this->hasMany(ApplicationExperience::class, 'application_id');
+    }
+
+    /**
+     * Total days of verified teaching experience
+     */
+    public function getTotalExperienceDaysAttribute(): int
+    {
+        return (int) $this->experiences->sum(function ($exp) {
+            if ($exp->duration_days > 0) {
+                return $exp->duration_days;
+            }
+            if ($exp->start_date && $exp->end_date) {
+                $start = \Carbon\Carbon::parse($exp->start_date);
+                $end = \Carbon\Carbon::parse($exp->end_date);
+                return max(0, $start->diffInDays($end));
+            }
+            return 0;
+        });
+    }
+
+    /**
+     * Check if cumulative experience >= 2 years (730 days)
+     */
+    public function getHasTwoYearsExperienceAttribute(): bool
+    {
+        return $this->total_experience_days >= 730;
     }
 
     public function messages()
@@ -215,4 +263,13 @@ class Application extends Model
     {
         return (bool) $this->scientific_production_approved;
     }
+
+    /**
+     * مصفوفة التصريف اللغوي المذكر والمؤنث للمرشح
+     */
+    public function getGenderDictionary()
+    {
+        return \App\Http\Controllers\Admin\GeneratedDecisionController::getGenderDictionary($this);
+    }
 }
+

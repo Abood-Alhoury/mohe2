@@ -328,12 +328,21 @@
                 </a>
 
                 <a href="{{ route('admin.decisions.index') }}" 
-                   class="sidebar-link {{ request()->routeIs('admin.decisions*') || request()->routeIs('admin.doctorate_decisions*') || request()->routeIs('admin.applied_decisions*') || request()->routeIs('admin.faculty_decisions*') ? 'active' : '' }}"
+                   class="sidebar-link {{ request()->routeIs('admin.decisions*') || request()->routeIs('admin.doctorate_decisions*') || request()->routeIs('admin.applied_decisions*') || request()->routeIs('admin.faculty_decisions*') || request()->routeIs('admin.rejected_decisions*') || request()->routeIs('admin.theoretical_decisions*') ? 'active' : '' }}"
                    :title="!isExpanded ? 'إصدار القرارات' : ''">
                     <div class="sidebar-icon-tile tile-amber">
                         <i class="fa-solid fa-stamp"></i>
                     </div>
                     <span class="sidebar-text-label">إصدار القرارات</span>
+                </a>
+
+                <a href="{{ route('admin.archive.index') }}" 
+                   class="sidebar-link {{ request()->routeIs('admin.archive*') ? 'active' : '' }}"
+                   :title="!isExpanded ? 'الأرشيف المركزي' : ''">
+                    <div class="sidebar-icon-tile" style="background: rgba(14,30,56,0.08); color: #0e1e38; border: 1px solid rgba(14,30,56,0.15);">
+                        <i class="fa-solid fa-box-archive"></i>
+                    </div>
+                    <span class="sidebar-text-label">الأرشيف المركزي</span>
                 </a>
 
             </nav>
@@ -378,16 +387,36 @@
     <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Global Max 2MB File Size Validation -->
+    <!-- Global File Size Validation (5MB for Theses/Dissertations/Abstracts, 2MB for Standard Files) -->
     <script>
         document.addEventListener('change', function(e) {
             if (e.target && e.target.tagName === 'INPUT' && e.target.type === 'file') {
                 const file = e.target.files[0];
                 if (file) {
-                    const maxBytes = 2 * 1024 * 1024; // 2 MB
+                    const name = (e.target.name || '').toLowerCase();
+                    const id = (e.target.id || '').toLowerCase();
+                    const labelText = (e.target.closest('div')?.querySelector('label')?.textContent || '') + ' ' +
+                                      (e.target.closest('.field-group')?.querySelector('label')?.textContent || '') + ' ' +
+                                      (e.target.closest('.border')?.querySelector('label')?.textContent || '') + ' ' +
+                                      (e.target.closest('.upload-field-row')?.querySelector('span')?.textContent || '') + ' ' +
+                                      (e.target.getAttribute('title') || '');
+
+                    // 5MB allowed for Master's thesis / PhD dissertation / abstracts / full thesis
+                    const is5MB = (
+                        e.target.dataset.maxMb === '5' ||
+                        e.target.dataset.maxSize === '5' ||
+                        ['file_thesis_summary', 'file_thesis_abstract', 'file_master_thesis_abstract', 'file_phd_thesis_abstract', 'file_phd_full_thesis', 'file_ma_thesis_summary', 'file_thesis', 'file_dissertation'].includes(name) ||
+                        name.includes('thesis') || name.includes('abstract') || name.includes('dissertation') ||
+                        id.includes('thesissummary') || id.includes('thesisabstract') || id.includes('fullthesis') ||
+                        ((labelText.includes('رسالة') || labelText.includes('أطروحة') || labelText.includes('ملخص')) && !labelText.includes('إيصال') && !name.includes('receipt'))
+                    );
+
+                    const maxLimitMB = is5MB ? 5 : 2;
+                    const maxBytes = maxLimitMB * 1024 * 1024;
+
                     if (file.size > maxBytes) {
                         const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-                        alert('⚠️ عذراً! حجم الملف المرفق (' + fileSizeMB + ' ميغابايت) يتجاوز الحد الأقصى المسموح به (2 ميغابايت).\nيرجى اختيار ملف بحجم أصغر لضمان عدم امتلاء السيرفر.');
+                        alert('⚠️ عذراً! حجم الملف المرفق (' + fileSizeMB + ' ميغابايت) يتجاوز الحد الأقصى المسموح به (' + maxLimitMB + ' ميغابايت).\nيرجى اختيار ملف بحجم أصغر لضمان عدم امتلاء السيرفر.');
                         e.target.value = '';
                     }
                 }

@@ -83,7 +83,7 @@
             <div>بناءً على أحكام قانون تنظيم الجامعات رقم /6/ لعام 2006، ولائحته التنفيذية.</div>
             <div>والمرسوم التشريعي رقم /36/ لعام 2001 وتعليماته التنفيذية وتعديلاتهما.</div>
             <div>وقرارات مجلس التعليم العالي ولجنة التأهيل ومعادلة الدرجات العلمية ولاسيما القرار رقم /175/ تاريخ 2022/2/16.</div>
-            <div>وقرار لجنة التأهيل ومعادلة الدرجات العلمية رقم /<span contenteditable="true" style="outline: none;">{!! ($decisionNo && $decisionNo !== '---') ? $decisionNo : '678' !!}</span>/ تاريخ <span contenteditable="true" style="outline: none;">{{ $decisionDate }}</span>.</div>
+            <div>وقرار لجنة التأهيل ومعادلة الدرجات العلمية رقم /<span contenteditable="true" style="outline: none;"></span>/ تاريخ <span contenteditable="true" style="outline: none;"></span></div>
             <div>وما قررته لجنة الأهلية المنعقدة بتاريخ <span contenteditable="true" style="outline: none;">{{ $eligibilityDate }}</span></div>
         </div>
 
@@ -92,7 +92,7 @@
         </div>
 
         <div class="article-div" id="live-article-body" contenteditable="true" title="انقر هنا لتعديل نص القرار مباشرة" style="font-size: 14px; margin-bottom: 50px; text-align: justify; line-height: 1.85; outline: none;">
-            - {{ $titlePrefix ?? 'السيد الدكتور' }} <strong>{{ $candidateName }}</strong> {{ $genderAttrs['promotionWord'] ?? 'يرقى' }} للتدريس في الجامعات السورية الخاصة عملاً بالقرارات الواردة أعلاه.
+            - <span contenteditable="true" style="outline: none;">{{ $g['doctor'] ?? ($candidateTitle ?? 'الدكتور') }}</span> <strong><span contenteditable="true" style="outline: none;">{{ $candidateName }}</span></strong> <span contenteditable="true" style="outline: none;">{{ $g['promoted'] ?? ($genderAttrs['promotionWord'] ?? 'يرقى') }}</span> للتدريس في الجامعات السورية الخاصة عملاً بالقرارات الواردة أعلاه.
         </div>
 
     @else
@@ -133,7 +133,7 @@
         </div>
 
         <div class="article-div" id="live-article-body" contenteditable="true" title="انقر هنا لتعديل نص القرار مباشرة" style="font-size: 16px; margin-bottom: 30px; text-align: justify; line-height: 1.85; outline: none;">
-            - {{ $titlePrefix ?? 'إن السيد/السيدة' }} <strong>{{ $candidateName }} </strong>{{ $qualifiedWord ?? 'مؤهل/ة' }} لتدريس في الجامعات السورية الخاصة عملاً بالمقررات الواردة أعلاه.
+            - <span contenteditable="true" style="outline: none;">{{ $g['title'] ?? ($candidateTitle ?? 'السيد') }}</span> <strong><span contenteditable="true" style="outline: none;">{{ $candidateName }}</span></strong> <span contenteditable="true" style="outline: none;">{{ $isFemale ? 'مؤهلة' : 'مؤهل' }}</span> للتدريس في الجامعات السورية الخاصة عملاً بالمقررات الواردة أعلاه.
         </div>
     @endif
 
@@ -177,13 +177,29 @@
         </div>
 
         <div class="article-div" id="live-article-body" contenteditable="true" title="انقر هنا لتعديل نص القرار مباشرة" style="font-size: 16px; margin-bottom: 14px; text-align: justify; line-height: 2.2; outline: none;">
-            <strong>المادة 1-</strong> السماح {{ $candidateTitlePrep ?? 'للسيد الدكتور' }} {{ $candidateName }} (عضو الهيئة التدريسية في {{ $govFaculty }} بجامعة {{ $govUni }}) بالتدريس باختصاص {{ $teachingDept }} في الجامعات الخاصة السورية.
+            <strong>المادة 1-</strong> السماح <span contenteditable="true" style="outline:none;">{{ $g['for_doctor'] ?? ($candidateTitlePrep ?? 'للسيد الدكتور') }}</span> <strong><span contenteditable="true" style="outline:none;">{{ $candidateName }}</span></strong> (عضو الهيئة التدريسية في <span contenteditable="true" style="outline:none;">{{ $govFaculty }}</span> بجامعة <span contenteditable="true" style="outline:none;">{{ $govUni }}</span>) بالتدريس باختصاص <span contenteditable="true" style="outline:none;">{{ $finalTeachingSpec ?? $teachingDept }}</span> في الجامعات الخاصة السورية.
         </div>
 
-   
+    @elseif(!empty($isResearchCenter))
+        {{-- نموذج باحث في مراكز البحوث --}}
+        <div class="preamble-div" style="font-size: 15px; margin-bottom: 12px; text-align: justify; line-height: 1.6;">
+            <div style="margin-bottom: 5px;">رئيس لجنة التأهيل ومعادلة الدرجات العلمية.</div>
+            <div style="margin-bottom: 5px;">بناءً على أحكام قانون تنظيم الجامعات رقم 6 لعام 2006 ولائحته التنفيذية وتعديلاتهما.</div>
+            <div style="margin-bottom: 5px;">وعلى قرار مجلس التعليم العالي رقم /236/ تاريخ 2007/7/15.</div>
+            <div style="margin-bottom: 5px;">وعلى قرار مجلس التعليم العالي رقم /175/ تاريخ 2022/6/16 وتعديلاته.</div>
+            <div style="margin-bottom: 5px;">وعلى كتاب {{ $uniName }} رقم <span contenteditable="true" id="live-uni-req-no" style="outline:none;">{!! $uniReqNo ?: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' !!}</span> تاريخ <span contenteditable="true" id="live-uni-req-date" style="outline:none;">{!! $uniReqDate ?: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' !!}</span></div>
+        </div>
+
+        <div class="decree-header-div" style="text-align: center; font-size: 16px; font-weight: bold; margin: 15px 0 12px; text-decoration: underline;">
+            يقرر ما يأتي:
+        </div>
+
+        <div class="article-div" id="live-article-body" contenteditable="true" title="انقر هنا لتعديل نص القرار مباشرة" style="font-size: 16px; margin-bottom: 14px; text-align: justify; line-height: 2.2; outline: none;">
+            <strong>المادة 1-</strong> تعدّ درجة الدكتوراه في <span contenteditable="true" style="outline:none;">{{ $phdFormattedSpec ?? $phdSpec }}</span> الممنوحة <span contenteditable="true" style="outline:none;">{{ $g['for_doctor'] ?? ($candidateTitlePrep ?? 'للدكتور') }}</span> <strong><span contenteditable="true" style="outline:none;">{{ $candidateName }}</span></strong> (<span contenteditable="true" style="outline:none;">{{ $g['appointed_researcher'] ?? ($appointedResearcherWord ?? 'والمعين باحث') }}</span> لدى <span contenteditable="true" style="outline:none;">{{ $rcCenterName }}</span>) عام <span contenteditable="true" style="outline:none;">{{ $phdYear }}</span> <span contenteditable="true" style="outline:none;">{{ $phdUniCountry ?? ('من ' . $phdUni) }}</span>، مؤهلة للتدريس باختصاص <span contenteditable="true" style="outline:none;">{{ $finalTeachingSpec ?? $teachingDept }}</span> بالجامعات الخاصة السورية.
+        </div>
 
     @elseif(!empty($isForeignDoctorate) || $decisionType === 'foreign_doctorate')
-        {{-- نموذج تعادل دكتوراه غير سورية (خارجية) مطابق للوثيقة الرسمية --}}
+        {{-- نموذج تعادل دكتوراه غير سورية (خارجية) --}}
         <div class="preamble-div" style="font-size: 15px; margin-bottom: 12px; text-align: justify; line-height: 1.6;">
             <div style="margin-bottom: 5px;">رئيس لجنة التأهيل ومعادلة الدرجات العلمية.</div>
             <div style="margin-bottom: 5px;">بناءً على أحكام قانون تنظيم الجامعات رقم 6 لعام 2006 ولائحته التنفيذية وتعديلاتهما.</div>
@@ -199,11 +215,11 @@
         </div>
 
         <div class="article-div" id="live-article-body" contenteditable="true" title="انقر هنا لتعديل نص القرار مباشرة" style="font-size: 16px; margin-bottom: 14px; text-align: justify; line-height: 2.2; outline: none;">
-            <strong>المادة 1-</strong> تعدّ درجة الدكتوراه في <span contenteditable="true" style="outline:none;">{{ $phdDepartment ?: ($phdFaculty ?: $phdSpec) }}</span> شعبة <span contenteditable="true" style="outline:none;">{{ $phdExact ?: $phdSpec }}</span> الممنوحة <span contenteditable="true" style="outline:none;">{{ $candidateTitlePrep ?? 'للدكتور' }}</span> <strong><span contenteditable="true" style="outline:none;">{{ $candidateName }}</span></strong> عام <span contenteditable="true" style="outline:none;">{{ $phdYear }}</span> من <span contenteditable="true" style="outline:none;">{{ preg_match('/^(جامعة|جامعه)\s+/u', $phdUni) ? $phdUni : 'جامعة ' . $phdUni }}</span> في <span contenteditable="true" style="outline:none;">{{ $phdCountry ?: '---' }}</span>، والمسبوقة بدرجة الماجستير في <span contenteditable="true" style="outline:none;">{{ $masterDepartment ?: ($masterFaculty ?: $masterGeneral) }}</span> اختصاص <span contenteditable="true" style="outline:none;">{{ $masterExact ?: $masterSpec }}</span> الممنوحة عام <span contenteditable="true" style="outline:none;">{{ $masterYear }}</span> من <span contenteditable="true" style="outline:none;">{{ preg_match('/^(جامعة|جامعه)\s+/u', $masterUni) ? $masterUni : 'جامعة ' . $masterUni }}</span>{{ !empty($masterCountry) ? ' في ' . $masterCountry : '' }}، ودرجة الإجازة في <span contenteditable="true" style="outline:none;">{{ $baSpec ?: ($baFaculty ?: $baGeneral) }}</span> الممنوحة عام <span contenteditable="true" style="outline:none;">{{ $baYear }}</span> من <span contenteditable="true" style="outline:none;">{{ preg_match('/^(جامعة|جامعه)\s+/u', $baUni) ? $baUni : 'جامعة ' . $baUni }}</span>{{ (!empty($baCountry) && $baCountry !== 'سوريا') ? ' في ' . $baCountry : '' }}، معادلة ومؤهلة لدرجة الدكتوراه المطلوبة للتعيين والتدريس باختصاص <span contenteditable="true" style="outline:none;">{{ $teachingDept }}</span> بالجامعات الخاصة السورية.
+            <strong>المادة 1-</strong> تعدّ درجة الدكتوراه في <span contenteditable="true" style="outline:none;">{{ $phdFormattedSpec ?? ($phdDepartment ?: ($phdFaculty ?: $phdSpec)) }}</span> الممنوحة <span contenteditable="true" style="outline:none;">{{ $g['for_doctor'] ?? ($candidateTitlePrep ?? 'للدكتور') }}</span> <strong><span contenteditable="true" style="outline:none;">{{ $candidateName }}</span></strong> عام <span contenteditable="true" style="outline:none;">{{ $phdYear }}</span> <span contenteditable="true" style="outline:none;">{{ $phdUniCountry }}</span>، والمسبوقة بدرجة الماجستير في <span contenteditable="true" style="outline:none;">{{ $masterFormattedSpec }}</span> الممنوحة عام <span contenteditable="true" style="outline:none;">{{ $masterYear }}</span> <span contenteditable="true" style="outline:none;">{{ $masterUniCountry }}</span>، ودرجة الإجازة في <span contenteditable="true" style="outline:none;">{{ $baFormattedSpec }}</span> الممنوحة عام <span contenteditable="true" style="outline:none;">{{ $baYear }}</span> <span contenteditable="true" style="outline:none;">{{ $baUniCountry }}</span>، معادلة ومؤهلة لدرجة الدكتوراه المطلوبة للتعيين والتدريس باختصاص <span contenteditable="true" style="outline:none;">{{ $finalTeachingSpec ?? $teachingDept }}</span> بالجامعات الخاصة السورية.
         </div>
 
     @elseif(!empty($isDoctorate))
-        {{-- نموذج تعادل الدكتوراه السورية --}}
+        {{-- نموذج تعادل الدكتوراه السورية (داخلي) --}}
         <div class="preamble-div" style="font-size: 15px; margin-bottom: 12px; text-align: justify; line-height: 1.6;">
             <div style="margin-bottom: 5px;">رئيس لجنة التأهيل ومعادلة الدرجات العلمية.</div>
             <div style="margin-bottom: 5px;">بناءً على أحكام قانون تنظيم الجامعات رقم 6 لعام 2006 ولائحته التنفيذية وتعديلاتهما.</div>
@@ -218,21 +234,21 @@
         </div>
 
         <div class="article-div" id="live-article-body" contenteditable="true" title="انقر هنا لتعديل نص القرار مباشرة" style="font-size: 16px; margin-bottom: 14px; text-align: justify; line-height: 2.2; outline: none;">
-            <strong>المادة 1-</strong> تعدّ درجة الدكتوراه في {{ $phdSpec }} الممنوحة {{ $candidateTitlePrep }} <strong>{{ $candidateName }}</strong> عام {{ $phdYear }} من جامعة {{ $phdUni }}، والمسبوقة بدرجة الماجستير في {{ $masterSpec }} الممنوحة عام {{ $masterYear }} من جامعة {{ $masterUni }}، ودرجة الإجازة في {{ $baFaculty ?: $baGeneral }} الممنوحة عام {{ $baYear }} من جامعة {{ $baUni }}، مؤهلة للتعيين والتدريس باختصاص {{ $teachingDept }} بالجامعات الخاصة السورية.
+            <strong>المادة 1-</strong> تعدّ درجة الدكتوراه في <span contenteditable="true" style="outline:none;">{{ $phdFormattedSpec ?? $phdSpec }}</span> الممنوحة <span contenteditable="true" style="outline:none;">{{ $g['for_doctor'] ?? ($candidateTitlePrep ?? 'للدكتور') }}</span> <strong><span contenteditable="true" style="outline:none;">{{ $candidateName }}</span></strong> عام <span contenteditable="true" style="outline:none;">{{ $phdYear }}</span> <span contenteditable="true" style="outline:none;">{{ $phdUniCountry }}</span>، والمسبوقة بدرجة الماجستير في <span contenteditable="true" style="outline:none;">{{ $masterFormattedSpec }}</span> الممنوحة عام <span contenteditable="true" style="outline:none;">{{ $masterYear }}</span> <span contenteditable="true" style="outline:none;">{{ $masterUniCountry }}</span>، ودرجة الإجازة في <span contenteditable="true" style="outline:none;">{{ $baFormattedSpec }}</span> الممنوحة عام <span contenteditable="true" style="outline:none;">{{ $baYear }}</span> <span contenteditable="true" style="outline:none;">{{ $baUniCountry }}</span>، مؤهلة للتعيين والتدريس باختصاص <span contenteditable="true" style="outline:none;">{{ $finalTeachingSpec ?? $teachingDept }}</span> بالجامعات الخاصة السورية.
         </div>
 
     @else
- {{-- نموذج تعادل الماجستير (سوري / تطبيقي / خارجي) --}}
-<div class="preamble-div" style="font-size: 15px; margin-bottom: 12px; text-align: justify; line-height: 1.6;">
-    <div style="margin-bottom: 5px;">رئيس لجنة التأهيل ومعادلة الدرجات العلمية.</div>
-    <div style="margin-bottom: 5px;">بناءً على أحكام قانون تنظيم الجامعات رقم 6 لعام 2006 ولائحته التنفيذية وتعديلاتهما.</div>
-    <div style="margin-bottom: 5px;">وقرار مجلس التعليم العالي رقم /236/ تاريخ 2007/7/15</div>
-    <div style="margin-bottom: 5px;">وقرار مجلس التعليم العالي رقم /175/ تاريخ 2022/6/16</div>
-    <div style="margin-bottom: 5px;">وكتاب {{ $uniName }} رقم <span contenteditable="true" id="live-uni-req-no" style="outline:none;">{!! $uniReqNo ?: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' !!}</span> تاريخ <span contenteditable="true" id="live-uni-req-date" style="outline:none;">{!! $uniReqDate ?: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' !!}</span></div>
-    
-    {{-- إضافة مستند قرار اللجنة للماجستير الخارجي بنوعيه (نظري أو تطبيقي) --}}
-    @if($isForeignMaster || $decisionType === 'foreign_master_theoretical' || $decisionType === 'foreign_master_applied')
-        <div style="margin-bottom: 5px;">وعلى قرار لجنة التأهيل ومعادلة الدرجات العلمية المنعقدة في <span contenteditable="true" style="outline:none;">{{ $committeeDate ?? ($decisionDate ?? '') }}</span></div>
+        {{-- نموذج تعادل الماجستير (سوري / تطبيقي / خارجي) --}}
+        <div class="preamble-div" style="font-size: 15px; margin-bottom: 12px; text-align: justify; line-height: 1.6;">
+            <div style="margin-bottom: 5px;">رئيس لجنة التأهيل ومعادلة الدرجات العلمية.</div>
+            <div style="margin-bottom: 5px;">بناءً على أحكام قانون تنظيم الجامعات رقم 6 لعام 2006 ولائحته التنفيذية وتعديلاتهما.</div>
+            <div style="margin-bottom: 5px;">وقرار مجلس التعليم العالي رقم /236/ تاريخ 2007/7/15</div>
+            <div style="margin-bottom: 5px;">وقرار مجلس التعليم العالي رقم /175/ تاريخ 2022/6/16</div>
+            <div style="margin-bottom: 5px;">وكتاب {{ $uniName }} رقم <span contenteditable="true" id="live-uni-req-no" style="outline:none;">{!! $uniReqNo ?: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' !!}</span> تاريخ <span contenteditable="true" id="live-uni-req-date" style="outline:none;">{!! $uniReqDate ?: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' !!}</span></div>
+            
+            {{-- إضافة مستند قرار اللجنة للماجستير الخارجي بنوعيه (نظري أو تطبيقي) --}}
+            @if($isForeignMaster || $decisionType === 'foreign_master_theoretical' || $decisionType === 'foreign_master_applied')
+                <div style="margin-bottom: 5px;">وعلى قرار لجنة التأهيل ومعادلة الدرجات العلمية المنعقدة في <span contenteditable="true" style="outline:none;">{{ $committeeDate ?? ($decisionDate ?? '') }}</span></div>
             @endif
             <div style="margin-bottom: 5px;" contenteditable="true"></div>
         </div>
@@ -243,23 +259,24 @@
 
         <div class="article-div" id="live-article-body" contenteditable="true" title="انقر هنا لتعديل نص القرار مباشرة" style="font-size: 16px; margin-bottom: 14px; text-align: justify; line-height: 2.2; outline: none;">
             @if($decisionType === 'foreign_master_theoretical')
-                {{-- 1. الماجستير الخارجي - مسار نظري (وفق الصياغة المعتمدة الجديدة) --}}
-                <strong>المادة 1-</strong> الموافقة على تكليف <span contenteditable="true" style="outline:none;">{{ $genderTitle ?? ($candidateTitle ?? 'السيد') }}</span> <strong><span contenteditable="true" style="outline:none;">{{ $candidateName }}</span></strong>، <span contenteditable="true" style="outline:none;">{{ $genderDegreeHolder ?? ($qualifierHolderWord ?? 'الحائز') }}</span> درجة الماجستير البحثي في <span contenteditable="true" style="outline:none;">{{ $masterSpec }}</span> الممنوحة عام <span contenteditable="true" style="outline:none;">{{ $masterYear }}</span> من جامعة <span contenteditable="true" style="outline:none;">{{ $masterUni }}</span>{{ !empty($masterCountry) ? ' في ' . $masterCountry : '' }}، والمسبوقة بدرجة الإجازة في <span contenteditable="true" style="outline:none;">{{ $baSpec }}</span> الممنوحة عام <span contenteditable="true" style="outline:none;">{{ $baYear }}</span> من جامعة <span contenteditable="true" style="outline:none;">{{ $baUni }}</span>، بتدريس المقررات النظرية في اختصاص <span contenteditable="true" style="outline:none;">{{ $teachingDept }}</span> في الجامعات الخاصة السورية على أن يكون <span contenteditable="true" style="outline:none;">{{ $genderCommitment ?? ($fullTimeWord ?? 'تفرغه') }}</span> كلياً فيها، وألا يقل <span contenteditable="true" style="outline:none;">{{ $genderQuota ?? ($quotaWord ?? 'نصابه') }}</span> التدريسي عن /12/ ساعة أسبوعياً.
+                {{-- 1. الماجستير الخارجي - مسار نظري --}}
+                <strong>المادة 1-</strong> الموافقة على تكليف <span contenteditable="true" style="outline:none;">{{ $g['title'] ?? ($genderTitle ?? 'السيد') }}</span> <strong><span contenteditable="true" style="outline:none;">{{ $candidateName }}</span></strong>، <span contenteditable="true" style="outline:none;">{{ $g['holder'] ?? ($genderDegreeHolder ?? 'الحائز') }}</span> درجة الماجستير{{ !empty($masterIsResearch) ? ' البحثي' : '' }} في <span contenteditable="true" style="outline:none;">{{ $masterFormattedSpec }}</span> الممنوحة عام <span contenteditable="true" style="outline:none;">{{ $masterYear }}</span> <span contenteditable="true" style="outline:none;">{{ $masterUniCountry }}</span>، والمسبوقة بدرجة الإجازة في <span contenteditable="true" style="outline:none;">{{ $baFormattedSpec }}</span> الممنوحة عام <span contenteditable="true" style="outline:none;">{{ $baYear }}</span> <span contenteditable="true" style="outline:none;">{{ $baUniCountry }}</span>، بتدريس المقررات النظرية في اختصاص <span contenteditable="true" style="outline:none;">{{ $finalTeachingSpec ?? $teachingDept }}</span> في الجامعات الخاصة السورية على أن يكون <span contenteditable="true" style="outline:none;">{{ $g['dedication'] ?? ($genderCommitment ?? 'تفرغه') }}</span> كلياً فيها، وألا يقل <span contenteditable="true" style="outline:none;">{{ $g['quota'] ?? ($genderQuota ?? 'نصابه') }}</span> التدريسي عن /12/ ساعة أسبوعياً.
 
             @elseif($decisionType === 'foreign_master_applied')
                 {{-- 2. الماجستير الخارجي - مسار تطبيقي (عضو هيئة فنية) --}}
-                <strong>المادة-1</strong> تعدّ درجة الماجستير في <span contenteditable="true" style="outline:none;">{{ $masterSpec }}</span> الممنوحة عام <span contenteditable="true" style="outline:none;">{{ $masterYear }}</span> من جامعة <span contenteditable="true" style="outline:none;">{{ $masterUni }}</span>{{ !empty($masterCountry) ? ' في ' . $masterCountry : '' }} <span contenteditable="true" style="outline:none;">{{ $candidateTitlePrep ?? ($isFemale ? 'للسيدة' : 'للسيد') }}</span> <strong><span contenteditable="true" style="outline:none;">{{ $candidateName }}</span></strong>، والمسبوقة بدرجة الإجازة في <span contenteditable="true" style="outline:none;">{{ $baSpec }}</span> الممنوحة عام <span contenteditable="true" style="outline:none;">{{ $baYear }}</span> من جامعة <span contenteditable="true" style="outline:none;">{{ $baUni }}</span>، محققةً لشروط الشهادة والاختصاص من أجل تدريس <strong>الجوانب التطبيقية (عضو هيئة فنية)</strong> في اختصاص <span contenteditable="true" style="outline:none;">{{ $teachingDept }}</span> بالجامعات الخاصة السورية.
+                <strong>المادة-1</strong> تعدّ درجة الماجستير في <span contenteditable="true" style="outline:none;">{{ $masterFormattedSpec }}</span> الممنوحة عام <span contenteditable="true" style="outline:none;">{{ $masterYear }}</span> <span contenteditable="true" style="outline:none;">{{ $masterUniCountry }}</span> <span contenteditable="true" style="outline:none;">{{ $g['title_prep'] ?? ($candidateTitlePrep ?? 'للسيد') }}</span> <strong><span contenteditable="true" style="outline:none;">{{ $candidateName }}</span></strong>، والمسبوقة بدرجة الإجازة في <span contenteditable="true" style="outline:none;">{{ $baFormattedSpec }}</span> الممنوحة عام <span contenteditable="true" style="outline:none;">{{ $baYear }}</span> <span contenteditable="true" style="outline:none;">{{ $baUniCountry }}</span>، محققةً لشروط الشهادة والاختصاص من أجل تدريس <strong>الجوانب التطبيقية (عضو هيئة فنية)</strong> في اختصاص <span contenteditable="true" style="outline:none;">{{ $finalTeachingSpec ?? $teachingDept }}</span> بالجامعات الخاصة السورية.
 
             @elseif($decisionType === 'applied_master' || (!empty($isApplied) && empty($isDoctorate)))
                 {{-- 3. الماجستير الداخلي التطبيقي --}}
-                <strong>المادة-1</strong> تعدّ درجة الماجستير في {{ $masterFaculty ?: $masterGeneral }}{!! $masterSpec ? ' اختصاص ' . $masterSpec : '' !!} الممنوحة عام {{ $masterYear }} {{ $candidateTitlePrep ?? 'للسيد' }} <strong>{{ $candidateName }}</strong> من جامعة {{ $masterUni }}، والمسبوقة بدرجة الإجازة في {{ $baGeneral }}{{ $baSection ? ' قسم ' . $baSection : '' }} الممنوحة عام {{ $baYear }} من جامعة {{ $baUni }}، محققةً لشروط الشهادة والاختصاص من أجل تدريس <strong>الجوانب التطبيقية</strong> في اختصاص {{ $teachingDept }} بالجامعات الخاصة السورية.
+                <strong>المادة-1</strong> تعدّ درجة الماجستير في <span contenteditable="true" style="outline:none;">{{ $masterFormattedSpec }}</span> الممنوحة عام <span contenteditable="true" style="outline:none;">{{ $masterYear }}</span> <span contenteditable="true" style="outline:none;">{{ $masterUniCountry }}</span> <span contenteditable="true" style="outline:none;">{{ $g['title_prep'] ?? ($candidateTitlePrep ?? 'للسيد') }}</span> <strong><span contenteditable="true" style="outline:none;">{{ $candidateName }}</span></strong>، والمسبوقة بدرجة الإجازة في <span contenteditable="true" style="outline:none;">{{ $baFormattedSpec }}</span> الممنوحة عام <span contenteditable="true" style="outline:none;">{{ $baYear }}</span> <span contenteditable="true" style="outline:none;">{{ $baUniCountry }}</span>، محققةً لشروط الشهادة والاختصاص من أجل تدريس <strong>الجوانب التطبيقية</strong> في اختصاص <span contenteditable="true" style="outline:none;">{{ $finalTeachingSpec ?? $teachingDept }}</span> بالجامعات الخاصة السورية.
 
             @else
                 {{-- 4. الماجستير السوري الداخلي النظري --}}
-                <strong>المادة 1-</strong> الموافقة على {{ $assignWord ?? 'تكليف' }} {{ $candidateTitle ?? 'السيد' }} <strong>{{ $candidateName }}</strong>، {{ $qualifierHolderWord ?? 'الحائز' }} درجة الماجستير في {{ $masterGeneral }}{{ $masterExact ? ' اختصاص ' . $masterExact : '' }} الممنوحة عام {{ $masterYear }} من جامعة {{ $masterUni }}، والمسبوقة بدرجة الإجازة في {{ $baGeneral }}{{ $baSection ? ' قسم ' . $baSection : '' }} الممنوحة عام {{ $baYear }} من جامعة {{ $baUni }}، بتدريس المقررات النظرية في اختصاص {{ $teachingDept }} في الجامعات الخاصة السورية على أن يكون {{ $fullTimeWord ?? 'تفرغه' }} كلياً فيها، وألا يقل {{ $quotaWord ?? 'نصابه' }} التدريسي عن /12/ ساعة أسبوعياً.
+                <strong>المادة 1-</strong> الموافقة على تكليف <span contenteditable="true" style="outline:none;">{{ $g['title'] ?? ($candidateTitle ?? 'السيد') }}</span> <strong><span contenteditable="true" style="outline:none;">{{ $candidateName }}</span></strong>، <span contenteditable="true" style="outline:none;">{{ $g['holder'] ?? ($qualifierHolderWord ?? 'الحائز') }}</span> درجة الماجستير في <span contenteditable="true" style="outline:none;">{{ $masterFormattedSpec }}</span> الممنوحة عام <span contenteditable="true" style="outline:none;">{{ $masterYear }}</span> <span contenteditable="true" style="outline:none;">{{ $masterUniCountry }}</span>، والمسبوقة بدرجة الإجازة في <span contenteditable="true" style="outline:none;">{{ $baFormattedSpec }}</span> الممنوحة عام <span contenteditable="true" style="outline:none;">{{ $baYear }}</span> <span contenteditable="true" style="outline:none;">{{ $baUniCountry }}</span>، بتدريس المقررات النظرية في اختصاص <span contenteditable="true" style="outline:none;">{{ $finalTeachingSpec ?? $teachingDept }}</span> في الجامعات الخاصة السورية على أن يكون <span contenteditable="true" style="outline:none;">{{ $g['dedication'] ?? ($fullTimeWord ?? 'تفرغه') }}</span> كلياً فيها، وألا يقل <span contenteditable="true" style="outline:none;">{{ $g['quota'] ?? ($quotaWord ?? 'نصابه') }}</span> التدريسي عن /12/ ساعة أسبوعياً.
             @endif
-    </div>
+        </div>
     @endif
+
 
     {{-- المادة 2 وتاريخ دمشق --}}
     <div class="article-div" style="font-size: 16px; margin-bottom: 14px;">

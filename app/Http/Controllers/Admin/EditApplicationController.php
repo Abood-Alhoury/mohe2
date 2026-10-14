@@ -97,19 +97,29 @@ class EditApplicationController extends Controller
         $app = Application::findOrFail($id);
         $candidate = $app->candidate;
 
-        $candidate->update($request->only([
-            'full_name',
-            'father_name',
-            'mother_name',
-            'national_id',
-            'dob',
-            'gender',
-            'job_title',
-            'phone',
-            'mobile',
-            'email',
-            'address'
-        ]));
+        $candId = $candidate ? $candidate->id : 'NULL';
+        $request->validate([
+            'national_id' => 'required|string|max:50|unique:equivalence_profiles,national_id,' . $candId,
+        ], [
+            'national_id.required' => 'الرقم الوطني مطلوب.',
+            'national_id.unique'   => 'الرقم الوطني المدخل مسجل مسبقاً لمرشح آخر في النظام.',
+        ]);
+
+        if ($candidate) {
+            $candidate->update($request->only([
+                'full_name',
+                'father_name',
+                'mother_name',
+                'national_id',
+                'dob',
+                'gender',
+                'job_title',
+                'phone',
+                'mobile',
+                'email',
+                'address'
+            ]));
+        }
 
         return redirect()->back()->with('success', 'تم تحديث البيانات الشخصية للمرشح بنجاح');
     }

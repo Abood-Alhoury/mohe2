@@ -1,125 +1,168 @@
-<div class="card-academic-table mb-4" style="border-top: 4px solid var(--heritage-gold) !important;">
-    <div class="table-header-slab d-flex flex-wrap align-items-center justify-content-between gap-3 bg-white p-3 border-bottom">
-        <div class="d-flex align-items-center gap-2">
-            <i class="fa-solid fa-list-check fs-5" style="color: #C5A059;"></i>
-            <h6 class="fw-bold mb-0" style="color: #1A2A44; font-size: 1.05rem;">
-                قائمة المسودات غير المكتملة
-            </h6>
-            <span class="badge bg-warning text-dark fw-bold rounded-pill px-2.5 py-1 fs-8">
-                {{ $drafts->total() }} مسودة
-            </span>
-        </div>
-        <p class="text-muted small mb-0">يمكنك الضغط على زر "استكمال الطلب" للعودة إلى نموذج التقديم بكافة البيانات والمرفقات السابقة.</p>
-    </div>
+@if($drafts->count() > 0)
+    <div class="drafts-bento-grid" id="drafts-cards-container">
+        @foreach($drafts as $draft)
+            @php
+                $candidateName = optional($draft->candidate)->full_name;
+                if (!$candidateName || $candidateName === 'مسودة غير مكتملة') {
+                    $candidateName = 'مرشح قيد الإدخال (مسودة)';
+                }
+                $nationalId = optional($draft->candidate)->national_id;
+                if ($nationalId && str_starts_with($nationalId, 'TMP-')) {
+                    $nationalId = 'غير محدد بعد';
+                }
 
-    @if($drafts->count() > 0)
-    <div class="table-responsive">
-        <table class="table-academic">
-            <thead>
-                <tr>
-                    <th style="width: 110px;">رقم المسودة</th>
-                    <th>اسم المرشح</th>
-                    <th>الرقم الوطني</th>
-                    <th>نوع التعادل</th>
-                    <th>الكلية والقسم</th>
-                    <th>آخر حفظ وتعديل</th>
-                    <th class="text-center" style="width: 220px;">الإجراءات</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($drafts as $draft)
-                @php
-                    $candidateName = optional($draft->candidate)->full_name;
-                    if (!$candidateName || $candidateName === 'مسودة غير مكتملة') {
-                        $candidateName = 'مرشح قيد الإدخال (مسودة)';
-                    }
-                    $nationalId = optional($draft->candidate)->national_id;
-                    if ($nationalId && str_starts_with($nationalId, 'TMP-')) {
-                        $nationalId = 'غير محدد بعد';
-                    }
-                @endphp
-                <tr>
-                    <td class="fw-bold text-muted">#Draft-{{ $draft->id }}</td>
-                    <td>
-                        <div class="fw-bold" style="color: #1A2A44; font-size: 0.95rem;">
-                            {{ $candidateName }}
-                        </div>
+                // Initial Letter
+                $firstChar = mb_substr($candidateName, 0, 1, 'UTF-8');
+                if ($candidateName === 'مرشح قيد الإدخال (مسودة)') {
+                    $firstChar = 'م';
+                }
+
+                // Degree Types
+                $reqType = (string)$draft->request_type;
+                $reqTypeId = (int)$draft->request_type_id;
+                $isDoc = $reqTypeId === 3 || $reqTypeId === 7 || str_contains($reqType, 'دكتور') || str_contains($reqType, 'دكتورة');
+                $isMasterTheo = $reqTypeId === 2 || $reqTypeId === 6 || (str_contains($reqType, 'ماجستير') && str_contains($reqType, 'نظري'));
+                $isMasterApp = $reqTypeId === 1 || $reqTypeId === 5 || (str_contains($reqType, 'ماجستير') && str_contains($reqType, 'تطبيقي'));
+                $isFac = $reqTypeId === 4 || str_contains($reqType, 'سماح') || str_contains($reqType, 'تدريس');
+
+                // Progress calculation
+                $progress = 25;
+                if (!empty($draft->candidate) && $draft->candidate->full_name && $draft->candidate->full_name !== 'مسودة غير مكتملة') {
+                    $progress += 25;
+                }
+                if (!empty($draft->work_faculty)) {
+                    $progress += 20;
+                }
+                if ($draft->educations && $draft->educations->count() > 0) {
+                    $progress += 20;
+                }
+                $progress = min($progress, 90);
+
+                $searchCorpus = strtolower($candidateName . ' ' . $nationalId . ' ' . $draft->id . ' ' . $draft->application_no . ' ' . $draft->work_faculty . ' ' . $draft->work_department . ' ' . $reqType);
+            @endphp
+
+            <div class="bento-draft-card" data-search-text="{{ $searchCorpus }}">
+                <!-- Card Header: ID & Degree Badge & Relative Time -->
+                <div class="draft-card-top">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="draft-code-badge">
+                            <i class="fa-solid fa-hashtag"></i> Draft-{{ $draft->id }}
+                        </span>
                         @if($draft->application_no)
-                            <small class="text-muted fs-8">رمز الطلب: {{ $draft->application_no }}</small>
+                            <span class="draft-app-no-badge">{{ $draft->application_no }}</span>
                         @endif
-                    </td>
-                    <td>
-                        <span class="badge bg-light text-dark border font-monospace px-2 py-1 fs-8">
-                            {{ $nationalId ?: 'غير محدد بعد' }}
-                        </span>
-                    </td>
-                    <td>
-                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2.5 py-1 fs-8 fw-medium">
-                            {{ $draft->request_type ?? 'معاملة تعادل' }}
-                        </span>
-                    </td>
-                    <td class="fs-7 text-muted">
-                        {{ $draft->work_faculty ?: 'غير محددة' }}
-                        @if($draft->work_department)
-                            - {{ $draft->work_department }}
-                        @endif
-                    </td>
-                    <td class="fs-8 text-muted">
-                        <div><i class="fa-regular fa-clock me-1 text-warning"></i> {{ $draft->updated_at ? $draft->updated_at->format('d/m/Y H:i') : '-' }}</div>
-                        <small class="text-black-50">تم البدء: {{ $draft->created_at ? $draft->created_at->format('d/m/Y') : '-' }}</small>
-                    </td>
-                    <td class="text-center">
-                        <div class="d-flex align-items-center justify-content-center gap-2">
-                            <a href="{{ route('university.applications.edit', $draft->id) }}" class="btn btn-sm btn-solid-navy px-2.5 py-1.5 fs-8 fw-bold d-inline-flex align-items-center gap-1.5" title="استكمال إدخال المعاملة">
-                                <i class="fa-solid fa-pen-to-square"></i>
-                               
-                            </a>
-                            <form action="{{ route('university.applications.delete_draft', $draft->id) }}" method="POST" class="d-inline m-0" onsubmit="return confirm('هل أنت متأكد تماماً من رغبتك في حذف هذه المسودة وإلغاء المعاملة؟');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-outline-danger px-2.5 py-1.5 fs-8" title="حذف المسودة نهائياً">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            </form>
+                    </div>
+                    <span class="draft-time-pill" title="{{ $draft->updated_at ? $draft->updated_at->format('Y-m-d H:i') : '' }}">
+                        <i class="fa-regular fa-clock"></i> {{ $draft->updated_at ? $draft->updated_at->diffForHumans() : 'مؤخراً' }}
+                    </span>
+                </div>
+
+                <!-- Candidate Info with Squircle Avatar -->
+                <div class="draft-candidate-cluster">
+                    <div class="candidate-squircle-avatar">
+                        <span>{{ $firstChar }}</span>
+                    </div>
+                    <div class="candidate-details">
+                        <h4 class="candidate-name" title="{{ $candidateName }}">{{ $candidateName }}</h4>
+                        <div class="candidate-nid">
+                            <i class="fa-regular fa-id-card"></i>
+                            <span class="font-monospace">{{ $nationalId ?: 'الرقم الوطني غير مدخل' }}</span>
                         </div>
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+                    </div>
+                </div>
+
+                <!-- Degree & Faculty Details -->
+                <div class="draft-academic-meta">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="meta-label text-muted" style="font-size: 0.8rem; font-weight: 600;">مسار المعاملة:</span>
+                        @if($isDoc)
+                            <span class="pill-degree"><i class="fa-solid fa-graduation-cap"></i> {{ $draft->request_type ?? 'دكتوراه داخلي' }}</span>
+                        @elseif($isMasterTheo)
+                            <span class="pill-degree pill-sky"><i class="fa-solid fa-book-open"></i> {{ $draft->request_type }}</span>
+                        @elseif($isMasterApp)
+                            <span class="pill-degree pill-emerald"><i class="fa-solid fa-briefcase"></i> {{ $draft->request_type }}</span>
+                        @elseif($isFac)
+                            <span class="pill-degree pill-amber"><i class="fa-solid fa-chalkboard-user"></i> {{ $draft->request_type }}</span>
+                        @else
+                            <span class="pill-degree"><i class="fa-solid fa-graduation-cap"></i> {{ $draft->request_type ?? 'معاملة تعادل' }}</span>
+                        @endif
+                    </div>
+
+                    <div class="meta-faculty-box">
+                        <i class="fa-solid fa-building-columns"></i>
+                        <span class="text-truncate">
+                            {{ $draft->work_faculty ?: 'الكلية غير محددة بعد' }}
+                            @if($draft->work_department)
+                                - {{ $draft->work_department }}
+                            @endif
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Completion Progress Bar -->
+                <div class="draft-progress-slab">
+                    <div class="d-flex justify-content-between align-items-center mb-1.5">
+                        <span class="progress-title">نسبة اكتمال البيانات</span>
+                        <span class="progress-percent-badge">{{ $progress }}%</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-bar-glow" style="width: {{ $progress }}%;"></div>
+                    </div>
+                </div>
+
+                <!-- Bottom Actions -->
+                <div class="draft-card-actions">
+                    <a href="{{ route('university.applications.edit', $draft->id) }}" class="btn-resume-draft">
+                        <span>استكمال الطلب</span>
+                        <i class="fa-solid fa-play fs-8"></i>
+                    </a>
+
+                    <form action="{{ route('university.applications.delete_draft', $draft->id) }}" 
+                          method="POST" 
+                          class="m-0"
+                          onsubmit="return confirm('هل أنت متأكد تماماً من رغبتك في حذف مسودة المعاملة رقم ({{ $draft->id }}) نهائياً؟ لا يمكن التراجع عن هذا الإجراء.');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn-delete-draft" title="حذف المسودة نهائياً">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        @endforeach
     </div>
 
     <!-- Pagination -->
     @if($drafts->hasPages())
-    <div class="p-3 border-top bg-white d-flex justify-content-center">
-        {{ $drafts->links() }}
-    </div>
-    @endif
-
-    @else
-    <!-- Empty State -->
-    <div class="text-center py-5 px-3 bg-white">
-        <div class="d-inline-flex align-items-center justify-content-center bg-warning-subtle rounded-circle mb-3" style="width: 70px; height: 70px;">
-            <i class="fa-solid fa-folder-open fs-2 text-warning"></i>
+        <div class="drafts-pagination-wrap mt-4 d-flex justify-content-center">
+            {{ $drafts->links() }}
         </div>
-        <h5 class="fw-bold mb-1" style="color: #1A2A44;">لا توجد مسودات محفوظة حالياً</h5>
-        <p class="text-muted small mb-4" style="max-width: 450px; margin: 0 auto;">
+    @endif
+@else
+    <!-- EMPTY STATE -->
+    <div class="empty-drafts-slab">
+        <div class="empty-drafts-halo-icon">
+            <i class="fa-solid fa-folder-open"></i>
+        </div>
+        <h4 class="empty-title">لا توجد مسودات محفوظة حالياً</h4>
+        <p class="empty-subtitle">
             @if(!empty($search))
-                لم نجد أي مسودة تطابق كلمة البحث ("{{ $search }}"). جرب البحث بكلمة أخرى أو مسح البحث.
+                لم يتم العثور على أي مسودة مطابقة لكلمة البحث: <strong>"{{ $search }}"</strong>. جرب البحث برقم أو اسم آخر.
             @else
-                عند بدء تعبئة أي طلب تعادل واختيار <strong>"حفظ كمسودة ومتابعة لاحقاً"</strong> أو عند مغادرة النموذج، ستُحفظ المعاملة هنا مباشرة لتعود إليها في أي وقت وتكملها.
+                كافة المعاملات التي تبدأ بإدخالها وتختار <strong>"حفظ كمسودة ومتابعة لاحقاً"</strong> ستظهر هنا في هذه اللوحة لتعود إليها وتستكملها أصولاً في أي وقت.
             @endif
         </p>
-        @if(!empty($search))
-            <a href="{{ route('university.drafts.index') }}" class="btn btn-outline-navy btn-sm px-3 py-1.5 fw-bold">
-                <i class="fa-solid fa-rotate-left me-1"></i> مسح تصفية البحث
-            </a>
-        @elseif(empty($siteLocked) || !$siteLocked)
-            <a href="{{ route('university.apply.options') }}" class="btn btn-gold-cta btn-sm px-4 py-2 fw-bold">
-                <i class="fa-solid fa-plus me-1"></i> بدء تقديم طلب جديد الآن
-            </a>
-        @endif
-    </div>
-    @endif
-</div>
 
+        <div class="d-flex align-items-center justify-content-center gap-2 mt-3">
+            @if(!empty($search))
+                <a href="{{ route('university.drafts.index') }}" class="btn-action-outline">
+                    <i class="fa-solid fa-rotate-left"></i> إلغاء البحث وعرض كافة المسودات
+                </a>
+            @elseif(empty($siteLocked) || !$siteLocked)
+                <a href="{{ route('university.apply.options') }}" class="hero-cta-btn">
+                    <i class="fa-solid fa-plus-circle"></i> بدء تقديم طلب جديد الآن
+                </a>
+            @endif
+        </div>
+    </div>
+@endif

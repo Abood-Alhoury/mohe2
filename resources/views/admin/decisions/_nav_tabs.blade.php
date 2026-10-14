@@ -3,54 +3,51 @@
     $active = $active ?? '';
 @endphp
 
-<!-- COMPACT & ELEGANT PILL TABS FOR DECISION TYPES -->
+<!-- COMPACT & ELEGANT PILL TABS FOR THE 5 CONSOLIDATED DECISION TRACKS -->
 <div class="d-flex align-items-center justify-content-start mb-3.5 flex-wrap gap-2" role="tablist">
-    <a href="{{ route('admin.decisions.index') }}" 
-       class="btn {{ ($active === 'master' || $currentRoute === 'admin.decisions.index') ? 'btn-solid-navy' : 'btn-outline-navy bg-white' }} fw-bold px-3 py-1.5 rounded-pill shadow-xs fs-7 d-inline-flex align-items-center gap-1.5"
-       title="إصدار قرارات الماجستير الداخلي">
-        <i class="fa-solid fa-graduation-cap" style="{{ ($active === 'master' || $currentRoute === 'admin.decisions.index') ? 'color: var(--heritage-gold-light);' : '' }} font-size: 0.82rem;"></i>
-        <span>الماجستير الداخلي</span>
-    </a>
-
-    <a href="{{ route('admin.doctorate_decisions.index') }}" 
-       class="btn {{ ($active === 'doctorate' || $currentRoute === 'admin.doctorate_decisions.index') ? 'btn-solid-navy' : 'btn-outline-navy bg-white' }} fw-bold px-3 py-1.5 rounded-pill shadow-xs fs-7 d-inline-flex align-items-center gap-1.5"
-       title="إصدار قرارات الدكتوراه الداخلية">
-        <i class="fa-solid fa-user-graduate" style="{{ ($active === 'doctorate' || $currentRoute === 'admin.doctorate_decisions.index') ? 'color: var(--heritage-gold-light);' : '' }} font-size: 0.82rem;"></i>
-        <span>الدكتوراه الداخلية</span>
-    </a>
-
-    <a href="{{ route('admin.foreign_doctorate_decisions.index') }}" 
-       class="btn {{ ($active === 'foreign_doctorate' || $currentRoute === 'admin.foreign_doctorate_decisions.index') ? 'btn-solid-navy' : 'btn-outline-navy bg-white' }} fw-bold px-3 py-1.5 rounded-pill shadow-xs fs-7 d-inline-flex align-items-center gap-1.5"
-       title="إصدار قرارات الدكتوراه الخارجية غير السورية">
-        <i class="fa-solid fa-award" style="{{ ($active === 'foreign_doctorate' || $currentRoute === 'admin.foreign_doctorate_decisions.index') ? 'color: var(--heritage-gold-light);' : '' }} font-size: 0.82rem;"></i>
-        <span>الدكتوراه الخارجية</span>
-    </a>
-
+    {{-- 1. الماجستير التطبيقي (داخلي + خارجي تطبيقي - ورقة وحيدة) --}}
     <a href="{{ route('admin.applied_decisions.index') }}" 
        class="btn {{ ($active === 'applied' || $currentRoute === 'admin.applied_decisions.index') ? 'btn-solid-navy' : 'btn-outline-navy bg-white' }} fw-bold px-3 py-1.5 rounded-pill shadow-xs fs-7 d-inline-flex align-items-center gap-1.5"
-       title="إصدار قرارات الماجستير التطبيقي">
+       title="إصدار قرارات الماجستير التطبيقي (داخلي وخارجي - قرار تعادل/معادلة فقط بدون أهلية - ورقة وحيدة)">
         <i class="fa-solid fa-briefcase" style="{{ ($active === 'applied' || $currentRoute === 'admin.applied_decisions.index') ? 'color: var(--heritage-gold-light);' : '' }} font-size: 0.82rem;"></i>
         <span>الماجستير التطبيقي</span>
+        <span class="badge rounded-pill bg-light text-dark fs-9 border ms-0.5">📄 ورقة وحيدة</span>
     </a>
 
+    {{-- 2. الماجستير النظري (داخلي + خارجي نظري - ورقتان) --}}
+    <a href="{{ route('admin.decisions.index') }}" 
+       class="btn {{ ($active === 'master' || $active === 'theoretical' || $currentRoute === 'admin.decisions.index' || $currentRoute === 'admin.theoretical_decisions.index') ? 'btn-solid-navy' : 'btn-outline-navy bg-white' }} fw-bold px-3 py-1.5 rounded-pill shadow-xs fs-7 d-inline-flex align-items-center gap-1.5"
+       title="إصدار قرارات الماجستير النظري (داخلي وخارجي - قرار معادلة + قرار أهلية التدريس - ورقتان)">
+        <i class="fa-solid fa-graduation-cap" style="{{ ($active === 'master' || $active === 'theoretical' || $currentRoute === 'admin.decisions.index' || $currentRoute === 'admin.theoretical_decisions.index') ? 'color: var(--heritage-gold-light);' : '' }} font-size: 0.82rem;"></i>
+        <span>الماجستير النظري</span>
+        <span class="badge rounded-pill bg-light text-dark fs-9 border ms-0.5">📄📄 ورقتان</span>
+    </a>
+
+    {{-- 3. السماح بالتدريس (أعضاء الجامعات الحكومية - ورقة وحيدة) --}}
     <a href="{{ route('admin.faculty_decisions.index') }}" 
        class="btn {{ ($active === 'faculty' || $currentRoute === 'admin.faculty_decisions.index') ? 'btn-solid-navy' : 'btn-outline-navy bg-white' }} fw-bold px-3 py-1.5 rounded-pill shadow-xs fs-7 d-inline-flex align-items-center gap-1.5"
-       title="إصدار قرارات السماح بالتدريس للهيئة التدريسية">
+       title="إصدار قرارات السماح بالتدريس لأعضاء الهيئة التدريسية بالجامعات الحكومية - ورقة وحيدة">
         <i class="fa-solid fa-chalkboard-user" style="{{ ($active === 'faculty' || $currentRoute === 'admin.faculty_decisions.index') ? 'color: var(--heritage-gold-light);' : '' }} font-size: 0.82rem;"></i>
         <span>السماح بالتدريس</span>
+        <span class="badge rounded-pill bg-light text-dark fs-9 border ms-0.5">📄 ورقة وحيدة</span>
     </a>
 
-    <a href="{{ route('admin.foreign_master_applied_decisions.index') }}" 
-       class="btn {{ ($active === 'foreign_master_applied' || $currentRoute === 'admin.foreign_master_applied_decisions.index' || $currentRoute === 'admin.foreign_master_decisions.index') ? 'btn-solid-navy' : 'btn-outline-navy bg-white' }} fw-bold px-3 py-1.5 rounded-pill shadow-xs fs-7 d-inline-flex align-items-center gap-1.5"
-       title="إصدار قرارات الماجستير الخارجي التطبيقي (تدريس الجوانب التطبيقية بدون أهلية)">
-        <i class="fa-solid fa-screwdriver-wrench" style="{{ ($active === 'foreign_master_applied' || $currentRoute === 'admin.foreign_master_applied_decisions.index' || $currentRoute === 'admin.foreign_master_decisions.index') ? 'color: var(--heritage-gold-light);' : '' }} font-size: 0.82rem;"></i>
-        <span>الماجستير الخارجي التطبيقي</span>
+    {{-- 4. الدكتوراه (دكتوراه سورية + دكتوراه خارجية - ورقتان) --}}
+    <a href="{{ route('admin.doctorate_decisions.index') }}" 
+       class="btn {{ ($active === 'doctorate' || $currentRoute === 'admin.doctorate_decisions.index') ? 'btn-solid-navy' : 'btn-outline-navy bg-white' }} fw-bold px-3 py-1.5 rounded-pill shadow-xs fs-7 d-inline-flex align-items-center gap-1.5"
+       title="إصدار قرارات الدكتوراه (سورية وخارجية - قرار تعادل/معادلة + قرار أهلية التدريس - ورقتان)">
+        <i class="fa-solid fa-user-graduate" style="{{ ($active === 'doctorate' || $currentRoute === 'admin.doctorate_decisions.index') ? 'color: var(--heritage-gold-light);' : '' }} font-size: 0.82rem;"></i>
+        <span>الدكتوراه</span>
+        <span class="badge rounded-pill bg-light text-dark fs-9 border ms-0.5">📄📄 ورقتان</span>
     </a>
 
-    <a href="{{ route('admin.foreign_master_theoretical_decisions.index') }}" 
-       class="btn {{ ($active === 'foreign_master_theoretical' || $currentRoute === 'admin.foreign_master_theoretical_decisions.index') ? 'btn-solid-navy' : 'btn-outline-navy bg-white' }} fw-bold px-3 py-1.5 rounded-pill shadow-xs fs-7 d-inline-flex align-items-center gap-1.5"
-       title="إصدار قرارات الماجستير الخارجي النظري (مع قرار الأهلية)">
-        <i class="fa-solid fa-book-open-reader" style="{{ ($active === 'foreign_master_theoretical' || $currentRoute === 'admin.foreign_master_theoretical_decisions.index') ? 'color: var(--heritage-gold-light);' : '' }} font-size: 0.82rem;"></i>
-        <span>الماجستير الخارجي النظري</span>
+    {{-- 5. قرارات عدم الموافقة (الطلبات المرفوضة - ورقة وحيدة) --}}
+    <a href="{{ route('admin.rejected_decisions.index') }}" 
+       class="btn {{ ($active === 'rejected' || $currentRoute === 'admin.rejected_decisions.index') ? 'btn-solid-navy' : 'btn-outline-navy bg-white' }} fw-bold px-3 py-1.5 rounded-pill shadow-xs fs-7 d-inline-flex align-items-center gap-1.5"
+       style="{{ ($active === 'rejected' || $currentRoute === 'admin.rejected_decisions.index') ? 'background-color: #dc2626 !important; border-color: #dc2626 !important; color: white !important;' : 'color: #dc2626 !important; border-color: #fca5a5 !important;' }}"
+       title="إصدار كتب وقرارات عدم الموافقة المسببة للطلبات المرفوضة - ورقة وحيدة">
+        <i class="fa-solid fa-triangle-exclamation" style="font-size: 0.82rem;"></i>
+        <span>قرارات عدم الموافقة</span>
+        <span class="badge rounded-pill bg-light text-danger fs-9 border ms-0.5">📄 ورقة وحيدة</span>
     </a>
 </div>

@@ -5,11 +5,13 @@ namespace App\Http\Controllers\University;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use App\Models\Application;
 use App\Models\ApplicationMessage;
 use App\Models\LookupUniversity;
 use App\Models\SiteSetting;
 use App\Models\User;
+use setasign\Fpdi\Fpdi;
 
 class DashboardController extends Controller
 {
@@ -30,8 +32,13 @@ class DashboardController extends Controller
         $suspendedCount = Application::where('work_university_id', $uniId)->whereIn('status', ['معلق', 'بانتظار الوثائق', 'مواضيع اللجنة العامة (معلق)'])->count();
         $draftsCount = Application::where('work_university_id', $uniId)->where('status', 'مسودة')->count();
         
+        $archivedStatuses = ['تم الصدور', 8, '8', 'موافقة', 'مرفوض', 9, '9', 10, '10'];
+
         $approvedCount = Application::where('work_university_id', $uniId)
-            ->whereIn('status', ['تم الصدور', 'موافقة'])
+            ->where(function ($q) {
+                $q->whereIn('status', ['تم الصدور', 8, '8', 'موافقة'])
+                  ->orWhereHas('decisions');
+            })
             ->count();
 
         $draftApplications = Application::where('work_university_id', $uniId)
@@ -40,8 +47,10 @@ class DashboardController extends Controller
             ->latest()
             ->get();
 
+        // Operational/Interactive applications only (exclude drafts and finalized/archived applications)
         $query = Application::where('work_university_id', $uniId)
-            ->where('status', '!=', 'مسودة')
+            ->whereNotIn('status', array_merge(['مسودة', 1, '1'], $archivedStatuses))
+            ->whereDoesntHave('decisions')
             ->with(['candidate', 'latestDecision', 'educations.level', 'educations.country', 'educations.university', 'educations.attachments.attachmentType']);
 
         $isSearch = $request->filled('search');
@@ -198,6 +207,10 @@ class DashboardController extends Controller
             ->where('work_university_id', Auth::user()->university_id)
             ->firstOrFail();
 
+        if ($app->isArchived()) {
+            return redirect()->back()->with('error', 'المعاملة مؤرشفة رسمياً ومغلقة (للاطلاع فقط). لا يمكن إرسال ردود جديدة.');
+        }
+
         ApplicationMessage::create([
             'application_id' => $app->id,
             'sender_id' => Auth::id(),
@@ -215,6 +228,10 @@ class DashboardController extends Controller
             ->where('work_university_id', $user->university_id)
             ->firstOrFail();
 
+        if ($app->isArchived()) {
+            return redirect()->back()->with('error', 'المعاملة مؤرشفة رسمياً ومغلقة (للاطلاع فقط).');
+        }
+
         $uniName = $user->university ? $user->university->name : 'الجامعة';
         $candidateName = $app->candidate ? $app->candidate->full_name : 'المرشح';
 
@@ -231,12 +248,16 @@ class DashboardController extends Controller
     public function showMozhakkara($appId)
     {
         $user = Auth::user();
-        $application = Application::where('id', $appId)
-            ->where('work_university_id', $user->university_id)
-            ->with([
+        $query = Application::where('id', $appId);
+        $isAdmin = $user && $user->role && $user->role->name === 'admin';
+        if (!$isAdmin && $user && $user->university_id) {
+            $query->where('work_university_id', $user->university_id);
+        }
+        $application = $query->with([
                 'candidate.nationality',
                 'workUniversity',
                 'courses',
+                'experiences',
                 'parentApplication.workUniversity',
                 'parentApplication.latestDecision',
                 'educations.level',
@@ -268,12 +289,16 @@ class DashboardController extends Controller
     public function downloadPdf($appId)
     {
         $user = Auth::user();
-        $application = Application::where('id', $appId)
-            ->where('work_university_id', $user->university_id)
-            ->with([
+        $query = Application::where('id', $appId);
+        $isAdmin = $user && $user->role && $user->role->name === 'admin';
+        if (!$isAdmin && $user && $user->university_id) {
+            $query->where('work_university_id', $user->university_id);
+        }
+        $application = $query->with([
                 'candidate.nationality',
                 'workUniversity',
                 'courses',
+                'experiences',
                 'parentApplication.workUniversity',
                 'parentApplication.latestDecision',
                 'educations.level',
@@ -343,22 +368,28 @@ class DashboardController extends Controller
     public function downloadConsolidatedPdf($appId)
     {
         $user = Auth::user();
-        $application = Application::where('id', $appId)
-            ->where('work_university_id', $user->university_id)
-            ->with([
-                'candidate.nationality',
-                'workUniversity',
-                'courses',
-                'parentApplication.workUniversity',
-                'parentApplication.latestDecision',
-                'parentApplication.courses',
-                'parentApplication.educations.attachments.attachmentType',
-                'educations.level',
-                'educations.country',
-                'educations.university',
-                'educations.residences',
-                'educations.attachments.attachmentType'
-            ])->firstOrFail();
+        $query = Application::where('id', $appId);
+
+        $isAdmin = $user && $user->role && $user->role->name === 'admin';
+        if (!$isAdmin && $user && $user->university_id) {
+            $query->where('work_university_id', $user->university_id);
+        }
+
+        $application = $query->with([
+            'candidate.nationality',
+            'workUniversity',
+            'courses',
+            'experiences',
+            'parentApplication.workUniversity',
+            'parentApplication.latestDecision',
+            'parentApplication.courses',
+            'parentApplication.educations.attachments.attachmentType',
+            'educations.level',
+            'educations.country',
+            'educations.university',
+            'educations.residences',
+            'educations.attachments.attachmentType'
+        ])->firstOrFail();
 
         $candidate = $application->candidate;
 
@@ -462,9 +493,11 @@ class DashboardController extends Controller
         $mergedContent = $merger->Output('S');
         @unlink($mozhakkaraTmpPath);
 
+        $disposition = request()->has('download') ? 'attachment' : 'inline';
+
         return response($mergedContent, 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="' . $fileName . '"; filename*=UTF-8\'\'' . rawurlencode($fileName),
+            'Content-Disposition' => $disposition . '; filename="' . $fileName . '"; filename*=UTF-8\'\'' . rawurlencode($fileName),
         ]);
     }
 
@@ -612,20 +645,28 @@ class DashboardController extends Controller
     public function showApplication($appId)
     {
         $user = Auth::user();
-        $application = Application::where('id', $appId)
-            ->where('work_university_id', $user->university_id)
-            ->with([
-                'candidate.nationality',
-                'workUniversity',
-                'courses',
-                'messages.sender',
-                'latestDecision',
-                'educations.level',
-                'educations.country',
-                'educations.university',
-                'educations.residences',
-                'educations.attachments.attachmentType'
-            ])->firstOrFail();
+        $query = Application::where('id', $appId);
+
+        $isAdmin = $user && $user->role && $user->role->name === 'admin';
+        if (!$isAdmin && $user && $user->university_id) {
+            $query->where('work_university_id', $user->university_id);
+        }
+
+        $application = $query->with([
+            'candidate.nationality',
+            'workUniversity',
+            'courses',
+            'experiences',
+            'messages.sender',
+            'latestDecision',
+            'decisions',
+            'parentApplication.educations.attachments.attachmentType',
+            'educations.level',
+            'educations.country',
+            'educations.university',
+            'educations.residences',
+            'educations.attachments.attachmentType'
+        ])->firstOrFail();
 
         $candidate = $application->candidate;
 
@@ -651,6 +692,224 @@ class DashboardController extends Controller
             'masterEd',
             'phdEd',
             'notifications'
+        ));
+    }
+
+    /**
+     * View the issued official decisions for an application inline in the browser.
+     * Merges both Equivalence and Eligibility decisions into a single PDF if both exist,
+     * or opens the single PDF decision directly.
+     */
+    public function viewDecisionPdf($appId)
+    {
+        $user = Auth::user();
+        $query = Application::with(['candidate', 'decisions', 'latestDecision']);
+
+        $isAdmin = $user && $user->role && $user->role->name === 'admin';
+        if (!$isAdmin && $user && $user->university_id) {
+            $query->where('work_university_id', $user->university_id);
+        }
+
+        $app = $query->findOrFail($appId);
+
+        $decision = $app->latestDecision ?? $app->decisions()->latest()->first();
+        if (!$decision) {
+            abort(404, 'لم يتم العثور على قرارات رسمية صادرة لهذه المعاملة.');
+        }
+
+        $hasEquiv = !empty($decision->file_path) && Storage::disk('public')->exists($decision->file_path);
+        $hasElig  = !empty($decision->eligibility_file_path) && Storage::disk('public')->exists($decision->eligibility_file_path);
+
+        if (!$hasEquiv && !$hasElig) {
+            abort(404, 'ملفات القرارات الصادرة غير متوفرة في التخزين.');
+        }
+
+        $candName = $app->candidate?->full_name ?? 'المرشح';
+        $cleanName = trim(preg_replace('/[^\p{L}\p{N}\s\-_]/u', '', $candName));
+        $cleanName = str_replace(' ', '_', $cleanName) ?: 'المرشح';
+
+        // 1. Both Equivalence and Eligibility Decisions exist -> Merge into a single PDF
+        if ($hasEquiv && $hasElig) {
+            $merger = new Fpdi();
+
+            $equivFullPath = Storage::disk('public')->path($decision->file_path);
+            $eligFullPath  = Storage::disk('public')->path($decision->eligibility_file_path);
+
+            // Add Equivalence decision pages
+            try {
+                $extEquiv = strtolower(pathinfo($equivFullPath, PATHINFO_EXTENSION));
+                if ($extEquiv === 'pdf') {
+                    $pageCount = $merger->setSourceFile($equivFullPath);
+                    for ($p = 1; $p <= $pageCount; $p++) {
+                        $tplId = $merger->importPage($p);
+                        $size = $merger->getTemplateSize($tplId);
+                        $merger->AddPage($size['orientation'], [$size['width'], $size['height']]);
+                        $merger->useTemplate($tplId);
+                    }
+                } else {
+                    $merger->AddPage('P', 'A4');
+                    $merger->Image($equivFullPath, 10, 10, 190);
+                }
+            } catch (\Throwable $e) {}
+
+            // Add Eligibility decision pages
+            try {
+                $extElig = strtolower(pathinfo($eligFullPath, PATHINFO_EXTENSION));
+                if ($extElig === 'pdf') {
+                    $pageCount = $merger->setSourceFile($eligFullPath);
+                    for ($p = 1; $p <= $pageCount; $p++) {
+                        $tplId = $merger->importPage($p);
+                        $size = $merger->getTemplateSize($tplId);
+                        $merger->AddPage($size['orientation'], [$size['width'], $size['height']]);
+                        $merger->useTemplate($tplId);
+                    }
+                } else {
+                    $merger->AddPage('P', 'A4');
+                    $merger->Image($eligFullPath, 10, 10, 190);
+                }
+            } catch (\Throwable $e) {}
+
+            $mergedPdfContent = $merger->Output('S');
+            $fileName = 'حزمة_القرارات_الرسمية_' . $cleanName . '.pdf';
+
+            return response($mergedPdfContent, 200, [
+                'Content-Type'        => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="' . $fileName . '"; filename*=UTF-8\'\'' . rawurlencode($fileName),
+                'Cache-Control'       => 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0',
+                'Pragma'              => 'public',
+            ]);
+        }
+
+        // 2. Only ONE Decision exists (e.g. Applied Master or Faculty Permission) -> Serve single PDF directly
+        $singleRelPath = $hasEquiv ? $decision->file_path : $decision->eligibility_file_path;
+        $singleFullPath = Storage::disk('public')->path($singleRelPath);
+        $ext = strtolower(pathinfo($singleFullPath, PATHINFO_EXTENSION));
+
+        $fileName = ($hasEquiv ? 'قرار_التعادل_' : 'قرار_الأهلية_') . $cleanName . '.' . $ext;
+        $mime = Storage::disk('public')->mimeType($singleRelPath) ?: 'application/pdf';
+
+        return response()->file($singleFullPath, [
+            'Content-Type'        => $mime,
+            'Content-Disposition' => 'inline; filename="' . $fileName . '"; filename*=UTF-8\'\'' . rawurlencode($fileName),
+            'Cache-Control'       => 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0',
+            'Pragma'              => 'public',
+        ]);
+    }
+
+    /**
+     * University Archive: View all finalized and issued decisions & academic dossiers for this university.
+     */
+    public function archive(Request $request)
+    {
+        $user = Auth::user();
+        $isAdmin = $user && $user->role && $user->role->name === 'admin';
+        $uniId = $user->university_id;
+
+        if (!$isAdmin && !$uniId) {
+            Auth::logout();
+            return redirect()->route('login')->withErrors(['email' => 'هذا المستخدم ليس مرتبطاً بأي جامعة.']);
+        }
+
+        $universityName = $user->university ? $user->university->name : ($isAdmin ? 'الجامعات (إشراف إدارة)' : 'الجامعة');
+
+        $query = Application::where(function ($q) {
+                $q->whereIn('status', ['تم الصدور', 8, '8', 'موافقة', 'مرفوض', 9, '9', 10, '10'])
+                  ->orWhereHas('decisions');
+            })
+            ->with([
+                'candidate',
+                'decisions',
+                'latestDecision',
+                'educations.level',
+                'educations.country',
+                'educations.university',
+                'educations.attachments.attachmentType'
+            ]);
+
+        if (!$isAdmin) {
+            $query->where('work_university_id', $uniId);
+        }
+
+        $search = trim($request->get('search', ''));
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('application_no', 'like', "%{$search}%")
+                  ->orWhere('work_faculty', 'like', "%{$search}%")
+                  ->orWhere('work_department', 'like', "%{$search}%")
+                  ->orWhereHas('candidate', function ($cq) use ($search) {
+                      $cq->where('full_name', 'like', "%{$search}%")
+                        ->orWhere('national_id', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('decisions', function ($dq) use ($search) {
+                      $dq->where('decision_no', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $trackFilter = $request->get('track', 'all');
+        if ($trackFilter && $trackFilter !== 'all') {
+            if ($trackFilter === 'phd') {
+                $query->where(function ($q) {
+                    $q->where('request_type', 'like', '%دكتور%')->orWhere('request_type', 'like', '%دكتورة%');
+                });
+            } elseif ($trackFilter === 'master-theo') {
+                $query->where('request_type', 'like', '%ماجستير%')->where('request_type', 'like', '%نظري%');
+            } elseif ($trackFilter === 'master-app') {
+                $query->where('request_type', 'like', '%ماجستير%')->where('request_type', 'like', '%تطبيقي%');
+            } elseif ($trackFilter === 'faculty') {
+                $query->where(function ($q) {
+                    $q->where('request_type', 'like', '%سماح%')->orWhere('request_type', 'like', '%تدريس%');
+                });
+            } elseif ($trackFilter === 'rejected') {
+                $query->whereIn('status', ['مرفوض', 9, '9', 10, '10']);
+            }
+        }
+
+        $yearFilter = $request->get('year');
+        if ($yearFilter) {
+            $query->whereYear('updated_at', $yearFilter);
+        }
+
+        $archivedApplications = $query->latest('updated_at')->paginate(15)->withQueryString();
+
+        $baseCountQuery = Application::where(function ($q) {
+                $q->whereIn('status', ['تم الصدور', 8, '8', 'موافقة', 'مرفوض', 9, '9', 10, '10'])
+                  ->orWhereHas('decisions');
+            });
+
+        if (!$isAdmin) {
+            $baseCountQuery->where('work_university_id', $uniId);
+        }
+
+        $kpi = [
+            'total'       => (clone $baseCountQuery)->count(),
+            'phd'         => (clone $baseCountQuery)->where(fn($q) => $q->where('request_type', 'like', '%دكتور%')->orWhere('request_type', 'like', '%دكتورة%'))->count(),
+            'master_theo' => (clone $baseCountQuery)->where('request_type', 'like', '%ماجستير%')->where('request_type', 'like', '%نظري%')->count(),
+            'master_app'  => (clone $baseCountQuery)->where('request_type', 'like', '%ماجستير%')->where('request_type', 'like', '%تطبيقي%')->count(),
+            'faculty'     => (clone $baseCountQuery)->where(fn($q) => $q->where('request_type', 'like', '%سماح%')->orWhere('request_type', 'like', '%تدريس%'))->count(),
+            'rejected'    => (clone $baseCountQuery)->whereIn('status', ['مرفوض', 9, '9', 10, '10'])->count(),
+        ];
+
+        $notificationsQuery = ApplicationMessage::where('sender_id', '!=', $user->id)->where('is_read', false);
+        if (!$isAdmin) {
+            $notificationsQuery->whereHas('application', fn($q) => $q->where('work_university_id', $uniId));
+        }
+        $notifications = $notificationsQuery->with(['application.candidate', 'sender'])->latest()->get();
+
+        $draftsCount = $isAdmin ? Application::where('status', 'مسودة')->count() : Application::where('work_university_id', $uniId)->where('status', 'مسودة')->count();
+        $approvedCount = $kpi['total'];
+
+        return view('university.archive.index', compact(
+            'archivedApplications',
+            'kpi',
+            'search',
+            'trackFilter',
+            'yearFilter',
+            'universityName',
+            'notifications',
+            'draftsCount',
+            'approvedCount',
+            'user'
         ));
     }
 }

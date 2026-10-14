@@ -75,13 +75,18 @@ class InterviewsController extends Controller
             })
             ->count();
 
+        $passedCount = Application::where('status', 'بانتظار إصدار القرار')->count();
+        $failedCount = Application::where('status', 'مرفوض')->count();
+
         return view('admin.interviews.index', compact(
             'applications',
             'universities',
             'searchQuery',
             'universityFilter',
             'totalAwaitingCount',
-            'scheduledCount'
+            'scheduledCount',
+            'passedCount',
+            'failedCount'
         ));
     }
 

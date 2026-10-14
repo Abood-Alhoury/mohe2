@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>وثيقة التوصيف المعماري والوظيفي الشامل لمنظومة معادلة الشهادات | مجلس التعليم العالي</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Plus+Jakarta+Sans:wght@500;700;800&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --navy-dark: #081224;
+            --navy-primary: #0e1e38;
+            --navy-light: #1e3a66;
+            --gold-primary: #c59b27;
+            --gold-light: #f5d77f;
+            --gold-bg: #fffdf5;
+            --emerald: #059669;
+            --emerald-bg: #ecfdf5;
+            --sky: #0284c7;
+            --sky-bg: #f0f9ff;
+            --rose: #dc2626;
+            --rose-bg: #fef2f2;
+            --amber: #d97706;
+            --amber-bg: #fffbeb;
+            --purple: #7e22ce;
+            --purple-bg: #faf5ff;
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --border-color: #cbd5e1;
+            --border-light: #e2e8f0;
+            --bg-card: #ffffff;
+            --bg-page: #f8fafc;
+        }
+
+        @page {
+            size: A4 portrait;
+            margin: 14mm 14mm 16mm 14mm;
+            @bottom-right {
+                content: "صفحة " counter(page);
+                font-family: 'Tajawal', sans-serif;
+                font-size: 8pt;
+                color: #64748b;
+            }
+            @bottom-left {
+                content: "منظومة معادلة الشهادات - مجلس التعليم العالي السوري";
+                font-family: 'Tajawal', sans-serif;
+                font-size: 8pt;
+                color: #64748b;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            font-size: 9.5pt;
+            line-height: 1.55;
+            direction: rtl;
+            text-align: right;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .page-break {
+            page-break-after: always;
+            break-after: page;
+        }
+
+        .avoid-break {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        /* Cover Page */
+        .cover-page {
+            min-height: 260mm;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 30px 25px;
+            background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy-primary) 65%, #132b50 100%);
+            color: white;
+            border-radius: 12px;
+            border: 2px solid var(--gold-primary);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .cover-header {
+            border-bottom: 2px solid rgba(197, 155, 39, 0.4);
+            padding-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .crest-title h3 {
+            font-size: 13pt;
+            font-weight: 800;
+            color: var(--gold-light);
+            letter-spacing: 0.5px;
+        }
+
+        .crest-title p {
+            font-size: 9.5pt;
+            color: #cbd5e1;
+        }
+
+        .cover-body {
+            margin: 40px 0;
+            text-align: center;
+        }
+
+        .cover-badge {
+            display: inline-block;
+            background: rgba(197, 155, 39, 0.2);
+            border: 1px solid var(--gold-primary);
+            color: var(--gold-light);
+            padding: 6px 18px;
+            border-radius: 30px;
+            font-size: 9pt;
+            font-weight: 800;
+            margin-bottom: 20px;
+            letter-spacing: 0.5px;
+        }
+
+        .cover-title {
+            font-size: 24pt;
+            font-weight: 900;
+            line-height: 1.35;
+            color: #ffffff;
+            margin-bottom: 15px;
+        }
+
+        .cover-subtitle {
+            font-size: 13pt;
+            color: #94a3b8;
+            max-width: 650px;
+            margin: 0 auto 30px;
+            line-height: 1.6;
+        }
+
+        .cover-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            max-width: 680px;
+            margin: 0 auto;
+            text-align: right;
+        }
+
+        .meta-box {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 8px;
+            padding: 12px 14px;
+        }
+
+        .meta-box span {
+            display: block;
+            font-size: 7.5pt;
+            color: var(--gold-light);
+            font-weight: 700;
+        }
+
+        .meta-box strong {
+            font-size: 9.5pt;
+            color: white;
+            font-weight: 800;
+        }
+
+        .cover-footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            padding-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 8pt;
+            color: #94a3b8;
+        }
+
+        /* Section Container */
+        .doc-section {
+            background: white;
+            border-radius: 10px;
+            border: 1px solid var(--border-light);
+            padding: 20px 22px;
+            margin-bottom: 18px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+        }
+
+        .section-header-band {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 13pt;
+            font-weight: 900;
+            color: var(--navy-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-number {
+            background: var(--navy-primary);
+            color: var(--gold-light);
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10pt;
+            font-weight: 800;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .section-tag {
+            font-size: 7.5pt;
+            font-weight: 700;
+            background: #f1f5f9;
+            color: #475569;
+            padding: 3px 10px;
+            border-radius: 15px;
+            border: 1px solid #cbd5e1;
+        }
+
+        /* Bento Grid Layouts */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .bento-card {
+            background: #f8fafc;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            padding: 12px 14px;
+        }
+
+        .bento-card.primary {
+            border-top: 3px solid var(--navy-primary);
+        }
+
+        .bento-card.gold {
+            border-top: 3px solid var(--gold-primary);
+            background: var(--gold-bg);
+        }
+
+        .bento-card.emerald {
+            border-top: 3px solid var(--emerald);
+            background: var(--emerald-bg);
+        }
+
+        .bento-card.sky {
+            border-top: 3px solid var(--sky);
+            background: var(--sky-bg);
+        }
+
+        .bento-card.rose {
+            border-top: 3px solid var(--rose);
+            background: var(--rose-bg);
+        }
+
+        .bento-title {
+            font-size: 9pt;
+            font-weight: 800;
+            color: var(--navy-primary);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .bento-body {
+            font-size: 8.2pt;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* Modern Tables */
+        table.styled-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8.5pt;
+            margin: 10px 0 15px;
+        }
+
+        table.styled-table th {
+            background: #f1f5f9;
+            color: var(--navy-primary);
+            font-weight: 800;
+            text-align: right;
+            padding: 8px 10px;
+            border: 1px solid #cbd5e1;
+            font-size: 8.2pt;
+        }
+
+        table.styled-table td {
+            padding: 8px 10px;
+            border: 1px solid #e2e8f0;
+            color: #334155;
+            vertical-align: top;
+        }
+
+        table.styled-table tr:nth-child(even) td {
+            background: #fbfcfe;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 7.5pt;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .badge-navy { background: #e0e7ff; color: #1e3a8a; border: 1px solid #bfdbfe; }
+        .badge-gold { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .badge-green { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+        .badge-red { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .badge-blue { background: #f0f9ff; color: #075985; border: 1px solid #bae6fd; }
+        .badge-purple { background: #faf5ff; color: #6b21a8; border: 1px solid #e9d5ff; }
+
+        /* Code / Schema Block */
+        .code-box {
+            background: #091322;
+            color: #e2e8f0;
+            padding: 12px 14px;
+            border-radius: 6px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 7.8pt;
+            line-height: 1.5;
+            direction: ltr;
+            text-align: left;
+            margin: 10px 0;
+            border: 1px solid #1e293b;
+            overflow-x: auto;
+        }
+
+        .code-keyword { color: #f472b6; font-weight: bold; }
+        .code-type { color: #38bdf8; }
+        .code-string { color: #34d399; }
+        .code-comment { color: #64748b; font-style: italic; }
+
+        /* Callout Box */
+        .callout {
+            border-right: 4px solid var(--gold-primary);
+            background: var(--gold-bg);
+            padding: 10px 14px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 8.5pt;
+        }
+
+        .callout strong {
+            color: #854d0e;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        /* Flow diagram pills */
+        .flow-stepper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            margin: 12px 0;
+            flex-wrap: wrap;
+        }
+
+        .flow-step {
+            background: #ffffff;
+            border: 1.5px solid #cbd5e1;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 7.8pt;
+            font-weight: 700;
+            text-align: center;
+            flex: 1;
+            min-width: 95px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
+
+        .flow-step.active {
+            border-color: var(--navy-primary);
+            background: #f0f4fa;
+            color: var(--navy-primary);
+        }
+
+        .flow-step.completed {
+            border-color: var(--emerald);
+            background: var(--emerald-bg);
+            color: var(--emerald);
+        }
+
+        .flow-arrow {
+            color: #94a3b8;
+            font-weight: bold;
+            font-size: 10pt;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ========================================== -->
+    <!-- 1. COVER PAGE / الغلاف الرسمي للوثيقة -->
+    <!-- ========================================== -->
+    <div class="cover-page page-break">
+        <div class="cover-header">
+            <div class="crest-title">
+                <h3>الجمهورية العربية السورية</h3>
+                <p>وزارة التعليم العالي والبحث العلمي | مجلس التعليم العالي</p>
+            </div>
+            <div style="text-align: left; font-size: 8pt; color: #94a3b8;">
+                <div>وثيقة هندسية مرجعية</div>
+                <div style="color: var(--gold-light); font-weight: bold;">MoHE-ARC-2026-V3</div>
+            </div>
+        </div>
+
+        <div class="cover-body">
+            <span class="cover-badge">وثيقة التوصيف المعماري والهندسي الشامل للذكاء الاصطناعي</span>
+            <h1 class="cover-title">منظومة إدارة وقرارات معادلة الشهادات والتعادل الأكاديمي</h1>
+            <p class="cover-subtitle">
+                الدليل المعماري والوظيفي التأسيسي لتشغيل وتطوير نظام التعادل الأكاديمي، متضمناً دورات العمل، هندسة البيانات، المسارات الخمسة، قواعد البت الوزارية، ومحرك دمج الوثائق.
+            </p>
+
+            <div class="cover-meta-grid">
+                <div class="meta-box">
+                    <span>إصدار النظام والبيئة</span>
+                    <strong>Laravel 12 / PHP 8.2+</strong>
+                </div>
+                <div class="meta-box">
+                    <span>طراز الهوية البصرية</span>
+                    <strong>Luxury Cyber-Gov (Navy & Gold)</strong>
+                </div>
+                <div class="meta-box">
+                    <span>الجهة المستهدفة بالشرح</span>
+                    <strong>Gemini AI / Lead Architect</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="cover-footer">
+            <div>أمانة مجلس التعليم العالي ولجنة التعادل الأكاديمي</div>
+            <div>تاريخ الإصدار: أكتوبر 2026 | وثيقة معتمدة</div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 2. EXECUTIVE SUMMARY & SYSTEM MISSION -->
+    <!-- ========================================== -->
+    <div class="doc-section avoid-break">
+        <div class="section-header-band">
+            <div class="section-title">
+                <span class="section-number">1</span>
+                <span>الملخص التنفيذي والهدف الاستراتيجي من المنظومة</span>
+            </div>
+            <span class="section-tag">Executive Summary</span>
+        </div>
+
+        <p style="font-size: 9pt; margin-bottom: 12px; color: var(--text-muted); line-height: 1.6;">
+            <strong>المنظومة الوطنية لمعادلة الشهادات والتعادل الأكاديمي</strong> هي منصة سيادية متكاملة أطلقتها <strong>وزارة التعليم العالي والبحث العلمي (مجلس التعليم العالي)</strong> في الجمهورية العربية السورية. تهدف المنظومة إلى حوكمة ورقمنة إجراءات معادلة المؤهلات العليا (الماجستير والدكتوراه) ومنح تراخيص السماح بالتدريس لأعضاء الهيئات التدريسية والتعليمية المرشحين للعمل في الجامعات الخاصة السورية، استناداً إلى <strong>اللائحة التنفيذية والتعميم الوزاري رقم (150 / ص)</strong>.
+        </p>
+
+        <div class="grid-3" style="margin-bottom: 12px;">
+            <div class="bento-card gold">
+                <div class="bento-title">🏛️ الحوكمة ومنع التكرار والتزوير</div>
+                <div class="bento-body">
+                    ربط كل مرشح برقم وطني فريد (11 خانة) مع فحص فوري لمنع تكرار الإضبارة بين الجامعات، وإلزامية التدقيق للأصول وتصديقات الخارجية والعدل.
+                </div>
+            </div>
+            <div class="bento-card sky">
+                <div class="bento-title">⚡ أتمتة اللجان والمقابلات</div>
+                <div class="bento-body">
+                    جدولة مركزية موحدة لمواعيد المقابلات الشفهية والعملية، وتوثيق قرارات اللجنة العامة ولجنة الإنتاج العلمي، والتنبيه التلقائي للجامعات.
+                </div>
+            </div>
+            <div class="bento-card emerald">
+                <div class="bento-title">📑 إصدار القرارات والأرشيف الموحد</div>
+                <div class="bento-body">
+                    توليد قرارات وزارية رسمية بصيغة PDF، ودمج الوثائق المتعددة (معادلة + أهلية) بملف واحد سلس، وتنزيل الحزم كاملة بصيغة ZIP.
+                </div>
+            </div>
+        </div>
+
+        <div class="callout">
+            <strong>نطاق العمل الرئيسي:</strong>
+            يخدم النظام طرفين رئيسيين: <strong>(1) أمانة مجلس التعليم العالي واللجان المتخصصة</strong> كإدارة مركزية عليا، و <strong>(2) إدارات شؤون العاملين والعمداء في الجامعات السورية الخاصة</strong> كمؤسسات مقدمة ومتابعة للطلبات.
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 3. TECHNICAL STACK & ARCHITECTURE -->
+    <!-- ========================================== -->
+    <div class="doc-section avoid-break">
+        <div class="section-header-band">
+            <div class="section-title">
+                <span class="section-number">2</span>
+                <span>البنية التقنية ومعمارية النظام (Technology Stack)</span>
+            </div>
+            <span class="section-tag">Architecture</span>
+        </div>
+
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">الطبقة التقنية</th>
+                    <th style="width: 35%;">التقنيات المستخدمة</th>
+                    <th style="width: 40%;">الدور الوظيفي والمسؤولية</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Backend Framework</strong></td>
+                    <td>Laravel 12.x / PHP 8.2+</td>
+                    <td>معمارية MVC متقدمة، معالجة المسارات، بوابات الصلاحيات (Gate & Middleware)، وبناة الاستعلامات المخصصة.</td>
+                </tr>
+                <tr>
+                    <td><strong>Frontend UI & Styling</strong></td>
+                    <td>Blade Templates + Tailwind CSS v4 + Bootstrap 5.3 RTL</td>
+                    <td>واجهات عصرية متجاوبة بالكامل RTL، مكونات Bento UI، وتدرجات الهوية الملكية (Navy #0e1e38 & Gold #c59b27).</td>
+                </tr>
+                <tr>
+                    <td><strong>Client-side Reactivity</strong></td>
+                    <td>Alpine.js + Vanilla JS (ES6+)</td>
+                    <td>تحكم القوائم الجانبية القابلة للطي، التصفية الفورية للبيانات في الجداول، والتحقق التفاعلي من الحقول والمرفقات.</td>
+                </tr>
+                <tr>
+                    <td><strong>Document Processing</strong></td>
+                    <td>Barryvdh DomPDF + ArPHP + FPDI / FPDF</td>
+                    <td>توليد مذكرات العرض والقرارات بصيغة PDF، معالجة الحروف العربية والاتجاهات (BiDi Engine)، ودمج ملفات PDF المتعددة بحزمة واحدة.</td>
+                </tr>
+                <tr>
+                    <td><strong>Database & Storage</strong></td>
+                    <td>MySQL / SQLite + Laravel Storage (Public Disk)</td>
+                    <td>تخزين العلاقات المتشعبة، مع حماية الملفات وتصنيف المرفقات في مسارات محددة <code>storage/app/public/attachments/{app_id}</code>.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 4. USER PORTALS & ROLES -->
+    <!-- ========================================== -->
+    <div class="doc-section page-break">
+        <div class="section-header-band">
+            <div class="section-title">
+                <span class="section-number">3</span>
+                <span>بوابات النظام وصلاحيات المستخدمين (Role-Based Portals)</span>
+            </div>
+            <span class="section-tag">RBAC System</span>
+        </div>
+
+        <div class="grid-2">
+            <!-- Admin Portal -->
+            <div class="bento-card primary">
+                <div class="bento-title">
+                    <span>👑 لوحة تحكم أمانة المجلس (Admin Portal)</span>
+                    <span class="badge badge-navy">role: admin</span>
+                </div>
+                <div class="bento-body">
+                    <p style="margin-bottom: 6px;">المسار الأساسي: <code>/admin/*</code></p>
+                    <ul style="padding-right: 18px; line-height: 1.6;">
+                        <li><strong>Dashboard (/admin/dashboard):</strong> إحصائيات فورية وتدفق المعاملات.</li>
+                        <li><strong>Applications (/admin/applications):</strong> استعراض كافة المعاملات وفرزها وتدقيقها.</li>
+                        <li><strong>Committee (/admin/committee):</strong> شؤون وقرارات اللجنة العامة والبت بالمؤهلات الخارجية.</li>
+                        <li><strong>Interviews (/admin/interviews):</strong> منظومة جدولة وتثبيت مواعيد المقابلات ورصد نتائج الأهلية.</li>
+                        <li><strong>Scientific Production (/admin/scientific-production):</strong> إدارة معاملات الدكتوراه المحالة للإنتاج العلمي.</li>
+                        <li><strong>Decisions (/admin/decisions/*):</strong> إصدار القرارات الوزارية بحسب المسار الأكاديمي (نظري، تطبيقي، دكتوراه، سماح تدريس).</li>
+                        <li><strong>Central Archive (/admin/archive):</strong> الأرشيف المركزي الموثق والبحث المتقدم بالقرارات الصادرة.</li>
+                        <li><strong>Edit Application (/admin/applications/{id}/edit):</strong> تعديل إضبارة المرشح وبيانات الجامعة والشهادات والمرفقات.</li>
+                        <li><strong>Settings (/admin/settings):</strong> إدارة الجامعات، قفل الموقع، والدول والمؤهلات.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- University Portal -->
+            <div class="bento-card gold">
+                <div class="bento-title">
+                    <span>🎓 بوابة الجامعات الخاصة (University Portal)</span>
+                    <span class="badge badge-gold">role: university</span>
+                </div>
+                <div class="bento-body">
+                    <p style="margin-bottom: 6px;">المسار الأساسي: <code>/university/*</code></p>
+                    <ul style="padding-right: 18px; line-height: 1.6;">
+                        <li><strong>Dashboard (/university/dashboard):</strong> كروت KPI للمعاملات، إجراءات سريعة، وآخر المعاملات.</li>
+                        <li><strong>Application Wizards (/university/apply/*):</strong> معالجات تقديم خطوة بخطوة للمسارات الخمسة (ماجستير داخلي، ماجستير خارجي، دكتوراه سورية، دكتوراه خارجية، سماح تدريس).</li>
+                        <li><strong>Saved Drafts (/university/drafts):</strong> إدارة ومتابعة المسودات المحفوظة قبل الإرسال النهائي بنمط Bento UI.</li>
+                        <li><strong>Candidate Lookup (/university/candidate/lookup):</strong> استعلام فوري بالرقم الوطني لمنع تكرار الإضبارة واسترجاع البيانات.</li>
+                        <li><strong>Required Documents (/university/required-documents):</strong> الدليل الرقمي التفاعلي للائحة التنفيذية والأوراق المطلوبة.</li>
+                        <li><strong>Messages Hub (/university/messages):</strong> التراسل الفوري وتلقي التنبيهات الرسمية بمواعيد المقابلات ونتائج اللجان.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 5. THE 5 ACADEMIC EQUIVALENCE TRACKS -->
+    <!-- ========================================== -->
+    <div class="doc-section avoid-break">
+        <div class="section-header-band">
+            <div class="section-title">
+                <span class="section-number">4</span>
+                <span>المسارات الأكاديمية الخمسة وقواعد العمل (The 5 Academic Tracks)</span>
+            </div>
+            <span class="section-tag">Business Rules</span>
+        </div>
+
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th style="width: 18%;">المسار الأكاديمي</th>
+                    <th style="width: 12%;">الرسم المالي</th>
+                    <th style="width: 25%;">متطلبات وشروط الاعتماد</th>
+                    <th style="width: 25%;">محطة البت الأساسية</th>
+                    <th style="width: 20%;">نوع القرار النهائي</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>1. ماجستير سوري</strong><br><span class="badge badge-blue">داخلي - نظري/تطبيقي</span></td>
+                    <td>100,000 ل.س</td>
+                    <td>شهادة الإجازة + مصدقة الماجستير + وثيقة التواريخ وقرارات المجلس + الأطروحة.</td>
+                    <td>التدقيق الإداري ➔ المقابلة الشفهية (للنظري) لإثبات الأهلية التدريسية.</td>
+                    <td>قرار معادلة وأهلية تدريسية (أو تعادل مباشر للتطبيقي).</td>
+                </tr>
+                <tr>
+                    <td><strong>2. ماجستير غير سوري</strong><br><span class="badge badge-gold">خارجي - نظري/تطبيقي</span></td>
+                    <td>100,000 ل.س</td>
+                    <td>شهادات أصلية مصدقة من الخارجية والعدل + إثبات الإقامة وجوازات السفر + ترجمة محلفة.</td>
+                    <td><strong>اللجنة العامة:</strong><br>
+                        • <em>نظري:</em> اشتراط خبرة سنتين + بحث ➔ مقابلة.<br>
+                        • <em>تطبيقي:</em> دون خبرة ➔ بدون مقابلة (هيئة فنية).
+                    </td>
+                    <td>
+                        • <em>نظري:</em> قرار تعادل + أهلية.<br>
+                        • <em>تطبيقي:</em> قرار تعادل تطبيقي وحيد.
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>3. دكتوراه سورية</strong><br><span class="badge badge-navy">داخلي حكومي/خاص</span></td>
+                    <td>125,000 ل.س</td>
+                    <td>مصدقة الإجازة + مصدقة الماجستير + مصدقة الدكتوراه + ملخص الأطروحة.</td>
+                    <td>التدقيق الإداري ➔ المقابلة الشفهية والعملية لإثبات الأهلية التدريسية.</td>
+                    <td>قرار تعادل درجة الدكتوراه + قرار ثبوت الأهلية التدريسية (ورقتان مدمجتان).</td>
+                </tr>
+                <tr>
+                    <td><strong>4. دكتوراه غير سورية</strong><br><span class="badge badge-purple">خارجية + إنتاج علمي</span></td>
+                    <td>125,000 ل.س</td>
+                    <td>3 نسخ أطروحة مطبوعة + 3 ملخصات عربية &ge; 25 صفحة + قرص ليزري + تصديقات الخارجية.</td>
+                    <td><strong>اللجنة العامة</strong> ➔ <strong>لجنة الإنتاج العلمي</strong> (فحص الأطروحة) ➔ <strong>المقابلة الشفهية</strong>.</td>
+                    <td>قرار تعادل درجة الدكتوراه + قرار ثبوت الأهلية التدريسية (ورقتان مدمجتان).</td>
+                </tr>
+                <tr>
+                    <td><strong>5. عضو هيئة تدريسية حكومية</strong><br><span class="badge badge-green">سماح بالتدريس</span></td>
+                    <td>125,000 ل.س</td>
+                    <td>بيان وضع وظيفي رسمي يثبت رتبة (مدرس / أستاذ مساعد / أستاذ) بجامعة حكومية سورية ساري المفعول.</td>
+                    <td>تدقيق بيان الوضع وموافقة الجامعة الأم ➔ لا يحتاج لمعادلة ولا لجنة علمية.</td>
+                    <td>قرار وزاري بالسماح بالتدريس بالجامعة الخاصة (ورقة واحدة).</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 6. APPLICATION LIFECYCLE & STATE MACHINE -->
+    <!-- ========================================== -->
+    <div class="doc-section avoid-break">
+        <div class="section-header-band">
+            <div class="section-title">
+                <span class="section-number">5</span>
+                <span>دورة حياة المعاملة ومخطط الحالات (Lifecycle State Machine)</span>
+            </div>
+            <span class="section-tag">Workflow Engine</span>
+        </div>
+
+        <p style="font-size: 8.5pt; color: var(--text-muted); margin-bottom: 10px;">
+            تتبع المعاملة دورة حياة صارمة ودقيقة تتغير حالتها برمجياً تلقائياً بناءً على إجراءات اللجان والإدارة:
+        </p>
+
+        <div class="flow-stepper">
+            <div class="flow-step">1. مسودة<br><small>draft</small></div>
+            <div class="flow-arrow">&larr;</div>
+            <div class="flow-step active">2. بانتظار الوثائق<br><small>تقديم الجامعة</small></div>
+            <div class="flow-arrow">&larr;</div>
+            <div class="flow-step">3. قيد الدراسة<br><small>التدقيق الأولي</small></div>
+            <div class="flow-arrow">&larr;</div>
+            <div class="flow-step">4. لجنة عامة<br><small>بت المؤهلات</small></div>
+            <div class="flow-arrow">&larr;</div>
+            <div class="flow-step">5. إنتاج علمي<br><small>للدكتوراه الخارجي</small></div>
+            <div class="flow-arrow">&larr;</div>
+            <div class="flow-step">6. بانتظار المقابلة<br><small>جدولة الموعد</small></div>
+            <div class="flow-arrow">&larr;</div>
+            <div class="flow-step">7. إصدار القرار<br><small>اعتماد المراسيم</small></div>
+            <div class="flow-arrow">&larr;</div>
+            <div class="flow-step completed">8. تم الصدور / مؤرشف<br><small>تحميل الوثائق</small></div>
+        </div>
+
+        <div class="grid-3" style="margin-top: 14px;">
+            <div class="bento-card">
+                <div class="bento-title">🔄 آلية التخفيض التلقائي (Downgrade)</div>
+                <div class="bento-body">
+                    في الماجستير الخارجي، إذا قررت اللجنة العامة عدم كفاية الخبرة النقدية، يتم تحويل مسار الطلب تلقائياً من (نظري) إلى (تطبيقي)، ونقله مباشرة إلى (بانتظار إصدار القرار) متجاوزاً المقابلة.
+                </div>
+            </div>
+            <div class="bento-card">
+                <div class="bento-title">📅 الجدولة والإشعارات الفورية</div>
+                <div class="bento-body">
+                    عند تحديد موعد المقابلة في شاشة المقابلات، يقوم النظام تلقائياً بإنشاء رسالة إشعار رسمية في جدول <code>application_messages</code> موجهة لجامعة المرشح بتفاصيل التاريخ والوقت والقاعة.
+                </div>
+            </div>
+            <div class="bento-card">
+                <div class="bento-title">⛔ التسجيل المسبب للرفض</div>
+                <div class="bento-body">
+                    في حال رفض أي معاملة من قبل اللجنة العامة أو في المقابلة، يُلزم النظام المستخدم بإدخال سبب الرفض التفصيلي، ويتحول الطلب إلى (مرفوض) مع حفظ سجل التدقيق بالكامل.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 7. DATABASE SCHEMA & ENTITY RELATIONSHIPS -->
+    <!-- ========================================== -->
+    <div class="doc-section page-break">
+        <div class="section-header-band">
+            <div class="section-title">
+                <span class="section-number">6</span>
+                <span>المخطط الهيكلي لقاعدة البيانات (Database Schema & Models)</span>
+            </div>
+            <span class="section-tag">ER Diagram</span>
+        </div>
+
+        <p style="font-size: 8.5pt; color: var(--text-muted); margin-bottom: 10px;">
+            تم بناء بنية قاعدة البيانات وفق معايير التطبيع العلائقي (Relational Normalization) مع الحفاظ على الأداء العالي وفهرسة حقول البحث:
+        </p>
+
+        <div class="code-box">
+<span class="code-comment">// 1. EquivalenceProfile (بيانات المرشح الوطنية)</span>
+<span class="code-keyword">Table:</span> equivalence_profiles {
+    id <span class="code-type">BIGINT AUTO_INCREMENT</span>,
+    national_id <span class="code-type">VARCHAR(11) UNIQUE INDEX</span>,
+    full_name <span class="code-type">VARCHAR(255)</span>,
+    father_name, mother_name, dob, gender, mobile, email, address,
+    nationality_id <span class="code-type">FOREIGN KEY -> lookup_countries</span>
+}
+
+<span class="code-comment">// 2. Application (إضبارة المعاملة المركزية)</span>
+<span class="code-keyword">Table:</span> applications {
+    id <span class="code-type">BIGINT AUTO_INCREMENT</span>,
+    application_no <span class="code-type">VARCHAR(100) UNIQUE</span>,   <span class="code-comment">// مثال: PHD-SY-924780</span>
+    profile_id <span class="code-type">FOREIGN KEY -> equivalence_profiles</span>,
+    work_university_id <span class="code-type">FOREIGN KEY -> lookup_universities</span>,
+    work_faculty, work_department,
+    request_type <span class="code-type">VARCHAR(100)</span>,           <span class="code-comment">// ماجستير خارجي، دكتوراه سورية...</span>
+    status <span class="code-type">VARCHAR(50) INDEX</span>,             <span class="code-comment">// بانتظار المقابلة، تم الصدور...</span>
+    new_uni_request_no, new_uni_request_date,
+    interview_date, interview_time, interview_notes,
+    committee_track, rejection_reason
+}
+
+<span class="code-comment">// 3. Education & Attachments (المؤهلات والمرفقات المتعددة)</span>
+<span class="code-keyword">Table:</span> educations {
+    id <span class="code-type">BIGINT AUTO_INCREMENT</span>,
+    application_id <span class="code-type">FOREIGN KEY -> applications</span>,
+    education_level_id <span class="code-type">FOREIGN KEY -> lookup_education_levels</span>, <span class="code-comment">// 1:إجازة, 2:ماجستير, 3:دكتوراه</span>
+    university_id <span class="code-type">NULLABLE FOREIGN KEY -> lookup_universities</span>,
+    university_other, faculty, department, general_specialization, exact_specialization,
+    thesis_title, supervisor_name, rank, registration_date, grant_date, defense_date
+}
+
+<span class="code-keyword">Table:</span> education_attachments {
+    id <span class="code-type">BIGINT AUTO_INCREMENT</span>,
+    education_id <span class="code-type">FOREIGN KEY -> educations</span>,
+    attachment_type_id <span class="code-type">FOREIGN KEY -> lookup_attachment_types</span>,
+    file_path <span class="code-type">VARCHAR(500)</span>, notes <span class="code-type">TEXT</span>
+}
+
+<span class="code-comment">// 4. Decisions & Messages (القرارات الصادرة والتراسل)</span>
+<span class="code-keyword">Table:</span> application_decisions {
+    id <span class="code-type">BIGINT</span>, application_id <span class="code-type">FOREIGN KEY</span>,
+    decision_type, decision_number, session_number, decision_date, pdf_path
+}
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 8. DOCUMENT GENERATION & PDF MERGING -->
+    <!-- ========================================== -->
+    <div class="doc-section avoid-break">
+        <div class="section-header-band">
+            <div class="section-title">
+                <span class="section-number">7</span>
+                <span>هندسة توليد الوثائق والدمج الذكي (Document & PDF Engine)</span>
+            </div>
+            <span class="section-tag">PDF Processing</span>
+        </div>
+
+        <div class="grid-2">
+            <div class="bento-card">
+                <div class="bento-title">📄 مذكرة العرض الرسمية (Mozhakkara)</div>
+                <div class="bento-body">
+                    وثيقة وزارية تفصيلية تستعرض السيرة الأكاديمية الكاملة للمرشح من الشهادة الثانوية وحتى الدكتوراه، تشمل التواريخ وتطابق التخصصات والمقررات والمشرفين وملاحظات أمانة المجلس.
+                </div>
+            </div>
+            <div class="bento-card">
+                <div class="bento-title">📜 القرارات الوزارية الرسمية المؤتمتة</div>
+                <div class="bento-body">
+                    توليد نصوص القرارات الوزارية بصيغ قانونية معتمدة، مع وضع أرقام المراسيم وتواريخ الجلسات والتوقيعات الرسمية، وتصديرها بصيغة PDF فور الاعتماد.
+                </div>
+            </div>
+        </div>
+
+        <div class="callout" style="margin-top: 14px;">
+            <strong>الدمج الذكي والتحميل الموحد (Smart PDF Bundling):</strong>
+            تم برمجة دالة <code>downloadBundle($id)</code> و <code>viewAttachment($id, $type)</code> باستخدام مكتبة <strong>FPDI / PDFMerger</strong>:
+            <ul style="padding-right: 18px; margin-top: 6px; line-height: 1.6;">
+                <li>إذا كان الطلب يتضمن <strong>قرارين</strong> (مثل الدكتوراه: قرار تعادل + قرار أهلية): يدمجهما النظام تلقائياً داخل <strong>ملف PDF واحد متصل</strong> عند النقر على أيقونة التنزيل.</li>
+                <li>إذا كان الطلب يتضمن <strong>قراراً واحداً</strong> (مثل الماجستير التطبيقي أو السماح بالتدريس): يتم فتح أو تنزيل ملف الـ PDF المعتمد مباشرة دون دمج.</li>
+                <li>توفير خيار لتنزيل <strong>الحزمة الكاملة (Zip Archive)</strong> المتضمنة كافة وثائق ومرفقات المرشح بضغطة زر واحدة.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 9. READY-TO-USE PROMPT FOR GEMINI -->
+    <!-- ========================================== -->
+    <div class="doc-section avoid-break">
+        <div class="section-header-band">
+            <div class="section-title">
+                <span class="section-number">8</span>
+                <span>قالب البرومبت الجاهز لتزويده لـ Gemini (Gemini AI Prompt Template)</span>
+            </div>
+            <span class="section-tag">Prompt for Gemini</span>
+        </div>
+
+        <p style="font-size: 8.5pt; color: var(--text-muted); margin-bottom: 8px;">
+            يمكنك نسخ هذا البرومبت الموحد ولصقه مباشرة في نافذة محادثة <strong>Gemini</strong> لتعريفه بالنظام بدقة وتكليفه بأي مهمة برمجية أو تحليلية:
+        </p>
+
+        <div class="code-box" style="direction: rtl; text-align: right; font-family: 'Tajawal', sans-serif; font-size: 8.5pt; color: #f1f5f9; background: #0c1a30; border: 1px solid var(--gold-primary);">
+<strong>نص البرومبت الموجه لـ Gemini:</strong><br><br>
+"مرحباً Gemini، أنت تعمل الآن بصفتك كبير مهندسي البرمجيات (Lead Software Architect) والمطور الأساسي لمشروع: <strong>نظام إدارة وقرارات معادلة الشهادات والتعادل الأكاديمي لمجلس التعليم العالي السوري (MoHE Equivalence System)</strong>.<br><br>
+<strong>ملخص البنية التقنية للمشروع:</strong><br>
+• مبني باستخدام: <strong>Laravel 12 / PHP 8.2+ / MySQL / Blade / Tailwind CSS v4 / Bootstrap 5.3 RTL / Alpine.js / DomPDF / FPDI</strong>.<br>
+• هوية التصميم: <strong>Modern Cyber-Gov / Luxury Navy (`#0e1e38`) & Heritage Gold (`#c59b27`)</strong> بنمط Bento UI.<br>
+• يخدم طرفين: <strong>(1) بوابة الإدارة المركزية (Admin)</strong> و <strong>(2) بوابة الجامعات الخاصة (University)</strong>.<br>
+• يدير 5 مسارات أكاديمية: <strong>ماجستير سوري، ماجستير غير سوري (نظري/تطبيقي)، دكتوراه سورية، دكتوراه غير سورية (إنتاج علمي)، وسماح بالتدريس لأعضاء الجامعات الحكومية</strong>.<br>
+• يتضمن دورة حالات دقيقة: <strong>مسودة ➔ بانتظار الوثائق ➔ قيد الدراسة ➔ لجنة عامة ➔ لجنة إنتاج علمي ➔ بانتظار المقابلة ➔ بانتظار إصدار القرار ➔ تم الصدور / مؤرشف</strong>.<br>
+• الجداول الرئيسية: <code>applications</code>, <code>equivalence_profiles</code>, <code>educations</code>, <code>education_attachments</code>, <code>application_decisions</code>, <code>application_messages</code>.<br>
+• يتم دمج القرارات الثنائية (معادلة + أهلية) تلقائياً بملف PDF واحد عبر FPDI.<br><br>
+يرجى اعتماد هذه الخلفية الكاملة في كافة استجاباتك البرمجية والتحليلية، والالتزام الصارم بالهوية والتسميات الحالية دون كسر أي مسارات أو كود قائم. كيف يمكنك مساعدتي في تطوير أو فحص المنظومة الآن؟"
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 10. SYSTEM METRICS & HEALTH SUMMARY -->
+    <!-- ========================================== -->
+    <div class="doc-section avoid-break">
+        <div class="section-header-band">
+            <div class="section-title">
+                <span class="section-number">9</span>
+                <span>فهرس المسارات وروابط المنظومة (Key System Routes)</span>
+            </div>
+            <span class="section-tag">Route Registry</span>
+        </div>
+
+        <div class="grid-2">
+            <div>
+                <strong style="color: var(--navy-primary); font-size: 8.5pt; display: block; margin-bottom: 6px;">مسارات الإدارة المركزية (Admin Routes):</strong>
+                <ul style="font-size: 8pt; color: #475569; padding-right: 16px; line-height: 1.6;">
+                    <li><code>admin.dashboard</code> ➔ لوحة القيادة والمؤشرات الرقمية.</li>
+                    <li><code>admin.applications.index</code> ➔ جدول استعراض كافة المعاملات والفلترة.</li>
+                    <li><code>admin.committee.index</code> ➔ شؤون ومداولات اللجنة العامة.</li>
+                    <li><code>admin.interviews.index</code> ➔ جدولة المقابلات ورصد الأهلية.</li>
+                    <li><code>admin.scientific_production.index</code> ➔ إدارة فحص الإنتاج العلمي.</li>
+                    <li><code>admin.decisions.index</code> ➔ إصدار قرارات الماجستير النظري.</li>
+                    <li><code>admin.doctorate_decisions.index</code> ➔ إصدار قرارات الدكتوراه.</li>
+                    <li><code>admin.applied_decisions.index</code> ➔ إصدار قرارات الماجستير التطبيقي.</li>
+                    <li><code>admin.faculty_decisions.index</code> ➔ قرارات السماح بالتدريس.</li>
+                    <li><code>admin.archive.index</code> ➔ الأرشيف المركزي الموحد.</li>
+                </ul>
+            </div>
+            <div>
+                <strong style="color: var(--gold-primary); font-size: 8.5pt; display: block; margin-bottom: 6px;">مسارات الجامعات الخاصة (University Routes):</strong>
+                <ul style="font-size: 8pt; color: #475569; padding-right: 16px; line-height: 1.6;">
+                    <li><code>university.dashboard</code> ➔ الواجهة الرئيسية وإحصائيات الجامعة.</li>
+                    <li><code>university.drafts.index</code> ➔ إدارة المسودات المحفوظة بنمط Bento.</li>
+                    <li><code>university.required_documents</code> ➔ اللائحة التنفيذية والأوراق المطلوبة.</li>
+                    <li><code>university.messages</code> ➔ مركز التراسل والتنبيهات المباشرة.</li>
+                    <li><code>university.apply.options</code> ➔ معالج اختيار المسار الأكاديمي.</li>
+                    <li><code>university.candidate.lookup</code> ➔ التحقق الفوري من الرقم الوطني.</li>
+                    <li><code>admin.decisions.download-bundle</code> ➔ تنزيل حزمة القرارات المدمجة PDF.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

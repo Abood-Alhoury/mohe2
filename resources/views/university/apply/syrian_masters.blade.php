@@ -55,6 +55,12 @@
             }
         }
     }
+
+    $isAwaitingDocs = $draft && (
+        $draft->status_id == 3 || 
+        in_array($draft->status, ['بانتظار الوثائق', 'بانتظار استكمال الوثائق', 'بانتظار تصحيح الوثائق', 'بانتظار الوثائق الناقصة'])
+    );
+    $canSaveDraft = !$draft || ($draft->status_id == 1 || $draft->status === 'مسودة');
 @endphp
 
 <!-- BREADCRUMBS & PAGE HEADER -->
@@ -67,16 +73,43 @@
                 <li class="breadcrumb-item active text-muted" aria-current="page">ماجستير سوري</li>
             </ol>
         </nav>
-        <h3 class="headline-md text-prestigious mb-1" style="font-size: 1.5rem;">
-            <i class="fa-solid fa-file-invoice-dollar me-2" style="color: var(--heritage-gold);"></i> معاملة تعادل درجة ماجستير سورية
-        </h3>
-        <p class="body-md text-muted mb-0">الرجاء إدخال البيانات المطلوبة بدقة والتنقل بين الخطوات لرفع المستندات وإرسال الطلب لمجلس التعليم العالي.</p>
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div>
+                <h3 class="headline-md text-prestigious mb-1" style="font-size: 1.5rem;">
+                    <i class="fa-solid fa-file-invoice-dollar me-2" style="color: var(--heritage-gold);"></i> معاملة تعادل درجة ماجستير سورية
+                </h3>
+                <p class="body-md text-muted mb-0">الرجاء إدخال البيانات المطلوبة بدقة والتنقل بين الخطوات لرفع المستندات وإرسال الطلب لمجلس التعليم العالي.</p>
+            </div>
+            @if($draft)
+                <div>
+                    @if($isAwaitingDocs)
+                        <span class="badge bg-warning text-dark px-3 py-2 border border-warning fs-7 fw-bold">
+                            <i class="fa-solid fa-file-circle-exclamation me-1"></i> بانتظار استكمال الوثائق: #{{ $draft->application_no }}
+                        </span>
+                    @else
+                        <span class="badge px-3 py-2 border fs-7 fw-bold" style="background-color: #FAF6EE; color: #8A651E; border-color: #D9C394 !important;">
+                            <i class="fa-solid fa-file-pen me-1"></i> تعديل مسودة طلب: #{{ $draft->application_no }}
+                        </span>
+                    @endif
+                </div>
+            @endif
+        </div>
     </div>
 </div>
 
 <!-- WIZARD MAIN CONTAINER -->
 <div class="card border-0 shadow-sm" style="border-radius: 8px; border-top: 3px solid var(--heritage-gold) !important; border: 1px solid var(--outline-variant) !important; background-color: #ffffff;">
     <div class="card-body p-4 p-md-5">
+
+        @if($isAwaitingDocs)
+            <div class="alert alert-warning border-warning shadow-sm d-flex align-items-center gap-3 mb-4 p-3 rounded" style="background-color: #fff8e1; border-right: 4px solid #f59e0b !important;">
+                <i class="fa-solid fa-file-circle-exclamation fs-3 text-warning"></i>
+                <div>
+                    <div class="fw-bold fs-6 text-dark">معاملة معادة لاستكمال وتصحيح الوثائق (طلب رقم: #{{ $draft->application_no }})</div>
+                    <div class="small text-muted">حالة المعاملة الحالية هي "بانتظار الوثائق". يرجى استكمال المرفقات والبيانات المطلوبة ثم الضغط على زر الإرسال. لا يمكن حفظ هذا الطلب كمسودة لأنه مسجل ومقدم رسمياً.</div>
+                </div>
+            </div>
+        @endif
         
         @if ($errors->any())
             <div class="alert alert-danger mb-4 shadow-sm border-0 rounded" style="border-right: 4px solid #ba1a1a !important;">
@@ -123,7 +156,6 @@
         <form action="{{ route('university.apply.syrian_masters.submit') }}" method="POST" enctype="multipart/form-data" id="wizard-form" novalidate>
             @csrf
             <input type="hidden" name="draft_id" id="input-draft-id" value="{{ optional($draft)->id }}">
-            <input type="hidden" name="redirect_to" id="input-redirect-to" value="">
 
             <!-- ================= STEP 1: PERSONAL INFO & UNIVERSITY REQUEST ================= -->
             <div class="form-section active" id="step-1">
@@ -449,25 +481,173 @@
                         <textarea name="ma_thesis_title" id="input-maThesisTitle" class="form-control academic-input" rows="2" placeholder="أدخل عنوان رسالة الماجستير كاملاً كما هو مذكور في مصدقة التخرج أو الأطروحة" required>{{ old('ma_thesis_title', optional($maEd)->thesis_title) }}</textarea>
                     </div>
 
-                    <!-- Experience details toggle (> 2 years since master grant date) -->
-                    <div class="col-12 mt-4" id="experience-toggle-container" style="display: none;">
-                        <div class="card border-0 shadow-sm p-3" style="background-color: var(--surface-container-low); border: 1px solid var(--outline-variant) !important; border-radius: 4px;">
-                            <div class="form-check form-switch mb-3">
-                                <input class="form-check-input" type="checkbox" id="input-hasExperience" name="has_experience" value="1" {{ old('has_experience', optional($maEd)->experience_from_year ? '1' : '0') == '1' ? 'checked' : '' }} onchange="toggleExperienceSection(this)">
-                                <label class="form-check-label fw-bold text-dark ms-2 label-md" for="input-hasExperience">هل يمتلك المرشح خبرة تدريسية تفوق سنتين؟</label>
+                    @php
+                        $oldExperiences = old('experiences');
+                        if (is_array($oldExperiences) && count($oldExperiences) > 0) {
+                            $draftExperiences = collect($oldExperiences)->map(function($exp, $key) {
+                                return (object)[
+                                    'id' => $key + 1,
+                                    'institution_name' => $exp['institution_name'] ?? $exp['institution'] ?? '',
+                                    'role_or_subject' => $exp['role_or_subject'] ?? null,
+                                    'start_date' => $exp['start_date'] ?? null,
+                                    'end_date' => $exp['end_date'] ?? null,
+                                    'notes' => $exp['notes'] ?? null,
+                                ];
+                            });
+                        } else {
+                            $draftExperiences = ($draft && $draft->experiences) ? $draft->experiences : collect();
+                            if ($draftExperiences->isEmpty() && optional($maEd)->experience_from_year && optional($maEd)->experience_to_year) {
+                                $s = \Carbon\Carbon::parse($maEd->experience_from_year);
+                                $e = \Carbon\Carbon::parse($maEd->experience_to_year);
+                                $draftExperiences = collect([(object)[
+                                    'id' => 1,
+                                    'institution_name' => optional($maEd)->notes ? preg_replace('/.*مكان الخبرة التدريسية:\s*/u', '', $maEd->notes) : 'جامعة سورية',
+                                    'role_or_subject' => 'تدريس جامعي',
+                                    'start_date' => $s->format('Y-m-d'),
+                                    'end_date' => $e->format('Y-m-d'),
+                                    'duration_days' => max(0, $s->diffInDays($e)),
+                                    'notes' => null,
+                                ]]);
+                            }
+                        }
+                        $hasInitialExperiences = $draftExperiences->isNotEmpty() || old('has_experience') == '1';
+                    @endphp
+
+                    <!-- Multi-Period Teaching Experience Section -->
+                    <div class="col-12 mt-4" id="experience-section-container">
+                        <div class="card border rounded-3 p-3 shadow-xs" style="background-color: #f8fafc; border-color: #e2e8f0 !important;">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 border-bottom pb-2">
+                                <div>
+                                    <h6 class="fw-bold mb-1 d-flex align-items-center gap-2" style="color: var(--primary-container);">
+                                        <i class="fa-solid fa-chalkboard-user" style="color: var(--heritage-gold);"></i> تسجيل فترات الخبرة التدريسية الأكاديمية (إن وجدت)
+                                    </h6>
+                                    <p class="text-muted fs-8 mb-0">
+                                        يتم احتساب مجموع فترات الخبرة التدريسية تلقائياً: إذا بلغت <strong>سنتين فأكثر (730 يوماً)</strong> يُعتمد مسار <strong>(ماجستير نظري)</strong> ويتطلب مقابلة وأهلية تدريس، وإذا كانت <strong>أقل من سنتين</strong> يُعتمد مسار <strong>(ماجستير تطبيقي - هيئة فنية)</strong>.
+                                    </p>
+                                </div>
+                                <div class="form-check form-switch m-0">
+                                    <input class="form-check-input" type="checkbox" id="input-hasExperience" name="has_experience" value="1" {{ $hasInitialExperiences ? 'checked' : '' }} onchange="toggleExperienceBlock(this.checked)">
+                                    <label class="form-check-label fw-bold text-dark ms-1 label-md" for="input-hasExperience">تسجيل فترات خبرة</label>
+                                </div>
                             </div>
-                            <div class="row g-3" id="experience-details-section" style="display: none;">
-                                <div class="col-md-6">
-                                    <label class="form-label label-md fw-medium text-dark">مكان الخبرة التدريسية (الجهة/الجامعة) </label><span class="text-danger"> *</span>
-                                    <input type="text" name="exp_place" id="input-expPlace" class="form-control academic-input" placeholder="اسم الكلية أو الجامعة والمعهد" value="{{ old('exp_place', optional($maEd)->notes ? preg_replace('/.*مكان الخبرة التدريسية:\s*/u', '', $maEd->notes) : '') }}">
+
+                            <div id="experience-entry-wrapper" style="display: {{ $hasInitialExperiences ? 'block' : 'none' }};">
+                                <!-- Form Inputs Card -->
+                                <div class="card p-3 mb-3 border rounded-3 bg-white shadow-xs">
+                                    <div class="row g-2 align-items-end">
+                                        <div class="col-md-4">
+                                             <label class="form-label label-sm fw-bold">الجهة / الجامعة والكلية <span class="text-danger">*</span></label>
+                                            <input type="text" id="exp_institution" class="form-control academic-input" placeholder="مثال: جامعة دمشق - كلية العلوم">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label label-sm fw-bold">الصفة التدريسية / المقرر <span class="text-muted fs-8 fw-normal">(اختياري)</span></label>
+                                            <input type="text" id="exp_role" class="form-control academic-input" placeholder="مثال: تدريس مخبري لمقرر البرمجة">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label label-sm fw-bold">من تاريخ <span class="text-danger">*</span></label>
+                                            <input type="date" id="exp_start_date" class="form-control academic-input" max="{{ date('Y-m-d') }}">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label label-sm fw-bold">إلى تاريخ <span class="text-danger">*</span></label>
+                                            <input type="date" id="exp_end_date" class="form-control academic-input" max="{{ date('Y-m-d') }}">
+                                        </div>
+                                        <div class="col-md-1">
+                                            <button type="button" class="btn btn-primary w-100 fw-bold shadow-sm" onclick="addExperiencePeriod()" style="height: 38px;" title="إضافة الفترة إلى الجدول">
+                                                <i class="fa-solid fa-plus-circle me-1"></i> إضافة
+                                            </button>
+                                        </div>
+                                        <div class="col-12 mt-2">
+                                            <input type="text" id="exp_notes" class="form-control academic-input form-control-sm" placeholder="ملاحظات إضافية أو رقم كتاب التكليف بالتدريس (اختياري)">
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="col-md-3">
-                                    <label class="form-label label-md fw-medium text-dark">من تاريخ </label><span class="text-danger"> *</span>
-                                    <input type="date" name="exp_from_year" id="input-expFrom" class="form-control academic-input" value="{{ old('exp_from_year', optional($maEd)->experience_from_year) }}">
+
+                                <!-- Periods Table -->
+                                <div class="table-responsive mb-3 shadow-xs rounded border bg-white">
+                                    <table class="table table-bordered table-hover align-middle text-center mb-0" id="experiences_table" style="font-size: 0.85rem;">
+                                        <thead style="background-color: #1e3a5f; color: #ffffff;">
+                                            <tr>
+                                                <th style="width: 5%; color: #ffffff;">#</th>
+                                                <th style="width: 25%; color: #ffffff;"><i class="fa-solid fa-building-columns me-1"></i> الجهة / الجامعة والكلية</th>
+                                                <th style="width: 18%; color: #ffffff;"><i class="fa-solid fa-chalkboard me-1"></i> الصفة / المقرر</th>
+                                                <th style="width: 12%; color: #ffffff;"><i class="fa-regular fa-calendar-check me-1"></i> من تاريخ</th>
+                                                <th style="width: 12%; color: #ffffff;"><i class="fa-regular fa-calendar-xmark me-1"></i> إلى تاريخ</th>
+                                                <th style="width: 18%; color: #ffffff;"><i class="fa-solid fa-clock-rotate-left me-1"></i> المدة المحسوبة</th>
+                                                <th style="width: 10%; color: #ffffff;">إجراءات</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="experiences_tbody">
+                                            @forelse($draftExperiences as $idx => $exp)
+                                                @php
+                                                    $sDateStr = !empty($exp->start_date) ? $exp->start_date : null;
+                                                    $eDateStr = !empty($exp->end_date) ? $exp->end_date : null;
+                                                    $calcY = 0; $calcM = 0; $calcD = 0; $tDays = 0;
+                                                    if ($sDateStr && $eDateStr) {
+                                                        try {
+                                                            $sDate = \Carbon\Carbon::parse($sDateStr);
+                                                            $eDate = \Carbon\Carbon::parse($eDateStr);
+                                                            if ($eDate->gte($sDate)) {
+                                                                $diff = $sDate->diff($eDate);
+                                                                $calcY = $diff->y; $calcM = $diff->m; $calcD = $diff->d;
+                                                                $tDays = $sDate->diffInDays($eDate);
+                                                            }
+                                                        } catch (\Exception $ex) {}
+                                                    }
+                                                @endphp
+                                                <tr data-row-id="{{ $idx + 1 }}">
+                                                    <td>{{ $idx + 1 }}</td>
+                                                    <td class="text-start pe-3"><strong>{{ $exp->institution_name }}</strong></td>
+                                                    <td>{{ $exp->role_or_subject ?: '---' }}</td>
+                                                    <td><strong class="text-dark">{{ $sDateStr ? \Carbon\Carbon::parse($sDateStr)->format('Y-m-d') : '---' }}</strong></td>
+                                                    <td><strong class="text-dark">{{ $eDateStr ? \Carbon\Carbon::parse($eDateStr)->format('Y-m-d') : '---' }}</strong></td>
+                                                    <td>
+                                                        <span class="badge bg-success-subtle text-success border border-success px-2 py-1">
+                                                            {{ $calcY }} سنة و {{ $calcM }} شهر و {{ $calcD }} يوم
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <button type="button" class="btn btn-xs btn-outline-danger" onclick="deleteExperiencePeriod(this)" title="حذف الفترة"><i class="fa-solid fa-trash"></i></button>
+                                                        <input type="hidden" name="experiences[{{ $idx }}][institution_name]" value="{{ $exp->institution_name }}">
+                                                        <input type="hidden" name="experiences[{{ $idx }}][role_or_subject]" value="{{ $exp->role_or_subject }}">
+                                                        <input type="hidden" name="experiences[{{ $idx }}][start_date]" value="{{ $sDateStr ? \Carbon\Carbon::parse($sDateStr)->format('Y-m-d') : '' }}">
+                                                        <input type="hidden" name="experiences[{{ $idx }}][end_date]" value="{{ $eDateStr ? \Carbon\Carbon::parse($eDateStr)->format('Y-m-d') : '' }}">
+                                                        <input type="hidden" name="experiences[{{ $idx }}][duration_days]" value="{{ $tDays }}">
+                                                        <input type="hidden" name="experiences[{{ $idx }}][notes]" value="{{ $exp->notes }}">
+                                                    </td>
+                                                </tr>
+                                            @empty
+                                                <tr id="no_experiences_row">
+                                                    <td colspan="7" class="text-muted py-4">لم يتم تسجيل أي فترات خبرة تدريسية بعد. يمكنك إدخال الفترات من النموذج أعلاه والضغط على (إضافة) لإدراجها بالجدول.</td>
+                                                </tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
                                 </div>
-                                <div class="col-md-3">
-                                    <label class="form-label label-md fw-medium text-dark">إلى تاريخ </label><span class="text-danger"> *</span>
-                                    <input type="date" name="exp_to_year" id="input-expTo" class="form-control academic-input" value="{{ old('exp_to_year', optional($maEd)->experience_to_year) }}">
+
+                                <!-- Live KPI & Track Determination Bar -->
+                                <div class="card p-3 rounded-3 shadow-sm border" id="experience_kpi_card" style="background-color: #eff6ff; border-color: #bfdbfe !important;">
+                                    <div class="row align-items-center gy-3">
+                                        <div class="col-lg-6">
+                                            <div class="d-flex align-items-center gap-2 mb-1">
+                                                <i class="fa-solid fa-hourglass-half text-primary fs-5" id="exp_kpi_icon"></i>
+                                                <span class="fw-bold fs-7 text-dark">مجموع مدة الخبرات التدريسية التراكمية:</span>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2 fs-6 fw-bold text-dark flex-wrap">
+                                                <span class="badge bg-primary fs-6 px-2.5 py-1.5"><span id="exp_total_years">0</span> سنة</span>
+                                                <span>و</span>
+                                                <span class="badge bg-primary fs-6 px-2.5 py-1.5"><span id="exp_total_months">0</span> شهر</span>
+                                                <span>و</span>
+                                                <span class="badge bg-primary fs-6 px-2.5 py-1.5"><span id="exp_total_days">0</span> يوم</span>
+                                                <span class="badge bg-dark-subtle text-dark border ms-1 fs-7 py-1 px-2">(إجمالي: <span id="exp_total_all_days">0</span> يوماً)</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-6 text-lg-end text-center">
+                                            <div class="fs-8 text-muted mb-1">المسار الأكاديمي المعتمد آلياً للطلب:</div>
+                                            <div id="track_determination_badge">
+                                                <!-- Dynamic badge rendered by recalcTotalExperience -->
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -478,14 +658,28 @@
             <!-- ================= STEP 5: ATTACHMENTS ================= -->
             <div class="form-section" id="step-5" style="display: none;">
                 <h5 class="fw-bold border-bottom pb-2 mb-4 d-flex align-items-center gap-2" style="color: var(--primary-container); border-bottom-color: var(--outline-variant) !important;">
-                    <i class="fa-solid fa-paperclip fs-5" style="color: var(--heritage-gold);"></i> الخطوة 5: رفع المرفقات والمستندات الثبوتية المطلوبة (بصيغة PDF فقط - أقصى حجم 2 ميغابايت لكل ملف)
+                    <i class="fa-solid fa-paperclip fs-5" style="color: var(--heritage-gold);"></i> الخطوة 5: رفع المرفقات والمستندات الثبوتية المطلوبة (PDF فقط - حد أقصى 5 ميغابايت لملخص الرسالة و2 ميغابايت لباقي الثبوتيات)
                 </h5>
                 
                 <div class="alert border-0 shadow-sm mb-4" style="background-color: var(--surface-container-low); border-right: 4px solid var(--primary-container) !important; color: var(--primary-container); border-radius: 4px;">
-                    <i class="fa-solid fa-info-circle me-1" style="color: var(--heritage-gold);"></i> يرجى التأكد من رفع ملفات PDF واضحة ومصدقة أصولاً، <strong>بحجم لا يتجاوز 2 ميغابايت لكل مرفق</strong> لعدم تعليق المعاملة ولضمان سرعة معالجة وحفظ الملفات.
+                    <i class="fa-solid fa-info-circle me-1" style="color: var(--heritage-gold);"></i> يرجى التأكد من رفع ملفات PDF واضحة ومصدقة أصولاً، <strong>بحجم لا يتجاوز 2 ميغابايت للوثائق الثبوتية، وحتى 5 ميغابايت لملخص الرسالة</strong> لعدم تعليق المعاملة ولضمان سرعة معالجة وحفظ الملفات.
                 </div>
 
                 <div class="row g-4">
+                    <!-- National ID / Identity Proof (Mandatory) -->
+                    <div class="col-md-6">
+                        <label class="form-label label-md fw-medium text-dark">صورة الهوية الشخصية / إثبات الشخصية (إلزامي) <span class="text-danger">*</span></label>
+                        <input type="file" name="file_national_id" id="input-fileNationalId" class="form-control academic-input" accept=".pdf" {{ empty($existingFiles['file_national_id']) ? 'required' : '' }}>
+                        @if(!empty($existingFiles['file_national_id']))
+                            <div class="mt-1 d-flex align-items-center gap-2">
+                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                <a href="{{ asset('storage/' . $existingFiles['file_national_id']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                </a>
+                            </div>
+                        @endif
+                    </div>
+
                     <!-- High School Cert -->
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">نسخة مصدقة أصولاً عن شهادة الدراسة الثانوية </label><span class="text-danger"> *</span>
@@ -598,8 +792,8 @@
 
                     <!-- Arabic Thesis Summary -->
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">ملخص باللغة العربية عن رسالة الماجستير إلكترونياً </label><span class="text-danger"> *</span>
-                        <input type="file" name="file_thesis_summary" id="input-fileThesisSummary" class="form-control academic-input" accept=".pdf">
+                        <label class="form-label label-md fw-medium text-dark">ملخص باللغة العربية عن رسالة الماجستير إلكترونياً <span class="badge bg-light text-primary border ms-1 fs-9">حتى 5MB</span></label><span class="text-danger"> *</span>
+                        <input type="file" name="file_thesis_summary" id="input-fileThesisSummary" data-max-mb="5" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['file_thesis_summary']))
                             <div class="mt-1 d-flex align-items-center gap-2">
                                 <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
@@ -827,10 +1021,14 @@
                                 <div class="col-12"><strong>11. عنوان رسالة الماجستير (الأطروحة):</strong> <span id="preview-maThesisTitle"></span></div>
                                 
                                 <!-- Experience Section in Report -->
-                                <div class="col-12 mt-2" id="preview-experience-container" style="display: none;">
-                                    <div class="card p-2 border-0" style="background-color: var(--surface-container-low);">
-                                        <strong>الخبرة التدريسية (> سنتين):</strong> 
-                                        <div>الجهة/المكان: <span id="preview-expPlace"></span> | من عام: <span id="preview-expFrom"></span> إلى عام: <span id="preview-expTo"></span></div>
+                                <div class="col-12 mt-3" id="preview-experience-container">
+                                    <div class="card p-3 border rounded-2" style="background-color: var(--surface-container-low);">
+                                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                                            <strong class="text-dark"><i class="fa-solid fa-chalkboard-user me-1 text-primary"></i> بيانات الخبرة التدريسية والمسار الأكاديمي المعتمد:</strong>
+                                            <span id="preview-trackBadge" class="badge bg-secondary">لم يُحدد</span>
+                                        </div>
+                                        <div class="mb-1"><strong>إجمالي مدة الخبرة:</strong> <span id="preview-totalExpTime" class="text-dark fw-bold">لا توجد خبرات مسجلة</span></div>
+                                        <div id="preview-experiences-list"></div>
                                     </div>
                                 </div>
                             </div>
@@ -876,9 +1074,11 @@
                     </button>
                     <div id="spacer-prev"></div> <!-- Spacer if step 1 -->
 
+                    @if($canSaveDraft)
                     <button type="submit" formnovalidate name="action" value="save_draft" class="btn btn-outline-warning px-3 py-2 fw-bold" id="btn-draft" title="حفظ البيانات المعبأة كمسودة للعودة إليها لاحقاً برقم الطلب">
                         <i class="fa-solid fa-floppy-disk me-1"></i> حفظ كمسودة ومتابعة لاحقاً
                     </button>
+                    @endif
                 </div>
 
                 <div class="d-flex align-items-center gap-2">
@@ -891,7 +1091,11 @@
                     </button>
 
                     <button type="submit" formnovalidate name="action" value="submit_final" class="btn btn-gold-cta px-5 py-2" id="btn-submit" style="display: none;">
-                        إنهاء وإرسال الطلب للوزارة <i class="fa-solid fa-paper-plane ms-1"></i>
+                        @if($isAwaitingDocs)
+                            إعادة إرسال الطلب بعد استكمال الوثائق <i class="fa-solid fa-paper-plane ms-1"></i>
+                        @else
+                            إنهاء وإرسال الطلب للوزارة <i class="fa-solid fa-paper-plane ms-1"></i>
+                        @endif
                     </button>
                 </div>
             </div>
@@ -920,19 +1124,224 @@
         }
     }
 
-    // Toggle experience details
-    function toggleExperienceSection(checkbox) {
-        const expSection = document.getElementById('experience-details-section');
-        const inputs = expSection.querySelectorAll('input');
-        const fileInputs = document.querySelectorAll('.exp-conditional-file');
+    // ==========================================
+    // MULTI-PERIOD TEACHING EXPERIENCE LOGIC
+    // ==========================================
+    let experienceCounter = {{ $draftExperiences->count() }};
 
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    function getDetailedStay(entryDateStr, exitDateStr) {
+        const inD = new Date(entryDateStr);
+        const outD = new Date(exitDateStr);
+        if (isNaN(inD.getTime()) || isNaN(outD.getTime()) || outD < inD) {
+            return { years: 0, months: 0, days: 0, totalDays: 0 };
+        }
+        const diffTime = Math.abs(outD - inD);
+        const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        let y = outD.getFullYear() - inD.getFullYear();
+        let m = outD.getMonth() - inD.getMonth();
+        let d = outD.getDate() - inD.getDate();
+
+        if (d < 0) {
+            m -= 1;
+            const prevMonthLastDay = new Date(outD.getFullYear(), outD.getMonth(), 0).getDate();
+            d += prevMonthLastDay;
+        }
+        if (m < 0) {
+            y -= 1;
+            m += 12;
+        }
+
+        return { years: y, months: m, days: d, totalDays: totalDays };
+    }
+
+    function toggleExperienceBlock(show) {
+        const wrapper = document.getElementById('experience-entry-wrapper');
+        if (wrapper) wrapper.style.display = show ? 'block' : 'none';
+        if (!show) {
+            const instEl = document.getElementById('exp_institution');
+            const roleEl = document.getElementById('exp_role');
+            const startEl = document.getElementById('exp_start_date');
+            const endEl = document.getElementById('exp_end_date');
+            const notesEl = document.getElementById('exp_notes');
+            if (instEl) instEl.value = '';
+            if (roleEl) roleEl.value = '';
+            if (startEl) startEl.value = '';
+            if (endEl) endEl.value = '';
+            if (notesEl) notesEl.value = '';
+        }
+        recalcTotalExperience();
+    }
+
+    function toggleExperienceSection(chk) {
+        toggleExperienceBlock(chk ? chk.checked : false);
+    }
+
+    function addExperiencePeriod() {
+        const instEl = document.getElementById('exp_institution');
+        const roleEl = document.getElementById('exp_role');
+        const startEl = document.getElementById('exp_start_date');
+        const endEl = document.getElementById('exp_end_date');
+        const notesEl = document.getElementById('exp_notes');
+
+        const institution = instEl ? instEl.value.trim() : '';
+        const role = roleEl ? roleEl.value.trim() : '';
+        const startDate = startEl ? startEl.value : '';
+        const endDate = endEl ? endEl.value : '';
+        const notes = notesEl ? notesEl.value.trim() : '';
+
+        if (!institution) {
+            alert('يرجى إدخال اسم الجهة أو الجامعة والكلية لفترة الخبرة التدريسية.');
+            if (instEl) instEl.focus();
+            return;
+        }
+        if (!startDate || !endDate) {
+            alert('يرجى تحديد تاريخ البدء وتاريخ الانتهاء لفترة الخبرة.');
+            return;
+        }
+
+        const inD = new Date(startDate);
+        const outD = new Date(endDate);
+        if (outD < inD) {
+            alert('تاريخ انتهاء فترة الخبرة يجب أن يكون مساوياً أو بعد تاريخ البدء.');
+            return;
+        }
+
+        const stay = getDetailedStay(startDate, endDate);
+        experienceCounter++;
+
+        const tbody = document.getElementById('experiences_tbody');
+        const noRow = document.getElementById('no_experiences_row');
+        if (noRow) noRow.remove();
+
+        const tr = document.createElement('tr');
+        tr.setAttribute('data-days', stay.totalDays);
+        tr.innerHTML = `
+            <td>${tbody.children.length + 1}</td>
+            <td class="text-start pe-3"><strong>${escapeHtml(institution)}</strong></td>
+            <td>${escapeHtml(role) || '---'}</td>
+            <td><strong class="text-dark">${startDate}</strong></td>
+            <td><strong class="text-dark">${endDate}</strong></td>
+            <td>
+                <span class="badge bg-success-subtle text-success border border-success px-2 py-1">
+                    ${stay.years} سنة و ${stay.months} شهر و ${stay.days} يوم
+                </span>
+            </td>
+            <td>
+                <button type="button" class="btn btn-xs btn-outline-danger" onclick="deleteExperiencePeriod(this)" title="حذف الفترة"><i class="fa-solid fa-trash"></i></button>
+                <input type="hidden" name="experiences[${experienceCounter}][institution_name]" value="${escapeHtml(institution)}">
+                <input type="hidden" name="experiences[${experienceCounter}][role_or_subject]" value="${escapeHtml(role)}">
+                <input type="hidden" name="experiences[${experienceCounter}][start_date]" value="${startDate}">
+                <input type="hidden" name="experiences[${experienceCounter}][end_date]" value="${endDate}">
+                <input type="hidden" name="experiences[${experienceCounter}][duration_days]" value="${stay.totalDays}">
+                <input type="hidden" name="experiences[${experienceCounter}][notes]" value="${escapeHtml(notes)}">
+            </td>
+        `;
+        tbody.appendChild(tr);
+
+        if (instEl) instEl.value = '';
+        if (roleEl) roleEl.value = '';
+        if (startEl) startEl.value = '';
+        if (endEl) endEl.value = '';
+        if (notesEl) notesEl.value = '';
+
+        recalcTotalExperience();
+    }
+
+    function deleteExperiencePeriod(btn) {
+        const row = btn.closest('tr');
+        if (row) row.remove();
+        const tbody = document.getElementById('experiences_tbody');
+        if (tbody.children.length === 0) {
+            tbody.innerHTML = '<tr id="no_experiences_row"><td colspan="7" class="text-muted py-4">لم يتم تسجيل أي فترات خبرة تدريسية بعد. يمكنك إدخال الفترات من النموذج أعلاه والضغط على (إضافة) لإدراجها بالجدول.</td></tr>';
+        } else {
+            Array.from(tbody.children).forEach((r, idx) => {
+                if (r.children[0]) r.children[0].textContent = idx + 1;
+            });
+        }
+        recalcTotalExperience();
+    }
+
+    function recalcTotalExperience() {
+        const tbody = document.getElementById('experiences_tbody');
+        const chkExp = document.getElementById('input-hasExperience');
+        let totalDays = 0;
+
+        if (chkExp && chkExp.checked && tbody) {
+            tbody.querySelectorAll('tr').forEach(tr => {
+                const startInput = tr.querySelector('input[name*="[start_date]"]');
+                const endInput = tr.querySelector('input[name*="[end_date]"]');
+                if (startInput && endInput && startInput.value && endInput.value) {
+                    const stay = getDetailedStay(startInput.value, endInput.value);
+                    totalDays += stay.totalDays;
+                }
+            });
+        }
+
+        const years = Math.floor(totalDays / 365);
+        const months = Math.floor((totalDays % 365) / 30);
+        const days = (totalDays % 365) % 30;
+
+        const yEl = document.getElementById('exp_total_years');
+        const mEl = document.getElementById('exp_total_months');
+        const dEl = document.getElementById('exp_total_days');
+        const allEl = document.getElementById('exp_total_all_days');
+        if (yEl) yEl.textContent = years;
+        if (mEl) mEl.textContent = months;
+        if (dEl) dEl.textContent = days;
+        if (allEl) allEl.textContent = totalDays;
+
+        const isTheoretical = (totalDays >= 730);
+        const badgeContainer = document.getElementById('track_determination_badge');
+        const kpiCard = document.getElementById('experience_kpi_card');
+        const kpiIcon = document.getElementById('exp_kpi_icon');
+
+        if (badgeContainer) {
+            if (isTheoretical) {
+                badgeContainer.innerHTML = `
+                    <span class="badge px-3 py-2 fs-6 shadow-sm border border-success" style="background-color: #15803d; color: #ffffff;">
+                        <i class="fa-solid fa-circle-check me-1 text-warning"></i>
+                        ماجستير نظري (مستوفي شرط السنتين ≥ 730 يوماً)
+                    </span>
+                    <div class="fs-9 text-success fw-bold mt-1"><i class="fa-solid fa-info-circle me-1"></i> يتطلب إجراء مقابلة شفهية/عملية وتثبيت أهلية تدريس</div>
+                `;
+                if (kpiCard) {
+                    kpiCard.style.backgroundColor = '#f0fdf4';
+                    kpiCard.style.borderColor = '#86efac';
+                }
+                if (kpiIcon) {
+                    kpiIcon.className = 'fa-solid fa-circle-check text-success fs-5';
+                }
+            } else {
+                badgeContainer.innerHTML = `
+                    <span class="badge px-3 py-2 fs-6 shadow-sm border border-primary" style="background-color: #1e3a5f; color: #ffffff;">
+                        <i class="fa-solid fa-chalkboard me-1 text-info"></i>
+                        ماجستير تطبيقي (هيئة فنية - خبرة أقل من سنتين)
+                    </span>
+                    <div class="fs-9 text-muted mt-1"><i class="fa-solid fa-info-circle me-1"></i> اعتماد تلقائي كعضو هيئة فنية تدريسية (بدون شرط المقابلة)</div>
+                `;
+                if (kpiCard) {
+                    kpiCard.style.backgroundColor = '#eff6ff';
+                    kpiCard.style.borderColor = '#bfdbfe';
+                }
+                if (kpiIcon) {
+                    kpiIcon.className = 'fa-solid fa-hourglass-half text-primary fs-5';
+                }
+            }
+        }
+
+        // Toggle conditional files for experience (Step 5)
+        const fileDivs = document.querySelectorAll('.exp-conditional-file');
         const hasExistingExpCert = {{ isset($existingFiles['file_exp_cert']) ? 'true' : 'false' }};
         const hasExistingContracts = {{ isset($existingFiles['file_contracts']) ? 'true' : 'false' }};
 
-        if (checkbox.checked) {
-            expSection.style.display = 'flex';
-            inputs.forEach(input => input.required = true);
-            fileInputs.forEach(div => {
+        fileDivs.forEach(div => {
+            if (isTheoretical) {
                 div.style.display = 'block';
                 const fileInp = div.querySelector('input');
                 if (fileInp) {
@@ -940,23 +1349,20 @@
                         fileInp.required = !hasExistingExpCert;
                     } else if (fileInp.name === 'file_contracts') {
                         fileInp.required = !hasExistingContracts;
-                    } else {
-                        fileInp.required = true;
                     }
                 }
-            });
-        } else {
-            expSection.style.display = 'none';
-            inputs.forEach(input => {
-                input.required = false;
-                input.value = '';
-            });
-            fileInputs.forEach(div => {
+            } else {
                 div.style.display = 'none';
                 const fileInp = div.querySelector('input');
-                if (fileInp) fileInp.required = false;
-            });
-        }
+                if (fileInp) {
+                    fileInp.required = false;
+                    fileInp.classList.remove('is-invalid');
+                    fileInp.setCustomValidity('');
+                }
+            }
+        });
+
+        return { totalDays, isTheoretical, years, months, days };
     }
 
     // Toggle High School Decision inputs
@@ -1253,30 +1659,22 @@
 
             const hasExp = document.getElementById('input-hasExperience');
             if (hasExp && hasExp.checked) {
-                const expPlace = document.getElementById('input-expPlace');
-                const expFrom = document.getElementById('input-expFrom');
-                const expTo = document.getElementById('input-expTo');
-                if (expPlace && !expPlace.value.trim()) {
+                const tbody = document.getElementById('experiences_tbody');
+                const hasRows = tbody && tbody.querySelectorAll('tr:not(#no_experiences_row)').length > 0;
+                const instEl = document.getElementById('exp_institution');
+                const startEl = document.getElementById('exp_start_date');
+                const endEl = document.getElementById('exp_end_date');
+
+                // If user entered details in inputs but forgot to click Add (+)
+                if (!hasRows && instEl && instEl.value.trim() && startEl && startEl.value && endEl && endEl.value) {
+                    addExperiencePeriod();
+                } else if (!hasRows) {
                     if (showNotice) {
-                        expPlace.setCustomValidity('يرجى إدخال مكان أو جهة الخبرة التدريسية.');
-                        expPlace.reportValidity();
-                        expPlace.focus();
-                    }
-                    return false;
-                }
-                if (expFrom && !expFrom.value) {
-                    if (showNotice) {
-                        expFrom.setCustomValidity('يرجى إدخال تاريخ بدء الخبرة التدريسية.');
-                        expFrom.reportValidity();
-                        expFrom.focus();
-                    }
-                    return false;
-                }
-                if (expTo && !expTo.value) {
-                    if (showNotice) {
-                        expTo.setCustomValidity('يرجى إدخال تاريخ انتهاء الخبرة التدريسية.');
-                        expTo.reportValidity();
-                        expTo.focus();
+                        alert('لقد قمت بتفعيل خيار تسجيل الخبرات التدريسية دون إدراج أي فترة في الجدول. يرجى ملء بيانات الفترة والضغط على (إضافة) أو إلغاء تفعيل الخيار للمتابعة.');
+                        if (instEl) {
+                            instEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            instEl.focus();
+                        }
                     }
                     return false;
                 }
@@ -1316,8 +1714,8 @@
                 requiredAttachments.push({ id: 'input-baDecisionFile', name: 'قرار معادلة الإجازة الجامعية غير السورية' });
             }
 
-            const hasExp = document.getElementById('input-hasExperience');
-            if (hasExp && hasExp.checked) {
+            const expStats = recalcTotalExperience();
+            if (expStats.isTheoretical) {
                 requiredAttachments.push({ id: 'input-fileExpCert', name: 'شهادة خبرة لا تقل عن سنتين ما بعد الدرجة' });
                 requiredAttachments.push({ id: 'input-fileContracts', name: 'العقود وإيصالات الرواتب مصدقة أصولاً' });
             }
@@ -1548,13 +1946,56 @@
         const hasExpEl = document.getElementById('input-hasExperience');
         const hasExp = hasExpEl ? hasExpEl.checked : false;
         const expContainer = document.getElementById('preview-experience-container');
-        if (hasExp) {
+        const stats = recalcTotalExperience();
+
+        if (hasExp && stats.totalDays > 0) {
             if (expContainer) expContainer.style.display = 'block';
-            setTxt('preview-expPlace', getVal('input-expPlace'));
-            setTxt('preview-expFrom', formatDateDisplay(getVal('input-expFrom')));
-            setTxt('preview-expTo', formatDateDisplay(getVal('input-expTo')));
+            const badgeEl = document.getElementById('preview-trackBadge');
+            const totalEl = document.getElementById('preview-totalExpTime');
+            const listEl = document.getElementById('preview-experiences-list');
+
+            if (badgeEl) {
+                if (stats.isTheoretical) {
+                    badgeEl.className = 'badge bg-success-subtle text-success border border-success px-3 py-1';
+                    badgeEl.innerHTML = '<i class="fa-solid fa-circle-check me-1"></i> ماجستير نظري (مستوفي شرط السنتين)';
+                } else {
+                    badgeEl.className = 'badge bg-primary-subtle text-primary border border-primary px-3 py-1';
+                    badgeEl.innerHTML = '<i class="fa-solid fa-chalkboard me-1"></i> ماجستير تطبيقي (هيئة فنية)';
+                }
+            }
+            if (totalEl) {
+                totalEl.textContent = `${stats.years} سنة و ${stats.months} شهر و ${stats.days} يوم (إجمالي ${stats.totalDays} يوماً)`;
+            }
+            if (listEl) {
+                const tbody = document.getElementById('experiences_tbody');
+                const rows = tbody ? tbody.querySelectorAll('tr:not(#no_experiences_row)') : [];
+                if (rows.length > 0) {
+                    let itemsHtml = '<ul class="mb-0 mt-2 ps-3 fs-8 text-dark">';
+                    rows.forEach(r => {
+                        const inst = r.children[1] ? r.children[1].textContent.trim() : '';
+                        const role = r.children[2] ? r.children[2].textContent.trim() : '';
+                        const fromD = r.children[3] ? r.children[3].textContent.trim() : '';
+                        const toD = r.children[4] ? r.children[4].textContent.trim() : '';
+                        const dur = r.children[5] ? r.children[5].textContent.trim() : '';
+                        itemsHtml += `<li><strong>${inst}</strong> ${role !== '---' ? '(' + role + ')' : ''}: من ${fromD} إلى ${toD} [${dur}]</li>`;
+                    });
+                    itemsHtml += '</ul>';
+                    listEl.innerHTML = itemsHtml;
+                } else {
+                    listEl.innerHTML = '';
+                }
+            }
         } else {
-            if (expContainer) expContainer.style.display = 'none';
+            if (expContainer) expContainer.style.display = 'block';
+            const badgeEl = document.getElementById('preview-trackBadge');
+            const totalEl = document.getElementById('preview-totalExpTime');
+            const listEl = document.getElementById('preview-experiences-list');
+            if (badgeEl) {
+                badgeEl.className = 'badge bg-secondary-subtle text-secondary border px-3 py-1';
+                badgeEl.innerHTML = 'ماجستير تطبيقي (بدون فترات خبرة مسجلة)';
+            }
+            if (totalEl) totalEl.textContent = 'لا توجد فترات خبرة تدريسية مسجلة';
+            if (listEl) listEl.innerHTML = '';
         }
 
         // Request
@@ -1690,36 +2131,7 @@
     }
 
     function checkMasterGrantDateForExperience() {
-        const grantDateInput = document.getElementById('input-maGrantDate');
-        const container = document.getElementById('experience-toggle-container');
-        const switchInput = document.getElementById('input-hasExperience');
-        const detailsSection = document.getElementById('experience-details-section');
-
-        if (!grantDateInput || !grantDateInput.value) {
-            if (container) container.style.display = 'none';
-            if (switchInput) switchInput.checked = false;
-            if (detailsSection) detailsSection.style.display = 'none';
-            return;
-        }
-
-        const grantDate = new Date(grantDateInput.value);
-        const today = new Date();
-
-        let yearsDiff = today.getFullYear() - grantDate.getFullYear();
-        let monthsDiff = today.getMonth() - grantDate.getMonth();
-        let daysDiff = today.getDate() - grantDate.getDate();
-
-        if (monthsDiff < 0 || (monthsDiff === 0 && daysDiff < 0)) {
-            yearsDiff--;
-        }
-
-        if (yearsDiff >= 2) {
-            if (container) container.style.display = 'block';
-        } else {
-            if (container) container.style.display = 'none';
-            if (switchInput) switchInput.checked = false;
-            if (detailsSection) detailsSection.style.display = 'none';
-        }
+        recalcTotalExperience();
     }
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -1729,7 +2141,7 @@
         const baCountry = document.getElementById('input-baCountry');
         if (baCountry) toggleBaCountrySection(baCountry);
 
-        checkMasterGrantDateForExperience();
+        recalcTotalExperience();
 
         @php
             $initialStep = 1;
@@ -1739,7 +2151,7 @@
                     $initialStep = 2;
                 } elseif (str_starts_with($firstErrorKey, 'ba_')) {
                     $initialStep = 3;
-                } elseif (str_starts_with($firstErrorKey, 'ma_') || str_starts_with($firstErrorKey, 'exp_') || $firstErrorKey === 'has_experience') {
+                } elseif (str_starts_with($firstErrorKey, 'ma_') || str_starts_with($firstErrorKey, 'exp_') || $firstErrorKey === 'has_experience' || str_starts_with($firstErrorKey, 'experiences')) {
                     $initialStep = 4;
                 } elseif (str_starts_with($firstErrorKey, 'file_') || str_ends_with($firstErrorKey, '_file')) {
                     $initialStep = 5;
@@ -1777,69 +2189,6 @@
 
         const form = document.getElementById('wizard-form');
         let isSubmitting = false;
-
-        function formHasEnteredData() {
-            const inputs = document.querySelectorAll('#wizard-form input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), #wizard-form textarea');
-            for (const input of inputs) {
-                if (input.value && input.value.trim() !== '') {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        function autoSaveDraftAndNavigate(targetUrl) {
-            if (isSubmitting) return;
-            isSubmitting = true;
-
-            if (!form) {
-                window.location.href = targetUrl;
-                return;
-            }
-
-            const redirectInput = document.getElementById('input-redirect-to');
-            if (redirectInput) redirectInput.value = targetUrl;
-
-            form.querySelectorAll('input, select, textarea').forEach(el => el.removeAttribute('required'));
-
-            let actionInput = form.querySelector('input[name="action"][type="hidden"]');
-            if (!actionInput) {
-                actionInput = document.createElement('input');
-                actionInput.type = 'hidden';
-                actionInput.name = 'action';
-                form.appendChild(actionInput);
-            }
-            actionInput.value = 'save_draft';
-
-            // Show an unobtrusive toast
-            const toast = document.createElement('div');
-            toast.className = 'position-fixed bottom-0 start-50 translate-middle-x mb-4 p-3 bg-dark text-white rounded shadow-lg d-flex align-items-center gap-2';
-            toast.style.zIndex = '99999';
-            toast.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-warning fs-5"></i> <span>جارٍ حفظ بيانات الطلب كمسودة تلقائياً...</span>';
-            document.body.appendChild(toast);
-
-            form.submit();
-        }
-
-        // Intercept clicks on links that leave the wizard
-        document.addEventListener('click', function(e) {
-            if (isSubmitting) return;
-
-            const link = e.target.closest('a');
-            if (!link || !link.href) return;
-
-            const href = link.getAttribute('href');
-            if (!href || href.startsWith('#') || href.startsWith('javascript:') || link.target === '_blank') return;
-
-            const isCurrentWizard = window.location.href.split('?')[0] === link.href.split('?')[0];
-            if (isCurrentWizard) return;
-
-            if (formHasEnteredData()) {
-                e.preventDefault();
-                e.stopPropagation();
-                autoSaveDraftAndNavigate(link.href);
-            }
-        });
 
         if (form) {
             form.addEventListener('submit', function(e) {

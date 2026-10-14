@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('title', 'إصدار قرارات تعادل الماجستير الخارجي النظري')
 
@@ -7,21 +7,22 @@
 <!-- NAV TABS FOR DECISION TYPES -->
 @include('admin.decisions._nav_tabs', ['active' => 'foreign_master_theoretical'])
 
+<div class="container-fluid px-1 px-md-2">
 <div class="row g-3" dir="rtl">
 
     {{-- ============================================================
          العمود الأيمن: نموذج إصدار قرارات تعادل الماجستير الخارجي النظري
     ============================================================ --}}
     <div class="col-xl-4 col-lg-5 col-md-12">
-        <div class="card border-0 shadow-sm overflow-hidden h-100" style="border-top: 3.5px solid var(--heritage-gold) !important; border-radius: 4px;">
+        <div class="card rounded-3xl border border-slate-200/90 bg-white p-6 pb-6 shadow-sm overflow-hidden space-y-5">
             <!-- Header -->
-            <div class="card-header py-2.5 px-3 text-white" style="background-color: var(--imperial-navy) !important;">
-                <h5 class="mb-0 fs-6 fw-bold text-white d-flex align-items-center gap-2 text-start" dir="rtl">
-                    <i class="fa-solid fa-book-open-reader" style="color: var(--heritage-gold-light);"></i>
+            <div class="card-header p-0 pb-3 bg-transparent border-bottom d-flex align-items-center justify-content-between text-start" dir="rtl">
+                <h5 class="mb-0 fs-6 fw-bold d-flex align-items-center gap-2" style="color: var(--imperial-navy);">
+                    <i class="fa-solid fa-book-open-reader" style="color: var(--heritage-gold);"></i>
                     <span>إصدار ورصد قرارات الماجستير النظري والأهلية</span>
                 </h5>
             </div>
-            <div class="card-body p-3.5 bg-white" dir="rtl">
+            <div class="card-body p-0 pt-2 bg-white" dir="rtl">
                 <!-- Info banner: Has eligibility -->
                 <div class="alert alert-info py-2 px-2.5 mb-3 border-0 small d-flex align-items-start gap-2" style="background-color: #f0fdf4; color: #166534; font-size: 0.8rem; border-radius: 4px;">
                     <i class="fa-solid fa-certificate fs-6 mt-0.5 text-success flex-shrink-0"></i>
@@ -140,49 +141,39 @@
                             </div>
                         </div>
 
-                        <!-- Shortcut button to Generate Official Decision Text & PDF -->
-                        <template x-if="selectedId">
-                            <div class="mt-2 text-start">
-                                <a :href="'/admin/reports/' + selectedId + '/generate-decision'" 
-                                   target="_blank" 
-                                   class="btn btn-xs btn-outline-primary d-inline-flex align-items-center gap-1">
-                                    <i class="fa-solid fa-wand-magic-sparkles text-warning"></i>
-                                    <span>توليد ومعاينة نص القرار النظري وقرار الأهلية والـ PDF</span>
-                                </a>
+                    </div>
+
+                    {{-- 1. بيانات قرار التعادل النظري --}}
+                    <div class="rounded-2xl border border-slate-200 p-4 bg-slate-50/50 mb-4 text-start">
+                        <span class="badge mb-2 d-inline-flex align-items-center gap-1 py-1 px-2" style="background-color: var(--heritage-gold); color: #000;">
+                            <i class="fa-solid fa-stamp"></i> بيانات قرار التعادل النظري <span class="text-danger">*</span>
+                        </span>
+
+                        <div class="row g-2 mb-2.5">
+                            <div class="col-6 text-start">
+                                <label class="form-label fw-bold small d-block text-start mb-1" style="color: var(--imperial-navy);">
+                                    رقم قرار التعادل <span class="text-danger">*</span> :
+                                </label>
+                                <input type="text" name="decision_no" class="form-control form-control-sm text-start" placeholder="مثال: 45 / ل.م" value="" required>
                             </div>
-                        </template>
-                    </div>
-
-                    <hr class="my-2 text-muted opacity-25">
-
-                    {{-- سطر: رقم قرار التعادل وتاريخ الصدور --}}
-                    <div class="row g-2 mb-2.5">
-                        <div class="col-6 text-start">
-                            <label class="form-label fw-bold small d-block text-start mb-1" style="color: var(--imperial-navy);">
-                                رقم قرار التعادل <span class="text-danger">*</span> :
-                            </label>
-                            <input type="text" name="decision_no" class="form-control form-control-sm text-start" placeholder="مثال: 45 / ل.م" value="" required>
+                            <div class="col-6 text-start">
+                                <label class="form-label fw-bold small d-block text-start mb-1" style="color: var(--imperial-navy);">
+                                    تاريخ قرار التعادل <span class="text-danger">*</span> :
+                                </label>
+                                <input type="date" name="decision_date" class="form-control form-control-sm text-start" value="" required>
+                            </div>
                         </div>
-                        <div class="col-6 text-start">
+
+                        <div class="mb-0 text-start">
                             <label class="form-label fw-bold small d-block text-start mb-1" style="color: var(--imperial-navy);">
-                                تاريخ قرار التعادل <span class="text-danger">*</span> :
+                                ملف قرار تعادل الماجستير النظري (PDF) <span class="text-danger">*</span> :
                             </label>
-                            <input type="date" name="decision_date" class="form-control form-control-sm text-start" value="" required>
+                            <input type="file" name="decision_file" class="form-control form-control-sm text-start" accept=".pdf,image/*" required>
                         </div>
                     </div>
 
-                    {{-- ملف قرار التعادل النظري --}}
-                    <div class="mb-2.5 text-start">
-                        <label class="form-label fw-bold small d-block text-start mb-1" style="color: var(--imperial-navy);">
-                            ملف قرار تعادل الماجستير النظري (PDF) <span class="text-danger">*</span> :
-                        </label>
-                        <input type="file" name="decision_file" class="form-control form-control-sm text-start" accept=".pdf,image/*" required>
-                    </div>
-
-                    <hr class="my-2.5 text-muted opacity-25">
-
-                    {{-- قسم قرار الأهلية (خاص بالماجستير الخارجي النظري) --}}
-                    <div class="p-2.5 bg-light rounded border mb-2.5 text-start">
+                    {{-- 2. قسم قرار الأهلية (خاص بالماجستير الخارجي النظري) --}}
+                    <div class="rounded-2xl border border-slate-200 p-4 bg-slate-50/50 mb-4 text-start">
                         <div class="d-flex align-items-center justify-content-between mb-2">
                             <label class="form-label fw-bold small mb-0 text-primary">
                                 <i class="fa-solid fa-certificate me-1 text-warning"></i> قرار أهلية التدريس (للمسار النظري) :
@@ -213,9 +204,9 @@
                         <textarea name="notes" class="form-control form-control-sm text-start" rows="2" placeholder="أدخل أي ملاحظات خاصة بقرار الماجستير الخارجي النظري..."></textarea>
                     </div>
 
-                    <button type="submit" class="btn btn-solid-navy btn-sm w-100 fw-bold py-2 shadow-2xs d-flex align-items-center justify-content-center gap-1.5">
-                        <i class="fa-solid fa-file-circle-check text-warning"></i>
-                        <span>حفظ وإصدار القرار النظري والأهلية وإشعار الجامعة</span>
+                    <button type="submit" class="w-full py-3.5 px-4 rounded-xl bg-[#c59b27] hover:bg-[#b0891e] text-white font-extrabold text-sm shadow-md transition flex items-center justify-center gap-2 mt-4">
+                        <i class="fa-solid fa-circle-check"></i>
+                        اعتماد ورصد القرار نهائياً
                     </button>
                 </form>
             </div>
@@ -368,4 +359,6 @@
 
 </div>
 
+</div>{{-- /container-fluid --}}
 @endsection
+

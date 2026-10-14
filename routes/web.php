@@ -12,12 +12,12 @@ use App\Http\Controllers\Admin\SearchController;
 use App\Http\Controllers\Admin\ReportsController;
 use App\Http\Controllers\Admin\PdfReportController;
 use App\Http\Controllers\Admin\DecisionsController;
+use App\Http\Controllers\Admin\ArchiveController;
 use App\Http\Controllers\Admin\GeneratedDecisionController;
 use App\Http\Controllers\Admin\InterviewsController;
 use App\Http\Controllers\Admin\ScientificProductionController;
 use App\Http\Controllers\University\DashboardController as UniDashboardController;
 use App\Http\Controllers\University\ApplicationWizardController;
-use App\Http\Controllers\PageController;
 
 // 1. Redirect Root based on authentication
 Route::get('/', function () {
@@ -31,11 +31,6 @@ Route::get('/', function () {
     }
     return redirect()->route('login');
 });
-
-// Public Institutional Pages
-Route::get('/contact', [PageController::class, 'contact'])->name('contact');
-Route::post('/contact', [PageController::class, 'submitContact'])->name('contact.submit');
-Route::get('/privacy', [PageController::class, 'privacy'])->name('privacy');
 
 // 2. Authentication Routes
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -92,39 +87,57 @@ Route::get('/admin/attachments/{id}/view/{filename?}', [\App\Http\Controllers\Ad
     Route::get('/reports/{id}/consolidated', [PdfReportController::class, 'consolidatedView'])->name('admin.reports.consolidated');
     Route::get('/reports/{id}/consolidated-pdf', [PdfReportController::class, 'downloadConsolidatedPdf'])->name('admin.reports.download_consolidated_pdf');
 
-    // Equivalence Decisions Upload & Issue (Academic Master)
-    Route::get('/decisions', [DecisionsController::class, 'index'])->name('admin.decisions.index');
-    Route::post('/decisions', [DecisionsController::class, 'store'])->name('admin.decisions.store');
-
-    // Doctorate Equivalence Decisions Upload & Issue (تعادل الدكتوراه)
-    Route::get('/doctorate-decisions', [DecisionsController::class, 'doctorateIndex'])->name('admin.doctorate_decisions.index');
-    Route::post('/doctorate-decisions', [DecisionsController::class, 'doctorateStore'])->name('admin.doctorate_decisions.store');
-
-    // Applied Master Equivalence Decisions Upload & Issue
+    // 1. Group 1: Applied Master Equivalence Decisions (ماجستير تطبيقي داخلي + خارجي - ورقة وحيدة)
     Route::get('/applied-decisions', [DecisionsController::class, 'appliedIndex'])->name('admin.applied_decisions.index');
     Route::post('/applied-decisions', [DecisionsController::class, 'appliedStore'])->name('admin.applied_decisions.store');
 
-    // Faculty Teaching Permission Decisions Upload & Issue
+    // 2. Group 2: Theoretical Master Equivalence Decisions (ماجستير نظري داخلي + خارجي - ورقتان)
+    Route::get('/decisions', [DecisionsController::class, 'index'])->name('admin.decisions.index');
+    Route::post('/decisions', [DecisionsController::class, 'store'])->name('admin.decisions.store');
+    Route::get('/theoretical-decisions', [DecisionsController::class, 'theoreticalIndex'])->name('admin.theoretical_decisions.index');
+    Route::post('/theoretical-decisions', [DecisionsController::class, 'theoreticalStore'])->name('admin.theoretical_decisions.store');
+
+    // 3. Group 3: Faculty Teaching Permission Decisions (سماح بالتدريس لأعضاء الجامعات الحكومية - ورقة وحيدة)
     Route::get('/faculty-decisions', [DecisionsController::class, 'facultyIndex'])->name('admin.faculty_decisions.index');
     Route::post('/faculty-decisions', [DecisionsController::class, 'facultyStore'])->name('admin.faculty_decisions.store');
 
-    // Foreign Master Applied Decisions Upload & Issue (تعادل الماجستير الخارجي التطبيقي - بدون أهلية)
-    Route::get('/foreign-master-applied-decisions', [DecisionsController::class, 'foreignMasterAppliedIndex'])->name('admin.foreign_master_applied_decisions.index');
-    Route::post('/foreign-master-applied-decisions', [DecisionsController::class, 'foreignMasterAppliedStore'])->name('admin.foreign_master_applied_decisions.store');
+    // 4. Group 4: Doctorate Equivalence Decisions (دكتوراه سورية + خارجية - ورقتان)
+    Route::get('/doctorate-decisions', [DecisionsController::class, 'doctorateIndex'])->name('admin.doctorate_decisions.index');
+    Route::post('/doctorate-decisions', [DecisionsController::class, 'doctorateStore'])->name('admin.doctorate_decisions.store');
 
-    // Foreign Master Theoretical Decisions Upload & Issue (تعادل الماجستير الخارجي النظري - مع قرار الأهلية)
-    Route::get('/foreign-master-theoretical-decisions', [DecisionsController::class, 'foreignMasterTheoreticalIndex'])->name('admin.foreign_master_theoretical_decisions.index');
-    Route::post('/foreign-master-theoretical-decisions', [DecisionsController::class, 'foreignMasterTheoreticalStore'])->name('admin.foreign_master_theoretical_decisions.store');
+    // 5. Group 5: Rejection Decisions / Letters (قرارات وكتب عدم الموافقة المسببة - ورقة وحيدة)
+    Route::get('/rejected-decisions', [DecisionsController::class, 'rejectedIndex'])->name('admin.rejected_decisions.index');
+    Route::post('/rejected-decisions', [DecisionsController::class, 'rejectedStore'])->name('admin.rejected_decisions.store');
 
-    // Foreign Doctorate Decisions Upload & Issue (تعادل الدكتوراه الخارجية غير السورية)
-    Route::get('/foreign-doctorate-decisions', [DecisionsController::class, 'foreignDoctorateIndex'])->name('admin.foreign_doctorate_decisions.index');
-    Route::post('/foreign-doctorate-decisions', [DecisionsController::class, 'foreignDoctorateStore'])->name('admin.foreign_doctorate_decisions.store');
+    // Legacy Route Aliases with clean redirection to prevent 404
+    Route::get('/foreign-master-applied-decisions', function () {
+        return redirect()->route('admin.applied_decisions.index');
+    })->name('admin.foreign_master_applied_decisions.index');
+    Route::post('/foreign-master-applied-decisions', [DecisionsController::class, 'appliedStore'])->name('admin.foreign_master_applied_decisions.store');
 
-    // Legacy Route Alias for backwards compatibility
+    Route::get('/foreign-master-theoretical-decisions', function () {
+        return redirect()->route('admin.decisions.index');
+    })->name('admin.foreign_master_theoretical_decisions.index');
+    Route::post('/foreign-master-theoretical-decisions', [DecisionsController::class, 'theoreticalStore'])->name('admin.foreign_master_theoretical_decisions.store');
+
+    Route::get('/foreign-doctorate-decisions', function () {
+        return redirect()->route('admin.doctorate_decisions.index');
+    })->name('admin.foreign_doctorate_decisions.index');
+    Route::post('/foreign-doctorate-decisions', [DecisionsController::class, 'doctorateStore'])->name('admin.foreign_doctorate_decisions.store');
+
     Route::get('/foreign-master-decisions', function () {
-        return redirect()->route('admin.foreign_master_applied_decisions.index');
+        return redirect()->route('admin.applied_decisions.index');
     })->name('admin.foreign_master_decisions.index');
-    Route::post('/foreign-master-decisions', [DecisionsController::class, 'foreignMasterAppliedStore'])->name('admin.foreign_master_decisions.store');
+    Route::post('/foreign-master-decisions', [DecisionsController::class, 'appliedStore'])->name('admin.foreign_master_decisions.store');
+
+    // Central Archive & Academic Decisions Registry (الأرشيف المركزي وسجل القرارات الأكاديمية)
+    Route::get('/archive', [ArchiveController::class, 'index'])->name('admin.archive.index');
+    Route::get('/archive/export-excel', [ArchiveController::class, 'exportExcel'])->name('admin.archive.export_excel');
+
+    // Decision Attachment Viewer & Bundle Downloader & Excel Export
+    Route::get('/decisions/export-excel', [DecisionsController::class, 'exportExcel'])->name('admin.decisions.export_excel');
+    Route::get('/decisions/view-attachment/{id}/{type}', [DecisionsController::class, 'viewAttachment'])->name('admin.decisions.view-file');
+    Route::get('/decisions/download-bundle/{id}', [DecisionsController::class, 'downloadBundle'])->name('admin.decisions.download-bundle');
 
     // Interviews Management & Scheduling ('بانتظار المقابلة')
     Route::get('/interviews', [InterviewsController::class, 'index'])->name('admin.interviews.index');
@@ -139,8 +152,9 @@ Route::get('/admin/attachments/{id}/view/{filename?}', [\App\Http\Controllers\Ad
 
 // 4. University Area (Protected by role:university)
 Route::prefix('university')->middleware(['auth', 'role:university'])->group(function () {
-    // Dashboard & Required Documents
+    // Dashboard, Archive & Required Documents
     Route::get('/dashboard', [UniDashboardController::class, 'index'])->name('university.dashboard');
+    Route::get('/archive', [UniDashboardController::class, 'archive'])->name('university.archive');
     Route::get('/drafts', [UniDashboardController::class, 'drafts'])->name('university.drafts.index');
     Route::get('/required-documents', [UniDashboardController::class, 'requiredDocuments'])->name('university.required_documents');
     
@@ -183,6 +197,8 @@ Route::prefix('university')->middleware(['auth', 'role:university'])->group(func
 
     // Official Application Report & Mozhakkara PDF Download
     Route::get('/applications/{appId}/mozhakkara', [UniDashboardController::class, 'showMozhakkara'])->name('university.applications.mozhakkara');
+    Route::get('/applications/{appId}/show-mozhakkara', [UniDashboardController::class, 'showMozhakkara'])->name('university.applications.show_mozhakkara');
     Route::get('/applications/{appId}/download-pdf', [UniDashboardController::class, 'downloadPdf'])->name('university.applications.download_pdf');
     Route::get('/applications/{appId}/consolidated-pdf', [UniDashboardController::class, 'downloadConsolidatedPdf'])->name('university.applications.download_consolidated_pdf');
+    Route::get('/applications/{appId}/view-decision', [UniDashboardController::class, 'viewDecisionPdf'])->name('university.applications.view_decision_pdf');
 });

@@ -130,8 +130,8 @@
 
                 <!-- Quick Action Buttons -->
                 <div class="mohe-chat-header-actions">
-                    <a href="{{ route('university.applications.show_mozhakkara', $activeApp->id) }}" target="_blank" class="btn btn-sm btn-outline-navy fw-bold" title="عرض وطباعة مذكرة العرض الرسمية">
-                        <i class="fa-solid fa-file-pdf me-1" style="color: var(--heritage-gold);"></i> مذكرة العرض
+                    <a href="{{ route('university.applications.show', $activeApp->id) }}" target="_blank" class="btn btn-sm btn-outline-navy fw-bold" title="عرض تفاصيل وإضبارة المعاملة">
+                        <i class="fa-solid fa-folder-open me-1" style="color: var(--heritage-gold);"></i> تفاصيل المعاملة
                     </a>
                     <a href="{{ route('university.messages', ['application_id' => $activeApp->id]) }}" class="btn btn-sm btn-outline-secondary" title="تحديث الرسائل">
                         <i class="fa-solid fa-rotate-right"></i>
@@ -205,22 +205,31 @@
             </div>
 
             <!-- 3. WhatsApp-Style Message Input Dock -->
-            <div class="mohe-chat-dock">
-                <form action="{{ route('university.applications.reply', $activeApp->id) }}" method="POST" id="chatReplyForm" class="d-flex align-items-center w-100 gap-2 m-0">
-                    @csrf
-                    <textarea name="message" 
-                              id="chatInputText"
-                              class="form-control mohe-chat-textarea" 
-                              rows="1" 
-                              placeholder="اكتب رسالتكم أو استفساركم هنا... (Enter للإرسال، Shift+Enter لسطر جديد)" 
-                              required></textarea>
-                    
-                    <!-- Circular Send Button -->
-                    <button type="submit" class="mohe-chat-send-btn" title="إرسال الرسالة">
-                        <i class="fa-solid fa-paper-plane"></i>
-                    </button>
-                </form>
-            </div>
+            @if($activeApp->isArchived())
+                <div class="mohe-chat-dock justify-content-center bg-light text-muted py-3 px-4 border-top">
+                    <div class="d-flex align-items-center gap-2 text-secondary fw-bold fs-7">
+                        <i class="fa-solid fa-lock text-warning"></i>
+                        <span>المعاملة مؤرشفة رسمياً ومغلقة (للاطلاع فقط)</span>
+                    </div>
+                </div>
+            @else
+                <div class="mohe-chat-dock">
+                    <form action="{{ route('university.applications.reply', $activeApp->id) }}" method="POST" id="chatReplyForm" class="d-flex align-items-center w-100 gap-2 m-0">
+                        @csrf
+                        <textarea name="message" 
+                                  id="chatInputText"
+                                  class="form-control mohe-chat-textarea" 
+                                  rows="1" 
+                                  placeholder="اكتب رسالتكم أو استفساركم هنا... (Enter للإرسال، Shift+Enter لسطر جديد)" 
+                                  required></textarea>
+                        
+                        <!-- Circular Send Button -->
+                        <button type="submit" class="mohe-chat-send-btn" title="إرسال الرسالة">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            @endif
         @else
             <!-- WhatsApp Desktop Empty State -->
             <div class="mohe-chat-empty-state">

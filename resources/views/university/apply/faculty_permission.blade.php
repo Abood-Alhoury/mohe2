@@ -38,6 +38,12 @@
             }
         }
     }
+
+    $isAwaitingDocs = $draft && (
+        $draft->status_id == 3 || 
+        in_array($draft->status, ['بانتظار الوثائق', 'بانتظار استكمال الوثائق', 'بانتظار تصحيح الوثائق', 'بانتظار الوثائق الناقصة'])
+    );
+    $canSaveDraft = !$draft || ($draft->status_id == 1 || $draft->status === 'مسودة');
 @endphp
 
 <!-- BREADCRUMBS & PAGE HEADER -->
@@ -58,14 +64,22 @@
                 <p class="body-md text-muted mb-0">معاملة مخصصة حصراً للسادة أعضاء الهيئة التدريسية القائمين على رأس عملهم في الجامعات الحكومية السورية لطلب السماح بالتدريس في الجامعات الخاصة.</p>
             </div>
             <div class="d-flex align-items-center gap-2">
+                @if($canSaveDraft)
                 <button type="button" class="btn btn-outline-warning px-3 py-2 fw-bold shadow-2xs d-inline-flex align-items-center gap-1.5" onclick="triggerSaveDraft()" title="حفظ البيانات المدخلة كمسودة للعودة إليها لاحقاً برقم الطلب">
                     <i class="fa-solid fa-floppy-disk"></i>
                     <span>حفظ كمسودة ومتابعة لاحقاً</span>
                 </button>
+                @endif
                 @if($draft)
-                    <span class="badge px-3 py-2 border fs-7 fw-bold" style="background-color: #FAF6EE; color: #8A651E; border-color: #D9C394 !important;">
-                        <i class="fa-solid fa-file-pen me-1"></i> تعديل مسودة طلب: #{{ $draft->application_no }}
-                    </span>
+                    @if($isAwaitingDocs)
+                        <span class="badge bg-warning text-dark px-3 py-2 border border-warning fs-7 fw-bold">
+                            <i class="fa-solid fa-file-circle-exclamation me-1"></i> بانتظار استكمال الوثائق: #{{ $draft->application_no }}
+                        </span>
+                    @else
+                        <span class="badge px-3 py-2 border fs-7 fw-bold" style="background-color: #FAF6EE; color: #8A651E; border-color: #D9C394 !important;">
+                            <i class="fa-solid fa-file-pen me-1"></i> تعديل مسودة طلب: #{{ $draft->application_no }}
+                        </span>
+                    @endif
                 @endif
             </div>
         </div>
@@ -75,6 +89,16 @@
 <!-- WIZARD MAIN CONTAINER -->
 <div class="card border-0 shadow-sm" style="border-radius: 8px; border-top: 3px solid var(--heritage-gold) !important; border: 1px solid var(--outline-variant) !important; background-color: #ffffff;">
     <div class="card-body p-4 p-md-5">
+
+        @if($isAwaitingDocs)
+            <div class="alert alert-warning border-warning shadow-sm d-flex align-items-center gap-3 mb-4 p-3 rounded" style="background-color: #fff8e1; border-right: 4px solid #f59e0b !important;">
+                <i class="fa-solid fa-file-circle-exclamation fs-3 text-warning"></i>
+                <div>
+                    <div class="fw-bold fs-6 text-dark">معاملة معادة لاستكمال وتصحيح الوثائق (طلب رقم: #{{ $draft->application_no }})</div>
+                    <div class="small text-muted">حالة المعاملة الحالية هي "بانتظار الوثائق". يرجى استكمال المرفقات والبيانات المطلوبة ثم الضغط على زر الإرسال. لا يمكن حفظ هذا الطلب كمسودة لأنه مسجل ومقدم رسمياً.</div>
+                </div>
+            </div>
+        @endif
         
         @if ($errors->any())
             <div class="alert alert-danger mb-4 shadow-sm border-0 rounded" style="border-right: 4px solid #ba1a1a !important;">
@@ -381,7 +405,7 @@
                     <!-- 1. صورة الهوية الشخصية -->
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">
-                            1. صورة الهوية الشخصية (الوجهين) <span class="text-danger">*</span>
+                            1. صورة الهوية الشخصية / إثبات الشخصية (إلزامي) <span class="text-danger">*</span>
                         </label>
                         <input type="file" name="file_id_card" id="input-fileIdCard" class="form-control academic-input" accept=".pdf" {{ empty($existingFiles['file_id_card']) ? 'required' : '' }}>
                         @if(!empty($existingFiles['file_id_card']))
@@ -599,9 +623,11 @@
                     </button>
                     <div id="spacer-prev"></div>
 
+                    @if($canSaveDraft)
                     <button type="button" class="btn btn-outline-warning px-3 py-2 fw-bold" id="btn-draft" onclick="triggerSaveDraft()" title="حفظ البيانات المعبأة كمسودة للعودة إليها لاحقاً برقم الطلب">
                         <i class="fa-solid fa-floppy-disk me-1"></i> حفظ كمسودة ومتابعة لاحقاً
                     </button>
+                    @endif
                 </div>
 
                 <div class="d-flex align-items-center gap-2">
@@ -614,7 +640,11 @@
                     </button>
 
                     <button type="submit" formnovalidate name="action" value="submit_final" class="btn btn-gold-cta px-5 py-2" id="btn-submit" style="display: none;">
-                        إنهاء وإرسال الطلب للوزارة <i class="fa-solid fa-paper-plane ms-1"></i>
+                        @if($isAwaitingDocs)
+                            إعادة إرسال الطلب بعد استكمال الوثائق <i class="fa-solid fa-paper-plane ms-1"></i>
+                        @else
+                            إنهاء وإرسال الطلب للوزارة <i class="fa-solid fa-paper-plane ms-1"></i>
+                        @endif
                     </button>
                 </div>
             </div>
