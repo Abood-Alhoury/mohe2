@@ -1,4 +1,4 @@
-@extends('layouts.university')
+@extends(!empty($isAdminEdit) ? 'layouts.admin' : 'layouts.university')
 
 @section('title', 'تقديم طلب تعادل دكتوراه سورية')
 
@@ -60,11 +60,11 @@
         }
     }
 
-    $isAwaitingDocs = $draft && (
+    $isAwaitingDocs = empty($isAdminEdit) && $draft && (
         $draft->status_id == 3 || 
         in_array($draft->status, ['بانتظار الوثائق', 'بانتظار استكمال الوثائق', 'بانتظار تصحيح الوثائق', 'بانتظار الوثائق الناقصة'])
     );
-    $canSaveDraft = !$draft || ($draft->status_id == 1 || $draft->status === 'مسودة');
+    $canSaveDraft = empty($isAdminEdit) && (!$draft || ($draft->status_id == 1 || $draft->status === 'مسودة'));
 @endphp
 
 <style>
@@ -74,6 +74,9 @@
     }
 </style>
 
+@if(!empty($isAdminEdit))
+    @include('university.apply.partials._admin_edit_banner', ['wizardTitle' => 'دكتوراه سورية'])
+@else
 <!-- BREADCRUMBS & PAGE HEADER -->
 <div class="row mb-4">
     <div class="col-12">
@@ -107,6 +110,7 @@
         </div>
     </div>
 </div>
+@endif
 
 <!-- WIZARD MAIN CONTAINER -->
 <div class="card border-0 shadow-sm" style="border-radius: 8px; border-top: 3px solid var(--heritage-gold) !important; border: 1px solid var(--outline-variant) !important; background-color: #ffffff;">
@@ -168,7 +172,7 @@
         </div>
 
         <!-- Form Tag -->
-        <form action="{{ route('university.apply.syrian_doctorate.submit') }}" method="POST" enctype="multipart/form-data" id="wizard-form" novalidate>
+        <form action="{{ !empty($isAdminEdit) ? $adminSubmitRoute : route('university.apply.syrian_doctorate.submit') }}" method="POST" enctype="multipart/form-data" id="wizard-form" novalidate>
             @csrf
             <input type="hidden" name="draft_id" value="{{ optional($draft)->id }}">
 
@@ -232,7 +236,7 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">البريد الإلكتروني <span class="text-danger">*</span></label>
-                        <input type="email" name="email" id="input-email" class="form-control academic-input" placeholder="name@example.com" value="{{ old('email', optional(optional($draft)->candidate)->email ?: (Auth::user()->university->email ?? Auth::user()->email)) }}" oninput="this.setCustomValidity('')" required>
+                        <input type="email" name="email" id="input-email" class="form-control academic-input" placeholder="name@example.com" value="{{ old('email', optional(optional($draft)->candidate)->email ?: (empty($isAdminEdit) ? (Auth::user()?->university?->email ?? Auth::user()?->email) : '')) }}" oninput="this.setCustomValidity('')" required>
                     </div>
 
                     <div class="col-md-6">
@@ -584,7 +588,7 @@
                             <option value="">-- اختر الجامعة السورية --</option>
                             @foreach($universities as $uni)
                                 @if($uni->country && $uni->country->name === 'سوريا')
-                                    <option value="{{ $uni->id }}" {{ old('phd_university_id', optional($phdEd)->university_id ?? Auth::user()->university_id) == $uni->id ? 'selected' : '' }}>{{ $uni->name }}</option>
+                                    <option value="{{ $uni->id }}" {{ old('phd_university_id', optional($phdEd)->university_id ?? (empty($isAdminEdit) ? Auth::user()?->university_id : null)) == $uni->id ? 'selected' : '' }}>{{ $uni->name }}</option>
                                 @endif
                             @endforeach
                         </select>
@@ -848,7 +852,7 @@
 
                     <!-- كتاب طلب التقويم و السيرة الذاتية -->
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">كتاب طلب التقويم الصادر عن الجامعة <span class="text-danger">*</span></label>
+                        <label class="form-label label-md fw-medium text-dark">طلب الجامعة للتعادل (كتاب طلب التقويم الصادر عن الجامعة) <span class="text-danger">*</span></label>
                         <input type="file" name="file_uni_request" id="input-fileUniRequest" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['file_uni_request']))
                             <div class="mt-1 d-flex align-items-center gap-2">
@@ -1095,6 +1099,9 @@
                         <i class="fa-solid fa-floppy-disk me-1"></i> حفظ كمسودة ومتابعة لاحقاً
                     </button>
                     @endif
+                    @if(!empty($isAdminEdit))
+                        @include('university.apply.partials._admin_edit_footer_btn')
+                    @endif
                 </div>
 
                 <div class="d-flex align-items-center gap-2">
@@ -1107,7 +1114,9 @@
                     </button>
 
                     <button type="submit" formnovalidate name="action" value="submit_final" class="btn btn-gold-cta px-5 py-2 fw-bold shadow-sm" id="btn-submit" style="display: none;">
-                        @if($isAwaitingDocs)
+                        @if(!empty($isAdminEdit))
+                            حفظ كافة التعديلات (دون تغيير الحالة) <i class="fa-solid fa-check-double ms-1"></i>
+                        @elseif($isAwaitingDocs)
                             إعادة إرسال الطلب بعد استكمال الوثائق <i class="fa-solid fa-paper-plane ms-1"></i>
                         @else
                             إنهاء وإرسال الطلب للوزارة <i class="fa-solid fa-paper-plane ms-1"></i>
@@ -1122,6 +1131,7 @@
 
 <!-- JAVASCRIPT LOGIC -->
 <script>
+    const IS_ADMIN_EDIT = @json(!empty($isAdminEdit));
     let currentStep = 1;
     const totalSteps = 7;
     const syriaCountryId = "{{ $syriaId }}";
@@ -1295,6 +1305,7 @@
     }
 
     function validateStep(step) {
+        if (IS_ADMIN_EDIT) return true;
         const currentSection = document.getElementById(`step-${step}`);
         if (!currentSection) return true;
 
@@ -1821,7 +1832,7 @@
         if (form) {
             form.addEventListener('submit', function(e) {
                 const submitter = e.submitter;
-                if (submitter && submitter.value === 'save_draft') {
+                if (IS_ADMIN_EDIT || (submitter && (submitter.value === 'save_draft' || submitter.value === 'admin_save'))) {
                     form.querySelectorAll('input, select, textarea').forEach(el => el.removeAttribute('required'));
                     return true;
                 }

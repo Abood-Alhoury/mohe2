@@ -672,6 +672,15 @@
                                         <span class="decision-date">
                                             {{ $decision->decision_date ? \Carbon\Carbon::parse($decision->decision_date)->format('d/m/Y') : ($app->updated_at ? $app->updated_at->format('d/m/Y') : '—') }}
                                         </span>
+                                        @if(($isDoc || $isMasterTheo) && ($decision->eligibility_decision_no || $decision->eligibility_decision_date))
+                                            <span class="decision-date" style="color: #0284c7; font-weight: 700; margin-top: 2px;">
+                                                <i class="fa-solid fa-certificate me-1"></i>
+                                                أهلية رقم: {{ $decision->eligibility_decision_no ?: '—' }}
+                                                @if($decision->eligibility_decision_date)
+                                                    ({{ \Carbon\Carbon::parse($decision->eligibility_decision_date)->format('d/m/Y') }})
+                                                @endif
+                                            </span>
+                                        @endif
                                     </div>
                                 @else
                                     <span class="text-muted fs-8">صادر أصولاً</span>

@@ -6,9 +6,11 @@
     $govEd = $govEd ?? ($application->educations ? $application->educations->first(function($e) {
         return $e->thesis_title === 'عضو هيئة تدريسية في جامعة حكومية' || (optional($e->level)->name && str_contains(optional($e->level)->name, 'حكومية'));
     }) : null);
-    $phdEd = $phdEd ?? ($application->educations ? $application->educations->first(function($e) {
-        return $e->thesis_title === 'شهادة الدكتوراه' || (optional($e->level)->name == 'دكتوراه' && $e->thesis_title !== 'عضو هيئة تدريسية في جامعة حكومية');
-    }) : null);
+    if (!isset($phdEd) || str_contains($phdEd->thesis_title ?? '', 'هيئة تدريسية') || str_contains($phdEd->thesis_title ?? '', 'مركز بحوث')) {
+        $phdEd = $application->educations ? $application->educations->first(function($e) {
+            return $e->thesis_title === 'شهادة الدكتوراه' || (optional($e->level)->name == 'دكتوراه' && !str_contains($e->thesis_title ?? '', 'هيئة تدريسية') && !str_contains($e->thesis_title ?? '', 'مركز بحوث'));
+        }) : null;
+    }
 @endphp
 
 <div class="moz-wrapper">
@@ -87,7 +89,7 @@
         <table class="mt">
             <tr>
                 <td class="l">الجامعة المانحة للدكتوراه :</td>
-                <td style="font-weight:bold; color: var(--imperial-navy);">{{ $phdEd?->university?->name ?? $phdEd?->university_other ?? '---' }}</td>
+                <td style="font-weight:bold; color: var(--imperial-navy);">{{ $phdEd?->university?->name ?? $phdEd?->university_other ?? '---' }}{{ $phdEd?->country?->name ? ' (' . $phdEd->country->name . ')' : '' }}</td>
                 <td class="l">تاريخ / سنة المنح :</td>
                 <td>{{ format_sys_date(optional($phdEd)->grant_date) }}</td>
             </tr>
@@ -95,7 +97,7 @@
                 <td class="l">الكلية المانحة :</td>
                 <td>{{ optional($phdEd)->faculty ?: optional($phdEd)->general_specialization ?: '---' }}</td>
                 <td class="l">القسم / الاختصاص الدقيق :</td>
-                <td>{{ optional($phdEd)->department ?: optional($phdEd)->exact_specialization ?: '---' }}</td>
+                <td>{{ optional($phdEd)->exact_specialization ?: optional($phdEd)->department ?: '---' }}</td>
             </tr>
         </table>
 

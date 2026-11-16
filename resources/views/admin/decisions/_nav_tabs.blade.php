@@ -14,13 +14,13 @@
         <span class="badge rounded-pill bg-light text-dark fs-9 border ms-0.5">📄 ورقة وحيدة</span>
     </a>
 
-    {{-- 2. الماجستير النظري (داخلي + خارجي نظري - ورقتان) --}}
+    {{-- 2. الماجستير النظري (داخلي + خارجي نظري - ورقة موحدة) --}}
     <a href="{{ route('admin.decisions.index') }}" 
        class="btn {{ ($active === 'master' || $active === 'theoretical' || $currentRoute === 'admin.decisions.index' || $currentRoute === 'admin.theoretical_decisions.index') ? 'btn-solid-navy' : 'btn-outline-navy bg-white' }} fw-bold px-3 py-1.5 rounded-pill shadow-xs fs-7 d-inline-flex align-items-center gap-1.5"
-       title="إصدار قرارات الماجستير النظري (داخلي وخارجي - قرار معادلة + قرار أهلية التدريس - ورقتان)">
+       title="إصدار قرارات الماجستير النظري (داخلي وخارجي - قرار التعادل والأهلية الموحد - ورقة واحدة)">
         <i class="fa-solid fa-graduation-cap" style="{{ ($active === 'master' || $active === 'theoretical' || $currentRoute === 'admin.decisions.index' || $currentRoute === 'admin.theoretical_decisions.index') ? 'color: var(--heritage-gold-light);' : '' }} font-size: 0.82rem;"></i>
         <span>الماجستير النظري</span>
-        <span class="badge rounded-pill bg-light text-dark fs-9 border ms-0.5">📄📄 ورقتان</span>
+        <span class="badge rounded-pill bg-light text-dark fs-9 border ms-0.5">📄 ورقة موحدة</span>
     </a>
 
     {{-- 3. السماح بالتدريس (أعضاء الجامعات الحكومية - ورقة وحيدة) --}}
@@ -32,13 +32,13 @@
         <span class="badge rounded-pill bg-light text-dark fs-9 border ms-0.5">📄 ورقة وحيدة</span>
     </a>
 
-    {{-- 4. الدكتوراه (دكتوراه سورية + دكتوراه خارجية - ورقتان) --}}
+    {{-- 4. الدكتوراه (دكتوراه سورية + دكتوراه خارجية - ورقة موحدة) --}}
     <a href="{{ route('admin.doctorate_decisions.index') }}" 
        class="btn {{ ($active === 'doctorate' || $currentRoute === 'admin.doctorate_decisions.index') ? 'btn-solid-navy' : 'btn-outline-navy bg-white' }} fw-bold px-3 py-1.5 rounded-pill shadow-xs fs-7 d-inline-flex align-items-center gap-1.5"
-       title="إصدار قرارات الدكتوراه (سورية وخارجية - قرار تعادل/معادلة + قرار أهلية التدريس - ورقتان)">
+       title="إصدار قرارات الدكتوراه (سورية وخارجية - قرار التعادل والأهلية الموحد - ورقة واحدة)">
         <i class="fa-solid fa-user-graduate" style="{{ ($active === 'doctorate' || $currentRoute === 'admin.doctorate_decisions.index') ? 'color: var(--heritage-gold-light);' : '' }} font-size: 0.82rem;"></i>
         <span>الدكتوراه</span>
-        <span class="badge rounded-pill bg-light text-dark fs-9 border ms-0.5">📄📄 ورقتان</span>
+        <span class="badge rounded-pill bg-light text-dark fs-9 border ms-0.5">📄 ورقة موحدة</span>
     </a>
 
     {{-- 5. قرارات عدم الموافقة (الطلبات المرفوضة - ورقة وحيدة) --}}

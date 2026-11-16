@@ -13,6 +13,7 @@ class Education extends Model
         'education_level_id',
         'country_id',
         'university_id',
+        'university_other',
         'faculty',
         'department',
         'section_name',

@@ -13,24 +13,46 @@ class WipeSystemDataSeeder extends Seeder
     {
         Schema::disableForeignKeyConstraints();
 
-        // Truncate all application & candidate related data
-        DB::table('application_decisions')->truncate();
-        DB::table('application_messages')->truncate();
-        DB::table('application_courses')->truncate();
-        DB::table('education_residences')->truncate();
-        DB::table('education_attachments')->truncate();
-        DB::table('educations')->truncate();
-        DB::table('applications')->truncate();
-        DB::table('equivalence_profiles')->truncate();
+        // Truncate all application, decision, archive & candidate related tables
+        $tables = [
+            'application_decision_drafts',
+            'application_decisions',
+            'application_experiences',
+            'application_messages',
+            'application_courses',
+            'education_residences',
+            'education_attachments',
+            'educations',
+            'applications',
+            'equivalence_profiles',
+        ];
+
+        foreach ($tables as $table) {
+            if (Schema::hasTable($table)) {
+                DB::table($table)->truncate();
+            }
+        }
+
+        // Reset SQLite auto-increment sequences for wiped tables (if using SQLite)
+        if (DB::getDriverName() === 'sqlite') {
+            DB::table('sqlite_sequence')->whereIn('name', $tables)->delete();
+        }
 
         Schema::enableForeignKeyConstraints();
 
-        // Clean storage directories for attachments and decisions
+        // Clean storage directories for attachments, decisions, test_docs, and temp PDFs
         try {
             Storage::disk('public')->deleteDirectory('attachments');
             Storage::disk('public')->deleteDirectory('decisions');
+            Storage::disk('public')->deleteDirectory('test_docs');
+
             Storage::disk('public')->makeDirectory('attachments');
             Storage::disk('public')->makeDirectory('decisions');
+
+            // Remove any leftover temporary PDF files in storage/app
+            foreach (glob(storage_path('app/tmp_*.pdf')) ?: [] as $tmpFile) {
+                @unlink($tmpFile);
+            }
         } catch (\Throwable $e) {
             // Ignore file deletion warnings if any
         }

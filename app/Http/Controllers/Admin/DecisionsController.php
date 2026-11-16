@@ -85,7 +85,7 @@ class DecisionsController extends Controller
         $statusRejected = ['مرفوض', '9', '10', 9, 10];
 
         // Query pending applications
-        $pendingApps = Application::with(['candidate', 'workUniversity', 'educations.level', 'educations.university'])
+        $pendingApps = Application::with(['candidate', 'workUniversity', 'educations.level', 'educations.university', 'latestDecision'])
             ->where(function ($q) use ($statusPending, $statusRejected) {
                 $q->whereIn('status', $statusPending)
                   ->orWhere(function ($q2) use ($statusRejected) {
@@ -97,7 +97,7 @@ class DecisionsController extends Controller
 
         // If specific app_id requested, include it
         if ($request->filled('app_id')) {
-            $targetApp = Application::with(['candidate', 'workUniversity', 'educations.level', 'educations.university'])->find($request->query('app_id'));
+            $targetApp = Application::with(['candidate', 'workUniversity', 'educations.level', 'educations.university', 'latestDecision'])->find($request->query('app_id'));
             if ($targetApp && !$pendingApps->contains('id', $targetApp->id)) {
                 $pendingApps->prepend($targetApp);
             }
@@ -141,8 +141,10 @@ class DecisionsController extends Controller
 
             // Smart Degree Extraction
             $targetEdu = null;
-            if (str_contains($reqType, 'دكتور')) {
-                $targetEdu = $app->educations->where('education_level_id', 3)->first();
+            if (str_contains($reqType, 'دكتور') || str_contains($reqType, 'سماح') || str_contains($reqType, 'تدريس') || str_contains($reqType, 'بحوث')) {
+                $targetEdu = $app->educations->first(function($e) {
+                    return $e->education_level_id == 3 && !str_contains($e->thesis_title ?? '', 'هيئة تدريسية') && !str_contains($e->thesis_title ?? '', 'مركز بحوث');
+                });
             }
             if (!$targetEdu && str_contains($reqType, 'ماجستير')) {
                 $targetEdu = $app->educations->where('education_level_id', 2)->first();
@@ -154,8 +156,8 @@ class DecisionsController extends Controller
             $degree = $reqType;
             if ($targetEdu) {
                 $levelName = $targetEdu->level->name ?? $reqType;
-                $spec = $targetEdu->general_specialization ?: $targetEdu->exact_specialization ?: '';
-                $uni = $targetEdu->university_name ?: ($targetEdu->university->name ?? '');
+                $spec = $targetEdu->exact_specialization ?: ($targetEdu->general_specialization ?: '');
+                $uni = $targetEdu->university_name ?: ($targetEdu->university->name ?? ($targetEdu->university_other ?? ''));
                 if ($spec && $uni) {
                     $degree = "{$levelName} في {$spec} ({$uni})";
                 } elseif ($spec) {
@@ -175,6 +177,12 @@ class DecisionsController extends Controller
                 'uni'      => $app->workUniversity->name ?? 'غير محدد',
                 'status'   => $status,
                 'reason'   => $app->rejection_reason ?? '',
+                'eligNo'   => $app->latestDecision?->eligibility_decision_no ?: ($app->eligibility_decision_no ?? ''),
+                'eligDate' => $app->latestDecision?->eligibility_decision_date
+                    ? \Carbon\Carbon::parse($app->latestDecision->eligibility_decision_date)->format('Y-m-d')
+                    : ($app->eligibility_decision_date
+                        ? \Carbon\Carbon::parse($app->eligibility_decision_date)->format('Y-m-d')
+                        : ($app->interview_date ? \Carbon\Carbon::parse($app->interview_date)->format('Y-m-d') : date('Y-m-d'))),
             ];
         }
 
@@ -274,17 +282,20 @@ class DecisionsController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'application_id'           => 'required|exists:applications,id',
-            'eligibility_decision_no'   => 'nullable|string',
-            'eligibility_decision_date' => 'nullable|date',
-            'eligibility_decision_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
-            'decision_no'              => 'required|string',
-            'decision_date'            => 'required|date',
-            'decision_file'            => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
-            'notes'                    => 'nullable|string',
+            'application_id' => 'required|exists:applications,id',
         ]);
 
         $app = Application::findOrFail($request->application_id);
+        $requiresElig = $app->requiresEligibility();
+
+        $request->validate([
+            'eligibility_decision_no'   => ($requiresElig ? 'required' : 'nullable') . '|string',
+            'eligibility_decision_date' => ($requiresElig ? 'required' : 'nullable') . '|date',
+            'decision_no'               => 'required|string',
+            'decision_date'             => 'required|date',
+            'decision_file'             => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'notes'                     => 'nullable|string',
+        ]);
 
         if (!in_array($app->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار', '7', 7])) {
             return redirect()->back()->with('error', 'لا يمكن إرفاق قرار لطلب حالته حالياً (' . $app->status . '). إصدار القرارات متاح فقط للطلبات بحالة (بانتظار إصدار القرار).');
@@ -295,31 +306,21 @@ class DecisionsController extends Controller
         $candidateName = $app->candidate ? preg_replace('/[^\p{L}\p{N}\s\-_]/u', '', $app->candidate->full_name) : '';
         $cleanCandidateName = trim(preg_replace('/\s+/', '_', $candidateName));
 
-        // 1. Process Eligibility Decision File if uploaded
-        $eligibilityPath = null;
-        if ($request->hasFile('eligibility_decision_file')) {
-            $eligFile = $request->file('eligibility_decision_file');
-            $safeEligDecNo = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $request->eligibility_decision_no ?? 'Elig');
-            $extElig = $eligFile->getClientOriginalExtension();
-            $eligFileName = 'Eligibility_Decision_No' . $safeEligDecNo . '_' . $safeAppNo . ($cleanCandidateName ? '_' . $cleanCandidateName : '') . '.' . $extElig;
-            $eligibilityPath = $eligFile->storeAs('decisions', $eligFileName, 'public');
-        }
-
-        // 2. Process Equivalence Decision File
+        // 1. Process Unified Decision File (Single PDF/Image - No separate eligibility file)
         $ext = $request->file('decision_file')->getClientOriginalExtension();
         $decisionFileName = 'Official_Decision_No' . $safeDecNo . '_' . $safeAppNo . ($cleanCandidateName ? '_' . $cleanCandidateName : '') . '.' . $ext;
         $path = $request->file('decision_file')->storeAs('decisions', $decisionFileName, 'public');
 
-        // 3. Create Decision Record
+        // 2. Create Decision Record (keep eligibility no & date, set eligibility_file_path to null)
         $decision = ApplicationDecision::create([
             'application_id'            => $request->application_id,
-            'eligibility_decision_no'   => $request->eligibility_decision_no,
-            'eligibility_decision_date' => $request->eligibility_decision_date,
-            'eligibility_file_path'     => $eligibilityPath,
+            'eligibility_decision_no'   => $requiresElig ? $request->eligibility_decision_no : null,
+            'eligibility_decision_date' => $requiresElig ? $request->eligibility_decision_date : null,
+            'eligibility_file_path'     => null,
             'decision_no'               => $request->decision_no,
             'decision_date'             => $request->decision_date,
             'file_path'                 => $path,
-            'notes'                     => $request->notes ?? 'قرار معادلة صادرة رسمياً من مجلس التعليم العالي',
+            'notes'                     => $request->notes ?? 'قرار التعادل والأهلية الموحد صادر رسمياً من مجلس التعليم العالي',
         ]);
 
         // Automatically update application status
@@ -328,32 +329,37 @@ class DecisionsController extends Controller
 
         // Send automated notification message to university
         $candidateFullName = $app->candidate ? $app->candidate->full_name : '';
-        $eligibilityInfoText = $request->eligibility_decision_no ? " وقرار الأهلية برقم ({$request->eligibility_decision_no})" : "";
+        $eligibilityInfoText = ($requiresElig && $request->eligibility_decision_no)
+            ? " متضمناً قرار الأهلية رقم ({$request->eligibility_decision_no}) تاريخ ({$request->eligibility_decision_date})"
+            : "";
 
         ApplicationMessage::create([
             'application_id' => $app->id,
             'sender_id' => Auth::id() ?? 1,
-            'message' => "📜 [إشعار رسمي - صدور قرار تعادل ماجستير]: تم صدور قرار معادلة الماجستير رسمياً برقم ({$request->decision_no}){$eligibilityInfoText} للطلب رقم (#{$app->application_no}) للمرشح ({$candidateFullName}). يمكنك الاطلاع على نسخة القرارات وتحميلها أصولاً.",
+            'message' => "📜 [إشعار رسمي - صدور قرار التعادل والأهلية الموحد]: تم صدور القرار الرسمي الموحد للماجستير برقم ({$request->decision_no}) تاريخ ({$request->decision_date}){$eligibilityInfoText} للطلب رقم (#{$app->application_no}) للمرشح ({$candidateFullName}). يمكنك الاطلاع على نسخة القرار وتحميلها أصولاً.",
             'is_read' => false,
         ]);
 
-        return redirect()->route('admin.decisions.index')->with('success', 'تم تسجيل وإرسال قرار الأهلية وقرار تعادل الماجستير النهائي وإشعار الجامعة المعنية بنجاح.');
+        return redirect()->route('admin.decisions.index')->with('success', 'تم تسجيل وإرسال قرار التعادل والأهلية الموحد وإشعار الجامعة المعنية بنجاح.');
     }
 
     public function doctorateStore(Request $request)
     {
         $request->validate([
-            'application_id'           => 'required|exists:applications,id',
-            'eligibility_decision_no'   => 'nullable|string',
-            'eligibility_decision_date' => 'nullable|date',
-            'eligibility_decision_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
-            'decision_no'              => 'required|string',
-            'decision_date'            => 'required|date',
-            'decision_file'            => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
-            'notes'                    => 'nullable|string',
+            'application_id' => 'required|exists:applications,id',
         ]);
 
         $app = Application::findOrFail($request->application_id);
+        $requiresElig = $app->requiresEligibility();
+
+        $request->validate([
+            'eligibility_decision_no'   => ($requiresElig ? 'required' : 'nullable') . '|string',
+            'eligibility_decision_date' => ($requiresElig ? 'required' : 'nullable') . '|date',
+            'decision_no'               => 'required|string',
+            'decision_date'             => 'required|date',
+            'decision_file'             => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'notes'                     => 'nullable|string',
+        ]);
 
         if (!in_array($app->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار', '7', 7])) {
             return redirect()->back()->with('error', 'لا يمكن إرفاق قرار لطلب حالته حالياً (' . $app->status . '). إصدار القرارات متاح فقط للطلبات بحالة (بانتظار إصدار القرار).');
@@ -364,31 +370,21 @@ class DecisionsController extends Controller
         $candidateName = $app->candidate ? preg_replace('/[^\p{L}\p{N}\s\-_]/u', '', $app->candidate->full_name) : '';
         $cleanCandidateName = trim(preg_replace('/\s+/', '_', $candidateName));
 
-        // 1. Process Eligibility Decision File if uploaded
-        $eligibilityPath = null;
-        if ($request->hasFile('eligibility_decision_file')) {
-            $eligFile = $request->file('eligibility_decision_file');
-            $safeEligDecNo = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $request->eligibility_decision_no ?? 'Elig');
-            $extElig = $eligFile->getClientOriginalExtension();
-            $eligFileName = 'Doctorate_Eligibility_Decision_No' . $safeEligDecNo . '_' . $safeAppNo . ($cleanCandidateName ? '_' . $cleanCandidateName : '') . '.' . $extElig;
-            $eligibilityPath = $eligFile->storeAs('decisions', $eligFileName, 'public');
-        }
-
-        // 2. Process Doctorate Equivalence Decision File
+        // 1. Process Unified Doctorate Decision File (Single PDF/Image)
         $ext = $request->file('decision_file')->getClientOriginalExtension();
         $decisionFileName = 'Doctorate_Official_Decision_No' . $safeDecNo . '_' . $safeAppNo . ($cleanCandidateName ? '_' . $cleanCandidateName : '') . '.' . $ext;
         $path = $request->file('decision_file')->storeAs('decisions', $decisionFileName, 'public');
 
-        // 3. Create Decision Record
+        // 2. Create Decision Record (keep eligibility no & date, set eligibility_file_path to null)
         $decision = ApplicationDecision::create([
             'application_id'            => $request->application_id,
-            'eligibility_decision_no'   => $request->eligibility_decision_no,
-            'eligibility_decision_date' => $request->eligibility_decision_date,
-            'eligibility_file_path'     => $eligibilityPath,
+            'eligibility_decision_no'   => $requiresElig ? $request->eligibility_decision_no : null,
+            'eligibility_decision_date' => $requiresElig ? $request->eligibility_decision_date : null,
+            'eligibility_file_path'     => null,
             'decision_no'               => $request->decision_no,
             'decision_date'             => $request->decision_date,
             'file_path'                 => $path,
-            'notes'                     => $request->notes ?? 'قرار معادلة دكتوراه سورية صادر رسمياً من مجلس التعليم العالي',
+            'notes'                     => $request->notes ?? 'قرار التعادل والأهلية الموحد للدكتوراه صادر رسمياً من مجلس التعليم العالي',
         ]);
 
         // Automatically update application status
@@ -397,16 +393,18 @@ class DecisionsController extends Controller
 
         // Send automated notification message to university
         $candidateFullName = $app->candidate ? $app->candidate->full_name : '';
-        $eligibilityInfoText = $request->eligibility_decision_no ? " وقرار الأهلية برقم ({$request->eligibility_decision_no})" : "";
+        $eligibilityInfoText = ($requiresElig && $request->eligibility_decision_no)
+            ? " متضمناً قرار الأهلية رقم ({$request->eligibility_decision_no}) تاريخ ({$request->eligibility_decision_date})"
+            : "";
 
         ApplicationMessage::create([
             'application_id' => $app->id,
             'sender_id' => Auth::id() ?? 1,
-            'message' => "📜 [إشعار رسمي - صدور قرار تعادل دكتوراه]: تم صدور قرار معادلة الدكتوراه رسمياً برقم ({$request->decision_no}){$eligibilityInfoText} للطلب رقم (#{$app->application_no}) للمرشح ({$candidateFullName}). يمكنك الاطلاع على نسخة القرارات وتحميلها أصولاً.",
+            'message' => "📜 [إشعار رسمي - صدور قرار التعادل والأهلية الموحد]: تم صدور القرار الرسمي الموحد للدكتوراه برقم ({$request->decision_no}) تاريخ ({$request->decision_date}){$eligibilityInfoText} للطلب رقم (#{$app->application_no}) للمرشح ({$candidateFullName}). يمكنك الاطلاع على نسخة القرار وتحميلها أصولاً.",
             'is_read' => false,
         ]);
 
-        return redirect()->route('admin.doctorate_decisions.index')->with('success', 'تم تسجيل وإرسال قرار الأهلية وقرار تعادل الدكتوراه النهائي وإشعار الجامعة المعنية بنجاح.');
+        return redirect()->route('admin.doctorate_decisions.index')->with('success', 'تم تسجيل وإرسال قرار التعادل والأهلية الموحد للدكتوراه وإشعار الجامعة المعنية بنجاح.');
     }
 
     // =========================================================================
@@ -621,17 +619,20 @@ class DecisionsController extends Controller
     public function foreignMasterTheoreticalStore(Request $request)
     {
         $request->validate([
-            'application_id'           => 'required|exists:applications,id',
-            'decision_no'              => 'required|string',
-            'decision_date'            => 'required|date',
-            'decision_file'            => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
-            'eligibility_decision_no'   => 'nullable|string',
-            'eligibility_decision_date' => 'nullable|date',
-            'eligibility_file'         => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
-            'notes'                    => 'nullable|string',
+            'application_id' => 'required|exists:applications,id',
         ]);
 
         $app = Application::findOrFail($request->application_id);
+        $requiresElig = $app->requiresEligibility();
+
+        $request->validate([
+            'decision_no'               => 'required|string',
+            'decision_date'             => 'required|date',
+            'decision_file'             => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'eligibility_decision_no'   => ($requiresElig ? 'required' : 'nullable') . '|string',
+            'eligibility_decision_date' => ($requiresElig ? 'required' : 'nullable') . '|date',
+            'notes'                     => 'nullable|string',
+        ]);
 
         if (!in_array($app->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار'])) {
             return redirect()->back()->with('error', 'لا يمكن إرفاق قرار لطلب حالته حالياً (' . $app->status . '). إصدار القرارات متاح فقط للطلبات بحالة (بانتظار إصدار القرار).');
@@ -642,63 +643,41 @@ class DecisionsController extends Controller
         $candidateName = $app->candidate ? preg_replace('/[^\p{L}\p{N}\s\-_]/u', '', $app->candidate->full_name) : '';
         $cleanCandidateName = trim(preg_replace('/\s+/', '_', $candidateName));
 
-        // 1. Process Main Equivalence Decision File
+        // 1. Process Unified Equivalence & Eligibility Decision File (Single Document)
         $ext = $request->file('decision_file')->getClientOriginalExtension();
         $decisionFileName = 'Foreign_Master_Theoretical_Decision_No' . $safeDecNo . '_' . $safeAppNo . ($cleanCandidateName ? '_' . $cleanCandidateName : '') . '.' . $ext;
         $path = $request->file('decision_file')->storeAs('decisions', $decisionFileName, 'public');
 
-        // 2. Process Eligibility Decision File if provided (has eligibility!)
-        $eligibilityPath = null;
-        if ($request->hasFile('eligibility_file')) {
-            $elExt = $request->file('eligibility_file')->getClientOriginalExtension();
-            $elFileName = 'Foreign_Master_Theoretical_Eligibility_No' . ($request->eligibility_decision_no ? str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $request->eligibility_decision_no) : 'Draft') . '_' . $safeAppNo . ($cleanCandidateName ? '_' . $cleanCandidateName : '') . '.' . $elExt;
-            $eligibilityPath = $request->file('eligibility_file')->storeAs('decisions', $elFileName, 'public');
-        }
-
-        // 3. If both files are PDFs, merge them into one comprehensive package
-        if ($eligibilityPath && strtolower($ext) === 'pdf' && strtolower($request->file('eligibility_file')->getClientOriginalExtension()) === 'pdf') {
-            try {
-                $merger = new \Jurosh\PDFMerge\PDFMerger;
-                $mainPdfPath = Storage::disk('public')->path($path);
-                $eligibilityPdfPath = Storage::disk('public')->path($eligibilityPath);
-
-                $merger->addPDF($eligibilityPdfPath, 'all');
-                $merger->addPDF($mainPdfPath, 'all');
-
-                $combinedFileName = 'Foreign_Master_Theoretical_Package_No' . $safeDecNo . '_' . $safeAppNo . ($cleanCandidateName ? '_' . $cleanCandidateName : '') . '.pdf';
-                $combinedFullPath = Storage::disk('public')->path('decisions/' . $combinedFileName);
-                $merger->merge('file', $combinedFullPath, 'P');
-
-                $path = 'decisions/' . $combinedFileName;
-            } catch (\Throwable $e) {}
-        }
-
-        // 4. Create Decision Record with eligibility
+        // 2. Create Decision Record (keep eligibility no & date, no separate eligibility file)
         $decision = ApplicationDecision::create([
-            'application_id'           => $request->application_id,
-            'decision_no'              => $request->decision_no,
-            'decision_date'            => $request->decision_date,
-            'file_path'                => $path,
-            'eligibility_decision_no'   => $request->eligibility_decision_no,
-            'eligibility_decision_date' => $request->eligibility_decision_date,
-            'eligibility_file_path'    => $eligibilityPath,
-            'notes'                    => $request->notes ?? 'قرار تعادل ماجستير خارجي نظري صادر رسمياً',
+            'application_id'            => $request->application_id,
+            'decision_no'               => $request->decision_no,
+            'decision_date'             => $request->decision_date,
+            'file_path'                 => $path,
+            'eligibility_decision_no'   => $requiresElig ? $request->eligibility_decision_no : null,
+            'eligibility_decision_date' => $requiresElig ? $request->eligibility_decision_date : null,
+            'eligibility_file_path'     => null,
+            'notes'                     => $request->notes ?? 'قرار التعادل والأهلية الموحد للماجستير الخارجي النظري صادر رسمياً',
         ]);
 
-        // 5. Automatically update application status
+        // 3. Automatically update application status
         $app->status = 'تم الصدور';
         $app->save();
 
-        // 6. Send automated notification message to university
+        // 4. Send automated notification message to university
         $candidateFullName = $app->candidate ? $app->candidate->full_name : '';
+        $eligibilityInfoText = ($requiresElig && $request->eligibility_decision_no)
+            ? " متضمناً قرار الأهلية رقم ({$request->eligibility_decision_no}) تاريخ ({$request->eligibility_decision_date})"
+            : "";
+
         ApplicationMessage::create([
             'application_id' => $app->id,
             'sender_id' => Auth::id() ?? 1,
-            'message' => "📜 [إشعار رسمي - صدور قرار تعادل ماجستير خارجي نظري والأهلية]: تم صدور قرار تعادل الماجستير الخارجي (المسار النظري) وقرار الأهلية رسمياً برقم ({$request->decision_no}) للطلب رقم (#{$app->application_no}) للمرشح ({$candidateFullName}). يمكنك الاطلاع على نسخة القرار وتحميلها أصولاً.",
+            'message' => "📜 [إشعار رسمي - صدور قرار التعادل والأهلية الموحد]: تم صدور القرار الرسمي الموحد للماجستير الخارجي (المسار النظري) برقم ({$request->decision_no}) تاريخ ({$request->decision_date}){$eligibilityInfoText} للطلب رقم (#{$app->application_no}) للمرشح ({$candidateFullName}). يمكنك الاطلاع على نسخة القرار وتحميلها أصولاً.",
             'is_read' => false,
         ]);
 
-        return redirect()->route('admin.foreign_master_theoretical_decisions.index')->with('success', 'تم تسجيل وإرسال قرار تعادل الماجستير الخارجي النظري والأهلية وإشعار الجامعة المعنية بنجاح.');
+        return redirect()->route('admin.foreign_master_theoretical_decisions.index')->with('success', 'تم تسجيل وإرسال قرار التعادل والأهلية الموحد للماجستير الخارجي النظري وإشعار الجامعة المعنية بنجاح.');
     }
 
     // =========================================================================
@@ -752,17 +731,20 @@ class DecisionsController extends Controller
     public function foreignDoctorateStore(Request $request)
     {
         $request->validate([
-            'application_id'           => 'required|exists:applications,id',
-            'eligibility_decision_no'   => 'nullable|string',
-            'eligibility_decision_date' => 'nullable|date',
-            'eligibility_decision_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
-            'decision_no'              => 'required|string',
-            'decision_date'            => 'required|date',
-            'decision_file'            => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
-            'notes'                    => 'nullable|string',
+            'application_id' => 'required|exists:applications,id',
         ]);
 
         $app = Application::findOrFail($request->application_id);
+        $requiresElig = $app->requiresEligibility();
+
+        $request->validate([
+            'eligibility_decision_no'   => ($requiresElig ? 'required' : 'nullable') . '|string',
+            'eligibility_decision_date' => ($requiresElig ? 'required' : 'nullable') . '|date',
+            'decision_no'               => 'required|string',
+            'decision_date'             => 'required|date',
+            'decision_file'             => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'notes'                     => 'nullable|string',
+        ]);
 
         if (!in_array($app->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار'])) {
             return redirect()->back()->with('error', 'لا يمكن إرفاق قرار لطلب حالته حالياً (' . $app->status . '). إصدار القرارات متاح فقط للطلبات بحالة (بانتظار إصدار القرار).');
@@ -773,31 +755,21 @@ class DecisionsController extends Controller
         $candidateName = $app->candidate ? preg_replace('/[^\p{L}\p{N}\s\-_]/u', '', $app->candidate->full_name) : '';
         $cleanCandidateName = trim(preg_replace('/\s+/', '_', $candidateName));
 
-        // 1. Process Eligibility Decision File if uploaded
-        $eligibilityPath = null;
-        if ($request->hasFile('eligibility_decision_file')) {
-            $eligFile = $request->file('eligibility_decision_file');
-            $safeEligDecNo = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $request->eligibility_decision_no ?? 'Elig');
-            $extElig = $eligFile->getClientOriginalExtension();
-            $eligFileName = 'Foreign_Doctorate_Eligibility_No' . $safeEligDecNo . '_' . $safeAppNo . ($cleanCandidateName ? '_' . $cleanCandidateName : '') . '.' . $extElig;
-            $eligibilityPath = $eligFile->storeAs('decisions', $eligFileName, 'public');
-        }
-
-        // 2. Process Foreign Doctorate Equivalence Decision File
+        // 1. Process Unified Foreign Doctorate Decision File (Single Document)
         $ext = $request->file('decision_file')->getClientOriginalExtension();
         $decisionFileName = 'Foreign_Doctorate_Official_Decision_No' . $safeDecNo . '_' . $safeAppNo . ($cleanCandidateName ? '_' . $cleanCandidateName : '') . '.' . $ext;
         $path = $request->file('decision_file')->storeAs('decisions', $decisionFileName, 'public');
 
-        // 3. Create Decision Record
+        // 2. Create Decision Record (keep eligibility no & date, no separate eligibility file)
         $decision = ApplicationDecision::create([
             'application_id'            => $request->application_id,
-            'eligibility_decision_no'   => $request->eligibility_decision_no,
-            'eligibility_decision_date' => $request->eligibility_decision_date,
-            'eligibility_file_path'     => $eligibilityPath,
+            'eligibility_decision_no'   => $requiresElig ? $request->eligibility_decision_no : null,
+            'eligibility_decision_date' => $requiresElig ? $request->eligibility_decision_date : null,
+            'eligibility_file_path'     => null,
             'decision_no'               => $request->decision_no,
             'decision_date'             => $request->decision_date,
             'file_path'                 => $path,
-            'notes'                     => $request->notes ?? 'قرار معادلة دكتوراه غير سورية (خارجية) صادر رسمياً من مجلس التعليم العالي',
+            'notes'                     => $request->notes ?? 'قرار التعادل والأهلية الموحد للدكتوراه غير السورية (خارجية) صادر رسمياً من مجلس التعليم العالي',
         ]);
 
         // Automatically update application status
@@ -806,16 +778,18 @@ class DecisionsController extends Controller
 
         // Send automated notification message to university
         $candidateFullName = $app->candidate ? $app->candidate->full_name : '';
-        $eligibilityInfoText = $request->eligibility_decision_no ? " وقرار الأهلية برقم ({$request->eligibility_decision_no})" : "";
+        $eligibilityInfoText = ($requiresElig && $request->eligibility_decision_no)
+            ? " متضمناً قرار الأهلية رقم ({$request->eligibility_decision_no}) تاريخ ({$request->eligibility_decision_date})"
+            : "";
 
         ApplicationMessage::create([
             'application_id' => $app->id,
             'sender_id' => Auth::id() ?? 1,
-            'message' => "📜 [إشعار رسمي - صدور قرار تعادل دكتوراه غير سورية]: تم صدور قرار معادلة الدكتوراه الخارجية رسمياً برقم ({$request->decision_no}){$eligibilityInfoText} للطلب رقم (#{$app->application_no}) للمرشح ({$candidateFullName}). يمكنك الاطلاع على نسخة القرارات وتحميلها أصولاً.",
+            'message' => "📜 [إشعار رسمي - صدور قرار التعادل والأهلية الموحد]: تم صدور القرار الرسمي الموحد للدكتوراه الخارجية برقم ({$request->decision_no}) تاريخ ({$request->decision_date}){$eligibilityInfoText} للطلب رقم (#{$app->application_no}) للمرشح ({$candidateFullName}). يمكنك الاطلاع على نسخة القرار وتحميلها أصولاً.",
             'is_read' => false,
         ]);
 
-        return redirect()->route('admin.foreign_doctorate_decisions.index')->with('success', 'تم تسجيل وإرسال قرار الأهلية وقرار تعادل الدكتوراه الخارجية الرسمي وإشعار الجامعة المعنية بنجاح.');
+        return redirect()->route('admin.foreign_doctorate_decisions.index')->with('success', 'تم تسجيل وإرسال قرار التعادل والأهلية الموحد للدكتوراه الخارجية وإشعار الجامعة المعنية بنجاح.');
     }
 
     // =========================================================================
@@ -878,7 +852,14 @@ class DecisionsController extends Controller
             'is_read'        => false,
         ]);
 
-        return redirect()->route('admin.rejected_decisions.index')->with('success', 'تم تسجيل وإرسال كتاب عدم الموافقة المسبّب وإشعار الجامعة المعنية بنجاح.');
+        return redirect()->route('admin.rejected_decisions.index')
+            ->with('action_banner', [
+                'variant'     => 'success',
+                'title'       => 'تم أرشفة وإصدار كتاب عدم الموافقة رقم (' . $request->decision_no . ') وإشعار الجامعة بنجاح',
+                'message'     => 'انتقل الطلب الآن من قائمة الانتظار إلى الأرشيف العام للوزارة (قسم عدم الموافقة).',
+                'issue_url'   => route('admin.archive.index', ['track' => 'rejected']),
+                'issue_label' => 'عرض القرار في الأرشيف العام (عدم الموافقة)',
+            ]);
     }
 
     // =========================================================================

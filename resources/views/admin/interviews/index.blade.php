@@ -637,15 +637,10 @@
                         </td>
                         <td style="text-align: center;">
                             <div class="actions-cluster">
-                                <!-- Pass button (PATCH form) -->
-                                <form action="{{ route('admin.interviews.decide_outcome', $app->id) }}" method="POST" class="d-inline" onsubmit="return confirm('هل أنت متأكد من اعتماد اجتياز المرشح ({{ $app->candidate->full_name ?? '' }}) للمقابلة وتحويله إلى (بانتظار إصدار القرار)؟');">
-                                    @csrf
-                                    @method('PATCH')
-                                    <input type="hidden" name="outcome" value="pass">
-                                    <button type="submit" class="btn-eval btn-pass" title="اعتماد اجتياز المقابلة وثبوت الأهلية">
-                                        <i class="fa-solid fa-circle-check"></i> موافقة (اجتياز)
-                                    </button>
-                                </form>
+                                <!-- Pass button (opens Eligibility Approval Modal) -->
+                                <button type="button" class="btn-eval btn-pass" data-bs-toggle="modal" data-bs-target="#passModal{{ $app->id }}" title="اعتماد اجتياز المقابلة وإدخال رقم قرار الأهلية">
+                                    <i class="fa-solid fa-circle-check"></i> موافقة (اجتياز)
+                                </button>
 
                                 <!-- Fail button (opens modal) -->
                                 <button type="button" class="btn-eval btn-fail" data-bs-toggle="modal" data-bs-target="#rejectModal{{ $app->id }}" title="رصد عدم اجتياز المقابلة">
@@ -717,6 +712,56 @@
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal">إلغاء</button>
                     <button type="submit" class="btn px-4 fw-bold" style="background: var(--imperial-navy); color: white;">حفظ الموعد</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- PASS / ELIGIBILITY APPROVAL MODAL -->
+<div class="modal fade" id="passModal{{ $app->id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-top: 4px solid #10b981 !important; border-radius: 12px;">
+            <form action="{{ route('admin.interviews.decide_outcome', $app->id) }}" method="POST">
+                @csrf
+                @method('PATCH')
+                <input type="hidden" name="outcome" value="pass">
+
+                <div class="modal-header bg-light">
+                    <h6 class="modal-title fw-bold text-success">
+                        <i class="fa-solid fa-circle-check me-1.5"></i>
+                        اعتماد موافقة الأهلية واجتياز المقابلة: {{ $app->candidate->full_name ?? '' }}
+                    </h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body p-4 text-start">
+                    <p class="small text-muted mb-3">
+                        سيتم اعتماد اجتياز المرشح وتحويل طلبه إلى <strong class="text-primary">(بانتظار إصدار القرار)</strong> وإدراج بيانات الأهلية تلقائياً في ديباجة القرار الموحد.
+                    </p>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-dark">رقم قرار الأهلية :</label>
+                            <input type="text" name="eligibility_decision_no" class="form-control fw-bold" value="{{ $app->eligibility_decision_no ?? '' }}" placeholder="مثال: 502/2026" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-dark">تاريخ قرار الأهلية (تاريخ المقابلة) :</label>
+                            <input type="date" name="eligibility_decision_date" class="form-control fw-bold" value="{{ $app->eligibility_decision_date ? \Carbon\Carbon::parse($app->eligibility_decision_date)->format('Y-m-d') : ($app->interview_date ? \Carbon\Carbon::parse($app->interview_date)->format('Y-m-d') : date('Y-m-d')) }}" required>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <label class="form-label fw-bold small text-dark">ملاحظات لجنة الأهلية (اختياري) :</label>
+                        <textarea name="notes" class="form-control" rows="2" placeholder="أدخل أي ملاحظات إضافية إن وجدت...">{{ $app->interview_notes }}</textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-success px-4 fw-bold">
+                        <i class="fa-solid fa-check me-1"></i> اعتماد الموافقة وتثبيت الأهلية
+                    </button>
                 </div>
             </form>
         </div>

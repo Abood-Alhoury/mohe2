@@ -635,6 +635,7 @@
                                     <option value="{{ $u->id }}" {{ $phdEd->university_id == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
                                 @endforeach
                             </select>
+                            <input type="text" name="university_other" class="field-control mt-1.5" value="{{ $phdEd->university_other }}" placeholder="أو اسم جامعة أخرى (إذا لم تكن بالقائمة)">
                         </div>
                         <div class="field-group">
                             <label class="field-label">2. الكلية :</label>

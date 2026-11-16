@@ -1,4 +1,4 @@
-@extends('layouts.university')
+@extends(!empty($isAdminEdit) ? 'layouts.admin' : 'layouts.university')
 
 @section('title', 'معاملة السماح بالتدريس - أعضاء الهيئة التدريسية')
 
@@ -6,12 +6,13 @@
 
 @php
     $candidate = $draft ? $draft->candidate : null;
-    $govEd = $draft ? $draft->educations->first(function($e) { 
+    $govEd = $govEdu ?? ($draft ? $draft->educations->first(function($e) { 
         return $e->thesis_title === 'عضو هيئة تدريسية في جامعة حكومية' || (optional($e->level)->name && str_contains(optional($e->level)->name, 'حكومية')); 
-    }) : null;
-    $phdEd = $draft ? $draft->educations->first(function($e) { 
-        return $e->thesis_title === 'شهادة الدكتوراه' || ((optional($e->level)->name && str_contains(optional($e->level)->name, 'دكتوراه')) && $e->thesis_title !== 'عضو هيئة تدريسية في جامعة حكومية'); 
-    }) : null;
+    }) : null);
+    $phdEd = $phdEdu ?? ($draft ? ($draft->educations->first(function($e) use ($govEd) { 
+        return $e->thesis_title === 'شهادة الدكتوراه' || ($e->education_level_id == 3 && $e->id !== optional($govEd)->id); 
+    }) ?? $draft->educations->where('education_level_id', 3)->first() ?? $draft->educations->first()) : null);
+    $phdEdu = $phdEd;
     $maEd = $draft ? $draft->educations->first(function($e) { 
         return $e->thesis_title === 'شهادة الماجستير' || ((optional($e->level)->name && str_contains(optional($e->level)->name, 'ماجستير')) || $e->education_level_id == 2); 
     }) : null;
@@ -20,7 +21,9 @@
     if ($draft) {
         foreach ($draft->educations as $ed) {
             foreach ($ed->attachments as $att) {
-                if ($att->attachment_type_id == 7 || ($att->notes && (str_contains($att->notes, 'طلب تقويم') || str_contains($att->notes, 'كتاب ترشيح') || str_contains($att->notes, 'كتاب الجامعة')))) {
+                if ($att->attachment_type_id == 23 || ($att->notes && (str_contains($att->notes, 'أخرى') || str_contains($att->notes, 'داعمة')))) {
+                    $existingFiles['file_other_attachments'] = $att->file_path;
+                } elseif ($att->attachment_type_id == 7 || ($att->notes && (str_contains($att->notes, 'طلب تقويم') || str_contains($att->notes, 'كتاب ترشيح') || str_contains($att->notes, 'كتاب الجامعة')))) {
                     $existingFiles['file_uni_request'] = $att->file_path;
                 } elseif ($att->attachment_type_id == 8 || ($att->notes && (str_contains($att->notes, 'شهادة الدكتوراه') || str_contains($att->notes, 'مصدقة الدكتوراه')))) {
                     $existingFiles['file_phd_cert'] = $att->file_path;
@@ -28,24 +31,25 @@
                     $existingFiles['file_service_statement'] = $att->file_path;
                 } elseif ($att->attachment_type_id == 10 || ($att->notes && (str_contains($att->notes, 'إيصال') || str_contains($att->notes, '125,000') || str_contains($att->notes, 'رسم تعادل')))) {
                     $existingFiles['file_payment'] = $att->file_path;
-                } elseif ($att->attachment_type_id == 11 || ($att->notes && (str_contains($att->notes, 'هوية') || str_contains($att->notes, 'الهوية الشخصية')))) {
+                } elseif ($att->attachment_type_id == 11 || $att->attachment_type_id == 13 || ($att->notes && (str_contains($att->notes, 'هوية') || str_contains($att->notes, 'الهوية الشخصية') || str_contains($att->notes, 'إثبات الشخصية')))) {
                     $existingFiles['file_id_card'] = $att->file_path;
                 } elseif ($att->attachment_type_id == 12 || ($att->notes && (str_contains($att->notes, 'شهادة الماجستير') || str_contains($att->notes, 'مصدقة الماجستير')))) {
                     $existingFiles['file_ma_cert'] = $att->file_path;
-                } elseif ($att->notes && str_contains($att->notes, 'أخرى')) {
-                    $existingFiles['file_other_attachments'] = $att->file_path;
                 }
             }
         }
     }
 
-    $isAwaitingDocs = $draft && (
+    $isAwaitingDocs = empty($isAdminEdit) && $draft && (
         $draft->status_id == 3 || 
         in_array($draft->status, ['بانتظار الوثائق', 'بانتظار استكمال الوثائق', 'بانتظار تصحيح الوثائق', 'بانتظار الوثائق الناقصة'])
     );
-    $canSaveDraft = !$draft || ($draft->status_id == 1 || $draft->status === 'مسودة');
+    $canSaveDraft = empty($isAdminEdit) && (!$draft || ($draft->status_id == 1 || $draft->status === 'مسودة'));
 @endphp
 
+@if(!empty($isAdminEdit))
+    @include('university.apply.partials._admin_edit_banner', ['wizardTitle' => 'السماح بالتدريس (أعضاء الهيئة التدريسية)'])
+@else
 <!-- BREADCRUMBS & PAGE HEADER -->
 <div class="row mb-4">
     <div class="col-12">
@@ -85,6 +89,7 @@
         </div>
     </div>
 </div>
+@endif
 
 <!-- WIZARD MAIN CONTAINER -->
 <div class="card border-0 shadow-sm" style="border-radius: 8px; border-top: 3px solid var(--heritage-gold) !important; border: 1px solid var(--outline-variant) !important; background-color: #ffffff;">
@@ -138,7 +143,7 @@
         </div>
 
         <!-- Form Tag -->
-        <form action="{{ route('university.apply.faculty_permission.submit') }}" method="POST" enctype="multipart/form-data" id="wizard-form" novalidate>
+        <form action="{{ !empty($isAdminEdit) ? $adminSubmitRoute : route('university.apply.faculty_permission.submit') }}" method="POST" enctype="multipart/form-data" id="wizard-form" novalidate>
             @csrf
             <input type="hidden" name="draft_id" value="{{ optional($draft)->id }}">
             <input type="hidden" name="action" id="form-action-input" value="submit_final">
@@ -208,7 +213,7 @@
 
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">البريد الإلكتروني </label><span class="text-danger"> *</span>
-                        <input type="email" name="email" id="input-email" class="form-control academic-input" placeholder="name@example.com" value="{{ old('email', optional($candidate)->email ?: (Auth::user()->university->email ?? Auth::user()->email)) }}" required>
+                        <input type="email" name="email" id="input-email" class="form-control academic-input" placeholder="name@example.com" value="{{ old('email', optional($candidate)->email ?: (empty($isAdminEdit) ? (Auth::user()?->university?->email ?? Auth::user()?->email) : '')) }}" required>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">عنوان الإقامة الحالي بالتفصيل </label><span class="text-danger"> *</span>
@@ -247,18 +252,30 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label label-md fw-medium text-dark">الجامعة الحكومية السورية التابع لها </label><span class="text-danger"> *</span>
-                        <select name="gov_university_id" id="input-govUniId" class="form-select academic-input" onchange="toggleGovUniOther()" required>
+                        @php
+                            $selectedGovUniId = old('gov_university_id', optional($govEd)->university_id);
+                            $selectedGovUniOther = old('gov_university_other', optional($govEd)->university_other);
+                            $selectedGovUniName = optional(optional($govEd)->university)->name ?? '';
+                            $isGovOther = ($selectedGovUniId === 'other') || (empty($selectedGovUniId) && !empty($selectedGovUniOther));
+                            if ($isGovOther) {
+                                $selectedGovUniId = 'other';
+                            }
+                        @endphp
+                        <select name="gov_university_id" id="input-govUniId" class="form-select academic-input" data-saved-val="{{ $selectedGovUniId }}" onchange="toggleGovUniOther()" required>
                             <option value="">-- اختر الجامعة الحكومية --</option>
                             @foreach($govUniversities as $gu)
-                                <option value="{{ $gu->id }}" {{ old('gov_university_id', optional($govEd)->university_id) == $gu->id ? 'selected' : '' }}>{{ $gu->name }}</option>
+                                <option value="{{ $gu->id }}" {{ (!$isGovOther && ($selectedGovUniId == $gu->id || (!empty($selectedGovUniName) && $selectedGovUniName == $gu->name))) ? 'selected' : '' }}>{{ $gu->name }}</option>
                             @endforeach
-                            <!-- <option value="other" {{ old('gov_university_other', optional($govEd)->university_other) ? 'selected' : '' }}>أخرى (جامعة حكومية سورية أخرى)</option> -->
+                            @if(optional($govEd)->university && !$govUniversities->contains('id', $govEd->university_id))
+                                <option value="{{ $govEd->university->id }}" {{ (!$isGovOther && $selectedGovUniId == $govEd->university->id) ? 'selected' : '' }}>{{ $govEd->university->name }}</option>
+                            @endif
+                            <option value="other" {{ $isGovOther ? 'selected' : '' }}>أخرى (جامعة حكومية سورية أخرى)</option>
                         </select>
                     </div>
 
-                    <div class="col-md-6" id="gov_uni_other_div" style="display: {{ old('gov_university_other', optional($govEd)->university_other) ? 'block' : 'none' }};">
+                    <div class="col-md-6" id="gov_uni_other_div" style="display: {{ $isGovOther ? 'block' : 'none' }};">
                         <label class="form-label label-md fw-medium text-dark">اسم الجامعة الحكومية :</label>
-                        <input type="text" name="gov_university_other" id="input-govUniOther" class="form-control academic-input" placeholder="أدخل اسم الجامعة الحكومية" value="{{ old('gov_university_other', optional($govEd)->university_other) }}">
+                        <input type="text" name="gov_university_other" id="input-govUniOther" class="form-control academic-input" placeholder="أدخل اسم الجامعة الحكومية" value="{{ $selectedGovUniOther }}">
                     </div>
 
                     <div class="col-md-6">
@@ -306,20 +323,43 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label label-md fw-medium text-dark">الجامعة المانحة لشهادة الدكتوراه </label><span class="text-danger"> *</span>
-                            <!-- <select name="phd_university_id" id="input-phdUniId" class="form-select academic-input" onchange="togglePhdUniOther()" required>
-                                <option value="">-- اختر الجامعة المانحة --</option>
-                                @foreach($govUniversities as $gu)
-                                    <option value="{{ $gu->id }}" {{ old('phd_university_id', optional($phdEd)->university_id) == $gu->id ? 'selected' : '' }}>{{ $gu->name }}</option>
-                                @endforeach
+                            @php
+                                $savedPhdUniId = old('phd_university_id', $phdEdu->university_id ?? ($phdEd->university_id ?? ''));
+                                $savedPhdUniOther = old('phd_university_other', $phdEdu->university_other ?? ($phdEd->university_other ?? ''));
+                                $savedPhdUniName = optional(optional($phdEdu ?? $phdEd)->university)->name ?? '';
                                 
-                            </select> -->
-                            <input type="text" name="phd_university_id" id="input-phdUniId" class="form-control academic-input" placeholder="أدخل اسم الجامعة المانحة" value="{{ old('phd_university_id', optional($phdEd)->university_id) }}">
+                                $isPhdOther = ($savedPhdUniId === 'other') || (empty($savedPhdUniId) && !empty($savedPhdUniOther));
+                                if ($isPhdOther) {
+                                    $savedPhdUniId = 'other';
+                                }
+                            @endphp
+                            <select name="phd_university_id" id="input-phdUniId" class="form-select academic-input" data-saved-val="{{ $savedPhdUniId }}" onchange="onPhdUniChange()" required>
+                                <option value="">-- اختر الجامعة المانحة --</option>
+                                @foreach($universities as $uni)
+                                    <option value="{{ $uni->id }}" data-country-id="{{ $uni->country_id }}" {{ (!$isPhdOther && ($savedPhdUniId == $uni->id || (!empty($savedPhdUniName) && $savedPhdUniName == $uni->name))) ? 'selected' : '' }}>
+                                        {{ $uni->name }}
+                                    </option>
+                                @endforeach
+                                <option value="other" {{ $isPhdOther ? 'selected' : '' }}>جامعة أخرى / غير واردة بالقائمة</option>
+                            </select>
                         </div>
-<!-- 
-                        <div class="col-md-6" id="phd_uni_other_div" style="display: {{ old('phd_university_other', optional($phdEd)->university_other) ? 'block' : 'none' }};">
+
+                        <div class="col-md-6" id="phd_uni_other_div" style="display: {{ $isPhdOther ? 'block' : 'none' }};">
                             <label class="form-label label-md fw-medium text-dark">اسم الجامعة المانحة لدرجة الدكتوراه :</label><span class="text-danger"> *</span>
-                            <input type="text" name="phd_university_other" id="input-phdUniOther" class="form-control academic-input" placeholder="أدخل اسم الجامعة المانحة" value="{{ old('phd_university_other', optional($phdEd)->university_other) }}">
-                        </div> -->
+                            <input type="text" name="phd_university_other" id="input-phdUniOther" class="form-control academic-input" placeholder="أدخل اسم الجامعة المانحة" value="{{ $savedPhdUniOther }}" {{ $isPhdOther ? 'required' : '' }}>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label label-md fw-medium text-dark">الدولة المانحة لشهادة الدكتوراه <span class="text-muted fw-normal fs-8">(سوريا، روسيا، أو غيرها)</span></label>
+                            @php
+                                $savedPhdCountryId = old('phd_country_id', optional($phdEd)->country_id ?? ($syriaId ?? 1));
+                            @endphp
+                            <select name="phd_country_id" id="input-phdCountryId" class="form-select academic-input">
+                                @foreach($countries as $c)
+                                    <option value="{{ $c->id }}" {{ $savedPhdCountryId == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
 
                         <div class="col-md-6">
                             <label class="form-label label-md fw-medium text-dark">تاريخ / سنة منح شهادة الدكتوراه </label><span class="text-danger"> *</span>
@@ -356,18 +396,26 @@
                         <div class="row g-3 pt-2 border-top">
                             <div class="col-md-6">
                                 <label class="form-label label-md fw-medium text-dark">الجامعة المانحة لشهادة الماجستير :</label>
+                                @php
+                                    $selectedMaUniId = old('ma_university_id', optional($maEd)->university_id);
+                                    $selectedMaUniOther = old('ma_university_other', optional($maEd)->university_other);
+                                    $isMaOther = ($selectedMaUniId === 'other') || (empty($selectedMaUniId) && !empty($selectedMaUniOther));
+                                    if ($isMaOther) {
+                                        $selectedMaUniId = 'other';
+                                    }
+                                @endphp
                                 <select name="ma_university_id" id="input-maUniId" class="form-select academic-input" onchange="toggleMaUniOther()">
                                     <option value="">-- اختر الجامعة المانحة --</option>
-                                    @foreach($govUniversities as $gu)
-                                        <option value="{{ $gu->id }}" {{ old('ma_university_id', optional($maEd)->university_id) == $gu->id ? 'selected' : '' }}>{{ $gu->name }}</option>
+                                    @foreach($universities as $gu)
+                                        <option value="{{ $gu->id }}" {{ (!$isMaOther && $selectedMaUniId == $gu->id) ? 'selected' : '' }}>{{ $gu->name }}</option>
                                     @endforeach
-                                    <option value="other" {{ old('ma_university_other', optional($maEd)->university_other) ? 'selected' : '' }}>جامعة أخرى</option>
+                                    <option value="other" {{ $isMaOther ? 'selected' : '' }}>جامعة أخرى</option>
                                 </select>
                             </div>
 
-                            <div class="col-md-6" id="ma_uni_other_div" style="display: {{ old('ma_university_other', optional($maEd)->university_other) ? 'block' : 'none' }};">
+                            <div class="col-md-6" id="ma_uni_other_div" style="display: {{ $isMaOther ? 'block' : 'none' }};">
                                 <label class="form-label label-md fw-medium text-dark">اسم الجامعة المانحة للماجستير :</label>
-                                <input type="text" name="ma_university_other" id="input-maUniOther" class="form-control academic-input" placeholder="أدخل اسم الجامعة المانحة" value="{{ old('ma_university_other', optional($maEd)->university_other) }}">
+                                <input type="text" name="ma_university_other" id="input-maUniOther" class="form-control academic-input" placeholder="أدخل اسم الجامعة المانحة" value="{{ $selectedMaUniOther }}">
                             </div>
 
                             <div class="col-md-6">
@@ -574,8 +622,9 @@
                             <div class="card p-3 border-0 mb-3" style="background-color: #ffffff;">
                                 <strong class="mb-2 d-block text-primary"><i class="fa-solid fa-certificate me-1"></i> درجة الدكتوراه (الأساسية):</strong>
                                 <div class="row g-2">
-                                    <div class="col-md-6"><strong>الجامعة المانحة:</strong> <span id="preview-phdUni">---</span></div>
-                                    <div class="col-md-6"><strong>سنة/تاريخ المنح:</strong> <span id="preview-phdGrantDate">---</span></div>
+                                    <div class="col-md-4"><strong>الجامعة المانحة:</strong> <span id="preview-phdUni">---</span></div>
+                                    <div class="col-md-4"><strong>الدولة المانحة:</strong> <span id="preview-phdCountry">---</span></div>
+                                    <div class="col-md-4"><strong>سنة/تاريخ المنح:</strong> <span id="preview-phdGrantDate">---</span></div>
                                     <div class="col-md-4"><strong>الكلية المانحة:</strong> <span id="preview-phdFaculty">---</span></div>
                                     <div class="col-md-4"><strong>القسم:</strong> <span id="preview-phdDept">---</span></div>
                                     <div class="col-md-4"><strong>الاختصاص الدقيق:</strong> <span id="preview-phdSpec">---</span></div>
@@ -599,7 +648,9 @@
                                 <h6 class="fw-bold mb-0" style="color: var(--primary-container);"><i class="fa-solid fa-folder-open me-1" style="color: var(--heritage-gold);"></i> 5. الوثائق والمستندات المرفقة:</h6>
                                 <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2.5 fs-8 fw-bold" onclick="goToStep(4)"><i class="fa-solid fa-pen-to-square me-1"></i> تعديل المرفقات</button>
                             </div>
-                            <p class="text-muted fs-8 mb-0"><i class="fa-solid fa-circle-check text-success me-1"></i> تم إرفاق الوثائق والمستندات المطلوبة والموافقات الرسمية بصيغة PDF. يمكنك النقر على زر التعديل للعودة لخطوة المرفقات.</p>
+                            <div class="row g-2" id="preview-attachmentsList">
+                                <!-- يتم إدراجه تلقائياً عبر JavaScript -->
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -628,6 +679,9 @@
                         <i class="fa-solid fa-floppy-disk me-1"></i> حفظ كمسودة ومتابعة لاحقاً
                     </button>
                     @endif
+                    @if(!empty($isAdminEdit))
+                        @include('university.apply.partials._admin_edit_footer_btn')
+                    @endif
                 </div>
 
                 <div class="d-flex align-items-center gap-2">
@@ -640,7 +694,9 @@
                     </button>
 
                     <button type="submit" formnovalidate name="action" value="submit_final" class="btn btn-gold-cta px-5 py-2" id="btn-submit" style="display: none;">
-                        @if($isAwaitingDocs)
+                        @if(!empty($isAdminEdit))
+                            حفظ كافة التعديلات (دون تغيير الحالة) <i class="fa-solid fa-check-double ms-1"></i>
+                        @elseif($isAwaitingDocs)
                             إعادة إرسال الطلب بعد استكمال الوثائق <i class="fa-solid fa-paper-plane ms-1"></i>
                         @else
                             إنهاء وإرسال الطلب للوزارة <i class="fa-solid fa-paper-plane ms-1"></i>
@@ -654,6 +710,7 @@
 </div>
 
 <script>
+    const IS_ADMIN_EDIT = @json(!empty($isAdminEdit));
     let currentStep = 1;
     const totalSteps = 5;
     let hasVisitedReview = {{ optional($draft)->id ? 'true' : 'false' }};
@@ -751,6 +808,7 @@
     }
 
     function validateCurrentStep(step) {
+        if (IS_ADMIN_EDIT) return true;
         const section = document.getElementById('step-' + step);
         if (!section) return true;
 
@@ -761,7 +819,7 @@
         inputs.forEach(input => {
             // Check if file input has existing uploaded badge
             if (input.type === 'file') {
-                const parentDiv = input.closest('.border.rounded');
+                const parentDiv = input.closest('.border.rounded') || input.closest('.col-md-6') || input.closest('.col-12') || input.parentElement;
                 if (parentDiv && parentDiv.querySelector('.badge.bg-success-subtle')) {
                     input.setCustomValidity('');
                     return;
@@ -785,28 +843,50 @@
     }
 
     function toggleGovUniOther() {
-        const val = document.getElementById('input-govUniId').value;
+        const select = document.getElementById('input-govUniId');
+        if (!select) return;
+        const val = select.value;
         const otherDiv = document.getElementById('gov_uni_other_div');
         const otherInput = document.getElementById('input-govUniOther');
+        if (!otherDiv || !otherInput) return;
         if (val === 'other') {
             otherDiv.style.display = 'block';
             otherInput.required = true;
+            otherInput.disabled = false;
         } else {
             otherDiv.style.display = 'none';
             otherInput.required = false;
+            otherInput.disabled = false;
+        }
+    }
+
+    function onPhdUniChange() {
+        togglePhdUniOther();
+        const select = document.getElementById('input-phdUniId');
+        const countrySelect = document.getElementById('input-phdCountryId');
+        if (!select || !countrySelect) return;
+        const opt = select.options[select.selectedIndex];
+        const cid = opt ? opt.getAttribute('data-country-id') : null;
+        if (cid && countrySelect.querySelector('option[value="' + cid + '"]')) {
+            countrySelect.value = cid;
         }
     }
 
     function togglePhdUniOther() {
-        const val = document.getElementById('input-phdUniId').value;
+        const select = document.getElementById('input-phdUniId');
+        if (!select) return;
+        const val = select.value;
         const otherDiv = document.getElementById('phd_uni_other_div');
         const otherInput = document.getElementById('input-phdUniOther');
+        if (!otherDiv || !otherInput) return;
         if (val === 'other') {
             otherDiv.style.display = 'block';
             otherInput.required = true;
+            otherInput.disabled = false;
         } else {
             otherDiv.style.display = 'none';
             otherInput.required = false;
+            otherInput.disabled = false;
         }
     }
 
@@ -857,6 +937,10 @@
         const phdUniSelect = form.phd_university_id;
         const phdUniText = phdUniSelect.value === 'other' ? form.phd_university_other.value : (phdUniSelect.options[phdUniSelect.selectedIndex]?.text || '---');
         document.getElementById('preview-phdUni').textContent = phdUniText || '---';
+        const phdCountrySelect = form.phd_country_id;
+        if (phdCountrySelect && document.getElementById('preview-phdCountry')) {
+            document.getElementById('preview-phdCountry').textContent = phdCountrySelect.options[phdCountrySelect.selectedIndex]?.text || '---';
+        }
         document.getElementById('preview-phdGrantDate').textContent = form.phd_grant_date.value || '---';
         document.getElementById('preview-phdFaculty').textContent = form.phd_faculty.value || '---';
         document.getElementById('preview-phdDept').textContent = form.phd_department.value || '---';
@@ -872,6 +956,47 @@
             document.getElementById('preview-maDept').textContent = form.ma_department.value || '---';
         } else {
             document.getElementById('preview-master-block').style.display = 'none';
+        }
+
+        // Step 4: Attachments preview
+        const allAttachments = [
+            { id: 'input-fileIdCard', name: '1. صورة الهوية الشخصية / إثبات الشخصية', req: true },
+            { id: 'input-fileUniRequest', name: '2. طلب تقويم / كتاب ترشيح الجامعة الخاصة', req: true },
+            { id: 'input-fileServiceStatement', name: '3. بيان وضع أو بطاقة ذاتية من الجامعة الحكومية', req: true },
+            { id: 'input-filePhdCert', name: '4. نسخة مصدقة أصولاً عن شهادة الدكتوراه', req: true },
+            { id: 'input-filePayment', name: '5. إيصال تسديد رسم السماح بالتدريس', req: true },
+            { id: 'input-fileOtherAttachments', name: '6. وثائق داعمة أو قرارات سابقة إضافية', req: false }
+        ];
+
+        const listContainer = document.getElementById('preview-attachmentsList');
+        if (listContainer) {
+            listContainer.innerHTML = '';
+            allAttachments.forEach(att => {
+                const inputEl = document.getElementById(att.id);
+                if (!inputEl) return;
+                const hasFile = inputEl.files && inputEl.files.length > 0;
+                const parentContainer = inputEl.closest('.col-md-6, .col-12') || inputEl.parentElement;
+                const isAlreadyUploaded = parentContainer && (
+                    parentContainer.querySelector('.badge.bg-success-subtle') !== null ||
+                    parentContainer.querySelector('a[href*="storage"]') !== null
+                );
+                
+                let statusHtml = '';
+                if (hasFile) {
+                    statusHtml = `<span class="badge bg-success-subtle text-success border border-success"><i class="fa-solid fa-check me-1"></i> جاهز للرفع: ${inputEl.files[0].name}</span>`;
+                } else if (isAlreadyUploaded) {
+                    statusHtml = `<span class="badge bg-primary-subtle text-primary border border-primary"><i class="fa-solid fa-cloud-arrow-up me-1"></i> مرفوع ومحفوظ بالنظام</span>`;
+                } else if (att.req) {
+                    statusHtml = `<span class="badge bg-danger-subtle text-danger border border-danger"><i class="fa-solid fa-xmark me-1"></i> لم يتم الإرفاق (مطلوب)</span>`;
+                } else {
+                    statusHtml = `<span class="badge bg-secondary-subtle text-muted border"><i class="fa-solid fa-minus me-1"></i> غير مرفق (اختياري)</span>`;
+                }
+
+                const col = document.createElement('div');
+                col.className = 'col-md-6 d-flex justify-content-between align-items-center p-2 border-bottom';
+                col.innerHTML = `<span><strong>${att.name}:</strong></span> ${statusHtml}`;
+                listContainer.appendChild(col);
+            });
         }
     }
 
@@ -897,7 +1022,18 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+        const phdSelect = document.getElementById('input-phdUniId');
+        if (phdSelect && phdSelect.dataset.savedVal && !phdSelect.value) {
+            phdSelect.value = phdSelect.dataset.savedVal;
+        }
+        const govSelect = document.getElementById('input-govUniId');
+        if (govSelect && govSelect.dataset.savedVal && !govSelect.value) {
+            govSelect.value = govSelect.dataset.savedVal;
+        }
         showStep(1);
+        toggleGovUniOther();
+        togglePhdUniOther();
+        toggleMaUniOther();
 
         // Remove required attribute from any file inputs with existing uploaded badges
         document.querySelectorAll('input[type="file"]').forEach(function(input) {
@@ -928,9 +1064,10 @@
                 const isDraftInput = document.getElementById('form-is-draft-input');
                 const submitter = e.submitter;
 
-                if ((actionInput && actionInput.value === 'save_draft') || 
+                if (IS_ADMIN_EDIT ||
+                    (actionInput && actionInput.value === 'save_draft') || 
                     (isDraftInput && isDraftInput.value === '1') || 
-                    (submitter && submitter.value === 'save_draft')) {
+                    (submitter && (submitter.value === 'save_draft' || submitter.value === 'admin_save'))) {
                     form.querySelectorAll('input, select, textarea').forEach(el => el.removeAttribute('required'));
                     return true;
                 }

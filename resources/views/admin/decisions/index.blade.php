@@ -26,11 +26,19 @@
             --badge-rejected: #dc2626;
         }
 
+        /* Ensure parent flex container never expands past viewport */
+        main.flex-grow-1 {
+            min-width: 0 !important;
+        }
+
         .decisions-scope {
             font-family: 'Tajawal', sans-serif;
             color: var(--text-dark);
-            padding-left: 0.25rem;
-            padding-right: 0.25rem;
+            padding: 0.2rem 0.45rem 1.25rem;
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
         }
 
         /* Top Government Bar */
@@ -106,28 +114,31 @@
         /* 5 Master Tabs */
         .tracks-nav {
             display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            background: white;
-            padding: 10px 14px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-            overflow-x: auto;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 14px;
+            background: #ffffff;
+            padding: 8px 10px;
+            border-radius: 10px;
+            border: 1.5px solid #cbd5e1 !important;
+            box-shadow: 0 2px 10px rgba(14, 30, 56, 0.05);
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .track-btn {
             background: #f8fafc;
-            border: 1.5px solid var(--border-color);
-            padding: 10px 18px;
-            border-radius: 8px;
-            font-size: 0.92rem;
+            border: 1px solid #cbd5e1;
+            padding: 6px 12px;
+            border-radius: 7px;
+            font-size: 0.8rem;
             font-weight: 700;
             color: var(--text-muted);
             cursor: pointer;
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            gap: 10px;
+            gap: 7px;
             transition: all 0.2s;
             white-space: nowrap;
         }
@@ -142,7 +153,7 @@
             background: var(--imperial-navy);
             border-color: var(--imperial-navy);
             color: white;
-            box-shadow: 0 4px 12px rgba(14, 30, 56, 0.2);
+            box-shadow: 0 3px 10px rgba(14, 30, 56, 0.16);
         }
 
         .track-btn.btn-rejected.active {
@@ -152,10 +163,11 @@
         }
 
         .track-counter {
-            background: rgba(0,0,0,0.08);
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-size: 0.78rem;
+            background: rgba(15, 23, 42, 0.08);
+            padding: 1px 7px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 700;
         }
 
         .track-btn.active .track-counter {
@@ -167,12 +179,14 @@
         /* Workspace Grid: Form (Right) + Table (Left) */
         .workspace-grid {
             display: grid;
-            grid-template-columns: 460px 1fr;
-            gap: 22px;
+            grid-template-columns: 380px minmax(0, 1fr);
+            gap: 16px;
             align-items: start;
+            width: 100%;
+            box-sizing: border-box;
         }
 
-        @media (max-width: 1080px) {
+        @media (max-width: 1120px) {
             .workspace-grid {
                 grid-template-columns: 1fr;
             }
@@ -180,36 +194,39 @@
 
         /* Issuance Card (Form Panel) */
         .form-card {
-            background: white;
-            border-radius: 1.5rem !important; /* rounded-3xl */
-            border: 1px solid rgba(226, 232, 240, 0.9) !important; /* border-slate-200/90 */
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+            background: #ffffff;
+            border-radius: 12px !important;
+            border: 1.5px solid #cbd5e1 !important;
+            border-top: 3.5px solid var(--imperial-navy) !important;
+            box-shadow: 0 4px 16px rgba(14, 30, 56, 0.06) !important;
             position: sticky;
-            top: 20px;
+            top: 16px;
             overflow: hidden;
             box-sizing: border-box;
-            padding: 1.5rem !important; /* p-6 */
-            padding-bottom: 1.75rem !important; /* pb-6 breathing space */
+            padding: 14px 16px !important;
+            min-width: 0;
         }
 
         .form-card-header {
-            padding: 0 0 16px 0;
-            border-bottom: 1px solid #f1f5f9;
+            padding: 0 0 10px 0 !important;
+            border-bottom: 1.5px solid #e2e8f0 !important;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 8px;
             background: #ffffff;
-            margin-bottom: 18px;
+            margin-bottom: 12px !important;
         }
 
         .form-card-header h2 {
-            font-size: 1.05rem;
+            font-size: 0.94rem;
             font-weight: 800;
             color: var(--imperial-navy);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             margin: 0;
+            line-height: 1.35;
         }
 
         .form-body {
@@ -217,79 +234,109 @@
         }
 
         .form-group {
-            margin-bottom: 16px;
+            margin-bottom: 10px;
         }
 
         .form-label {
             display: block;
-            font-size: 0.82rem;
+            font-size: 0.76rem;
             font-weight: 700;
             color: #334155;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
+            line-height: 1.3;
         }
 
         .form-control-custom {
             width: 100%;
             max-width: 100%;
             box-sizing: border-box;
-            padding: 10px 14px;
-            border: 1.5px solid #cbd5e1;
-            border-radius: 0.75rem;
-            font-size: 0.88rem;
+            padding: 6px 10px;
+            height: 36px;
+            border: 1.5px solid #94a3b8 !important;
+            border-radius: 8px;
+            font-size: 0.81rem;
             outline: none;
             transition: all 0.2s;
             background: #ffffff;
+            color: #0f172a;
+        }
+
+        textarea.form-control-custom {
+            height: auto;
+            min-height: 58px;
+        }
+
+        input[type="file"].form-control-custom {
+            height: auto;
+            padding: 6px 10px;
+            font-size: 0.76rem;
+            border: 1.5px dashed #94a3b8 !important;
+            background: #ffffff;
+        }
+
+        .form-control-custom[readonly] {
+            background: #f1f5f9 !important;
+            border-color: #cbd5e1 !important;
+            color: #1e293b;
         }
 
         .form-control-custom:focus {
-            border-color: #c59b27;
-            background: #fff;
-            box-shadow: 0 0 0 3px rgba(197, 155, 39, 0.15);
+            border-color: #c59b27 !important;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(197, 155, 39, 0.16);
         }
 
         /* Sub-sections for Decisions */
         .decision-block {
-            background: rgba(248, 250, 252, 0.5) !important; /* bg-slate-50/50 */
-            border: 1px solid #e2e8f0 !important; /* border-slate-200 */
-            border-radius: 1rem !important; /* rounded-2xl */
-            padding: 1rem !important; /* p-4 */
-            margin-bottom: 1rem !important; /* mb-4 */
+            background: #f8fafc !important;
+            border: 1.5px solid #cbd5e1 !important;
+            border-radius: 10px !important;
+            padding: 11px 13px !important;
+            margin-bottom: 11px !important;
             position: relative;
             box-sizing: border-box;
             overflow: hidden;
+            box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.02);
         }
 
         .decision-block.block-eligibility {
+            background: #f8fbff !important;
+            border: 1.5px solid #bae6fd !important;
             border-right: 4px solid #0284c7 !important;
         }
 
         .decision-block.block-equivalence {
+            background: #fcfcfd !important;
+            border: 1.5px solid #cbd5e1 !important;
             border-right: 4px solid var(--heritage-gold) !important;
         }
 
         .decision-block.block-rejected {
+            border: 1.5px solid #fecaca !important;
             border-right: 4px solid var(--badge-rejected) !important;
             background: #fff5f5 !important;
         }
 
         .block-title {
-            font-size: 0.84rem;
+            font-size: 0.78rem;
             font-weight: 800;
             color: var(--imperial-navy);
-            margin-bottom: 12px;
+            margin-bottom: 9px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 6px;
         }
 
         .row-2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
+            gap: 10px;
+            align-items: end;
         }
 
         .row-2 > div {
-            min-width: 0; /* Prevents overflow inside grid columns */
+            min-width: 0;
         }
 
         .btn-submit-decision {
@@ -297,78 +344,90 @@
             background: #c59b27;
             color: #ffffff;
             border: none;
-            padding: 0.875rem 1rem;
-            border-radius: 0.75rem; /* rounded-xl */
-            font-size: 0.875rem;
+            padding: 9px 14px;
+            border-radius: 8px;
+            font-size: 0.84rem;
             font-weight: 800;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            gap: 7px;
+            box-shadow: 0 3px 8px rgba(197, 155, 39, 0.25);
             transition: all 0.2s;
-            margin-top: 1rem;
+            margin-top: 6px;
         }
 
         .btn-submit-decision:hover {
             background: #b0891e;
             transform: translateY(-1px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 6px 12px rgba(197, 155, 39, 0.3);
         }
 
         /* Pending Requests Table (Left Panel) */
         .table-card {
-            background: white;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 18px rgba(0,0,0,0.03);
+            background: #ffffff;
+            border-radius: 12px !important;
+            border: 1.5px solid #cbd5e1 !important;
+            border-top: 3.5px solid var(--heritage-gold) !important;
+            box-shadow: 0 4px 16px rgba(14, 30, 56, 0.06);
             overflow: hidden;
-            /* Ensure left panel never touches browser edge */
             min-width: 0;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .table-card-header {
-            padding: 16px 22px;
-            border-bottom: 1px solid var(--border-color);
+            padding: 11px 16px;
+            border-bottom: 1.5px solid #cbd5e1;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: #fcfdfe;
+            background: #f8fafc;
             flex-wrap: wrap;
-            gap: 12px;
+            gap: 10px;
         }
 
         .table-card-header h2 {
-            font-size: 1.05rem;
+            font-size: 0.94rem;
             font-weight: 800;
             color: var(--imperial-navy);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 7px;
             margin: 0;
         }
 
         .search-mini {
             position: relative;
-            width: 280px;
+            width: 230px;
+            max-width: 100%;
         }
 
         .search-mini input {
             width: 100%;
-            padding: 8px 36px 8px 12px;
-            border: 1.5px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 0.85rem;
+            height: 34px;
+            padding: 5px 32px 5px 10px;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 0.79rem;
             outline: none;
+            background: #ffffff;
+            box-sizing: border-box;
+        }
+
+        .search-mini input:focus {
+            border-color: var(--heritage-gold);
+            box-shadow: 0 0 0 2px rgba(197, 155, 39, 0.15);
         }
 
         .search-mini i {
             position: absolute;
-            right: 12px;
+            right: 11px;
             top: 50%;
             transform: translateY(-50%);
             color: #94a3b8;
+            font-size: 0.8rem;
         }
 
         table.requests-table {
@@ -379,56 +438,64 @@
         }
 
         table.requests-table th {
-            background: #f8fafc;
-            color: var(--text-muted);
-            font-size: 0.82rem;
-            font-weight: 700;
-            padding: 12px 18px;
-            border-bottom: 1.5px solid var(--border-color);
+            background: #f1f5f9;
+            color: #334155;
+            font-size: 0.77rem;
+            font-weight: 800;
+            padding: 9px 12px;
+            border-bottom: 1.5px solid #cbd5e1;
+            border-left: 1px solid #e2e8f0;
             white-space: nowrap;
         }
 
         table.requests-table td {
-            padding: 14px 18px;
-            border-bottom: 1px solid #f1f5f9;
-            font-size: 0.9rem;
+            padding: 9px 12px;
+            border-bottom: 1px solid #cbd5e1;
+            border-left: 1px solid #e2e8f0;
+            font-size: 0.81rem;
             vertical-align: middle;
         }
 
+        table.requests-table th:last-child,
+        table.requests-table td:last-child {
+            border-left: none;
+        }
+
         table.requests-table tr:hover td {
-            background: #fafcff;
+            background: #f8fbff;
         }
 
         table.requests-table tr.selected td {
-            background: #f0f7ff;
+            background: #eff6ff;
             border-right: 3px solid var(--imperial-navy);
         }
 
         .cand-info strong {
             display: block;
             color: var(--imperial-navy);
-            font-size: 0.95rem;
+            font-size: 0.84rem;
             cursor: pointer;
         }
 
         .cand-info span {
-            font-size: 0.78rem;
+            font-size: 0.72rem;
             color: var(--text-muted);
             font-family: monospace;
         }
 
         /* Action Buttons */
         .btn-act-table {
-            padding: 6px 12px;
+            padding: 5px 10px;
             border-radius: 6px;
-            font-size: 0.8rem;
+            font-size: 0.76rem;
             font-weight: 700;
-            border: 1px solid var(--border-color);
+            border: 1px solid #cbd5e1;
             background: white;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
+            white-space: nowrap;
             transition: all 0.15s;
         }
 
@@ -514,86 +581,82 @@
     <div class="workspace-grid">
 
         <!-- FORM PANEL (RIGHT) -->
-        <section class="form-card rounded-3xl border border-slate-200/90 bg-white p-6 pb-6 shadow-sm overflow-hidden space-y-5">
-            <div class="form-card-header pb-4 border-b border-slate-100 flex items-center justify-between">
+        <section class="form-card">
+            <div class="form-card-header">
                 <h2><i class="fa-solid fa-file-pen" style="color: var(--heritage-gold);"></i> <span id="form-title">إصدار ورصد قرار ماجستير نظري</span></h2>
-                <span class="badge" id="form-badge" style="background: #e0f2fe; color: #0284c7; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.75rem;">قراران (أهلية + معادلة)</span>
+                <span class="badge" id="form-badge" style="background: #e0f2fe; color: #0284c7; padding: 3px 8px; border-radius: 6px; font-weight: 800; font-size: 0.7rem; white-space: nowrap;">قرار موحد (ورقة واحدة تتضمن الأهلية)</span>
             </div>
 
-            <div class="form-body p-0">
-                <form id="decision-form" method="POST" action="{{ route('admin.decisions.store') }}" enctype="multipart/form-data" onsubmit="return validateBeforeSubmit(event)" class="space-y-4">
+            <div class="form-body">
+                <form id="decision-form" method="POST" action="{{ route('admin.decisions.store') }}" enctype="multipart/form-data" onsubmit="return validateBeforeSubmit(event)">
                     @csrf
                     <input type="hidden" name="application_id" id="form-application-id" value="">
 
                     <!-- Candidate Selector -->
-                    <div class="form-group mb-3">
+                    <div class="form-group">
                         <label class="form-label">المرشح والمعاملة المراد إصدار قرار لها :</label>
                         <select id="selected-candidate-id" class="form-control-custom" onchange="syncSelectedCandidate()">
                             <!-- Populated dynamically via JS -->
                         </select>
                     </div>
 
-                    <div class="form-group mb-3">
+                    <div class="form-group">
                         <label class="form-label">الجامعة الطالبة للتقويم :</label>
-                        <input type="text" id="target-uni-name" class="form-control-custom" value="" readonly style="background: #f1f5f9; font-weight: bold;">
+                        <input type="text" id="target-uni-name" class="form-control-custom" value="" readonly style="font-weight: bold;">
                     </div>
 
-                    <!-- BLOCK 1: ELIGIBILITY DECISION (Shown for Theoretical Master & PhD) -->
-                    <div class="decision-block block-eligibility rounded-2xl border border-slate-200 p-4 bg-slate-50/50 mb-4" id="block-eligibility">
+                    <!-- BLOCK 1: ELIGIBILITY DECISION (Metadata shown for Theoretical Master & PhD) -->
+                    <div class="decision-block block-eligibility" id="block-eligibility">
                         <div class="block-title">
-                            <span><i class="fa-solid fa-certificate text-primary"></i> 1. بيانات قرار أهلية التدريس</span>
-                            <span style="font-size: 0.72rem; color: #0284c7;">قرار فحص الأهلية</span>
+                            <span><i class="fa-solid fa-certificate text-primary"></i> 1. بيانات قرار الأهلية (ديباجة القرار الموحد)</span>
+                            <span style="font-size: 0.7rem; color: #0284c7;">رقم وتاريخ الأهلية</span>
                         </div>
                         <div class="row-2">
-                            <div class="form-group mb-2">
+                            <div class="form-group mb-0">
                                 <label class="form-label">رقم قرار الأهلية :</label>
-                                <input type="text" name="eligibility_decision_no" id="elig-no" class="form-control-custom" placeholder="مثال: 502/2026" value="502/2026">
+                                <input type="text" name="eligibility_decision_no" id="elig-no" class="form-control-custom" placeholder="مثال: 502/2026" value="">
                             </div>
-                            <div class="form-group mb-2">
+                            <div class="form-group mb-0">
                                 <label class="form-label">تاريخ صدور الأهلية :</label>
                                 <input type="date" name="eligibility_decision_date" id="elig-date" class="form-control-custom" value="{{ date('Y-m-d') }}">
                             </div>
                         </div>
-                        <div class="form-group mb-0">
-                            <label class="form-label">نسخة قرار الأهلية الموقّع (PDF/صورة) :</label>
-                            <input type="file" name="eligibility_decision_file" id="elig-file" class="form-control-custom" accept=".pdf,.jpg,.jpeg,.png">
-                        </div>
                     </div>
 
-                    <!-- BLOCK 2: EQUIVALENCE DECISION (Always present except when rejected) -->
-                    <div class="decision-block block-equivalence rounded-2xl border border-slate-200 p-4 bg-slate-50/50 mb-4" id="block-equivalence">
+                    <!-- BLOCK 2: EQUIVALENCE / UNIFIED DECISION (Always present except when rejected) -->
+                    <div class="decision-block block-equivalence" id="block-equivalence">
                         <div class="block-title">
-                            <span id="equiv-block-label"><i class="fa-solid fa-stamp" style="color: var(--heritage-gold);"></i> 2. بيانات قرار التعادل / المعادلة</span>
-                            <span style="font-size: 0.72rem; color: var(--heritage-gold-dark);">قرار لجنة التأهيل</span>
+                            <span id="equiv-block-label"><i class="fa-solid fa-stamp" style="color: var(--heritage-gold);"></i> 2. بيانات القرار الموحد الموقّع (ورقة واحدة)</span>
+                            <span style="font-size: 0.7rem; color: var(--heritage-gold-dark);">قرار لجنة التأهيل</span>
                         </div>
-                        <div class="row-2">
-                            <div class="form-group mb-2">
-                                <label class="form-label" id="lbl-equiv-no">رقم قرار المعادلة :</label>
-                                <input type="text" name="decision_no" id="equiv-no" class="form-control-custom" placeholder="مثال: 105/2026" value="105/2026" required>
+                        <div class="row-2 mb-2">
+                            <div class="form-group mb-0">
+                                <label class="form-label" id="lbl-equiv-no">رقم قرار التعادل :</label>
+                                <input type="text" name="decision_no" id="equiv-no" class="form-control-custom" placeholder="مثال: 105/2026" value="" required>
                             </div>
-                            <div class="form-group mb-2">
+                            <div class="form-group mb-0">
                                 <label class="form-label">تاريخ صدور القرار :</label>
                                 <input type="date" name="decision_date" id="equiv-date" class="form-control-custom" value="{{ date('Y-m-d') }}" required>
                             </div>
                         </div>
                         <div class="form-group mb-0">
-                            <label class="form-label">نسخة القرار الموقّع (PDF/صورة) :</label>
+                            <label class="form-label" id="lbl-equiv-file">نسخة القرار الرسمي الموقّع (PDF/صورة - ورقة واحدة) :</label>
                             <input type="file" name="decision_file" id="equiv-file" class="form-control-custom" accept=".pdf,.jpg,.jpeg,.png">
                         </div>
                     </div>
 
                     <!-- BLOCK 3: REJECTION BLOCK (Only shown for 'rejected' track) -->
-                    <div class="decision-block block-rejected rounded-2xl border border-slate-200 p-4 bg-slate-50/50 mb-4" id="block-rejected" style="display: none;">
+                    <div class="decision-block block-rejected" id="block-rejected" style="display: none;">
                         <div class="block-title">
                             <span style="color: var(--badge-rejected);"><i class="fa-solid fa-ban"></i> بيانات كتاب عدم الموافقة المسبّب</span>
-                            <span style="font-size: 0.72rem; color: #dc2626;">رفض رسمي مسبّب</span>
+                            <span style="font-size: 0.7rem; color: #dc2626;">رفض رسمي مسبّب</span>
                         </div>
-                        <div class="row-2">
-                            <div class="form-group mb-2">
+                        <div class="row-2 mb-2">
+                            <div class="form-group mb-0">
                                 <label class="form-label">رقم كتاب عدم الموافقة :</label>
                                 <input type="text" id="rej-no" class="form-control-custom" placeholder="مثال: 12/غ.م">
                             </div>
-                            <div class="form-group mb-2">
+                            <div class="form-group mb-0">
                                 <label class="form-label">تاريخ الجلسة / القرار :</label>
                                 <input type="date" id="rej-date" class="form-control-custom" value="{{ date('Y-m-d') }}">
                             </div>
@@ -609,7 +672,11 @@
                     </div>
 
                     <!-- Actions -->
-                    <button type="submit" id="btn-submit" class="w-full py-3.5 px-4 rounded-xl bg-[#c59b27] hover:bg-[#b0891e] text-white font-extrabold text-sm shadow-md transition flex items-center justify-center gap-2 mt-4">
+                    <a href="#" id="btn-generate-selected-draft" target="_blank" class="btn w-100 fw-bold mb-2 d-none align-items-center justify-content-center gap-2" style="padding: 9px 12px; border-radius: 9px; font-size: 0.85rem;">
+                        <i class="fa-solid fa-file-word"></i>
+                        <span id="btn-generate-selected-label">توليد / تحميل Word مسودة القرار</span>
+                    </a>
+                    <button type="submit" id="btn-submit" class="btn-submit-decision">
                         <i class="fa-solid fa-circle-check"></i>
                         اعتماد ورصد القرار نهائياً
                     </button>
@@ -649,12 +716,12 @@
             </div>
 
             {{-- Footer link to Central Archive --}}
-            <div class="d-flex flex-wrap justify-content-between align-items-center p-3 px-4 mt-3 mx-3 mb-3 bg-white border rounded-4 shadow-sm gap-2">
-                <div class="text-muted small d-flex align-items-center gap-2">
+            <div class="d-flex flex-wrap justify-content-between align-items-center px-3 py-2.5 gap-2" style="background: #f8fafc; border-top: 1.5px solid #cbd5e1;">
+                <div class="text-muted d-flex align-items-center gap-2" style="font-size: 0.78rem;">
                     <i class="fa-solid fa-circle-info text-primary"></i>
                     <span>القرارات المعتمدة هنا تُرَحّل تلقائياً للأرشيف المركزي للوزارة مع إشعار الجامعة فوراً.</span>
                 </div>
-                <a href="{{ route('admin.archive.index') }}" class="btn btn-outline-dark btn-sm fw-bold px-3 py-2 rounded-3">
+                <a href="{{ route('admin.archive.index') }}" class="btn btn-outline-dark btn-sm fw-bold px-3 py-1.5 rounded-3" style="font-size: 0.78rem; border-color: #94a3b8;">
                     <i class="fa-solid fa-box-archive me-1"></i>
                     الانتقال إلى الأرشيف المركزي ({{ $issuedCount ?? 0 }} قرار صادر)
                 </a>
@@ -710,6 +777,7 @@
         const blockEquiv = document.getElementById('block-equivalence');
         const blockRej = document.getElementById('block-rejected');
         const equivLabel = document.getElementById('lbl-equiv-no');
+        const equivBlockLabel = document.getElementById('equiv-block-label');
 
         // Update form submission route
         if (form && formRoutes[trackKey]) {
@@ -719,13 +787,14 @@
         // Enable / Disable inputs according to active track
         if (trackKey === 'master-theo') {
             formTitle.innerText = 'إصدار ورصد قرار ماجستير نظري';
-            formBadge.innerText = 'قراران (أهلية + معادلة)';
+            formBadge.innerText = 'قرار موحد (ورقة واحدة تتضمن الأهلية)';
             formBadge.style.background = '#e0f2fe';
             formBadge.style.color = '#0284c7';
             blockElig.style.display = 'block';
             blockEquiv.style.display = 'block';
             blockRej.style.display = 'none';
-            equivLabel.innerText = 'رقم قرار معادلة الماجستير :';
+            equivLabel.innerText = 'رقم قرار التعادل :';
+            if (equivBlockLabel) equivBlockLabel.innerHTML = '<i class="fa-solid fa-stamp" style="color: var(--heritage-gold);"></i> 2. بيانات القرار الموحد الموقّع (ورقة واحدة)';
             setInputsState(true, true, false);
         } else if (trackKey === 'master-app') {
             formTitle.innerText = 'إصدار ورصد قرار ماجستير تطبيقي';
@@ -735,17 +804,19 @@
             blockElig.style.display = 'none';
             blockEquiv.style.display = 'block';
             blockRej.style.display = 'none';
-            equivLabel.innerText = 'رقم قرار تعادل الماجستير التطبيقي :';
+            equivLabel.innerText = 'رقم قرار التعادل :';
+            if (equivBlockLabel) equivBlockLabel.innerHTML = '<i class="fa-solid fa-stamp" style="color: var(--heritage-gold);"></i> بيانات قرار التعادل الموقّع';
             setInputsState(false, true, false);
         } else if (trackKey === 'phd') {
             formTitle.innerText = 'إصدار ورصد قرار دكتوراه';
-            formBadge.innerText = 'قراران (أهلية + معادلة)';
+            formBadge.innerText = 'قرار موحد (ورقة واحدة تتضمن الأهلية)';
             formBadge.style.background = '#f5f3ff';
             formBadge.style.color = '#7c3aed';
             blockElig.style.display = 'block';
             blockEquiv.style.display = 'block';
             blockRej.style.display = 'none';
-            equivLabel.innerText = 'رقم قرار معادلة الدكتوراه :';
+            equivLabel.innerText = 'رقم قرار التعادل :';
+            if (equivBlockLabel) equivBlockLabel.innerHTML = '<i class="fa-solid fa-stamp" style="color: var(--heritage-gold);"></i> 2. بيانات القرار الموحد الموقّع (ورقة واحدة)';
             setInputsState(true, true, false);
         } else if (trackKey === 'faculty') {
             formTitle.innerText = 'إصدار كتاب سماح بالتدريس';
@@ -755,7 +826,8 @@
             blockElig.style.display = 'none';
             blockEquiv.style.display = 'block';
             blockRej.style.display = 'none';
-            equivLabel.innerText = 'رقم قرار / كتاب السماح بالتدريس :';
+            equivLabel.innerText = 'رقم قرار السماح :';
+            if (equivBlockLabel) equivBlockLabel.innerHTML = '<i class="fa-solid fa-stamp" style="color: var(--heritage-gold);"></i> بيانات كتاب السماح الموقّع';
             setInputsState(false, true, false);
         } else if (trackKey === 'rejected') {
             formTitle.innerText = 'إصدار كتاب عدم موافقة (رفض مسبّب)';
@@ -774,13 +846,17 @@
 
     // Helper to toggle active input fields for form submission
     function setInputsState(enableElig, enableEquiv, enableRej) {
-        // Block 1 (Eligibility)
+        // Block 1 (Eligibility Metadata)
         const eligNo = document.getElementById('elig-no');
         const eligDate = document.getElementById('elig-date');
-        const eligFile = document.getElementById('elig-file');
-        if (eligNo) eligNo.disabled = !enableElig;
-        if (eligDate) eligDate.disabled = !enableElig;
-        if (eligFile) eligFile.disabled = !enableElig;
+        if (eligNo) {
+            eligNo.disabled = !enableElig;
+            eligNo.required = enableElig;
+        }
+        if (eligDate) {
+            eligDate.disabled = !enableElig;
+            eligDate.required = enableElig;
+        }
 
         // Block 2 (Equivalence)
         const equivNo = document.getElementById('equiv-no');
@@ -809,11 +885,13 @@
         const rejFile = document.getElementById('rej-file');
         if (rejNo) {
             rejNo.disabled = !enableRej;
+            rejNo.required = enableRej;
             if (enableRej) rejNo.name = 'decision_no';
             else rejNo.removeAttribute('name');
         }
         if (rejDate) {
             rejDate.disabled = !enableRej;
+            rejDate.required = enableRej;
             if (enableRej) rejDate.name = 'decision_date';
             else rejDate.removeAttribute('name');
         }
@@ -852,6 +930,7 @@
             document.getElementById('form-application-id').value = '';
             document.getElementById('target-uni-name').value = 'لا يوجد مرشح محدد';
             currentSelectedCandidate = null;
+            updateGenerateDraftButton();
             return;
         }
 
@@ -864,17 +943,16 @@
 
             // Populate Table Row
             const tr = document.createElement('tr');
-            if (index === 0) tr.classList.add('selected');
             tr.onclick = (e) => {
-                if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
+                if (e.target.tagName !== 'BUTTON' && !e.target.closest('button') && !e.target.closest('a')) {
                     selectCandidateFromRow(app.id, tr);
                 }
             };
 
             const isRejected = (activeTrack === 'rejected');
             const statusBadge = isRejected
-                ? `<span class="badge" style="background: #fef2f2; color: #dc2626; font-weight: bold; padding: 4px 8px; border-radius: 4px;"><i class="fa-solid fa-circle-xmark"></i> عدم موافقة</span>`
-                : `<span class="badge" style="background: #ecfdf5; color: #059669; font-weight: bold; padding: 4px 8px; border-radius: 4px;"><i class="fa-solid fa-check"></i> موافقة اللجنة</span>`;
+                ? `<span class="badge" style="background: #fef2f2; color: #dc2626; font-weight: 700; padding: 3px 8px; border-radius: 6px; font-size: 0.74rem; border: 1px solid #fecaca;"><i class="fa-solid fa-circle-xmark"></i> عدم موافقة</span>`
+                : `<span class="badge" style="background: #ecfdf5; color: #059669; font-weight: 700; padding: 3px 8px; border-radius: 6px; font-size: 0.74rem; border: 1px solid #a7f3d0;"><i class="fa-solid fa-check"></i> موافقة اللجنة</span>`;
 
             tr.innerHTML = `
                 <td class="fw-bold" style="color: var(--imperial-navy);">${app.appNo}</td>
@@ -888,9 +966,14 @@
                 <td class="fw-bold" style="color: var(--imperial-navy);">${app.uni}</td>
                 <td>${statusBadge}</td>
                 <td style="text-align: center;">
-                    <button type="button" class="btn-act-table btn-act-select" onclick="selectCandidateFromRow(${app.id}, this.closest('tr'))">
-                        <i class="fa-solid fa-pen-to-square"></i> رصد القرار
-                    </button>
+                    <div class="d-inline-flex align-items-center justify-content-center gap-1 flex-wrap">
+                        <a href="/admin/reports/${app.id}/generate-decision" target="_blank" class="btn-act-table text-decoration-none" style="background: ${isRejected ? '#fef2f2' : '#eff6ff'}; color: ${isRejected ? '#dc2626' : '#1d4ed8'}; border: 1px solid ${isRejected ? '#fecaca' : '#bfdbfe'};" title="فتح مسودة القرار للطباعة أو التصدير بصيغة Word">
+                            <i class="fa-solid fa-file-word"></i> توليد / Word
+                        </a>
+                        <button type="button" class="btn-act-table btn-act-select" onclick="selectCandidateFromRow(${app.id}, this.closest('tr'))">
+                            <i class="fa-solid fa-pen-to-square"></i> رصد القرار
+                        </button>
+                    </div>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -899,8 +982,43 @@
         // Select the first one by default or match pre-selected app_id
         const preId = '{{ request("app_id") }}';
         let targetApp = filtered.find(a => a.id == preId) || filtered[0];
+        const targetIndex = filtered.indexOf(targetApp);
+        const targetRow = tbody.querySelectorAll('tr')[targetIndex >= 0 ? targetIndex : 0];
 
-        selectCandidateFromRow(targetApp.id, tbody.querySelector('tr'));
+        selectCandidateFromRow(targetApp.id, targetRow);
+    }
+
+    function updateGenerateDraftButton() {
+        const btn = document.getElementById('btn-generate-selected-draft');
+        const labelEl = document.getElementById('btn-generate-selected-label');
+        if (!btn || !labelEl) return;
+
+        if (!currentSelectedCandidate) {
+            btn.classList.add('d-none');
+            btn.classList.remove('d-flex');
+            return;
+        }
+
+        const decNoInput = activeTrack === 'rejected'
+            ? document.getElementById('rej-no')
+            : document.getElementById('equiv-no');
+        const decNo = decNoInput ? decNoInput.value.trim() : '';
+        const query = decNo ? `?decision_no=${encodeURIComponent(decNo)}` : '';
+
+        btn.href = `/admin/reports/${currentSelectedCandidate.id}/generate-decision${query}`;
+        if (activeTrack === 'rejected') {
+            labelEl.innerText = 'توليد / طباعة / Word كتاب عدم الموافقة';
+            btn.style.background = '#fef2f2';
+            btn.style.color = '#dc2626';
+            btn.style.border = '1.5px solid #fca5a5';
+        } else {
+            labelEl.innerText = 'توليد / طباعة / Word مسودة القرار';
+            btn.style.background = '#eff6ff';
+            btn.style.color = '#1d4ed8';
+            btn.style.border = '1.5px solid #93c5fd';
+        }
+        btn.classList.remove('d-none');
+        btn.classList.add('d-flex');
     }
 
     // Row Selection
@@ -914,10 +1032,14 @@
         currentSelectedCandidate = applicationsData.find(a => a.id === candId);
         if (currentSelectedCandidate) {
             document.getElementById('target-uni-name').value = currentSelectedCandidate.uni;
-            if (activeTrack === 'rejected' && currentSelectedCandidate.reason) {
-                document.getElementById('rej-reason').value = currentSelectedCandidate.reason;
-            }
+            const eligNo = document.getElementById('elig-no');
+            const eligDate = document.getElementById('elig-date');
+            const rejReason = document.getElementById('rej-reason');
+            if (eligNo) eligNo.value = currentSelectedCandidate.eligNo || '';
+            if (eligDate) eligDate.value = currentSelectedCandidate.eligDate || '{{ date('Y-m-d') }}';
+            if (rejReason) rejReason.value = currentSelectedCandidate.reason || '';
         }
+        updateGenerateDraftButton();
     }
 
     function syncSelectedCandidate() {
@@ -967,6 +1089,10 @@
     // Initialize on load
     document.addEventListener('DOMContentLoaded', function() {
         switchTrack(activeTrack, null);
+        ['rej-no', 'equiv-no'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', updateGenerateDraftButton);
+        });
     });
 </script>
 @endpush

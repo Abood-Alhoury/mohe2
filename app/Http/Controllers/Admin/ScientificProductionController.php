@@ -86,7 +86,16 @@ class ScientificProductionController extends Controller
 
             $application->notifyUniversityOfStatusChange('مرفوض', $request->rejection_reason);
 
-            $msg = 'تم تسجيل عدم الموافقة على الإنتاج العلمي وتحويل حالة الطلب رقم ' . $application->application_no . ' إلى (مرفوض).';
+            return redirect()->route('admin.scientific_production.index')
+                ->with('action_banner', [
+                    'variant'        => 'danger',
+                    'title'          => 'تم تسجيل عدم موافقة لجنة الإنتاج العلمي للطلب (#'.($application->application_no ?? $application->id).') ونقله إلى إصدار القرارات',
+                    'message'        => 'اختفى الطلب من قائمة الإنتاج العلمي وأصبح جاهزاً في (إصدار القرارات ← قرارات عدم الموافقة) لتوليد الكتاب / Word وتوقيعه وختمه ثم رفعه وأرشفته.',
+                    'generate_url'   => route('admin.reports.generate_decision', $application->id),
+                    'generate_label' => 'توليد / Word كتاب عدم الموافقة',
+                    'issue_url'      => route('admin.rejected_decisions.index', ['app_id' => $application->id]),
+                    'issue_label'    => 'الانتقال لإصدار القرارات (رفع المختوم)',
+                ]);
         }
 
         return redirect()->route('admin.scientific_production.index')->with('success', $msg);

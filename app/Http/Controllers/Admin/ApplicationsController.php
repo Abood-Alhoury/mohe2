@@ -22,9 +22,12 @@ class ApplicationsController extends Controller
         $requestTypeFilter = $request->query('request_type');
         $searchQuery = $request->query('search');
 
-        // Exclude finalized/archived transactions (تم الصدور, مرفوض) and drafts (مسودة)
-        $archivedStatuses = ['تم الصدور', 8, '8', 'مرفوض', 9, '9', 10, '10'];
-        $query = Application::whereNotIn('status', array_merge(['مسودة', 1, '1'], $archivedStatuses))
+        // Exclude drafts (مسودة) and finalized/archived transactions (تم الصدور، أو المرفوضة بعد رفع وإصدار كتاب عدم الموافقة)
+        $query = Application::whereNotIn('status', ['مسودة', 1, '1', 'تم الصدور', 8, '8'])
+            ->where(function ($q) {
+                $q->whereNotIn('status', ['مرفوض', 9, '9', 10, '10'])
+                  ->orWhereDoesntHave('decisions');
+            })
             ->with(['candidate.applications', 'workUniversity', 'user', 'messages', 'decisions', 'requestTypeRelation', 'statusRelation']);
 
         if ($statusFilter) {
@@ -76,9 +79,9 @@ class ApplicationsController extends Controller
         $universities = LookupUniversity::all();
         $requestTypesList = ApplicationRequestType::where('name', '!=', 'مسودة')->get();
 
-        // Load statuses dynamically from application_statuses table (Operational statuses only)
-        $filterStatusesList = ApplicationStatus::whereNotIn('name', ['مسودة', 'تم الصدور', 'مرفوض'])->pluck('name')->toArray();
-        $statusesList = ApplicationStatus::whereNotIn('name', ['مسودة', 'تم الصدور', 'مرفوض'])->pluck('name')->toArray();
+        // Load statuses dynamically from application_statuses table (Operational + pending rejection)
+        $filterStatusesList = ApplicationStatus::whereNotIn('name', ['مسودة', 'تم الصدور'])->pluck('name')->toArray();
+        $statusesList = ApplicationStatus::whereNotIn('name', ['مسودة', 'تم الصدور'])->pluck('name')->toArray();
 
         if ($request->ajax() || $request->has('ajax')) {
             return view('admin.applications.partials._table', compact(
@@ -118,6 +121,10 @@ class ApplicationsController extends Controller
 
         $app = Application::findOrFail($id);
 
+        if ($request->status === 'بانتظار المقابلة' && !$app->requiresEligibility()) {
+            return redirect()->back()->with('error', 'هذا النوع من المعاملات (' . $app->request_type . ') لا يتطلب مقابلة أو قرار أهلية.');
+        }
+
         // Enforce that attaching a decision file is only allowed when status is 'بانتظار إصدار القرار'
         if ($request->hasFile('decision_file') || $request->status === 'تم الصدور') {
             if (!in_array($app->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 'تم الصدور'])) {
@@ -127,6 +134,12 @@ class ApplicationsController extends Controller
 
         $oldStatus = $app->status;
         $app->status = $request->status;
+        if ($request->status !== 'مرفوض') {
+            $app->rejection_reason = null;
+            if ($app->committee_track === 'rejected') {
+                $app->committee_track = null;
+            }
+        }
         $app->save();
 
         // If uploading Equivalence Decision File, force status to "تم الصدور"
@@ -155,6 +168,19 @@ class ApplicationsController extends Controller
 
         // Send automated notification message to university for any status update
         $app->notifyUniversityOfStatusChange($app->status, $request->notes);
+
+        if ($app->status === 'مرفوض' && !$request->hasFile('decision_file')) {
+            return redirect()->back()
+                ->with('action_banner', [
+                    'variant'        => 'danger',
+                    'title'          => 'تم وضع حالة الطلب (#'.($app->application_no ?? $app->id).') على عدم موافقة (مرفوض)',
+                    'message'        => 'يبقى الطلب ظاهراً في هذه الشاشة لإمكانية توليد كتاب عدم الموافقة / تحميله Word أو تعديل الحالة عند الحاجة، ولا ينتقل للأرشيف العام إلا بعد رفع الكتاب الموقّع والمختوم في صفحة إصدار القرارات.',
+                    'generate_url'   => route('admin.reports.generate_decision', $app->id),
+                    'generate_label' => 'توليد / Word كتاب عدم الموافقة',
+                    'issue_url'      => route('admin.rejected_decisions.index', ['app_id' => $app->id]),
+                    'issue_label'    => 'إصدار القرارات (رفع المختوم وأرشفته)',
+                ]);
+        }
 
         return redirect()->back()->with('success', 'تم تحديث حالة الطلب إلى (' . $app->status . ') بنجاح وإشعار الجامعة.');
     }

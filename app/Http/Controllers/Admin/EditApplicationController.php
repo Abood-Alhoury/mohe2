@@ -10,10 +10,22 @@ use App\Models\Education;
 use App\Models\LookupCountry;
 use App\Models\LookupUniversity;
 use App\Models\LookupEducationLevel;
+use App\Http\Controllers\University\ApplicationWizardController;
 
 class EditApplicationController extends Controller
 {
-    public function edit($id)
+    public function edit(Request $request, $id)
+    {
+        return app(ApplicationWizardController::class)->renderAdminEditWizard((int) $id, $request);
+    }
+
+    public function updateWizard(Request $request, $id)
+    {
+        return app(ApplicationWizardController::class)->submitAdminEditWizard((int) $id, $request);
+    }
+
+    // Legacy summary editor (preserved for reference/direct links if ever needed)
+    public function editLegacy($id)
     {
         $application = Application::with([
             'candidate',
@@ -134,6 +146,7 @@ class EditApplicationController extends Controller
         $data = array_filter($request->only([
             'country_id',
             'university_id',
+            'university_other',
             'faculty',
             'department',
             'section_name',
@@ -153,6 +166,15 @@ class EditApplicationController extends Controller
             'experience_to_year',
             'notes',
         ]), function($v) { return $v !== null; });
+
+        // السماح بمسح أو تحديث الاختصاص الدقيق بدقة بدون الخلط مع القسم
+        if ($request->has('exact_specialization')) {
+            $exactVal = trim((string) $request->input('exact_specialization', ''));
+            $data['exact_specialization'] = $exactVal !== '' ? $exactVal : null;
+            if (!$request->has('section_name')) {
+                $data['section_name'] = $exactVal !== '' ? $exactVal : null;
+            }
+        }
 
         // 1. معالجة اسم الدولة إذا أُرسلت كـ Text Box (للإجازة)
         if ($request->filled('country_name')) {

@@ -617,29 +617,28 @@
                     <i class="fa-solid fa-stamp"></i>
                 </div>
                 <div class="decision-success-titles">
-                    <h3>تم صدور واعتماد قرارات التعادل والأهلية رسمياً</h3>
+                    <h3>تم صدور واعتماد القرار الرسمي الموحد</h3>
                     <div class="decision-pills">
                         @if($decision->decision_no)
                             <span class="decision-badge-item"><i class="fa-solid fa-file-contract"></i> قرار المعادلة رقم: <strong>{{ $decision->decision_no }}</strong></span>
                         @endif
+                        @if($decision->decision_date)
+                            <span class="decision-badge-item"><i class="fa-regular fa-calendar-check"></i> تاريخ القرار: <strong>{{ \Carbon\Carbon::parse($decision->decision_date)->format('d/m/Y') }}</strong></span>
+                        @endif
                         @if($decision->eligibility_decision_no)
                             <span class="decision-badge-item"><i class="fa-solid fa-certificate"></i> قرار الأهلية رقم: <strong>{{ $decision->eligibility_decision_no }}</strong></span>
                         @endif
-                        @if($decision->decision_date)
-                            <span class="decision-badge-item"><i class="fa-regular fa-calendar-check"></i> تاريخ الاعتماد: <strong>{{ \Carbon\Carbon::parse($decision->decision_date)->format('d/m/Y') }}</strong></span>
+                        @if($decision->eligibility_decision_date)
+                            <span class="decision-badge-item"><i class="fa-regular fa-calendar"></i> تاريخ الأهلية: <strong>{{ \Carbon\Carbon::parse($decision->eligibility_decision_date)->format('d/m/Y') }}</strong></span>
                         @endif
                     </div>
                 </div>
             </div>
 
-            <!-- SMART BUNDLE DOWNLOAD BUTTON -->
+            <!-- UNIFIED DECISION PDF BUTTON -->
             <a href="{{ route('university.applications.view_decision_pdf', $application->id) }}" target="_blank" class="btn-hero btn-hero-primary" style="background: white; color: #064e3b; font-size: 0.95rem; border: none; padding: 12px 20px;">
                 <i class="fa-solid fa-file-pdf" style="color: var(--heritage-gold);"></i> 
-                @if($decision->file_path && $decision->eligibility_file_path)
-                    معاينة حزمة القرارين الرسمية (PDF)
-                @else
-                    معاينة قرار التعادل الرسمي (PDF)
-                @endif
+                معاينة القرار الرسمي الصادر (PDF)
             </a>
         </section>
         @endif
@@ -744,7 +743,30 @@
                 <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal;">مسار موثق أصولاً من الثانوية حتى أعلى درجة</span>
             </div>
 
+            @php
+                $govEd = $application->educations->first(function($e) {
+                    return $e->thesis_title === 'عضو هيئة تدريسية في جامعة حكومية' || (optional($e->level)->name && str_contains(optional($e->level)->name, 'حكومية'));
+                });
+            @endphp
             <div class="timeline-stepper">
+                @if($govEd)
+                <!-- Gov Faculty Employment -->
+                <div class="degree-card">
+                    <div class="degree-tag">
+                        <span>التعيين بالجامعة الحكومية</span>
+                        <i class="fa-solid fa-building-columns text-muted"></i>
+                    </div>
+                    <div class="degree-title">
+                        {{ $govEd->rank ?? 'عضو هيئة تدريسية' }} - {{ $govEd->university?->name ?? ($govEd->university_other ?? 'جامعة حكومية') }}
+                    </div>
+                    <div class="degree-meta-list">
+                        <div><span>الكلية:</span> <strong>{{ $govEd->faculty ?: ($govEd->general_specialization ?: '—') }}</strong></div>
+                        <div><span>القسم:</span> <strong>{{ $govEd->department ?: ($govEd->exact_specialization ?: '—') }}</strong></div>
+                    </div>
+                </div>
+                @endif
+
+                @if($highSchoolEd)
                 <!-- High School -->
                 <div class="degree-card">
                     <div class="degree-tag">
@@ -752,14 +774,16 @@
                         <i class="fa-solid fa-school text-muted"></i>
                     </div>
                     <div class="degree-title">
-                        {{ $highSchoolEd ? ('الثانوية العامة (' . ($highSchoolEd->general_specialization ?? 'الفرع العلمي') . ')') : 'الثانوية العامة (الفرع العلمي)' }}
+                        الثانوية العامة ({{ $highSchoolEd->general_specialization ?? 'الفرع العلمي' }})
                     </div>
                     <div class="degree-meta-list">
                         <div><span>بلد المنح:</span> <strong>{{ $highSchoolEd?->country?->name ?? 'الجمهورية العربية السورية' }}</strong></div>
-                        <div><span>سنة الحصول:</span> <strong>{{ $highSchoolEd?->graduation_date ? \Carbon\Carbon::parse($highSchoolEd->graduation_date)->format('Y') : ($highSchoolEd?->graduation_year ?? '2004') }}</strong></div>
+                        <div><span>سنة الحصول:</span> <strong>{{ $highSchoolEd?->graduation_date ? \Carbon\Carbon::parse($highSchoolEd->graduation_date)->format('Y') : ($highSchoolEd?->graduation_year ?? '—') }}</strong></div>
                     </div>
                 </div>
+                @endif
 
+                @if($bachelorEd)
                 <!-- Bachelor Degree -->
                 <div class="degree-card">
                     <div class="degree-tag">
@@ -770,11 +794,12 @@
                         {{ $bachelorEd?->general_specialization ? 'إجازة في ' . $bachelorEd->general_specialization : ($bachelorEd?->faculty ? 'إجازة في ' . $bachelorEd->faculty : 'إجازة جامعية') }}
                     </div>
                     <div class="degree-meta-list">
-                        <div><span>الجامعة المانحة:</span> <strong>{{ $bachelorEd?->university?->name ?? $bachelorEd?->faculty ?? 'جامعة دمشق' }}</strong></div>
+                        <div><span>الجامعة المانحة:</span> <strong>{{ $bachelorEd?->university?->name ?? $bachelorEd?->university_other ?? ($bachelorEd?->faculty ?? '—') }}</strong></div>
                         <div><span>التقدير العام:</span> <strong style="color: var(--emerald);">{{ $bachelorEd?->rank ?? 'جيد جداً' }}</strong></div>
                         <div><span>تاريخ المنح:</span> <strong>{{ $bachelorEd?->graduation_date ? \Carbon\Carbon::parse($bachelorEd->graduation_date)->format('d/m/Y') : ($bachelorEd?->grant_date ? \Carbon\Carbon::parse($bachelorEd->grant_date)->format('d/m/Y') : '—') }}</strong></div>
                     </div>
                 </div>
+                @endif
 
                 <!-- Master Degree -->
                 @if($masterEd)
@@ -787,7 +812,7 @@
                         {{ $masterEd->exact_specialization ?? $masterEd->general_specialization ?? 'ماجستير' }}
                     </div>
                     <div class="degree-meta-list">
-                        <div><span>الجامعة والكلية:</span> <strong>{{ $masterEd->university?->name ?? '' }} {{ $masterEd->faculty ? '- ' . $masterEd->faculty : '' }}</strong></div>
+                        <div><span>الجامعة والكلية:</span> <strong>{{ $masterEd->university?->name ?? ($masterEd->university_other ?? '') }} {{ $masterEd->faculty ? '- ' . $masterEd->faculty : '' }}</strong></div>
                         <div><span>المشرف العلمي:</span> <strong>{{ $masterEd->supervisor_name ?? $masterEd->supervisor ?? '—' }}</strong></div>
                         <div><span>التقدير:</span> <strong style="color: var(--emerald);">{{ $masterEd->rank ?? 'جيد جداً' }}</strong></div>
                         <div><span>تاريخ المنح:</span> <strong>{{ $masterEd->graduation_date ? \Carbon\Carbon::parse($masterEd->graduation_date)->format('d/m/Y') : ($masterEd->grant_date ? \Carbon\Carbon::parse($masterEd->grant_date)->format('d/m/Y') : '—') }}</strong></div>
@@ -806,7 +831,7 @@
                         {{ $phdEd->exact_specialization ?? $phdEd->general_specialization ?? 'دكتوراه الفلسفة' }}
                     </div>
                     <div class="degree-meta-list">
-                        <div><span>الجامعة والكلية:</span> <strong>{{ $phdEd->university?->name ?? '' }} {{ $phdEd->faculty ? '- ' . $phdEd->faculty : '' }}</strong></div>
+                        <div><span>الجامعة والكلية:</span> <strong>{{ $phdEd->university?->name ?? ($phdEd->university_other ?? '') }} {{ $phdEd->faculty ? '- ' . $phdEd->faculty : '' }}</strong></div>
                         <div><span>التقدير الوزاري:</span> <strong style="color: #7c3aed;">{{ $phdEd->rank ?? 'شرف / امتياز' }}</strong></div>
                         <div><span>تاريخ منح الدرجة:</span> <strong>{{ $phdEd->graduation_date ? \Carbon\Carbon::parse($phdEd->graduation_date)->format('d/m/Y') : ($phdEd->grant_date ? \Carbon\Carbon::parse($phdEd->grant_date)->format('d/m/Y') : '—') }}</strong></div>
                     </div>

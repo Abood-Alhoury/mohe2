@@ -144,28 +144,55 @@ class InterviewsController extends Controller
     public function decideOutcome(Request $request, $id)
     {
         $request->validate([
-            'outcome' => 'required|in:pass,fail',
-            'notes'   => 'nullable|string',
+            'outcome'                 => 'required|in:pass,fail',
+            'eligibility_decision_no' => 'nullable|string|max:100',
+            'eligibility_decision_date' => 'nullable|date',
+            'notes'                   => 'nullable|string',
         ]);
 
         $app = Application::findOrFail($id);
 
         if ($request->outcome === 'pass') {
             $app->status = 'بانتظار إصدار القرار';
-            $message = 'تم رصد نجاح المرشح (' . ($app->candidate->full_name ?? '') . ') في المقابلة بنجاح، وتحويل حالة الطلب تلقائياً إلى (بانتظار إصدار القرار).';
+            $eligDate = $request->input('eligibility_decision_date') ?: ($app->interview_date ?: date('Y-m-d'));
+            if (empty($app->interview_date) && $eligDate) {
+                $app->interview_date = $eligDate;
+            }
+            if ($request->filled('eligibility_decision_no')) {
+                $app->eligibility_decision_no = trim((string) $request->input('eligibility_decision_no'));
+            }
+            $app->eligibility_decision_date = $eligDate;
+            if ($request->filled('notes')) {
+                $app->interview_notes = $request->notes;
+            }
+
+            $eligNoNote = $app->eligibility_decision_no ? (' برقم قرار أهلية (' . $app->eligibility_decision_no . ')') : '';
+            $message = 'تم اعتماد اجتياز المرشح (' . ($app->candidate->full_name ?? '') . ') للمقابلة' . $eligNoNote . '، وتحويل حالة الطلب إلى (بانتظار إصدار القرار).';
         } else {
             $app->status = 'مرفوض';
+            if ($request->filled('notes')) {
+                $app->interview_notes = $request->notes;
+                $app->rejection_reason = $request->notes;
+            }
             $message = 'تم رصد عدم اجتياز المرشح (' . ($app->candidate->full_name ?? '') . ') للمقابلة، وتحويل حالة الطلب إلى (مرفوض).';
-        }
-
-        if ($request->filled('notes')) {
-            $app->interview_notes = $request->notes;
         }
 
         $app->save();
 
         // Notify university of status change
         $app->notifyUniversityOfStatusChange($app->status, $request->notes);
+
+        if ($request->outcome === 'fail') {
+            return redirect()->back()->with('action_banner', [
+                'variant'        => 'danger',
+                'title'          => 'تم تسجيل عدم اجتياز المقابلة / عدم الموافقة للطلب (#'.($app->application_no ?? $app->id).') ونقله إلى إصدار القرارات',
+                'message'        => 'اختفى الطلب من جدول المقابلات وأصبح جاهزاً في (إصدار القرارات ← قرارات عدم الموافقة) لتوليد الكتاب / Word وتوقيعه وختمه ثم رفعه وأرشفته.',
+                'generate_url'   => route('admin.reports.generate_decision', $app->id),
+                'generate_label' => 'توليد / Word كتاب عدم الموافقة',
+                'issue_url'      => route('admin.rejected_decisions.index', ['app_id' => $app->id]),
+                'issue_label'    => 'الانتقال لإصدار القرارات (رفع المختوم)',
+            ]);
+        }
 
         return redirect()->back()->with('success', $message);
     }

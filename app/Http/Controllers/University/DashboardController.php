@@ -12,6 +12,7 @@ use App\Models\LookupUniversity;
 use App\Models\SiteSetting;
 use App\Models\User;
 use setasign\Fpdi\Fpdi;
+use App\Services\PdfMergerService;
 
 class DashboardController extends Controller
 {
@@ -32,7 +33,7 @@ class DashboardController extends Controller
         $suspendedCount = Application::where('work_university_id', $uniId)->whereIn('status', ['معلق', 'بانتظار الوثائق', 'مواضيع اللجنة العامة (معلق)'])->count();
         $draftsCount = Application::where('work_university_id', $uniId)->where('status', 'مسودة')->count();
         
-        $archivedStatuses = ['تم الصدور', 8, '8', 'موافقة', 'مرفوض', 9, '9', 10, '10'];
+        $archivedStatuses = ['تم الصدور', 8, '8', 'موافقة'];
 
         $approvedCount = Application::where('work_university_id', $uniId)
             ->where(function ($q) {
@@ -273,7 +274,9 @@ class DashboardController extends Controller
         $bachelorEd   = $application->educations->where('level.name', 'إجازة جامعية')->first();
         $diplomaEd    = $application->educations->where('level.name', 'دبلوم دراسات عليا')->first();
         $masterEd     = $application->educations->where('level.name', 'ماجستير')->first();
-        $phdEd        = $application->educations->where('level.name', 'دكتوراه')->first();
+        $phdEd        = $application->educations->first(function($e) {
+            return ($e->level?->name === 'دكتوراه' || $e->education_level_id == 3) && !str_contains($e->thesis_title ?? '', 'هيئة تدريسية') && !str_contains($e->thesis_title ?? '', 'مركز بحوث');
+        }) ?? $application->educations->where('level.name', 'دكتوراه')->first();
 
         return view('admin.reports.mozhakkara', compact(
             'application',
@@ -313,7 +316,9 @@ class DashboardController extends Controller
         $bachelorEd   = $application->educations->where('level.name', 'إجازة جامعية')->first();
         $diplomaEd    = $application->educations->where('level.name', 'دبلوم دراسات عليا')->first();
         $masterEd     = $application->educations->where('level.name', 'ماجستير')->first();
-        $phdEd        = $application->educations->where('level.name', 'دكتوراه')->first();
+        $phdEd        = $application->educations->first(function($e) {
+            return ($e->level?->name === 'دكتوراه' || $e->education_level_id == 3) && !str_contains($e->thesis_title ?? '', 'هيئة تدريسية') && !str_contains($e->thesis_title ?? '', 'مركز بحوث');
+        }) ?? $application->educations->where('level.name', 'دكتوراه')->first();
 
         $html = view('admin.reports.pdf_template', compact(
             'application',
@@ -384,11 +389,14 @@ class DashboardController extends Controller
             'parentApplication.latestDecision',
             'parentApplication.courses',
             'parentApplication.educations.attachments.attachmentType',
+            'parentApplication.decisions',
             'educations.level',
             'educations.country',
             'educations.university',
             'educations.residences',
-            'educations.attachments.attachmentType'
+            'educations.attachments.attachmentType',
+            'decisions',
+            'latestDecision',
         ])->firstOrFail();
 
         $candidate = $application->candidate;
@@ -397,7 +405,9 @@ class DashboardController extends Controller
         $bachelorEd   = $application->educations->where('level.name', 'إجازة جامعية')->first();
         $diplomaEd    = $application->educations->where('level.name', 'دبلوم دراسات عليا')->first();
         $masterEd     = $application->educations->where('level.name', 'ماجستير')->first();
-        $phdEd        = $application->educations->where('level.name', 'دكتوراه')->first();
+        $phdEd        = $application->educations->first(function($e) {
+            return ($e->level?->name === 'دكتوراه' || $e->education_level_id == 3) && !str_contains($e->thesis_title ?? '', 'هيئة تدريسية') && !str_contains($e->thesis_title ?? '', 'مركز بحوث');
+        }) ?? $application->educations->where('level.name', 'دكتوراه')->first();
 
         // 1. Generate Mozhakkara PDF using DomPDF
         $html = view('admin.reports.pdf_template', compact(
@@ -427,77 +437,31 @@ class DashboardController extends Controller
         } catch (\Throwable $e) {}
 
         $mozhakkaraPdf = \Barryvdh\DomPDF\Facade\Pdf::loadHtml($html)->setPaper('a4', 'portrait');
-        $mozhakkaraTmpPath = storage_path('app/tmp_mozhakkara_uni_' . $appId . '.pdf');
+        $mozhakkaraTmpPath = storage_path('app/tmp_mozhakkara_uni_' . $appId . '_' . uniqid() . '.pdf');
         file_put_contents($mozhakkaraTmpPath, $mozhakkaraPdf->output());
 
-        // 2. Collect all uploaded PDF attachment file paths (Latest application attachments first!)
-        $attachmentPaths = [];
-        foreach ($application->educations as $ed) {
-            foreach ($ed->attachments->sortByDesc('id') as $att) {
-                $fullPath = storage_path('app/public/' . $att->file_path);
-                if (file_exists($fullPath) && strtolower(pathinfo($fullPath, PATHINFO_EXTENSION)) === 'pdf') {
-                    if (!in_array($fullPath, $attachmentPaths)) {
-                        $attachmentPaths[] = $fullPath;
-                    }
-                }
-            }
+        // 2. Build consolidated PDF via PdfMergerService (merges Mozhakkara + decisions + all attachments)
+        $mergedContent = PdfMergerService::buildConsolidatedPdf($mozhakkaraTmpPath, $application);
+        @unlink($mozhakkaraTmpPath);
+
+        if (!$mergedContent) {
+            $mergedContent = $mozhakkaraPdf->output();
         }
 
-        if ($application->parentApplication) {
-            foreach ($application->parentApplication->educations as $pEd) {
-                foreach ($pEd->attachments->sortByDesc('id') as $att) {
-                    $fullPath = storage_path('app/public/' . $att->file_path);
-                    if (file_exists($fullPath) && strtolower(pathinfo($fullPath, PATHINFO_EXTENSION)) === 'pdf') {
-                        if (!in_array($fullPath, $attachmentPaths)) {
-                            $attachmentPaths[] = $fullPath;
-                        }
-                    }
-                }
-            }
-        }
-
-        // 3. Merge all PDFs using FPDI
-        $merger = new \setasign\Fpdi\Fpdi();
-
-        // Add Mozhakkara pages
-        $mozhakkaraPageCount = $merger->setSourceFile($mozhakkaraTmpPath);
-        for ($p = 1; $p <= $mozhakkaraPageCount; $p++) {
-            $tplId = $merger->importPage($p);
-            $size = $merger->getTemplateSize($tplId);
-            $merger->AddPage($size['orientation'], [$size['width'], $size['height']]);
-            $merger->useTemplate($tplId);
-        }
-
-        // Add each attachment PDF pages
-        foreach ($attachmentPaths as $pdfPath) {
-            try {
-                $pageCount = $merger->setSourceFile($pdfPath);
-                for ($p = 1; $p <= $pageCount; $p++) {
-                    $tplId = $merger->importPage($p);
-                    $size = $merger->getTemplateSize($tplId);
-                    $merger->AddPage($size['orientation'], [$size['width'], $size['height']]);
-                    $merger->useTemplate($tplId);
-                }
-            } catch (\Throwable $e) {
-                continue;
-            }
-        }
-
-        // 4. Output merged PDF with clean, descriptive filename
+        // 3. Output merged PDF with clean, descriptive filename
         $safeAppNo = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $application->application_no ?? ('App_' . $application->id));
         $candidateName = $candidate ? preg_replace('/[^\p{L}\p{N}\s\-_]/u', '', $candidate->full_name) : '';
         $cleanCandidateName = trim(preg_replace('/\s+/', '_', $candidateName));
 
         $fileName = 'Merged_Package_' . $safeAppNo . ($cleanCandidateName ? '_' . $cleanCandidateName : '') . '.pdf';
 
-        $mergedContent = $merger->Output('S');
-        @unlink($mozhakkaraTmpPath);
-
         $disposition = request()->has('download') ? 'attachment' : 'inline';
 
         return response($mergedContent, 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => $disposition . '; filename="' . $fileName . '"; filename*=UTF-8\'\'' . rawurlencode($fileName),
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0',
+            'Pragma' => 'public',
         ]);
     }
 
@@ -527,7 +491,20 @@ class DashboardController extends Controller
             return redirect()->route('university.apply.syrian_doctorate', ['draft_id' => $application->id]);
         }
 
-        return redirect()->route('university.apply.syrian_masters', ['draft_id' => $application->id]);
+        $reqType = $application->request_type ?? '';
+        if (str_contains($reqType, 'تطبيقي')) {
+            return redirect()->route('university.apply.syrian_masters_applied', ['draft_id' => $application->id]);
+        }
+        if (str_contains($reqType, 'نظري')) {
+            return redirect()->route('university.apply.syrian_masters_theoretical', ['draft_id' => $application->id]);
+        }
+
+        // Legacy fallback based on stored experience days
+        if ($application->total_experience_days >= 730) {
+            return redirect()->route('university.apply.syrian_masters_theoretical', ['draft_id' => $application->id]);
+        }
+
+        return redirect()->route('university.apply.syrian_masters_applied', ['draft_id' => $application->id]);
     }
 
     public function updateApplication(Request $request, $appId)
@@ -674,7 +651,9 @@ class DashboardController extends Controller
         $bachelorEd   = $application->educations->where('level.name', 'إجازة جامعية')->first();
         $diplomaEd    = $application->educations->where('level.name', 'دبلوم دراسات عليا')->first();
         $masterEd     = $application->educations->where('level.name', 'ماجستير')->first();
-        $phdEd        = $application->educations->where('level.name', 'دكتوراه')->first();
+        $phdEd        = $application->educations->first(function($e) {
+            return ($e->level?->name === 'دكتوراه' || $e->education_level_id == 3) && !str_contains($e->thesis_title ?? '', 'هيئة تدريسية') && !str_contains($e->thesis_title ?? '', 'مركز بحوث');
+        }) ?? $application->educations->where('level.name', 'دكتوراه')->first();
 
         $notifications = ApplicationMessage::whereHas('application', function($q) use ($user) {
                 $q->where('work_university_id', $user->university_id);
@@ -813,7 +792,7 @@ class DashboardController extends Controller
         $universityName = $user->university ? $user->university->name : ($isAdmin ? 'الجامعات (إشراف إدارة)' : 'الجامعة');
 
         $query = Application::where(function ($q) {
-                $q->whereIn('status', ['تم الصدور', 8, '8', 'موافقة', 'مرفوض', 9, '9', 10, '10'])
+                $q->whereIn('status', ['تم الصدور', 8, '8', 'موافقة'])
                   ->orWhereHas('decisions');
             })
             ->with([
@@ -873,7 +852,7 @@ class DashboardController extends Controller
         $archivedApplications = $query->latest('updated_at')->paginate(15)->withQueryString();
 
         $baseCountQuery = Application::where(function ($q) {
-                $q->whereIn('status', ['تم الصدور', 8, '8', 'موافقة', 'مرفوض', 9, '9', 10, '10'])
+                $q->whereIn('status', ['تم الصدور', 8, '8', 'موافقة'])
                   ->orWhereHas('decisions');
             });
 

@@ -377,6 +377,34 @@
                 </div>
             @endif
 
+            @if(session('action_banner'))
+                @php($banner = session('action_banner'))
+                <div class="alert alert-{{ $banner['variant'] ?? 'danger' }} alert-dismissible fade show shadow-sm border-0 mb-4 d-flex flex-wrap align-items-center justify-content-between gap-3" role="alert" style="border-right: 4px solid {{ ($banner['variant'] ?? 'danger') === 'success' ? '#059669' : '#dc2626' }} !important;">
+                    <div>
+                        <div class="fw-bold mb-1">
+                            <i class="fa-solid {{ ($banner['variant'] ?? 'danger') === 'success' ? 'fa-circle-check' : 'fa-file-circle-xmark' }} me-1"></i>
+                            {{ $banner['title'] ?? '' }}
+                        </div>
+                        @if(!empty($banner['message']))
+                            <div class="small">{{ $banner['message'] }}</div>
+                        @endif
+                    </div>
+                    <div class="d-flex flex-wrap align-items-center gap-2 ms-auto">
+                        @if(!empty($banner['generate_url']))
+                            <a href="{{ $banner['generate_url'] }}" target="_blank" class="btn btn-sm btn-danger fw-bold px-3">
+                                <i class="fa-solid fa-file-word me-1"></i> {{ $banner['generate_label'] ?? 'توليد / Word كتاب عدم الموافقة' }}
+                            </a>
+                        @endif
+                        @if(!empty($banner['issue_url']))
+                            <a href="{{ $banner['issue_url'] }}" class="btn btn-sm btn-solid-navy fw-bold px-3">
+                                <i class="fa-solid fa-stamp me-1"></i> {{ $banner['issue_label'] ?? 'الانتقال لإصدار القرارات' }}
+                            </a>
+                        @endif
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+
             @yield('content')
         </main>
     </div>

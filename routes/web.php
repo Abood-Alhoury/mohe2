@@ -62,6 +62,7 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::post('/applications/{id}/message', [ApplicationsController::class, 'sendMessage'])->name('admin.applications.send_message');
     Route::get('/messages', [ApplicationsController::class, 'messagesLog'])->name('admin.messages.index');
     Route::get('/applications/{id}/edit', [EditApplicationController::class, 'edit'])->name('admin.applications.edit');
+    Route::post('/applications/{id}/wizard-update', [EditApplicationController::class, 'updateWizard'])->name('admin.applications.wizard_update');
     Route::patch('/applications/{id}/candidate', [EditApplicationController::class, 'updateCandidate'])->name('admin.applications.update_candidate');
     Route::patch('/applications/{id}/education', [EditApplicationController::class, 'updateEducation'])->name('admin.applications.update_education');
     Route::patch('/applications/{id}/details', [EditApplicationController::class, 'updateApplicationDetails'])->name('admin.applications.update_details');
@@ -166,7 +167,15 @@ Route::prefix('university')->middleware(['auth', 'role:university'])->group(func
     // Wizard: Choose Equivalence Type
     Route::get('/apply/options', [ApplicationWizardController::class, 'showOptions'])->name('university.apply.options');
     
-    // Wizard: Syrian Master's step-by-step
+    // Wizard: Syrian Master's - Applied Track (ماجستير داخلي - تطبيقي)
+    Route::get('/apply/syrian-masters-applied', [ApplicationWizardController::class, 'showSyrianMastersAppliedWizard'])->name('university.apply.syrian_masters_applied');
+    Route::post('/apply/syrian-masters-applied', [ApplicationWizardController::class, 'submitSyrianMastersAppliedWizard'])->name('university.apply.syrian_masters_applied.submit');
+
+    // Wizard: Syrian Master's - Theoretical Track (ماجستير داخلي - نظري)
+    Route::get('/apply/syrian-masters-theoretical', [ApplicationWizardController::class, 'showSyrianMastersTheoreticalWizard'])->name('university.apply.syrian_masters_theoretical');
+    Route::post('/apply/syrian-masters-theoretical', [ApplicationWizardController::class, 'submitSyrianMastersTheoreticalWizard'])->name('university.apply.syrian_masters_theoretical.submit');
+
+    // Wizard: Syrian Master's step-by-step (Legacy / Compatibility Route)
     Route::get('/apply/syrian-masters', [ApplicationWizardController::class, 'showSyrianMastersWizard'])->name('university.apply.syrian_masters');
     Route::post('/apply/syrian-masters', [ApplicationWizardController::class, 'submitSyrianMastersWizard'])->name('university.apply.syrian_masters.submit');
 

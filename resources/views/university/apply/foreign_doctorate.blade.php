@@ -1,4 +1,4 @@
-@extends('layouts.university')
+@extends(!empty($isAdminEdit) ? 'layouts.admin' : 'layouts.university')
 
 @section('title', 'معاملة الدكتوراه غير السورية (الخارجية)')
 
@@ -11,11 +11,11 @@
         $draftNatId = '';
     }
 
-    $isAwaitingDocs = $draft && (
+    $isAwaitingDocs = empty($isAdminEdit) && $draft && (
         $draft->status_id == 3 || 
         in_array($draft->status, ['بانتظار الوثائق', 'بانتظار استكمال الوثائق', 'بانتظار تصحيح الوثائق', 'بانتظار الوثائق الناقصة'])
     );
-    $canSaveDraft = !$draft || ($draft->status_id == 1 || $draft->status === 'مسودة');
+    $canSaveDraft = empty($isAdminEdit) && (!$draft || ($draft->status_id == 1 || $draft->status === 'مسودة'));
 
     $todayDate = date('Y-m-d');
     $currentYear = date('Y');
@@ -103,13 +103,17 @@
                 }
                 if ($typeId === 24 || str_contains($note, 'حركة الهجرة والجوازات') || str_contains($note, 'الهجرة والجوازات')) $existingFilesMap['file_immigration_movement'] = $att;
                 if ($typeId === 17 || str_contains($note, '125,000') || str_contains($note, 'رسم تعادل الدكتوراه')) $existingFilesMap['file_fees_receipt'] = $att;
+                if ($typeId === 15 || str_contains($note, 'طلب الجامعة للتعادل') || str_contains($note, 'كتاب طلب التقويم') || str_contains($note, 'طلب التقويم')) $existingFilesMap['file_uni_request'] = $att;
                 if ($typeId === 22 || str_contains($note, 'المكتبة الوطنية') || str_contains($note, 'مكتبة الأسد')) $existingFilesMap['file_library_receipt'] = $att;
-                if ($typeId === 23 || str_contains($note, 'مرفقات ووثائق أخرى') || str_contains($note, 'بحوث')) $existingFilesMap['file_other_attachments'] = $att;
+                if ($typeId === 23 || str_contains($note, 'مرفقات ووثائق أخرى') || str_contains($note, 'مرفقات أخرى') || str_contains($note, 'بحوث')) $existingFilesMap['file_other_attachments'] = $att;
             }
         }
     }
 @endphp
 
+@if(!empty($isAdminEdit))
+    @include('university.apply.partials._admin_edit_banner', ['wizardTitle' => 'الدكتوراه غير السورية (الخارجية)'])
+@else
 <!-- PAGE TITLE & BREADCRUMB -->
 <div class="row mb-4">
     <div class="col-12">
@@ -149,6 +153,7 @@
         </div>
     </div>
 </div>
+@endif
 
 <!-- WIZARD MAIN CONTAINER -->
 <div class="card border-0 shadow-sm" style="border-radius: 8px; border-top: 3px solid var(--heritage-gold) !important; border: 1px solid var(--outline-variant) !important; background-color: #ffffff;">
@@ -214,7 +219,7 @@
         </div>
 
         <!-- Form Tag -->
-        <form action="{{ route('university.apply.foreign_doctorate.submit') }}" method="POST" enctype="multipart/form-data" id="wizard-form" novalidate>
+        <form action="{{ !empty($isAdminEdit) ? $adminSubmitRoute : route('university.apply.foreign_doctorate.submit') }}" method="POST" enctype="multipart/form-data" id="wizard-form" novalidate>
             @csrf
             <input type="hidden" name="draft_id" value="{{ optional($draft)->id }}">
             <input type="hidden" name="action" id="form-action-input" value="submit_final">
@@ -1004,10 +1009,24 @@
                         </div>
                     </div>
 
-                    <!-- 13. إيصال المكتبة الوطنية (ID 22) -->
+                    <!-- 13. طلب الجامعة للتعادل (ID 15) -->
                     <div class="col-md-6">
                         <div class="border rounded p-3 bg-light h-100">
-                            <label class="form-label label-sm fw-bold">13. إيصال إيداع الأطروحة لدى المكتبة الوطنية <span class="text-muted fs-8 fw-normal">(اختياري)</span></label>
+                            <label class="form-label label-sm fw-bold">13. طلب الجامعة للتعادل (كتاب طلب التقويم الصادر عن الجامعة) <span class="text-danger">*</span></label>
+                            <input type="file" name="file_uni_request" id="input_file_uni_request" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_uni_request']) ? 'required' : '' }}>
+                            @if(!empty($existingFilesMap['file_uni_request']))
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                    <a href="{{ asset('storage/' . $existingFilesMap['file_uni_request']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold"><i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي</a>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- 14. إيصال المكتبة الوطنية (ID 22) -->
+                    <div class="col-md-6">
+                        <div class="border rounded p-3 bg-light h-100">
+                            <label class="form-label label-sm fw-bold">14. إيصال إيداع الأطروحة لدى المكتبة الوطنية <span class="text-muted fs-8 fw-normal">(اختياري)</span></label>
                             <input type="file" name="file_library_receipt" class="form-control academic-input" accept=".pdf">
                             @if(!empty($existingFilesMap['file_library_receipt']))
                                 <div class="mt-1 d-flex align-items-center gap-2">
@@ -1018,10 +1037,10 @@
                         </div>
                     </div>
 
-                    <!-- 14. أبحاث ووثائق داعمة (ID 23) -->
+                    <!-- 15. مرفقات أخرى / أبحاث ووثائق داعمة (ID 23) -->
                     <div class="col-md-6">
                         <div class="border rounded p-3 bg-light h-100">
-                            <label class="form-label label-sm fw-bold">14. وثائق داعمة / بحوث علمية منشورة <span class="text-muted fs-8 fw-normal">(اختياري)</span></label>
+                            <label class="form-label label-sm fw-bold">15. مرفقات أخرى (وثائق داعمة / بحوث علمية منشورة) <span class="text-muted fs-8 fw-normal">(اختياري)</span></label>
                             <input type="file" name="file_other_attachments" class="form-control academic-input" accept=".pdf">
                             @if(!empty($existingFilesMap['file_other_attachments']))
                                 <div class="mt-1 d-flex align-items-center gap-2">
@@ -1208,6 +1227,9 @@
                         <i class="fa-solid fa-floppy-disk me-1"></i> حفظ كمسودة ومتابعة لاحقاً
                     </button>
                     @endif
+                    @if(!empty($isAdminEdit))
+                        @include('university.apply.partials._admin_edit_footer_btn')
+                    @endif
                 </div>
 
                 <div class="d-flex align-items-center gap-2">
@@ -1220,7 +1242,9 @@
                     </button>
 
                     <button type="submit" formnovalidate name="action" value="submit_final" class="btn btn-gold-cta px-5 py-2" id="btn-submit" style="display: none;">
-                        @if($isAwaitingDocs)
+                        @if(!empty($isAdminEdit))
+                            حفظ كافة التعديلات (دون تغيير الحالة) <i class="fa-solid fa-check-double ms-1"></i>
+                        @elseif($isAwaitingDocs)
                             إعادة إرسال الطلب بعد استكمال الوثائق <i class="fa-solid fa-paper-plane ms-1"></i>
                         @else
                             إنهاء وإرسال الطلب للوزارة <i class="fa-solid fa-paper-plane ms-1"></i>
@@ -1234,6 +1258,7 @@
 </div>
 
 <script>
+    const IS_ADMIN_EDIT = @json(!empty($isAdminEdit));
     let currentStep = 1;
     const totalSteps = 8;
     let hasVisitedReview = {{ optional($draft)->id ? 'true' : 'false' }};
@@ -1334,6 +1359,7 @@
     window.showStep = showStep;
 
     function validateCurrentStep(step) {
+        if (IS_ADMIN_EDIT) return true;
         const section = document.getElementById('step-' + step);
         if (!section) return true;
 
@@ -1875,9 +1901,10 @@
                 const isDraftInput = document.getElementById('form-is-draft-input');
                 const submitter = e.submitter;
 
-                if ((actionInput && actionInput.value === 'save_draft') || 
+                if (IS_ADMIN_EDIT ||
+                    (actionInput && actionInput.value === 'save_draft') || 
                     (isDraftInput && isDraftInput.value === '1') || 
-                    (submitter && submitter.value === 'save_draft')) {
+                    (submitter && (submitter.value === 'save_draft' || submitter.value === 'admin_save'))) {
                     form.querySelectorAll('input, select, textarea').forEach(el => el.removeAttribute('required'));
                     return true;
                 }

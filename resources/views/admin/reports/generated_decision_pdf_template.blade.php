@@ -100,7 +100,58 @@
 </head>
 <body>
 
-@if(($docType ?? 'equivalence') === 'eligibility')
+@if(($docType ?? 'equivalence') === 'rejection' || !empty($isRejected))
+    {{-- ==========================================
+         0. قرار / كتاب عدم الموافقة (الطلبات المرفوضة)
+    ========================================== --}}
+    <table style="margin-bottom: 12px;">
+        <tr>
+            <td style="width: 40%; text-align: right; font-size: 13px; line-height: 1.45; font-weight: bold;">
+                الجمهورية العربية السورية<br>
+                مجلس التعليم العالي<br>
+                لجنة التأهيل ومعادلة الدرجات العلمية<br>
+                الرقم: <span style="font-weight: bold;">{!! ($decisionNo && $decisionNo !== '---') ? $decisionNo : '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' !!}</span><br>
+                التاريخ: {{ $decisionDate }}
+            </td>
+            <td style="width: 20%; text-align: center; vertical-align: middle;">
+                @if($logoBase64)
+                    <img src="{{ $logoBase64 }}" style="width: 120px; height: auto;" alt="الشعار">
+                @endif
+            </td>
+            <td dir="ltr" style="width: 40%; text-align: left; font-size: 12px; line-height: 1.4; font-weight: bold; font-family: sans-serif;">
+                Syrian Arab Republic<br>
+                Council of Higher Education
+            </td>
+        </tr>
+    </table>
+
+    <div class="addressee-div">
+        السيد الدكتور رئيس {{ $uniName }}
+    </div>
+
+    <div class="preamble-div">
+        <div>بناءً على أحكام قانون تنظيم الجامعات رقم /6/ لعام 2006، ولائحته التنفيذية.</div>
+        <div>والمرسوم التشريعي رقم /36/ لعام 2001 وتعليماته التنفيذية وتعديلاتهما.</div>
+        <div>وقرارات مجلس التعليم العالي ولجنة التأهيل ومعادلة الدرجات العلمية ولاسيما القرار رقم /175/ تاريخ 16/2/2022.</div>
+    </div>
+
+    <div class="decree-header-div" style="text-align: right; text-decoration: none; font-weight: bold;">
+        نفيدكم بالآتي:
+    </div>
+
+    <div class="article-div" style="line-height: 1.9;">
+        @if(!empty($customArticle))
+            {!! $customArticle !!}
+        @else
+            "عدم الموافقة على تعيين {{ $rejectionTargetTitle ?? ($isFemale ? 'السيدة' : 'السيد') }} <strong>{{ $candidateName }}</strong> {{ $rejectionReasonText ?? 'نظراً لعدم تحقيق شروط معادلة الشهادات الواردة في قرارات مجلس التعليم العالي .' }}"
+        @endif
+    </div>
+
+    <div style="text-align: center; font-weight: bold; margin: 10px 0 18px;">
+        يرجى الاطلاع
+    </div>
+
+@elseif(($docType ?? 'equivalence') === 'eligibility')
     {{-- ==========================================
          1. قرارات الأهلية (دكتوراه / ماجستير)
     ========================================== --}}
@@ -199,11 +250,14 @@
     <div class="preamble-div">
         <div style="margin-bottom: 3px;">رئيس لجنة التأهيل ومعادلة الدرجات العلمية.</div>
         <div style="margin-bottom: 3px;">بناءً على أحكام قانون تنظيم الجامعات رقم 6 لعام 2006 ولائحته التنفيذية وتعديلاتهما.</div>
-        <div style="margin-bottom: 3px;">وعلى قرار مجلس التعليم العالي رقم /236/ تاريخ 2007/7/15.</div>
-        <div style="margin-bottom: 3px;">وعلى قرار مجلس التعليم العالي رقم /175/ تاريخ 2022/6/16 وتعديلاته.</div>
+        <div style="margin-bottom: 3px;">وعلى قرار مجلس التعليم العالي رقم /236/ تاريخ 15/7/2007.</div>
+        <div style="margin-bottom: 3px;">وعلى قرار مجلس التعليم العالي رقم /175/ تاريخ 16/6/2022 وتعديلاته.</div>
         <div>وعلى كتاب {{ $uniName }} رقم {{ $uniReqNo ?: '        ' }} تاريخ {{ $uniReqDate ?: '        ' }}</div>
         @if($decisionType === 'foreign_doctorate' || $decisionType === 'foreign_master_theoretical' || $decisionType === 'foreign_master_applied' || !empty($isForeignMaster))
             <div style="margin-top: 3px;">وعلى قرار لجنة التأهيل ومعادلة الدرجات العلمية المنعقدة في {{ $committeeDate ?? ($decisionDate ?? '') }}</div>
+        @endif
+        @if(!empty($requiresEligibility))
+            <div style="margin-top: 3px;">وعلى قرار الأهلية رقم / {{ $eligibilityDecisionNo ?: '        ' }} / تاريخ {{ $eligibilityDecisionDate ?: '   /   /   ' }}</div>
         @endif
     </div>
 
@@ -227,9 +281,9 @@
             @elseif($decisionType === 'foreign_master_theoretical')
                 <strong>المادة 1-</strong> الموافقة على تكليف {{ $g['title'] ?? ($genderTitle ?? 'السيد') }} <strong>{{ $candidateName }}</strong>، {{ $g['holder'] ?? ($genderDegreeHolder ?? 'الحائز') }} درجة الماجستير{{ !empty($masterIsResearch) ? ' البحثي' : '' }} في {{ $masterFormattedSpec }} الممنوحة عام {{ $masterYear }} {{ $masterUniCountry }}، والمسبوقة بدرجة الإجازة في {{ $baFormattedSpec }} الممنوحة عام {{ $baYear }} {{ $baUniCountry }}، بتدريس المقررات النظرية في اختصاص {{ $finalTeachingSpec ?? $teachingDept }} في الجامعات الخاصة السورية على أن يكون {{ $g['dedication'] ?? ($genderCommitment ?? 'تفرغه') }} كلياً فيها، وألا يقل {{ $g['quota'] ?? ($genderQuota ?? 'نصابه') }} التدريسي عن /12/ ساعة أسبوعياً.
             @elseif($decisionType === 'foreign_master_applied')
-                <strong>المادة-1</strong> تعدّ درجة الماجستير في {{ $masterFormattedSpec }} الممنوحة عام {{ $masterYear }} {{ $masterUniCountry }} {{ $g['title_prep'] ?? ($candidateTitlePrep ?? 'للسيد') }} <strong>{{ $candidateName }}</strong>، والمسبوقة بدرجة الإجازة في {{ $baFormattedSpec }} الممنوحة عام {{ $baYear }} {{ $baUniCountry }}، محققةً لشروط الشهادة والاختصاص من أجل تدريس <strong>الجوانب التطبيقية (عضو هيئة فنية)</strong> في اختصاص {{ $finalTeachingSpec ?? $teachingDept }} بالجامعات الخاصة السورية.
+                <strong>المادة 1-</strong> تعد درجة الماجستير في {{ $masterFormattedSpec }} الممنوحة عام {{ $masterYear }} {{ $g['title_prep'] ?? ($candidateTitlePrep ?? 'للسيد') }} <strong>{{ $candidateName }}</strong> {{ $masterUniCountry }}، والمسبوقة بدرجة الإجازة في {{ $baFormattedSpec }} الممنوحة عام {{ $baYear }} {{ $baUniCountry }}، محققتين لشروط الشهادة والاختصاص من أجل تدريس <strong>الجوانب التطبيقية (عضو هيئة فنية)</strong> في اختصاص {{ $finalTeachingSpec ?? $teachingDept }} بالجامعات الخاصة السورية.
             @elseif($decisionType === 'applied_master' || (!empty($isApplied) && empty($isDoctorate)))
-                <strong>المادة-1</strong> تعدّ درجة الماجستير في {{ $masterFormattedSpec }} الممنوحة عام {{ $masterYear }} {{ $masterUniCountry }} {{ $g['title_prep'] ?? ($candidateTitlePrep ?? 'للسيد') }} <strong>{{ $candidateName }}</strong>، والمسبوقة بدرجة الإجازة في {{ $baFormattedSpec }} الممنوحة عام {{ $baYear }} {{ $baUniCountry }}، محققةً لشروط الشهادة والاختصاص من أجل تدريس <strong>الجوانب التطبيقية</strong> في اختصاص {{ $finalTeachingSpec ?? $teachingDept }} بالجامعات الخاصة السورية.
+                <strong>المادة 1-</strong> تعد درجة الماجستير في {{ $masterFormattedSpec }} الممنوحة عام {{ $masterYear }} {{ $g['title_prep'] ?? ($candidateTitlePrep ?? 'للسيد') }} <strong>{{ $candidateName }}</strong> {{ $masterUniCountry }}، والمسبوقة بدرجة الإجازة في {{ $baFormattedSpec }} الممنوحة عام {{ $baYear }} {{ $baUniCountry }}، محققتين لشروط الشهادة والاختصاص من أجل تدريس <strong>الجوانب التطبيقية</strong> في اختصاص {{ $finalTeachingSpec ?? $teachingDept }} بالجامعات الخاصة السورية.
             @else
                 <strong>المادة 1-</strong> الموافقة على تكليف {{ $g['title'] ?? ($candidateTitle ?? 'السيد') }} <strong>{{ $candidateName }}</strong>، {{ $g['holder'] ?? ($qualifierHolderWord ?? 'الحائز') }} درجة الماجستير في {{ $masterFormattedSpec }} الممنوحة عام {{ $masterYear }} {{ $masterUniCountry }}، والمسبوقة بدرجة الإجازة في {{ $baFormattedSpec }} الممنوحة عام {{ $baYear }} {{ $baUniCountry }}، بتدريس المقررات النظرية في اختصاص {{ $finalTeachingSpec ?? $teachingDept }} في الجامعات الخاصة السورية على أن يكون {{ $g['dedication'] ?? ($fullTimeWord ?? 'تفرغه') }} كلياً فيها، وألا يقل {{ $g['quota'] ?? ($quotaWord ?? 'نصابه') }} التدريسي عن /12/ ساعة أسبوعياً.
             @endif
@@ -255,7 +309,7 @@
             <td style="width: 50%;">
                 <div>أمين مجلس التعليم العالي</div>
                 <div style="height: 35px;"></div>
-                <div>{{ $customSignerSecretary ?: 'الدكتور علي جاسم' }}</div>
+                <div>{{ $customSignerSecretary ?: 'الدكتور علي الجاسم' }}</div>
             </td>
         </tr>
         <tr>
@@ -270,11 +324,11 @@
     </table>
 
     <!-- قسم صورة إلى -->
-    <div class="copies-div">
+    <div class="copies-div" style="border-top: 1.5px solid #1e293b; padding-top: 8px; margin-top: 24px;">
         <div style="text-decoration: underline; font-weight: bold; margin-bottom: 3px;">صورة إلى:</div>
-        <div>- مجلس التعليم العالي: مكتب التعادل – الديوان.</div>
-        <div>- أمانة سر المجلس (للتعميم على الجامعة المعنية عبر البريد الالكتروني).</div>
-        <div>- مؤسسات التعليمية الخاصة.</div>
+        <div>- مكتب التعادل – الديوان</div>
+        <div>- المؤسسات التعليمية الخاصة</div>
+        <div>- أمانة سر المجلس (للتعميم على الجامعة المعنية عبر البريد الالكتروني)</div>
     </div>
 
 </body>

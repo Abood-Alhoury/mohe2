@@ -27,6 +27,8 @@ class Application extends Model
         'interview_date',
         'interview_time',
         'interview_notes',
+        'eligibility_decision_no',
+        'eligibility_decision_date',
         'user_id',
         'committee_track',
         'experience_approved',
@@ -95,6 +97,30 @@ class Application extends Model
     public function requestTypeRelation()
     {
         return $this->belongsTo(ApplicationRequestType::class, 'request_type');
+    }
+
+    public function requestType()
+    {
+        return $this->belongsTo(ApplicationRequestType::class, 'request_type');
+    }
+
+    /**
+     * التحقق مما إذا كانت المعاملة تتطلب مقابلة وقرار أهلية تدريسية
+     */
+    public function requiresEligibility(): bool
+    {
+        $typeName = (string) ($this->request_type ?? $this->requestType?->name ?? '');
+
+        if (str_contains($typeName, 'تطبيقي') || str_contains($typeName, 'سماح') || str_contains($typeName, 'هيئة تدريسية')) {
+            return false;
+        }
+
+        if (str_contains($typeName, 'نظري') || str_contains($typeName, 'دكتوراه') || str_contains($typeName, 'دكتورة')) {
+            return true;
+        }
+
+        $rawId = (int) ($this->attributes['request_type'] ?? 0);
+        return in_array($rawId, [2, 3, 6, 7], true);
     }
 
     public function statusRelation()

@@ -74,7 +74,7 @@
                 <select name="status" id="filter-status" class="form-select">
                     <option value="">-- كافة الحالات --</option>
                     @foreach(($filterStatusesList ?? $statusesList) as $st)
-                        <option value="{{ $st }}" {{ $statusFilter == $st ? 'selected' : '' }}>{{ $st }}</option>
+                        <option value="{{ $st }}" {{ $statusFilter == $st ? 'selected' : '' }}>{{ $st === 'مرفوض' ? 'عدم موافقة (مرفوض)' : $st }}</option>
                     @endforeach
                 </select>
             </div>

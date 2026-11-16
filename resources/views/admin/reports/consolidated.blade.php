@@ -36,13 +36,59 @@
     </div>
 </div>
 
+<!-- DECISIONS: Issued Official Decisions (If Any) -->
+@php
+    $decisionsList = collect();
+    if ($application->decisions) {
+        $decisionsList = $decisionsList->concat($application->decisions);
+    }
+    if ($application->parentApplication && $application->parentApplication->decisions) {
+        $decisionsList = $decisionsList->concat($application->parentApplication->decisions);
+    }
+@endphp
+
+@foreach($decisionsList as $decItem)
+    @if($decItem->file_path)
+    <div class="card mb-4 border-2 border-success shadow-sm" style="border-radius: 10px; overflow: hidden;">
+        <div class="card-header bg-success text-white fw-bold d-flex justify-content-between align-items-center py-2.5">
+            <span><i class="fa-solid fa-stamp me-2"></i> القرار الصادر المعتمد : قرار رقم {{ $decItem->decision_no ?: ($decItem->id) }} بتاريخ {{ $decItem->decision_date ?: optional($decItem->created_at)->format('Y-m-d') }}</span>
+            <div class="d-flex gap-2 align-items-center">
+                <span class="badge bg-white text-success fw-bold px-3 py-1">قرار وزاري رسمي</span>
+                <a href="{{ asset('storage/' . $decItem->file_path) }}" target="_blank" class="btn btn-sm btn-light fw-bold">
+                    <i class="fa-solid fa-expand me-1"></i> فتح في نافذة مستقلة
+                </a>
+            </div>
+        </div>
+        <div class="card-body p-0 text-center bg-secondary-subtle">
+            <iframe src="{{ asset('storage/' . $decItem->file_path) }}" style="width: 100%; height: 750px;" frameborder="0"></iframe>
+        </div>
+    </div>
+    @endif
+    @if($decItem->eligibility_file_path)
+    <div class="card mb-4 border-2 border-info shadow-sm" style="border-radius: 10px; overflow: hidden;">
+        <div class="card-header bg-info text-white fw-bold d-flex justify-content-between align-items-center py-2.5">
+            <span><i class="fa-solid fa-certificate me-2"></i> قرار الأهلية المعتمد : رقم {{ $decItem->eligibility_decision_no ?: ($decItem->id) }} بتاريخ {{ $decItem->eligibility_decision_date ?: optional($decItem->created_at)->format('Y-m-d') }}</span>
+            <div class="d-flex gap-2 align-items-center">
+                <span class="badge bg-white text-info fw-bold px-3 py-1">قرار أهلية</span>
+                <a href="{{ asset('storage/' . $decItem->eligibility_file_path) }}" target="_blank" class="btn btn-sm btn-light fw-bold">
+                    <i class="fa-solid fa-expand me-1"></i> فتح في نافذة مستقلة
+                </a>
+            </div>
+        </div>
+        <div class="card-body p-0 text-center bg-secondary-subtle">
+            <iframe src="{{ asset('storage/' . $decItem->eligibility_file_path) }}" style="width: 100%; height: 750px;" frameborder="0"></iframe>
+        </div>
+    </div>
+    @endif
+@endforeach
+
 <!-- PAGE 2+: Uploaded Document Attachments -->
 @php
     $attachments = collect();
     
-    // 1. Current Application Attachments (Latest 3 Transfer Documents & Degree attachments)
+    // 1. Current Application Attachments
     foreach($application->educations as $ed) {
-        foreach($ed->attachments->sortByDesc('id') as $att) {
+        foreach($ed->attachments->sortBy('id') as $att) {
             if (!$attachments->contains('id', $att->id)) {
                 $attachments->push($att);
             }
@@ -52,7 +98,7 @@
     // 2. Parent Application Attachments (if transfer application)
     if ($application->parentApplication) {
         foreach($application->parentApplication->educations as $pEd) {
-            foreach($pEd->attachments->sortByDesc('id') as $att) {
+            foreach($pEd->attachments->sortBy('id') as $att) {
                 if (!$attachments->contains('id', $att->id)) {
                     $attachments->push($att);
                 }

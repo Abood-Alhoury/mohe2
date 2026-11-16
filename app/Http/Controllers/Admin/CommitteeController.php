@@ -53,7 +53,16 @@ class CommitteeController extends Controller
 
             $application->notifyUniversityOfStatusChange('مرفوض', $reason);
 
-            return redirect()->route('admin.committee.index')->with('success', 'تم تسجيل قرار الرفض للطلب رقم: ' . $application->application_no);
+            return redirect()->route('admin.committee.index')
+                ->with('action_banner', [
+                    'variant'        => 'danger',
+                    'title'          => 'تم تسجيل عدم الموافقة للطلب (#'.($application->application_no ?? $application->id).') ونقله إلى إصدار القرارات',
+                    'message'        => 'اختفى الطلب من جدول اللجنة العامة وأصبح جاهزاً في (إصدار القرارات ← قرارات عدم الموافقة) لتوليد الكتاب وتوقيعه وختمه ثم رفعه وأرشفته.',
+                    'generate_url'   => route('admin.reports.generate_decision', $application->id),
+                    'generate_label' => 'توليد / Word كتاب عدم الموافقة',
+                    'issue_url'      => route('admin.rejected_decisions.index', ['app_id' => $application->id]),
+                    'issue_label'    => 'الانتقال لإصدار القرارات (رفع المختوم)',
+                ]);
         }
 
         // 2. معالجة خيارات الدكتوراه الخارجية
@@ -96,9 +105,8 @@ class CommitteeController extends Controller
                 $msg = 'تم اعتماد تعادل الماجستير الخارجي (مسار تطبيقي - عضو هيئة فنية) ونقله مباشرة إلى (بانتظار إصدار القرار).';
             }
         } else {
-            // 4. بقية الطلبات السورية
-            $isDoctorate = str_contains($application->request_type ?? '', 'دكتوراه') || str_contains($application->request_type ?? '', 'دكتورة');
-            $nextStatus = $isDoctorate ? 'بانتظار المقابلة' : 'بانتظار إصدار القرار';
+            // 4. بقية الطلبات السورية (الماجستير النظري والدكتوراه -> المقابلة والأهلية، التطبيقي والسماح -> إصدار القرار)
+            $nextStatus = $application->requiresEligibility() ? 'بانتظار المقابلة' : 'بانتظار إصدار القرار';
 
             $application->update([
                 'status'           => $nextStatus,

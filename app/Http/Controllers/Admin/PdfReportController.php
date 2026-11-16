@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Application;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\PdfMergerService;
 
 class PdfReportController extends Controller
 {
@@ -32,7 +33,9 @@ class PdfReportController extends Controller
         $bachelorEd = $application->educations->where('level.name', 'إجازة جامعية')->first();
         $diplomaEd = $application->educations->where('level.name', 'دبلوم دراسات عليا')->first();
         $masterEd = $application->educations->where('level.name', 'ماجستير')->first();
-        $phdEd = $application->educations->where('level.name', 'دكتوراه')->first();
+        $phdEd = $application->educations->first(function($e) {
+            return ($e->level?->name === 'دكتوراه' || $e->education_level_id == 3) && !str_contains($e->thesis_title ?? '', 'هيئة تدريسية') && !str_contains($e->thesis_title ?? '', 'مركز بحوث');
+        }) ?? $application->educations->where('level.name', 'دكتوراه')->first();
 
         return view('admin.reports.mozhakkara', compact(
             'application',
@@ -67,7 +70,9 @@ class PdfReportController extends Controller
         $bachelorEd   = $application->educations->where('level.name', 'إجازة جامعية')->first();
         $diplomaEd    = $application->educations->where('level.name', 'دبلوم دراسات عليا')->first();
         $masterEd     = $application->educations->where('level.name', 'ماجستير')->first();
-        $phdEd        = $application->educations->where('level.name', 'دكتوراه')->first();
+        $phdEd        = $application->educations->first(function($e) {
+            return ($e->level?->name === 'دكتوراه' || $e->education_level_id == 3) && !str_contains($e->thesis_title ?? '', 'هيئة تدريسية') && !str_contains($e->thesis_title ?? '', 'مركز بحوث');
+        }) ?? $application->educations->where('level.name', 'دكتوراه')->first();
 
         // 1. Render Blade view to an HTML string
         $html = view('admin.reports.pdf_template', compact(
@@ -121,7 +126,7 @@ class PdfReportController extends Controller
     }
 
 
-    // Consolidated Viewer: Page 1 Mozhakkara report + Page 2+ attachments
+    // Consolidated Viewer: Page 1 Mozhakkara report + Page 2+ attachments & decisions
     public function consolidatedView($id)
     {
         $application = Application::with([
@@ -133,11 +138,14 @@ class PdfReportController extends Controller
             'parentApplication.latestDecision',
             'parentApplication.courses',
             'parentApplication.educations.attachments.attachmentType',
+            'parentApplication.decisions',
             'educations.level',
             'educations.country',
             'educations.university',
             'educations.residences',
-            'educations.attachments.attachmentType'
+            'educations.attachments.attachmentType',
+            'decisions',
+            'latestDecision',
         ])->findOrFail($id);
 
         $candidate = $application->candidate;
@@ -146,7 +154,9 @@ class PdfReportController extends Controller
         $bachelorEd   = $application->educations->where('level.name', 'إجازة جامعية')->first();
         $diplomaEd    = $application->educations->where('level.name', 'دبلوم دراسات عليا')->first();
         $masterEd     = $application->educations->where('level.name', 'ماجستير')->first();
-        $phdEd        = $application->educations->where('level.name', 'دكتوراه')->first();
+        $phdEd        = $application->educations->first(function($e) {
+            return ($e->level?->name === 'دكتوراه' || $e->education_level_id == 3) && !str_contains($e->thesis_title ?? '', 'هيئة تدريسية') && !str_contains($e->thesis_title ?? '', 'مركز بحوث');
+        }) ?? $application->educations->where('level.name', 'دكتوراه')->first();
 
         return view('admin.reports.consolidated', compact(
             'application', 'candidate', 'highSchoolEd', 'bachelorEd', 'diplomaEd', 'masterEd', 'phdEd'
@@ -164,11 +174,14 @@ class PdfReportController extends Controller
             'parentApplication.latestDecision',
             'parentApplication.courses',
             'parentApplication.educations.attachments.attachmentType',
+            'parentApplication.decisions',
             'educations.level',
             'educations.country',
             'educations.university',
             'educations.residences',
-            'educations.attachments.attachmentType'
+            'educations.attachments.attachmentType',
+            'decisions',
+            'latestDecision',
         ])->findOrFail($id);
 
         $candidate = $application->candidate;
@@ -177,7 +190,9 @@ class PdfReportController extends Controller
         $bachelorEd   = $application->educations->where('level.name', 'إجازة جامعية')->first();
         $diplomaEd    = $application->educations->where('level.name', 'دبلوم دراسات عليا')->first();
         $masterEd     = $application->educations->where('level.name', 'ماجستير')->first();
-        $phdEd        = $application->educations->where('level.name', 'دكتوراه')->first();
+        $phdEd        = $application->educations->first(function($e) {
+            return ($e->level?->name === 'دكتوراه' || $e->education_level_id == 3) && !str_contains($e->thesis_title ?? '', 'هيئة تدريسية') && !str_contains($e->thesis_title ?? '', 'مركز بحوث');
+        }) ?? $application->educations->where('level.name', 'دكتوراه')->first();
 
         // 1. Generate Mozhakkara PDF (page 1) using DomPDF
         $html = view('admin.reports.pdf_template', compact(
@@ -207,73 +222,23 @@ class PdfReportController extends Controller
         } catch (\Throwable $e) {}
 
         $mozhakkaraPdf = Pdf::loadHtml($html)->setPaper('a4', 'portrait');
-        $mozhakkaraTmpPath = storage_path('app/tmp_mozhakkara_' . $id . '.pdf');
+        $mozhakkaraTmpPath = storage_path('app/tmp_mozhakkara_' . $id . '_' . uniqid() . '.pdf');
         file_put_contents($mozhakkaraTmpPath, $mozhakkaraPdf->output());
 
-        // 2. Collect all uploaded PDF attachment file paths (Latest application attachments first!)
-        $attachmentPaths = [];
-        foreach ($application->educations as $ed) {
-            foreach ($ed->attachments->sortByDesc('id') as $att) {
-                $fullPath = storage_path('app/public/' . $att->file_path);
-                if (file_exists($fullPath) && strtolower(pathinfo($fullPath, PATHINFO_EXTENSION)) === 'pdf') {
-                    if (!in_array($fullPath, $attachmentPaths)) {
-                        $attachmentPaths[] = $fullPath;
-                    }
-                }
-            }
+        // 2. Build consolidated PDF via PdfMergerService (merges Mozhakkara + decisions + all attachments)
+        $mergedContent = PdfMergerService::buildConsolidatedPdf($mozhakkaraTmpPath, $application);
+        @unlink($mozhakkaraTmpPath);
+
+        if (!$mergedContent) {
+            $mergedContent = $mozhakkaraPdf->output();
         }
 
-        if ($application->parentApplication) {
-            foreach ($application->parentApplication->educations as $pEd) {
-                foreach ($pEd->attachments->sortByDesc('id') as $att) {
-                    $fullPath = storage_path('app/public/' . $att->file_path);
-                    if (file_exists($fullPath) && strtolower(pathinfo($fullPath, PATHINFO_EXTENSION)) === 'pdf') {
-                        if (!in_array($fullPath, $attachmentPaths)) {
-                            $attachmentPaths[] = $fullPath;
-                        }
-                    }
-                }
-            }
-        }
-
-        // 3. Merge all PDFs using FPDI: Mozhakkara first, then each attachment
-        $merger = new \setasign\Fpdi\Fpdi();
-
-        // Add Mozhakkara pages
-        $mozhakkaraPageCount = $merger->setSourceFile($mozhakkaraTmpPath);
-        for ($p = 1; $p <= $mozhakkaraPageCount; $p++) {
-            $tplId = $merger->importPage($p);
-            $size = $merger->getTemplateSize($tplId);
-            $merger->AddPage($size['orientation'], [$size['width'], $size['height']]);
-            $merger->useTemplate($tplId);
-        }
-
-        // Add each attachment PDF pages
-        foreach ($attachmentPaths as $pdfPath) {
-            try {
-                $pageCount = $merger->setSourceFile($pdfPath);
-                for ($p = 1; $p <= $pageCount; $p++) {
-                    $tplId = $merger->importPage($p);
-                    $size = $merger->getTemplateSize($tplId);
-                    $merger->AddPage($size['orientation'], [$size['width'], $size['height']]);
-                    $merger->useTemplate($tplId);
-                }
-            } catch (\Throwable $e) {
-                // Skip corrupted/unreadable PDFs
-                continue;
-            }
-        }
-
-        // 4. Output merged PDF with clean, descriptive filename
+        // 3. Output merged PDF with clean, descriptive filename
         $safeAppNo = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $application->application_no ?? ('App_' . $application->id));
         $candidateName = $candidate ? preg_replace('/[^\p{L}\p{N}\s\-_]/u', '', $candidate->full_name) : '';
         $cleanCandidateName = trim(preg_replace('/\s+/', '_', $candidateName));
 
         $fileName = 'Merged_Package_' . $safeAppNo . ($cleanCandidateName ? '_' . $cleanCandidateName : '') . '.pdf';
-
-        // Clean up temp file
-        $mergedContent = $merger->Output('S');
-        @unlink($mozhakkaraTmpPath);
 
         $disposition = request()->has('download') ? 'attachment' : 'inline';
 

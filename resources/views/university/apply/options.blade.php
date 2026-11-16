@@ -12,20 +12,33 @@
 </div>
 
 <div class="row justify-content-center g-4 mb-5">
-    <!-- Option 1: Syrian Master's (ACTIVE) -->
+    <!-- Option 1: Syrian Master's - Applied Track (ACTIVE) -->
     <div class="col-md-4">
-        <a href="{{ route('university.apply.syrian_masters') }}" class="card text-center p-4 h-100 text-decoration-none mohe-card active-option-card position-relative" style="border-radius: 8px; border-top: 3.5px solid var(--heritage-gold) !important;">
+        <a href="{{ route('university.apply.syrian_masters_applied') }}" class="card text-center p-4 h-100 text-decoration-none mohe-card active-option-card position-relative" style="border-radius: 8px; border-top: 3.5px solid var(--heritage-gold) !important;">
             <div class="card-option-badge">متاح للتقديم</div>
             <div class="option-icon-wrapper mx-auto mb-3">
                 <i class="fa-solid fa-graduation-cap fs-1" style="color: var(--heritage-gold);"></i>
             </div>
-            <h5 class="fw-bold mb-1" style="color: var(--primary-container);">ماجستير سوري</h5>
-            <span class="label-sm text-muted d-block mb-3">Syrian Master's Degree</span>
-            <p class="body-md small text-muted mb-0">لتعادل درجة الماجستير الصادرة عن إحدى الجامعات الحكومية أو الخاصة السورية لغايات التدريس.</p>
+            <h5 class="fw-bold mb-1" style="color: var(--primary-container);">ماجستير سوري (مسار تطبيقي)</h5>
+            <span class="label-sm text-muted d-block mb-3">Syrian Master's (Applied Track)</span>
+            <p class="body-md small text-muted mb-0">لتعادل درجة الماجستير الصادرة عن الجامعات السورية لتدريس الجوانب التطبيقية (بدون شرط خبرة السنتين).</p>
         </a>
     </div>
 
-    <!-- Option 2: Syrian Doctorate (ACTIVE) -->
+    <!-- Option 2: Syrian Master's - Theoretical Track (ACTIVE) -->
+    <div class="col-md-4">
+        <a href="{{ route('university.apply.syrian_masters_theoretical') }}" class="card text-center p-4 h-100 text-decoration-none mohe-card active-option-card position-relative" style="border-radius: 8px; border-top: 3.5px solid var(--heritage-gold) !important;">
+            <div class="card-option-badge">متاح للتقديم</div>
+            <div class="option-icon-wrapper mx-auto mb-3">
+                <i class="fa-solid fa-book-open-reader fs-1" style="color: var(--heritage-gold);"></i>
+            </div>
+            <h5 class="fw-bold mb-1" style="color: var(--primary-container);">ماجستير سوري (مسار نظري)</h5>
+            <span class="label-sm text-muted d-block mb-3">Syrian Master's (Theoretical Track)</span>
+            <p class="body-md small text-muted mb-0">لتعادل درجة الماجستير الصادرة عن الجامعات السورية لتدريس المقررات النظرية (يتطلب خبرة تدريسية لا تقل عن سنتين).</p>
+        </a>
+    </div>
+
+    <!-- Option 3: Syrian Doctorate (ACTIVE) -->
     <div class="col-md-4">
         <a href="{{ route('university.apply.syrian_doctorate') }}" class="card text-center p-4 h-100 text-decoration-none mohe-card active-option-card position-relative" style="border-radius: 8px; border-top: 3.5px solid var(--heritage-gold) !important;">
             <div class="card-option-badge">متاح للتقديم</div>
@@ -38,7 +51,7 @@
         </a>
     </div>
 
-    <!-- Option 3: Foreign Master's (ACTIVE) -->
+    <!-- Option 4: Foreign Master's (ACTIVE) -->
     <div class="col-md-4">
         <a href="{{ route('university.apply.foreign_masters') }}" class="card text-center p-4 h-100 text-decoration-none mohe-card active-option-card position-relative" style="border-radius: 8px; border-top: 3.5px solid var(--heritage-gold) !important;">
             <div class="card-option-badge">متاح للتقديم</div>
@@ -51,7 +64,7 @@
         </a>
     </div>
 
-    <!-- Option 4: Non-Syrian Doctorate (ACTIVE) -->
+    <!-- Option 5: Non-Syrian Doctorate (ACTIVE) -->
     <div class="col-md-4">
         <a href="{{ route('university.apply.foreign_doctorate') }}" class="card text-center p-4 h-100 text-decoration-none mohe-card active-option-card position-relative" style="border-radius: 8px; border-top: 3.5px solid var(--heritage-gold) !important;">
             <div class="card-option-badge">متاح للتقديم</div>
@@ -64,7 +77,7 @@
         </a>
     </div>
 
-    <!-- Option 5: Faculty Member Teaching Permission (ACTIVE) -->
+    <!-- Option 6: Faculty Member Teaching Permission (ACTIVE) -->
     <div class="col-md-4">
         <a href="{{ route('university.apply.faculty_permission') }}" class="card text-center p-4 h-100 text-decoration-none mohe-card active-option-card position-relative" style="border-radius: 8px; border-top: 3.5px solid var(--heritage-gold) !important;">
             <div class="card-option-badge">متاح للتقديم</div>

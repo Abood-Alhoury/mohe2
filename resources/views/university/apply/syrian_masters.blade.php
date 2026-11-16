@@ -1,6 +1,17 @@
-@extends('layouts.university')
+@extends(!empty($isAdminEdit) ? 'layouts.admin' : 'layouts.university')
 
-@section('title', 'تقديم طلب تعادل ماجستير سوري')
+@php
+    $trackType = (isset($trackType) && in_array($trackType, ['applied', 'theoretical'], true)) ? $trackType : 'applied';
+    $isTheoreticalTrack = ($trackType === 'theoretical');
+    $trackLabel = $isTheoreticalTrack ? 'ماجستير سوري (مسار نظري)' : 'ماجستير سوري (مسار تطبيقي)';
+    $submitRoute = !empty($isAdminEdit)
+        ? $adminSubmitRoute
+        : ($isTheoreticalTrack
+            ? route('university.apply.syrian_masters_theoretical.submit')
+            : route('university.apply.syrian_masters_applied.submit'));
+@endphp
+
+@section('title', 'تقديم طلب تعادل ' . $trackLabel)
 
 @section('content')
 
@@ -12,14 +23,13 @@
 
     $existingFiles = [];
     if ($draft) {
-        // خريطة ربط أرقام الأنواع المعيارية (1 - 23) بأسماء حقول الـ Blade للماجستير
+        $sharedTypeIds = [7, 21];
         $typeToKeyMap = [
             1  => 'file_hs_cert',
             2  => 'hs_decision_file',
             3  => 'file_ba_cert',
             4  => 'ba_decision_file',
             6  => 'file_ma_cert',
-            7  => 'file_ma_dates',
             8  => 'file_thesis_summary',
             13 => 'file_national_id',
             14 => 'file_cv',
@@ -28,7 +38,6 @@
             18 => 'file_lang_cert',
             19 => 'file_icdl_cert',
             20 => 'file_exp_cert',
-            21 => 'file_contracts',
             22 => 'file_nat_library_receipt',
             23 => 'file_other_attachments',
         ];
@@ -36,33 +45,77 @@
         foreach ($draft->educations as $ed) {
             foreach ($ed->attachments as $att) {
                 $tId = (int) ($att->attachment_type_id ?? 0);
+                $notes = trim($att->notes ?? '');
                 $path = $att->file_path;
                 if (!$path) continue;
 
-                // 1. التخزين برقم الـ ID
-                $existingFiles[$tId] = $path;
-
-                // 2. التخزين بالاسم البرمجي المباشر لعرض الشارة
-                if (isset($typeToKeyMap[$tId])) {
-                    $existingFiles[$typeToKeyMap[$tId]] = $path;
+                if ($tId && !in_array($tId, $sharedTypeIds, true)) {
+                    $existingFiles[$tId] = $path;
                 }
 
-                // 3. دعم المسميات البديلة لتفادي أي خطأ
-                if ($tId === 2)  $existingFiles['file_hs_decision'] = $path;
-                if ($tId === 4)  $existingFiles['file_ba_decision'] = $path;
-                if ($tId === 7)  $existingFiles['file_ma_council_decisions'] = $path;
-                if ($tId === 13) $existingFiles['national_id'] = $path;
+                // مطابقة الملاحظات المحددة أولاً لمنع التداخل في الأنواع المشتركة (7 و 21) و (13)
+                if (str_contains($notes, 'هوية') || str_contains($notes, 'شخصية') || str_contains($notes, 'جواز') || $tId === 11) {
+                    $existingFiles['file_national_id'] = $path;
+                    $existingFiles['national_id'] = $path;
+                } elseif ((str_contains($notes, 'قرار') && str_contains($notes, 'ثانوية')) || $tId === 2) {
+                    $existingFiles['hs_decision_file'] = $path;
+                    $existingFiles['file_hs_decision'] = $path;
+                } elseif ((str_contains($notes, 'ثانوية') && !str_contains($notes, 'قرار')) || $tId === 1) {
+                    $existingFiles['file_hs_cert'] = $path;
+                } elseif ((str_contains($notes, 'قرار') && (str_contains($notes, 'الإجازة') || str_contains($notes, 'الجامعية'))) || $tId === 4) {
+                    $existingFiles['ba_decision_file'] = $path;
+                    $existingFiles['file_ba_decision'] = $path;
+                } elseif ((str_contains($notes, 'الإجازة') && !str_contains($notes, 'قرار')) || $tId === 3) {
+                    $existingFiles['file_ba_cert'] = $path;
+                } elseif (str_contains($notes, 'المناقشة')) {
+                    $existingFiles['file_ma_defense_decision'] = $path;
+                } elseif (str_contains($notes, 'منح') && str_contains($notes, 'ماجستير')) {
+                    $existingFiles['file_ma_grant_decision'] = $path;
+                } elseif (str_contains($notes, 'بالتسجيل') || (str_contains($notes, 'التسجيل') && str_contains($notes, 'ماجستير'))) {
+                    $existingFiles['file_ma_reg_decision'] = $path;
+                } elseif (str_contains($notes, 'تواريخ') || str_contains($notes, 'مجلس') || $tId === 7) {
+                    $existingFiles['file_ma_dates'] = $path;
+                } elseif ((str_contains($notes, 'شهادة') && str_contains($notes, 'ماجستير')) || $tId === 6 || $tId === 12) {
+                    $existingFiles['file_ma_cert'] = $path;
+                } elseif (str_contains($notes, 'ملخص') || $tId === 8 || $tId === 17) {
+                    $existingFiles['file_thesis_summary'] = $path;
+                } elseif (str_contains($notes, 'المكتبة') || $tId === 22 || $tId === 25) {
+                    $existingFiles['file_nat_library_receipt'] = $path;
+                } elseif (str_contains($notes, 'السيرة') || str_contains($notes, 'سيرة') || $tId === 14) {
+                    $existingFiles['file_cv'] = $path;
+                } elseif (str_contains($notes, 'كتاب') || str_contains($notes, 'طلب') || $tId === 15) {
+                    $existingFiles['file_uni_request'] = $path;
+                } elseif (str_contains($notes, 'إيصال') || str_contains($notes, 'تسديد') || str_contains($notes, 'رسم') || $tId === 16) {
+                    $existingFiles['file_payment'] = $path;
+                } elseif (str_contains($notes, 'اللغة') || $tId === 18) {
+                    $existingFiles['file_lang_cert'] = $path;
+                } elseif (str_contains($notes, 'ICDL') || str_contains($notes, 'حاسوب') || $tId === 19) {
+                    $existingFiles['file_icdl_cert'] = $path;
+                } elseif (str_contains($notes, 'خبرة') || $tId === 20) {
+                    $existingFiles['file_exp_cert'] = $path;
+                } elseif (str_contains($notes, 'كشوفات الرواتب') || str_contains($notes, 'التحويلات البنكية') || (str_contains($notes, 'رواتب') && !str_contains($notes, 'العقود'))) {
+                    $existingFiles['file_salary_slips'] = $path;
+                } elseif (str_contains($notes, 'أخرى') || str_contains($notes, 'اخرى') || $tId === 23 || $tId === 24) {
+                    $existingFiles['file_other_attachments'] = $path;
+                } elseif (str_contains($notes, 'العقود') || str_contains($notes, 'عقود') || $tId === 21) {
+                    $existingFiles['file_contracts'] = $path;
+                } elseif (isset($typeToKeyMap[$tId])) {
+                    $existingFiles[$typeToKeyMap[$tId]] = $path;
+                }
             }
         }
     }
 
-    $isAwaitingDocs = $draft && (
+    $isAwaitingDocs = empty($isAdminEdit) && $draft && (
         $draft->status_id == 3 || 
         in_array($draft->status, ['بانتظار الوثائق', 'بانتظار استكمال الوثائق', 'بانتظار تصحيح الوثائق', 'بانتظار الوثائق الناقصة'])
     );
-    $canSaveDraft = !$draft || ($draft->status_id == 1 || $draft->status === 'مسودة');
+    $canSaveDraft = empty($isAdminEdit) && (!$draft || ($draft->status_id == 1 || $draft->status === 'مسودة'));
 @endphp
 
+@if(!empty($isAdminEdit))
+    @include('university.apply.partials._admin_edit_banner', ['wizardTitle' => $trackLabel])
+@else
 <!-- BREADCRUMBS & PAGE HEADER -->
 <div class="row mb-4">
     <div class="col-12">
@@ -70,15 +123,21 @@
             <ol class="breadcrumb mb-2">
                 <li class="breadcrumb-item"><a href="{{ route('university.dashboard') }}" style="color: var(--primary-container); text-decoration: none;">الرئيسية</a></li>
                 <li class="breadcrumb-item"><a href="{{ route('university.apply.options') }}" style="color: var(--primary-container); text-decoration: none;">خيارات التعادل</a></li>
-                <li class="breadcrumb-item active text-muted" aria-current="page">ماجستير سوري</li>
+                <li class="breadcrumb-item active text-muted" aria-current="page">{{ $trackLabel }}</li>
             </ol>
         </nav>
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
             <div>
                 <h3 class="headline-md text-prestigious mb-1" style="font-size: 1.5rem;">
-                    <i class="fa-solid fa-file-invoice-dollar me-2" style="color: var(--heritage-gold);"></i> معاملة تعادل درجة ماجستير سورية
+                    <i class="fa-solid {{ $isTheoreticalTrack ? 'fa-chalkboard-user' : 'fa-flask-vial' }} me-2" style="color: var(--heritage-gold);"></i> معاملة تعادل {{ $trackLabel }}
                 </h3>
-                <p class="body-md text-muted mb-0">الرجاء إدخال البيانات المطلوبة بدقة والتنقل بين الخطوات لرفع المستندات وإرسال الطلب لمجلس التعليم العالي.</p>
+                <p class="body-md text-muted mb-0">
+                    @if($isTheoreticalTrack)
+                        لتعادل درجة الماجستير الصادرة عن الجامعات السورية لتدريس المقررات النظرية (يتطلب خبرة تدريسية تراكمية لا تقل عن سنتين ومقابلة وأهلية تدريس).
+                    @else
+                        لتعادل درجة الماجستير الصادرة عن الجامعات السورية لتدريس الجوانب التطبيقية والعملية (بدون شرط خبرة السنتين وبدون قرار أهلية).
+                    @endif
+                </p>
             </div>
             @if($draft)
                 <div>
@@ -96,6 +155,7 @@
         </div>
     </div>
 </div>
+@endif
 
 <!-- WIZARD MAIN CONTAINER -->
 <div class="card border-0 shadow-sm" style="border-radius: 8px; border-top: 3px solid var(--heritage-gold) !important; border: 1px solid var(--outline-variant) !important; background-color: #ffffff;">
@@ -153,9 +213,10 @@
         </div>
 
         <!-- Form Tag -->
-        <form action="{{ route('university.apply.syrian_masters.submit') }}" method="POST" enctype="multipart/form-data" id="wizard-form" novalidate>
+        <form action="{{ $submitRoute }}" method="POST" enctype="multipart/form-data" id="wizard-form" novalidate>
             @csrf
             <input type="hidden" name="draft_id" id="input-draft-id" value="{{ optional($draft)->id }}">
+            <input type="hidden" name="track_type" id="input-trackType" value="{{ $trackType }}">
 
             <!-- ================= STEP 1: PERSONAL INFO & UNIVERSITY REQUEST ================= -->
             <div class="form-section active" id="step-1">
@@ -214,7 +275,7 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label label-md fw-medium text-dark">البريد الإلكتروني</label><span class="text-danger"> *</span>
-                        <input type="email" name="email" id="input-email" class="form-control academic-input" placeholder="name@example.com" value="{{ old('email', optional(optional($draft)->candidate)->email ?: (Auth::user()->university->email ?? Auth::user()->email)) }}" oninput="this.setCustomValidity('')" required>
+                        <input type="email" name="email" id="input-email" class="form-control academic-input" placeholder="name@example.com" value="{{ old('email', optional(optional($draft)->candidate)->email ?: (empty($isAdminEdit) ? (Auth::user()?->university?->email ?? Auth::user()?->email) : '')) }}" oninput="this.setCustomValidity('')" required>
                     </div>
 
                     <div class="col-md-6">
@@ -296,7 +357,7 @@
                             <option value="شرعي" {{ $oldHsType == 'شرعي' ? 'selected' : '' }}>شرعي</option>
                             <option value="تجاري" {{ $oldHsType == 'تجاري' ? 'selected' : '' }}>تجاري</option>
                             <option value="صناعي" {{ $oldHsType == 'صناعي' ? 'selected' : '' }}>صناعي</option>
-                            <option value="أخر" {{ $oldHsType == 'أخرى' ? 'selected' : '' }}>أخرى</option>
+                            <option value="أخرى" {{ $oldHsType == 'أخرى' || $oldHsType == 'أخر' ? 'selected' : '' }}>أخرى</option>
                         </select>
                     </div>
                     <div class="col-md-4">
@@ -510,166 +571,167 @@
                                 ]]);
                             }
                         }
-                        $hasInitialExperiences = $draftExperiences->isNotEmpty() || old('has_experience') == '1';
                     @endphp
 
-                    <!-- Multi-Period Teaching Experience Section -->
-                    <div class="col-12 mt-4" id="experience-section-container">
-                        <div class="card border rounded-3 p-3 shadow-xs" style="background-color: #f8fafc; border-color: #e2e8f0 !important;">
-                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 border-bottom pb-2">
-                                <div>
-                                    <h6 class="fw-bold mb-1 d-flex align-items-center gap-2" style="color: var(--primary-container);">
-                                        <i class="fa-solid fa-chalkboard-user" style="color: var(--heritage-gold);"></i> تسجيل فترات الخبرة التدريسية الأكاديمية (إن وجدت)
-                                    </h6>
-                                    <p class="text-muted fs-8 mb-0">
-                                        يتم احتساب مجموع فترات الخبرة التدريسية تلقائياً: إذا بلغت <strong>سنتين فأكثر (730 يوماً)</strong> يُعتمد مسار <strong>(ماجستير نظري)</strong> ويتطلب مقابلة وأهلية تدريس، وإذا كانت <strong>أقل من سنتين</strong> يُعتمد مسار <strong>(ماجستير تطبيقي - هيئة فنية)</strong>.
-                                    </p>
+                    @if($isTheoreticalTrack)
+                        <!-- Multi-Period Teaching Experience Section (Mandatory for Theoretical Track) -->
+                        <div class="col-12 mt-4" id="experience-section-container">
+                            <input type="hidden" id="input-hasExperience" name="has_experience" value="1">
+                            <div class="card border rounded-3 p-3 shadow-xs" style="background-color: #f8fafc; border-color: #cbd5e1 !important; border-right: 4px solid var(--heritage-gold) !important;">
+                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 border-bottom pb-2">
+                                    <div>
+                                        <h6 class="fw-bold mb-1 d-flex align-items-center gap-2" style="color: var(--primary-container);">
+                                            <i class="fa-solid fa-chalkboard-user" style="color: var(--heritage-gold);"></i> تسجيل فترات الخبرة التدريسية الأكاديمية (إلزامي: لا تقل عن سنتين / 730 يوماً) <span class="text-danger">*</span>
+                                        </h6>
+                                        <p class="text-muted fs-8 mb-0">
+                                            يجب إدخال فترات الخبرة التدريسية لدى جامعة أو عدة جامعات بحيث لا يقل المجموع التراكمي عن <strong>سنتين كاملتين (730 يوماً فأكثر)</strong> لإتمام تقديم مسار <strong>(ماجستير نظري)</strong> وإصدار قرار الأهلية والمقابلة.
+                                        </p>
+                                    </div>
+                                    <span class="badge bg-warning-subtle text-dark border border-warning px-3 py-1.5 fw-bold">
+                                        <i class="fa-solid fa-shield-halved me-1 text-warning"></i> شرط إلزامي للمسار النظري
+                                    </span>
                                 </div>
-                                <div class="form-check form-switch m-0">
-                                    <input class="form-check-input" type="checkbox" id="input-hasExperience" name="has_experience" value="1" {{ $hasInitialExperiences ? 'checked' : '' }} onchange="toggleExperienceBlock(this.checked)">
-                                    <label class="form-check-label fw-bold text-dark ms-1 label-md" for="input-hasExperience">تسجيل فترات خبرة</label>
-                                </div>
-                            </div>
 
-                            <div id="experience-entry-wrapper" style="display: {{ $hasInitialExperiences ? 'block' : 'none' }};">
-                                <!-- Form Inputs Card -->
-                                <div class="card p-3 mb-3 border rounded-3 bg-white shadow-xs">
-                                    <div class="row g-2 align-items-end">
-                                        <div class="col-md-4">
-                                             <label class="form-label label-sm fw-bold">الجهة / الجامعة والكلية <span class="text-danger">*</span></label>
-                                            <input type="text" id="exp_institution" class="form-control academic-input" placeholder="مثال: جامعة دمشق - كلية العلوم">
-                                        </div>
-                                        <div class="col-md-3">
-                                            <label class="form-label label-sm fw-bold">الصفة التدريسية / المقرر <span class="text-muted fs-8 fw-normal">(اختياري)</span></label>
-                                            <input type="text" id="exp_role" class="form-control academic-input" placeholder="مثال: تدريس مخبري لمقرر البرمجة">
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label class="form-label label-sm fw-bold">من تاريخ <span class="text-danger">*</span></label>
-                                            <input type="date" id="exp_start_date" class="form-control academic-input" max="{{ date('Y-m-d') }}">
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label class="form-label label-sm fw-bold">إلى تاريخ <span class="text-danger">*</span></label>
-                                            <input type="date" id="exp_end_date" class="form-control academic-input" max="{{ date('Y-m-d') }}">
-                                        </div>
-                                        <div class="col-md-1">
-                                            <button type="button" class="btn btn-primary w-100 fw-bold shadow-sm" onclick="addExperiencePeriod()" style="height: 38px;" title="إضافة الفترة إلى الجدول">
-                                                <i class="fa-solid fa-plus-circle me-1"></i> إضافة
-                                            </button>
-                                        </div>
-                                        <div class="col-12 mt-2">
-                                            <input type="text" id="exp_notes" class="form-control academic-input form-control-sm" placeholder="ملاحظات إضافية أو رقم كتاب التكليف بالتدريس (اختياري)">
+                                <div id="experience-entry-wrapper">
+                                    <!-- Form Inputs Card -->
+                                    <div class="card p-3 mb-3 border rounded-3 bg-white shadow-xs">
+                                        <div class="row g-2 align-items-end">
+                                            <div class="col-md-4">
+                                                <label class="form-label label-sm fw-bold">الجهة / الجامعة والكلية <span class="text-danger">*</span></label>
+                                                <input type="text" id="exp_institution" class="form-control academic-input" placeholder="مثال: جامعة دمشق - كلية العلوم">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label label-sm fw-bold">الصفة التدريسية / المقرر <span class="text-muted fs-8 fw-normal">(اختياري)</span></label>
+                                                <input type="text" id="exp_role" class="form-control academic-input" placeholder="مثال: تدريس مقرر البرمجة">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label label-sm fw-bold">من تاريخ <span class="text-danger">*</span></label>
+                                                <input type="date" id="exp_start_date" class="form-control academic-input" max="{{ date('Y-m-d') }}">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label label-sm fw-bold">إلى تاريخ <span class="text-danger">*</span></label>
+                                                <input type="date" id="exp_end_date" class="form-control academic-input" max="{{ date('Y-m-d') }}">
+                                            </div>
+                                            <div class="col-md-1">
+                                                <button type="button" class="btn btn-primary w-100 fw-bold shadow-sm" onclick="addExperiencePeriod()" style="height: 38px;" title="إضافة الفترة إلى الجدول">
+                                                    <i class="fa-solid fa-plus-circle me-1"></i> إضافة
+                                                </button>
+                                            </div>
+                                            <div class="col-12 mt-2">
+                                                <input type="text" id="exp_notes" class="form-control academic-input form-control-sm" placeholder="ملاحظات إضافية أو رقم كتاب التكليف بالتدريس (اختياري)">
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <!-- Periods Table -->
-                                <div class="table-responsive mb-3 shadow-xs rounded border bg-white">
-                                    <table class="table table-bordered table-hover align-middle text-center mb-0" id="experiences_table" style="font-size: 0.85rem;">
-                                        <thead style="background-color: #1e3a5f; color: #ffffff;">
-                                            <tr>
-                                                <th style="width: 5%; color: #ffffff;">#</th>
-                                                <th style="width: 25%; color: #ffffff;"><i class="fa-solid fa-building-columns me-1"></i> الجهة / الجامعة والكلية</th>
-                                                <th style="width: 18%; color: #ffffff;"><i class="fa-solid fa-chalkboard me-1"></i> الصفة / المقرر</th>
-                                                <th style="width: 12%; color: #ffffff;"><i class="fa-regular fa-calendar-check me-1"></i> من تاريخ</th>
-                                                <th style="width: 12%; color: #ffffff;"><i class="fa-regular fa-calendar-xmark me-1"></i> إلى تاريخ</th>
-                                                <th style="width: 18%; color: #ffffff;"><i class="fa-solid fa-clock-rotate-left me-1"></i> المدة المحسوبة</th>
-                                                <th style="width: 10%; color: #ffffff;">إجراءات</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="experiences_tbody">
-                                            @forelse($draftExperiences as $idx => $exp)
-                                                @php
-                                                    $sDateStr = !empty($exp->start_date) ? $exp->start_date : null;
-                                                    $eDateStr = !empty($exp->end_date) ? $exp->end_date : null;
-                                                    $calcY = 0; $calcM = 0; $calcD = 0; $tDays = 0;
-                                                    if ($sDateStr && $eDateStr) {
-                                                        try {
-                                                            $sDate = \Carbon\Carbon::parse($sDateStr);
-                                                            $eDate = \Carbon\Carbon::parse($eDateStr);
-                                                            if ($eDate->gte($sDate)) {
-                                                                $diff = $sDate->diff($eDate);
-                                                                $calcY = $diff->y; $calcM = $diff->m; $calcD = $diff->d;
-                                                                $tDays = $sDate->diffInDays($eDate);
-                                                            }
-                                                        } catch (\Exception $ex) {}
-                                                    }
-                                                @endphp
-                                                <tr data-row-id="{{ $idx + 1 }}">
-                                                    <td>{{ $idx + 1 }}</td>
-                                                    <td class="text-start pe-3"><strong>{{ $exp->institution_name }}</strong></td>
-                                                    <td>{{ $exp->role_or_subject ?: '---' }}</td>
-                                                    <td><strong class="text-dark">{{ $sDateStr ? \Carbon\Carbon::parse($sDateStr)->format('Y-m-d') : '---' }}</strong></td>
-                                                    <td><strong class="text-dark">{{ $eDateStr ? \Carbon\Carbon::parse($eDateStr)->format('Y-m-d') : '---' }}</strong></td>
-                                                    <td>
-                                                        <span class="badge bg-success-subtle text-success border border-success px-2 py-1">
-                                                            {{ $calcY }} سنة و {{ $calcM }} شهر و {{ $calcD }} يوم
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        <button type="button" class="btn btn-xs btn-outline-danger" onclick="deleteExperiencePeriod(this)" title="حذف الفترة"><i class="fa-solid fa-trash"></i></button>
-                                                        <input type="hidden" name="experiences[{{ $idx }}][institution_name]" value="{{ $exp->institution_name }}">
-                                                        <input type="hidden" name="experiences[{{ $idx }}][role_or_subject]" value="{{ $exp->role_or_subject }}">
-                                                        <input type="hidden" name="experiences[{{ $idx }}][start_date]" value="{{ $sDateStr ? \Carbon\Carbon::parse($sDateStr)->format('Y-m-d') : '' }}">
-                                                        <input type="hidden" name="experiences[{{ $idx }}][end_date]" value="{{ $eDateStr ? \Carbon\Carbon::parse($eDateStr)->format('Y-m-d') : '' }}">
-                                                        <input type="hidden" name="experiences[{{ $idx }}][duration_days]" value="{{ $tDays }}">
-                                                        <input type="hidden" name="experiences[{{ $idx }}][notes]" value="{{ $exp->notes }}">
-                                                    </td>
+                                    <!-- Periods Table -->
+                                    <div class="table-responsive mb-3 shadow-xs rounded border bg-white">
+                                        <table class="table table-bordered table-hover align-middle text-center mb-0" id="experiences_table" style="font-size: 0.85rem;">
+                                            <thead style="background-color: #1e3a5f; color: #ffffff;">
+                                                <tr>
+                                                    <th style="width: 5%; color: #ffffff;">#</th>
+                                                    <th style="width: 25%; color: #ffffff;"><i class="fa-solid fa-building-columns me-1"></i> الجهة / الجامعة والكلية</th>
+                                                    <th style="width: 18%; color: #ffffff;"><i class="fa-solid fa-chalkboard me-1"></i> الصفة / المقرر</th>
+                                                    <th style="width: 12%; color: #ffffff;"><i class="fa-regular fa-calendar-check me-1"></i> من تاريخ</th>
+                                                    <th style="width: 12%; color: #ffffff;"><i class="fa-regular fa-calendar-xmark me-1"></i> إلى تاريخ</th>
+                                                    <th style="width: 18%; color: #ffffff;"><i class="fa-solid fa-clock-rotate-left me-1"></i> المدة المحسوبة</th>
+                                                    <th style="width: 10%; color: #ffffff;">إجراءات</th>
                                                 </tr>
-                                            @empty
-                                                <tr id="no_experiences_row">
-                                                    <td colspan="7" class="text-muted py-4">لم يتم تسجيل أي فترات خبرة تدريسية بعد. يمكنك إدخال الفترات من النموذج أعلاه والضغط على (إضافة) لإدراجها بالجدول.</td>
-                                                </tr>
-                                            @endforelse
-                                        </tbody>
-                                    </table>
-                                </div>
+                                            </thead>
+                                            <tbody id="experiences_tbody">
+                                                @forelse($draftExperiences as $idx => $exp)
+                                                    @php
+                                                        $sDateStr = !empty($exp->start_date) ? $exp->start_date : null;
+                                                        $eDateStr = !empty($exp->end_date) ? $exp->end_date : null;
+                                                        $calcY = 0; $calcM = 0; $calcD = 0; $tDays = 0;
+                                                        if ($sDateStr && $eDateStr) {
+                                                            try {
+                                                                $sDate = \Carbon\Carbon::parse($sDateStr);
+                                                                $eDate = \Carbon\Carbon::parse($eDateStr);
+                                                                if ($eDate->gte($sDate)) {
+                                                                    $diff = $sDate->diff($eDate);
+                                                                    $calcY = $diff->y; $calcM = $diff->m; $calcD = $diff->d;
+                                                                    $tDays = $sDate->diffInDays($eDate);
+                                                                }
+                                                            } catch (\Exception $ex) {}
+                                                        }
+                                                    @endphp
+                                                    <tr data-row-id="{{ $idx + 1 }}">
+                                                        <td>{{ $idx + 1 }}</td>
+                                                        <td class="text-start pe-3"><strong>{{ $exp->institution_name }}</strong></td>
+                                                        <td>{{ $exp->role_or_subject ?: '---' }}</td>
+                                                        <td><strong class="text-dark">{{ $sDateStr ? \Carbon\Carbon::parse($sDateStr)->format('Y-m-d') : '---' }}</strong></td>
+                                                        <td><strong class="text-dark">{{ $eDateStr ? \Carbon\Carbon::parse($eDateStr)->format('Y-m-d') : '---' }}</strong></td>
+                                                        <td>
+                                                            <span class="badge bg-success-subtle text-success border border-success px-2 py-1">
+                                                                {{ $calcY }} سنة و {{ $calcM }} شهر و {{ $calcD }} يوم
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <button type="button" class="btn btn-xs btn-outline-danger" onclick="deleteExperiencePeriod(this)" title="حذف الفترة"><i class="fa-solid fa-trash"></i></button>
+                                                            <input type="hidden" name="experiences[{{ $idx }}][institution_name]" value="{{ $exp->institution_name }}">
+                                                            <input type="hidden" name="experiences[{{ $idx }}][role_or_subject]" value="{{ $exp->role_or_subject }}">
+                                                            <input type="hidden" name="experiences[{{ $idx }}][start_date]" value="{{ $sDateStr ? \Carbon\Carbon::parse($sDateStr)->format('Y-m-d') : '' }}">
+                                                            <input type="hidden" name="experiences[{{ $idx }}][end_date]" value="{{ $eDateStr ? \Carbon\Carbon::parse($eDateStr)->format('Y-m-d') : '' }}">
+                                                            <input type="hidden" name="experiences[{{ $idx }}][duration_days]" value="{{ $tDays }}">
+                                                            <input type="hidden" name="experiences[{{ $idx }}][notes]" value="{{ $exp->notes }}">
+                                                        </td>
+                                                    </tr>
+                                                @empty
+                                                    <tr id="no_experiences_row">
+                                                        <td colspan="7" class="text-muted py-4">لم يتم تسجيل أي فترات خبرة تدريسية بعد. يرجى إضافة فترة واحدة أو أكثر بحيث يبلغ المجموع التراكمي 730 يوماً (سنتين) على الأقل.</td>
+                                                    </tr>
+                                                @endforelse
+                                            </tbody>
+                                        </table>
+                                    </div>
 
-                                <!-- Live KPI & Track Determination Bar -->
-                                <div class="card p-3 rounded-3 shadow-sm border" id="experience_kpi_card" style="background-color: #eff6ff; border-color: #bfdbfe !important;">
-                                    <div class="row align-items-center gy-3">
-                                        <div class="col-lg-6">
-                                            <div class="d-flex align-items-center gap-2 mb-1">
-                                                <i class="fa-solid fa-hourglass-half text-primary fs-5" id="exp_kpi_icon"></i>
-                                                <span class="fw-bold fs-7 text-dark">مجموع مدة الخبرات التدريسية التراكمية:</span>
+                                    <!-- Live KPI & Track Determination Bar -->
+                                    <div class="card p-3 rounded-3 shadow-sm border" id="experience_kpi_card" style="background-color: #eff6ff; border-color: #bfdbfe !important;">
+                                        <div class="row align-items-center gy-3">
+                                            <div class="col-lg-6">
+                                                <div class="d-flex align-items-center gap-2 mb-1">
+                                                    <i class="fa-solid fa-hourglass-half text-primary fs-5" id="exp_kpi_icon"></i>
+                                                    <span class="fw-bold fs-7 text-dark">مجموع مدة الخبرات التدريسية التراكمية:</span>
+                                                </div>
+                                                <div class="d-flex align-items-center gap-2 fs-6 fw-bold text-dark flex-wrap">
+                                                    <span class="badge bg-primary fs-6 px-2.5 py-1.5"><span id="exp_total_years">0</span> سنة</span>
+                                                    <span>و</span>
+                                                    <span class="badge bg-primary fs-6 px-2.5 py-1.5"><span id="exp_total_months">0</span> شهر</span>
+                                                    <span>و</span>
+                                                    <span class="badge bg-primary fs-6 px-2.5 py-1.5"><span id="exp_total_days">0</span> يوم</span>
+                                                    <span class="badge bg-dark-subtle text-dark border ms-1 fs-7 py-1 px-2">(إجمالي: <span id="exp_total_all_days">0</span> يوماً)</span>
+                                                </div>
                                             </div>
-                                            <div class="d-flex align-items-center gap-2 fs-6 fw-bold text-dark flex-wrap">
-                                                <span class="badge bg-primary fs-6 px-2.5 py-1.5"><span id="exp_total_years">0</span> سنة</span>
-                                                <span>و</span>
-                                                <span class="badge bg-primary fs-6 px-2.5 py-1.5"><span id="exp_total_months">0</span> شهر</span>
-                                                <span>و</span>
-                                                <span class="badge bg-primary fs-6 px-2.5 py-1.5"><span id="exp_total_days">0</span> يوم</span>
-                                                <span class="badge bg-dark-subtle text-dark border ms-1 fs-7 py-1 px-2">(إجمالي: <span id="exp_total_all_days">0</span> يوماً)</span>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-6 text-lg-end text-center">
-                                            <div class="fs-8 text-muted mb-1">المسار الأكاديمي المعتمد آلياً للطلب:</div>
-                                            <div id="track_determination_badge">
-                                                <!-- Dynamic badge rendered by recalcTotalExperience -->
+                                            <div class="col-lg-6 text-lg-end text-center">
+                                                <div class="fs-8 text-muted mb-1">حالة استيفاء شرط الخبرة للمسار النظري:</div>
+                                                <div id="track_determination_badge">
+                                                    <!-- Dynamic badge rendered by recalcTotalExperience -->
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    @endif
                 </div>
             </div>
 
             <!-- ================= STEP 5: ATTACHMENTS ================= -->
             <div class="form-section" id="step-5" style="display: none;">
                 <h5 class="fw-bold border-bottom pb-2 mb-4 d-flex align-items-center gap-2" style="color: var(--primary-container); border-bottom-color: var(--outline-variant) !important;">
-                    <i class="fa-solid fa-paperclip fs-5" style="color: var(--heritage-gold);"></i> الخطوة 5: رفع المرفقات والمستندات الثبوتية المطلوبة (PDF فقط - حد أقصى 5 ميغابايت لملخص الرسالة و2 ميغابايت لباقي الثبوتيات)
+                    <i class="fa-solid fa-paperclip fs-5" style="color: var(--heritage-gold);"></i> الخطوة 5: رفع المرفقات والمستندات الثبوتية المطلوبة ({{ $isTheoreticalTrack ? '16 مرفقاً' : '13 مرفقاً' }} — PDF فقط)
                 </h5>
                 
                 <div class="alert border-0 shadow-sm mb-4" style="background-color: var(--surface-container-low); border-right: 4px solid var(--primary-container) !important; color: var(--primary-container); border-radius: 4px;">
-                    <i class="fa-solid fa-info-circle me-1" style="color: var(--heritage-gold);"></i> يرجى التأكد من رفع ملفات PDF واضحة ومصدقة أصولاً، <strong>بحجم لا يتجاوز 2 ميغابايت للوثائق الثبوتية، وحتى 5 ميغابايت لملخص الرسالة</strong> لعدم تعليق المعاملة ولضمان سرعة معالجة وحفظ الملفات.
+                    <i class="fa-solid fa-info-circle me-1" style="color: var(--heritage-gold);"></i> يرجى التأكد من رفع ملفات PDF واضحة ومصدقة أصولاً، <strong>بحجم لا يتجاوز 2 ميغابايت للوثائق الثبوتية، وحتى 5 ميغابايت لملخص الرسالة</strong> لعدم تعليق المعاملة.
                 </div>
 
                 <div class="row g-4">
-                    <!-- National ID / Identity Proof (Mandatory) -->
+                    <!-- 1. National ID / Passport (Mandatory) -->
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">صورة الهوية الشخصية / إثبات الشخصية (إلزامي) <span class="text-danger">*</span></label>
-                        <input type="file" name="file_national_id" id="input-fileNationalId" class="form-control academic-input" accept=".pdf" {{ empty($existingFiles['file_national_id']) ? 'required' : '' }}>
+                        <label class="form-label label-md fw-medium text-dark">1. صورة عن الهوية الشخصية / جواز السفر <span class="text-danger">*</span></label>
+                        <input type="file" name="file_national_id" id="input-fileNationalId" class="form-control academic-input" accept=".pdf">
                         @if(!empty($existingFiles['file_national_id']))
                             <div class="mt-1 d-flex align-items-center gap-2">
                                 <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
@@ -680,9 +742,9 @@
                         @endif
                     </div>
 
-                    <!-- High School Cert -->
+                    <!-- 2. High School Cert (Mandatory) -->
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">نسخة مصدقة أصولاً عن شهادة الدراسة الثانوية </label><span class="text-danger"> *</span>
+                        <label class="form-label label-md fw-medium text-dark">2. نسخة مصدقة عن الشهادة الثانوية <span class="text-danger">*</span></label>
                         <input type="file" name="file_hs_cert" id="input-fileHsCert" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['file_hs_cert']))
                             <div class="mt-1 d-flex align-items-center gap-2">
@@ -694,9 +756,9 @@
                         @endif
                     </div>
 
-                    <!-- HS Equivalence Decision File (Conditional) -->
+                    <!-- HS Equivalence Decision File (Conditional if HS not Syrian) -->
                     <div class="col-md-6" id="hs-decision-file-container" style="display: none;">
-                        <label class="form-label label-md fw-medium text-dark">صورة عن قرار معادلة الشهادة الثانوية (وزارة التربية) </label><span class="text-danger"> *</span>
+                        <label class="form-label label-md fw-medium text-dark">صورة عن قرار معادلة الشهادة الثانوية غير السورية (وزارة التربية) <span class="text-danger">*</span></label>
                         <input type="file" name="hs_decision_file" id="input-hsDecisionFile" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['hs_decision_file']))
                             <div class="mt-1 d-flex align-items-center gap-2">
@@ -708,9 +770,9 @@
                         @endif
                     </div>
 
-                    <!-- Bachelor Cert -->
+                    <!-- 3. Bachelor Cert (Mandatory) -->
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">نسخة مصدقة أصولاً عن الإجازة الجامعية الأولى </label><span class="text-danger"> *</span>
+                        <label class="form-label label-md fw-medium text-dark">3. مصدقة الإجازة الجامعية الأولى <span class="text-danger">*</span></label>
                         <input type="file" name="file_ba_cert" id="input-fileBaCert" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['file_ba_cert']))
                             <div class="mt-1 d-flex align-items-center gap-2">
@@ -722,49 +784,44 @@
                         @endif
                     </div>
 
-                <!-- Bachelor Equivalence Decision File (Conditional) -->
-                <div class="col-md-6" id="ba-decision-file-container" style="display: none;">
-                    <label class="form-label label-md fw-medium text-dark">صورة عن قرار معادلة الشهادة الجامعية الأولى </label><span class="text-danger"> *</span>
-                    <input type="file" name="ba_decision_file" id="input-baDecisionFile" class="form-control academic-input" accept=".pdf">
+                    <!-- Bachelor Equivalence Decision File (Conditional if BA not Syrian) -->
+                    <div class="col-md-6" id="ba-decision-file-container" style="display: none;">
+                        <label class="form-label label-md fw-medium text-dark">صورة عن قرار معادلة الشهادة الجامعية الأولى غير السورية <span class="text-danger">*</span></label>
+                        <input type="file" name="ba_decision_file" id="input-baDecisionFile" class="form-control academic-input" accept=".pdf">
 
-                    @php
-                        // 1. البحث في مصفوفة الملفات بكافة المفاتيح المحتملة
-                        $baDecisionFilePath = $existingFiles['ba_decision_file'] 
-                            ?? $existingFiles['ba_decision'] 
-                            ?? $existingFiles['file_ba_decision'] 
-                            ?? $existingFiles['file_ba_decision_file']
-                            ?? $existingFiles['قرار معادلة الإجازة الجامعية الأولى'] 
-                            ?? $existingFiles['قرار معادلة الشهادة الجامعية الأولى'] 
-                            ?? null;
+                        @php
+                            $baDecisionFilePath = $existingFiles['ba_decision_file']
+                                ?? $existingFiles['ba_decision']
+                                ?? $existingFiles['file_ba_decision']
+                                ?? null;
 
-                        // 2. بحث احتياطي مباشر في مرفقات الطلب الحالية عبر رقم النوع (Type 15)
-                        if (!$baDecisionFilePath && isset($draft) && $draft) {
-                            foreach ($draft->educations as $ed) {
-                                foreach ($ed->attachments as $att) {
-                                    if (($att->attachment_type_id == 15) || (str_contains($att->notes ?? '', 'قرار') && (str_contains($att->notes ?? '', 'الإجازة') || str_contains($att->notes ?? '', 'الجامعية')))) {
-                                        $baDecisionFilePath = $att->file_path;
-                                        break 2;
+                            if (!$baDecisionFilePath && isset($draft) && $draft) {
+                                foreach ($draft->educations as $ed) {
+                                    foreach ($ed->attachments as $att) {
+                                        if (($att->attachment_type_id == 4) || (str_contains($att->notes ?? '', 'قرار') && (str_contains($att->notes ?? '', 'الإجازة') || str_contains($att->notes ?? '', 'الجامعية')))) {
+                                            $baDecisionFilePath = $att->file_path;
+                                            break 2;
+                                        }
                                     }
                                 }
                             }
-                        }
-                    @endphp
+                        @endphp
 
-                    @if($baDecisionFilePath)
-                        <div class="mt-1 d-flex align-items-center gap-2">
-                            <span class="badge bg-success-subtle text-success border border-success px-2 py-1">
-                                <i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً
-                            </span>
-                            <a href="{{ asset('storage/' . $baDecisionFilePath) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
-                                <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
-                            </a>
-                        </div>
-                    @endif
-                </div>
+                        @if($baDecisionFilePath)
+                            <div class="mt-1 d-flex align-items-center gap-2">
+                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1">
+                                    <i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً
+                                </span>
+                                <a href="{{ asset('storage/' . $baDecisionFilePath) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                </a>
+                            </div>
+                        @endif
+                    </div>
 
-                    <!-- Master Cert -->
+                    <!-- 4. Master Cert (Mandatory) -->
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">نسخة مصدقة أصولاً عن شهادة الماجستير </label><span class="text-danger"> *</span>
+                        <label class="form-label label-md fw-medium text-dark">4. نسخة مصدقة عن شهادة الماجستير <span class="text-danger">*</span></label>
                         <input type="file" name="file_ma_cert" id="input-fileMaCert" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['file_ma_cert']))
                             <div class="mt-1 d-flex align-items-center gap-2">
@@ -776,107 +833,51 @@
                         @endif
                     </div>
 
-                    <!-- Master Registration / Defense dates doc -->
+                    <!-- 5. Master Defense Decision (Mandatory) -->
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">وثيقة تواريخ التسجيل والمناقشة والمنح بالماجستير </label><span class="text-danger"> *</span>
-                        <input type="file" name="file_ma_dates" id="input-fileMaDates" class="form-control academic-input" accept=".pdf">
-                        @if(isset($existingFiles['file_ma_dates']))
+                        <label class="form-label label-md fw-medium text-dark">5. صورة عن قرار مجلس الدراسات العليا بالمناقشة بالماجستير <span class="text-danger">*</span></label>
+                        <input type="file" name="file_ma_defense_decision" id="input-fileMaDefenseDecision" class="form-control academic-input" accept=".pdf">
+                        @if(isset($existingFiles['file_ma_defense_decision']))
                             <div class="mt-1 d-flex align-items-center gap-2">
                                 <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
-                                <a href="{{ asset('storage/' . $existingFiles['file_ma_dates']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                <a href="{{ asset('storage/' . $existingFiles['file_ma_defense_decision']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
                                     <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
                                 </a>
                             </div>
                         @endif
                     </div>
 
-                    <!-- Arabic Thesis Summary -->
+                    <!-- 6. Master Grant Decision (Mandatory) -->
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">ملخص باللغة العربية عن رسالة الماجستير إلكترونياً <span class="badge bg-light text-primary border ms-1 fs-9">حتى 5MB</span></label><span class="text-danger"> *</span>
-                        <input type="file" name="file_thesis_summary" id="input-fileThesisSummary" data-max-mb="5" class="form-control academic-input" accept=".pdf">
-                        @if(isset($existingFiles['file_thesis_summary']))
+                        <label class="form-label label-md fw-medium text-dark">6. صورة عن قرار مجلس الجامعة بمنح درجة الماجستير <span class="text-danger">*</span></label>
+                        <input type="file" name="file_ma_grant_decision" id="input-fileMaGrantDecision" class="form-control academic-input" accept=".pdf">
+                        @if(isset($existingFiles['file_ma_grant_decision']))
                             <div class="mt-1 d-flex align-items-center gap-2">
                                 <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
-                                <a href="{{ asset('storage/' . $existingFiles['file_thesis_summary']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                <a href="{{ asset('storage/' . $existingFiles['file_ma_grant_decision']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
                                     <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
                                 </a>
                             </div>
                         @endif
                     </div>
 
-                    <!-- University Request Doc -->
+                    <!-- 7. Master Registration Decision (Mandatory) -->
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">طلب الجامعة المراد التعاقد معها:</label><span class="text-danger"> *</span>
-                        <input type="file" name="file_uni_request" id="input-fileUniRequest" class="form-control academic-input" accept=".pdf">
-                        @if(isset($existingFiles['file_uni_request']))
+                        <label class="form-label label-md fw-medium text-dark">7. صورة عن قرار مجلس الجامعة بالتسجيل بدرجة الماجستير <span class="text-danger">*</span></label>
+                        <input type="file" name="file_ma_reg_decision" id="input-fileMaRegDecision" class="form-control academic-input" accept=".pdf">
+                        @if(isset($existingFiles['file_ma_reg_decision']))
                             <div class="mt-1 d-flex align-items-center gap-2">
                                 <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
-                                <a href="{{ asset('storage/' . $existingFiles['file_uni_request']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                <a href="{{ asset('storage/' . $existingFiles['file_ma_reg_decision']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
                                     <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
                                 </a>
                             </div>
                         @endif
                     </div>
 
-                    <!-- Language Certificate (Optional) -->
+                    <!-- 8. Payment Receipt (Mandatory) -->
                     <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">شهادة اللغة الإنكليزية المعتمدة <span class="text-muted fw-normal fs-8">(اختياري)</span></label>
-                        <input type="file" name="file_lang_cert" id="input-fileLangCert" class="form-control academic-input" accept=".pdf">
-                        @if(isset($existingFiles['file_lang_cert']))
-                            <div class="mt-1 d-flex align-items-center gap-2">
-                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
-                                <a href="{{ asset('storage/' . $existingFiles['file_lang_cert']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
-                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
-                                </a>
-                            </div>
-                        @endif
-                    </div>
-
-                    <!-- ICDL Certificate (Optional) -->
-                    <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">شهادة مهارات الحاسوب (ICDL) المعتمدة <span class="text-muted fw-normal fs-8">(اختياري)</span></label>
-                        <input type="file" name="file_icdl_cert" id="input-fileIcdlCert" class="form-control academic-input" accept=".pdf">
-                        @if(isset($existingFiles['file_icdl_cert']))
-                            <div class="mt-1 d-flex align-items-center gap-2">
-                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
-                                <a href="{{ asset('storage/' . $existingFiles['file_icdl_cert']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
-                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
-                                </a>
-                            </div>
-                        @endif
-                    </div>
-
-                    <!-- National Library Receipt (Optional) -->
-                    <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">إيصال المكتبة الوطنية لاستلام الرسالة <span class="text-muted fw-normal fs-8">(اختياري)</span></label>
-                        <input type="file" name="file_nat_library_receipt" id="input-fileNatLibraryReceipt" class="form-control academic-input" accept=".pdf">
-                        @if(isset($existingFiles['file_nat_library_receipt']))
-                            <div class="mt-1 d-flex align-items-center gap-2">
-                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
-                                <a href="{{ asset('storage/' . $existingFiles['file_nat_library_receipt']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
-                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
-                                </a>
-                            </div>
-                        @endif
-                    </div>
-
-                    <!-- CV -->
-                    <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">السيرة الذاتية للمرشح كاملة </label><span class="text-danger"> *</span>
-                        <input type="file" name="file_cv" id="input-fileCv" class="form-control academic-input" accept=".pdf">
-                        @if(isset($existingFiles['file_cv']))
-                            <div class="mt-1 d-flex align-items-center gap-2">
-                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
-                                <a href="{{ asset('storage/' . $existingFiles['file_cv']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
-                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
-                                </a>
-                            </div>
-                        @endif
-                    </div>
-
-                    <!-- Payment Receipt -->
-                    <div class="col-md-6">
-                        <label class="form-label label-md fw-medium text-dark">إيصال تسديد رسم تعادل 100,000 ل.س </label><span class="text-danger"> *</span>
+                        <label class="form-label label-md fw-medium text-dark">8. إيصال تسديد رسم تعادل الماجستير (100,000 ل.س) <span class="text-danger">*</span></label>
                         <input type="file" name="file_payment" id="input-filePayment" class="form-control academic-input" accept=".pdf">
                         @if(isset($existingFiles['file_payment']))
                             <div class="mt-1 d-flex align-items-center gap-2">
@@ -888,37 +889,142 @@
                         @endif
                     </div>
 
-                    <!-- Experience Certificate (Conditional) -->
-                    <div class="col-md-6 exp-conditional-file" style="display: none;">
-                        <label class="form-label label-md fw-medium text-dark">شهادة خبرة لا تقل عن سنتين ما بعد الدرجة </label><span class="text-danger"> *</span>
-                        <input type="file" name="file_exp_cert" id="input-fileExpCert" class="form-control academic-input" accept=".pdf">
-                        @if(isset($existingFiles['file_exp_cert']))
+                    <!-- 9. CV (Mandatory) -->
+                    <div class="col-md-6">
+                        <label class="form-label label-md fw-medium text-dark">9. السيرة الذاتية للمرشح <span class="text-danger">*</span></label>
+                        <input type="file" name="file_cv" id="input-fileCv" class="form-control academic-input" accept=".pdf">
+                        @if(isset($existingFiles['file_cv']))
                             <div class="mt-1 d-flex align-items-center gap-2">
                                 <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
-                                <a href="{{ asset('storage/' . $existingFiles['file_exp_cert']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                <a href="{{ asset('storage/' . $existingFiles['file_cv']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
                                     <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
                                 </a>
                             </div>
                         @endif
                     </div>
 
-                    <!-- Contracts & Salary Slips (Conditional) -->
-                    <div class="col-md-6 exp-conditional-file" style="display: none;">
-                        <label class="form-label label-md fw-medium text-dark">العقود وإيصالات الرواتب مصدقة أصولاً </label><span class="text-danger"> *</span>
-                        <input type="file" name="file_contracts" id="input-fileContracts" class="form-control academic-input" accept=".pdf">
-                        @if(isset($existingFiles['file_contracts']))
+                    <!-- 10. Arabic Thesis Summary (Mandatory, max 5MB) -->
+                    <div class="col-md-6">
+                        <label class="form-label label-md fw-medium text-dark">10. ملخص رسالة الماجستير باللغة العربية إلكترونياً <span class="badge bg-light text-primary border ms-1 fs-9">حتى 5MB</span> <span class="text-danger">*</span></label>
+                        <input type="file" name="file_thesis_summary" id="input-fileThesisSummary" data-max-mb="5" class="form-control academic-input" accept=".pdf">
+                        @if(isset($existingFiles['file_thesis_summary']))
                             <div class="mt-1 d-flex align-items-center gap-2">
                                 <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
-                                <a href="{{ asset('storage/' . $existingFiles['file_contracts']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                <a href="{{ asset('storage/' . $existingFiles['file_thesis_summary']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
                                     <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
                                 </a>
                             </div>
                         @endif
                     </div>
+
+                    <!-- 11. University Equivalence Request (Mandatory) -->
+                    <div class="col-md-6">
+                        <label class="form-label label-md fw-medium text-dark">11. طلب الجامعة للتعادل (كتاب طلب التقويم الصادر عن الجامعة) <span class="text-danger">*</span></label>
+                        <input type="file" name="file_uni_request" id="input-fileUniRequest" class="form-control academic-input" accept=".pdf">
+                        @if(isset($existingFiles['file_uni_request']))
+                            <div class="mt-1 d-flex align-items-center gap-2">
+                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                <a href="{{ asset('storage/' . $existingFiles['file_uni_request']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                </a>
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- 12. National Library Receipt (Optional) -->
+                    <div class="col-md-6">
+                        <label class="form-label label-md fw-medium text-dark">12. إيصال المكتبة الوطنية لاستلام الرسالة <span class="text-muted fw-normal fs-8">(اختياري)</span></label>
+                        <input type="file" name="file_nat_library_receipt" id="input-fileNatLibraryReceipt" class="form-control academic-input" accept=".pdf">
+                        @if(isset($existingFiles['file_nat_library_receipt']))
+                            <div class="mt-1 d-flex align-items-center gap-2">
+                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                <a href="{{ asset('storage/' . $existingFiles['file_nat_library_receipt']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                </a>
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- 13. Language Certificate (Optional) -->
+                    <div class="col-md-6">
+                        <label class="form-label label-md fw-medium text-dark">13. شهادة إتقان اللغة الإنكليزية المعتمدة <span class="text-muted fw-normal fs-8">(اختياري)</span></label>
+                        <input type="file" name="file_lang_cert" id="input-fileLangCert" class="form-control academic-input" accept=".pdf">
+                        @if(isset($existingFiles['file_lang_cert']))
+                            <div class="mt-1 d-flex align-items-center gap-2">
+                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                <a href="{{ asset('storage/' . $existingFiles['file_lang_cert']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                </a>
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- 14. ICDL Certificate (Optional) -->
+                    <div class="col-md-6">
+                        <label class="form-label label-md fw-medium text-dark">14. شهادة مهارات الحاسوب (ICDL) المعتمدة <span class="text-muted fw-normal fs-8">(اختياري)</span></label>
+                        <input type="file" name="file_icdl_cert" id="input-fileIcdlCert" class="form-control academic-input" accept=".pdf">
+                        @if(isset($existingFiles['file_icdl_cert']))
+                            <div class="mt-1 d-flex align-items-center gap-2">
+                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                <a href="{{ asset('storage/' . $existingFiles['file_icdl_cert']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                    <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                </a>
+                            </div>
+                        @endif
+                    </div>
+
+                    @if($isTheoreticalTrack)
+                        <div class="col-12 mt-2">
+                            <hr class="my-2">
+                            <h6 class="fw-bold text-primary mb-0"><i class="fa-solid fa-briefcase me-1" style="color: var(--heritage-gold);"></i> مرفقات الخبرة التدريسية الإلزامية للمسار النظري (سنتين فأكثر):</h6>
+                        </div>
+
+                        <!-- 15. Certified Teaching Contracts (Mandatory in Theoretical) -->
+                        <div class="col-md-6">
+                            <label class="form-label label-md fw-medium text-dark">15. صور العقود التدريسية المصدقة لمدة لا تقل عن سنتين <span class="text-danger">*</span></label>
+                            <input type="file" name="file_contracts" id="input-fileContracts" class="form-control academic-input" accept=".pdf">
+                            @if(isset($existingFiles['file_contracts']))
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                    <a href="{{ asset('storage/' . $existingFiles['file_contracts']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                        <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                    </a>
+                                </div>
+                            @endif
+                        </div>
+
+                        <!-- 16. Certified Salary Slips / Bank Transfers (Mandatory in Theoretical) -->
+                        <div class="col-md-6">
+                            <label class="form-label label-md fw-medium text-dark">16. كشوفات الرواتب أو التحويلات البنكية المصدقة <span class="text-danger">*</span></label>
+                            <input type="file" name="file_salary_slips" id="input-fileSalarySlips" class="form-control academic-input" accept=".pdf">
+                            @if(isset($existingFiles['file_salary_slips']))
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                    <a href="{{ asset('storage/' . $existingFiles['file_salary_slips']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                        <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                    </a>
+                                </div>
+                            @endif
+                        </div>
+
+                        <!-- 17. Teaching Experience Certificates (Mandatory in Theoretical) -->
+                        <div class="col-md-6">
+                            <label class="form-label label-md fw-medium text-dark">17. وثائق وشهادات الخبرة التدريسية <span class="text-danger">*</span></label>
+                            <input type="file" name="file_exp_cert" id="input-fileExpCert" class="form-control academic-input" accept=".pdf">
+                            @if(isset($existingFiles['file_exp_cert']))
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                    <a href="{{ asset('storage/' . $existingFiles['file_exp_cert']) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold">
+                                        <i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي
+                                    </a>
+                                </div>
+                            @endif
+                        </div>
+                    @endif
 
                     <!-- Other Attachments (Optional) -->
-                    <div class="col-12 mt-3">
-                        <label class="form-label label-md fw-medium text-dark">مرفقات أخرى (اختياري)</label>
+                    <div class="col-12 mt-2">
+                        <label class="form-label label-md fw-medium text-dark">مرفقات أخرى <span class="text-muted fw-normal fs-8">(اختياري)</span></label>
                         <input type="file" name="file_other_attachments" id="input-fileOtherAttachments" class="form-control academic-input" accept=".pdf">
                         <span class="fs-8 text-muted d-block mt-1">يمكنك رفع أي وثائق أو مستندات داعمة إضافية بصيغة (PDF - حتى 2 ميغابايت).</span>
                         @if(isset($existingFiles['file_other_attachments']))
@@ -1020,8 +1126,8 @@
                                 <div class="col-md-6"><strong>10. تاريخ منح الدرجة:</strong> <span id="preview-maGrantDate"></span></div>
                                 <div class="col-12"><strong>11. عنوان رسالة الماجستير (الأطروحة):</strong> <span id="preview-maThesisTitle"></span></div>
                                 
-                                <!-- Experience Section in Report -->
-                                <div class="col-12 mt-3" id="preview-experience-container">
+                                <!-- Experience Section in Report (Theoretical Track Only) -->
+                                <div class="col-12 mt-3" id="preview-experience-container" style="display: {{ $isTheoreticalTrack ? 'block' : 'none' }};">
                                     <div class="card p-3 border rounded-2" style="background-color: var(--surface-container-low);">
                                         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
                                             <strong class="text-dark"><i class="fa-solid fa-chalkboard-user me-1 text-primary"></i> بيانات الخبرة التدريسية والمسار الأكاديمي المعتمد:</strong>
@@ -1079,6 +1185,9 @@
                         <i class="fa-solid fa-floppy-disk me-1"></i> حفظ كمسودة ومتابعة لاحقاً
                     </button>
                     @endif
+                    @if(!empty($isAdminEdit))
+                        @include('university.apply.partials._admin_edit_footer_btn')
+                    @endif
                 </div>
 
                 <div class="d-flex align-items-center gap-2">
@@ -1091,7 +1200,9 @@
                     </button>
 
                     <button type="submit" formnovalidate name="action" value="submit_final" class="btn btn-gold-cta px-5 py-2" id="btn-submit" style="display: none;">
-                        @if($isAwaitingDocs)
+                        @if(!empty($isAdminEdit))
+                            حفظ كافة التعديلات (دون تغيير الحالة) <i class="fa-solid fa-check-double ms-1"></i>
+                        @elseif($isAwaitingDocs)
                             إعادة إرسال الطلب بعد استكمال الوثائق <i class="fa-solid fa-paper-plane ms-1"></i>
                         @else
                             إنهاء وإرسال الطلب للوزارة <i class="fa-solid fa-paper-plane ms-1"></i>
@@ -1109,10 +1220,28 @@
 
 @push('scripts')
 <script>
+    const IS_ADMIN_EDIT = @json(!empty($isAdminEdit));
     let currentStep = 1;
     const totalSteps = 6;
     const syriaCountryId = "{{ $syriaId }}";
+    const trackType = "{{ $trackType }}";
     let hasVisitedReview = false;
+
+    function togglePreviousDegree(select) {
+        const section = document.getElementById('previous-degree-section');
+        const parentSelect = document.getElementById('input-parentAppId');
+        if (!select || !section) return;
+        if (select.value === '0') {
+            section.style.display = 'block';
+            if (parentSelect) parentSelect.required = true;
+        } else {
+            section.style.display = 'none';
+            if (parentSelect) {
+                parentSelect.required = false;
+                parentSelect.value = '';
+            }
+        }
+    }
 
     function quickReturnToReview() {
         if (typeof validateAllStepsUpTo === 'function') {
@@ -1268,11 +1397,14 @@
     }
 
     function recalcTotalExperience() {
+        if (trackType !== 'theoretical') {
+            return { totalDays: 0, isTheoretical: false, years: 0, months: 0, days: 0 };
+        }
+
         const tbody = document.getElementById('experiences_tbody');
-        const chkExp = document.getElementById('input-hasExperience');
         let totalDays = 0;
 
-        if (chkExp && chkExp.checked && tbody) {
+        if (tbody) {
             tbody.querySelectorAll('tr').forEach(tr => {
                 const startInput = tr.querySelector('input[name*="[start_date]"]');
                 const endInput = tr.querySelector('input[name*="[end_date]"]');
@@ -1306,9 +1438,9 @@
                 badgeContainer.innerHTML = `
                     <span class="badge px-3 py-2 fs-6 shadow-sm border border-success" style="background-color: #15803d; color: #ffffff;">
                         <i class="fa-solid fa-circle-check me-1 text-warning"></i>
-                        ماجستير نظري (مستوفي شرط السنتين ≥ 730 يوماً)
+                        مستوفٍ لشرط المسار النظري (≥ 730 يوماً)
                     </span>
-                    <div class="fs-9 text-success fw-bold mt-1"><i class="fa-solid fa-info-circle me-1"></i> يتطلب إجراء مقابلة شفهية/عملية وتثبيت أهلية تدريس</div>
+                    <div class="fs-9 text-success fw-bold mt-1"><i class="fa-solid fa-info-circle me-1"></i> مؤهل للتقديم في المسار النظري مع إجراء مقابلة وقرار أهلية تدريس</div>
                 `;
                 if (kpiCard) {
                     kpiCard.style.backgroundColor = '#f0fdf4';
@@ -1318,49 +1450,23 @@
                     kpiIcon.className = 'fa-solid fa-circle-check text-success fs-5';
                 }
             } else {
+                const remaining = 730 - totalDays;
                 badgeContainer.innerHTML = `
-                    <span class="badge px-3 py-2 fs-6 shadow-sm border border-primary" style="background-color: #1e3a5f; color: #ffffff;">
-                        <i class="fa-solid fa-chalkboard me-1 text-info"></i>
-                        ماجستير تطبيقي (هيئة فنية - خبرة أقل من سنتين)
+                    <span class="badge px-3 py-2 fs-6 shadow-sm border border-warning" style="background-color: #b45309; color: #ffffff;">
+                        <i class="fa-solid fa-triangle-exclamation me-1 text-warning"></i>
+                        غير مستوفٍ بعد (المتبقي: ${remaining} يوماً لإتمام سنتين)
                     </span>
-                    <div class="fs-9 text-muted mt-1"><i class="fa-solid fa-info-circle me-1"></i> اعتماد تلقائي كعضو هيئة فنية تدريسية (بدون شرط المقابلة)</div>
+                    <div class="fs-9 text-danger fw-bold mt-1"><i class="fa-solid fa-info-circle me-1"></i> يشترط المسار النظري إجمالي خبرة 730 يوماً فأكثر (أو قدّم عبر مسار الماجستير التطبيقي)</div>
                 `;
                 if (kpiCard) {
-                    kpiCard.style.backgroundColor = '#eff6ff';
-                    kpiCard.style.borderColor = '#bfdbfe';
+                    kpiCard.style.backgroundColor = '#fffbeb';
+                    kpiCard.style.borderColor = '#fcd34d';
                 }
                 if (kpiIcon) {
-                    kpiIcon.className = 'fa-solid fa-hourglass-half text-primary fs-5';
+                    kpiIcon.className = 'fa-solid fa-hourglass-half text-warning fs-5';
                 }
             }
         }
-
-        // Toggle conditional files for experience (Step 5)
-        const fileDivs = document.querySelectorAll('.exp-conditional-file');
-        const hasExistingExpCert = {{ isset($existingFiles['file_exp_cert']) ? 'true' : 'false' }};
-        const hasExistingContracts = {{ isset($existingFiles['file_contracts']) ? 'true' : 'false' }};
-
-        fileDivs.forEach(div => {
-            if (isTheoretical) {
-                div.style.display = 'block';
-                const fileInp = div.querySelector('input');
-                if (fileInp) {
-                    if (fileInp.name === 'file_exp_cert') {
-                        fileInp.required = !hasExistingExpCert;
-                    } else if (fileInp.name === 'file_contracts') {
-                        fileInp.required = !hasExistingContracts;
-                    }
-                }
-            } else {
-                div.style.display = 'none';
-                const fileInp = div.querySelector('input');
-                if (fileInp) {
-                    fileInp.required = false;
-                    fileInp.classList.remove('is-invalid');
-                    fileInp.setCustomValidity('');
-                }
-            }
-        });
 
         return { totalDays, isTheoretical, years, months, days };
     }
@@ -1442,12 +1548,10 @@
         const baSelect = document.getElementById('input-baCountry');
         if (baSelect) toggleBaCountrySection(baSelect, true);
 
-        const hasExpChk = document.getElementById('input-hasExperience');
-        if (hasExpChk && hasExpChk.checked) {
-            toggleExperienceSection(hasExpChk);
-        } else {
-            checkMasterGrantDateForExperience();
-        }
+        const isFirstTimeSelect = document.getElementById('input-isFirstTime');
+        if (isFirstTimeSelect) togglePreviousDegree(isFirstTimeSelect);
+
+        recalcTotalExperience();
     });
 
     function updateSyrianStatus(select) {
@@ -1461,6 +1565,7 @@
 
     // Modular step validation
     function validateStep(step, showNotice = true) {
+        if (IS_ADMIN_EDIT) return true;
         const currentSection = document.getElementById(`step-${step}`);
         if (!currentSection) return true;
 
@@ -1657,10 +1762,9 @@
                 }
             }
 
-            const hasExp = document.getElementById('input-hasExperience');
-            if (hasExp && hasExp.checked) {
+            if (trackType === 'theoretical') {
                 const tbody = document.getElementById('experiences_tbody');
-                const hasRows = tbody && tbody.querySelectorAll('tr:not(#no_experiences_row)').length > 0;
+                let hasRows = tbody && tbody.querySelectorAll('tr:not(#no_experiences_row)').length > 0;
                 const instEl = document.getElementById('exp_institution');
                 const startEl = document.getElementById('exp_start_date');
                 const endEl = document.getElementById('exp_end_date');
@@ -1668,9 +1772,13 @@
                 // If user entered details in inputs but forgot to click Add (+)
                 if (!hasRows && instEl && instEl.value.trim() && startEl && startEl.value && endEl && endEl.value) {
                     addExperiencePeriod();
-                } else if (!hasRows) {
+                    hasRows = tbody && tbody.querySelectorAll('tr:not(#no_experiences_row)').length > 0;
+                }
+
+                const expStats = recalcTotalExperience();
+                if (!hasRows) {
                     if (showNotice) {
-                        alert('لقد قمت بتفعيل خيار تسجيل الخبرات التدريسية دون إدراج أي فترة في الجدول. يرجى ملء بيانات الفترة والضغط على (إضافة) أو إلغاء تفعيل الخيار للمتابعة.');
+                        alert('في مسار الماجستير النظري، يجب إدخال فترة خبرة تدريسية واحدة على الأقل (بمجموع لا يقل عن سنتين / 730 يوماً) ثم الضغط على (إضافة).');
                         if (instEl) {
                             instEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
                             instEl.focus();
@@ -1678,46 +1786,56 @@
                     }
                     return false;
                 }
+                if (expStats.totalDays < 730) {
+                    if (showNotice) {
+                        alert(`مجموع مدة الخبرة التدريسية المسجلة حالياً هو (${expStats.totalDays}) يوماً، بينما يشترط المسار النظري خبرة تدريسية لا تقل عن سنتين (730 يوماً فأكثر). يرجى إضافة فترات خبرة إضافية أو التقديم عبر مسار الماجستير التطبيقي.`);
+                        const expContainer = document.getElementById('experience-section-container');
+                        if (expContainer) expContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    return false;
+                }
             }
         } else if (step === 5) {
             const requiredAttachments = [
-                { id: 'input-fileHsCert', name: 'شهادة الدراسة الثانوية' },
-                { id: 'input-fileBaCert', name: 'شهادة الإجازة الجامعة (البكالوريوس)' },
-                { id: 'input-fileMaCert', name: 'شهادة الماجستير السورية المصدقة أصولاً' },
-                { id: 'input-fileMaDates', name: 'وثيقة تواريخ التسجيل والمناقشة والمنح بالماجستير' },
-                { id: 'input-fileThesisSummary', name: 'ملخص عن رسالة الماجستير باللغة العربية' },
-                { id: 'input-filePayment', name: 'إيصال تسديد رسم تعادل 100,000 ل.س للماجستير' },
-                { id: 'input-fileUniRequest', name: 'كتاب طلب التقويم الصادر عن الجامعة' },
-                { id: 'input-fileCv', name: 'السيرة الذاتية للمرشح' }
+                { id: 'input-fileNationalId', name: 'صورة عن الهوية الشخصية / جواز السفر' },
+                { id: 'input-fileHsCert', name: 'نسخة مصدقة عن الشهادة الثانوية' },
+                { id: 'input-fileBaCert', name: 'مصدقة الإجازة الجامعية الأولى' },
+                { id: 'input-fileMaCert', name: 'نسخة مصدقة عن شهادة الماجستير' },
+                { id: 'input-fileMaDefenseDecision', name: 'صورة عن قرار مجلس الدراسات العليا بالمناقشة بالماجستير' },
+                { id: 'input-fileMaGrantDecision', name: 'صورة عن قرار مجلس الجامعة بمنح درجة الماجستير' },
+                { id: 'input-fileMaRegDecision', name: 'صورة عن قرار مجلس الجامعة بالتسجيل بدرجة الماجستير' },
+                { id: 'input-filePayment', name: 'إيصال تسديد رسم تعادل الماجستير' },
+                { id: 'input-fileCv', name: 'السيرة الذاتية للمرشح' },
+                { id: 'input-fileThesisSummary', name: 'ملخص رسالة الماجستير باللغة العربية' },
+                { id: 'input-fileUniRequest', name: 'طلب الجامعة للتعادل (كتاب طلب التقويم)' }
             ];
 
             const hsCountry = document.getElementById('input-hsCountry');
             const hsDecisionNo = document.getElementById('input-hsDecisionNo');
             const hsDecisionDate = document.getElementById('input-hsDecisionDate');
-            if ((hsCountry && hsCountry.value != syriaCountryId) || (hsDecisionNo && hsDecisionNo.value.trim() !== '') || (hsDecisionDate && hsDecisionDate.value !== '')) {
+            const hsFileContainer = document.getElementById('hs-decision-file-container');
+            const isHsAlreadyUploaded = hsFileContainer && hsFileContainer.querySelector('.badge.bg-success-subtle') !== null;
+            if (!isHsAlreadyUploaded && ((hsCountry && hsCountry.value != syriaCountryId) || (hsDecisionNo && hsDecisionNo.value.trim() !== '') || (hsDecisionDate && hsDecisionDate.value !== ''))) {
                 requiredAttachments.push({ id: 'input-hsDecisionFile', name: 'قرار معادلة الشهادة الثانوية غير السورية' });
             }
 
-         const baCountry = document.getElementById('input-baCountry');
+            const baCountry = document.getElementById('input-baCountry');
             const baDecisionNo = document.getElementById('input-baDecisionNo');
             const baDecisionDate = document.getElementById('input-baDecisionDate');
-
-            // فحص هل قرار معادلة الإجازة مرفوع سابقاً (وجود شارة أو زر الاستعراض)
             const baFileContainer = document.getElementById('ba-decision-file-container');
             const isBaAlreadyUploaded = baFileContainer && (
-                baFileContainer.querySelector('.badge') !== null ||
+                baFileContainer.querySelector('.badge.bg-success-subtle') !== null ||
                 baFileContainer.querySelector('a') !== null
             );
 
-            // نطلب المرفق فقط إذا لم يكن مرفوعاً سابقاً وكانت الدولة غير سورية
             if (!isBaAlreadyUploaded && ((baCountry && baCountry.value != syriaCountryId) || (baDecisionNo && baDecisionNo.value.trim() !== '') || (baDecisionDate && baDecisionDate.value !== ''))) {
                 requiredAttachments.push({ id: 'input-baDecisionFile', name: 'قرار معادلة الإجازة الجامعية غير السورية' });
             }
 
-            const expStats = recalcTotalExperience();
-            if (expStats.isTheoretical) {
-                requiredAttachments.push({ id: 'input-fileExpCert', name: 'شهادة خبرة لا تقل عن سنتين ما بعد الدرجة' });
-                requiredAttachments.push({ id: 'input-fileContracts', name: 'العقود وإيصالات الرواتب مصدقة أصولاً' });
+            if (trackType === 'theoretical') {
+                requiredAttachments.push({ id: 'input-fileContracts', name: 'صور العقود التدريسية المصدقة لمدة لا تقل عن سنتين' });
+                requiredAttachments.push({ id: 'input-fileSalarySlips', name: 'كشوفات الرواتب أو التحويلات البنكية المصدقة' });
+                requiredAttachments.push({ id: 'input-fileExpCert', name: 'وثائق وشهادات الخبرة التدريسية' });
             }
 
             for (const att of requiredAttachments) {
@@ -1942,14 +2060,11 @@
         setTxt('preview-maGrantDate', formatDateDisplay(getVal('input-maGrantDate')));
         setTxt('preview-maThesisTitle', getVal('input-maThesisTitle'));
 
-        // Experience
-        const hasExpEl = document.getElementById('input-hasExperience');
-        const hasExp = hasExpEl ? hasExpEl.checked : false;
+        // Experience (Only in Theoretical Track)
         const expContainer = document.getElementById('preview-experience-container');
-        const stats = recalcTotalExperience();
-
-        if (hasExp && stats.totalDays > 0) {
+        if (trackType === 'theoretical') {
             if (expContainer) expContainer.style.display = 'block';
+            const stats = recalcTotalExperience();
             const badgeEl = document.getElementById('preview-trackBadge');
             const totalEl = document.getElementById('preview-totalExpTime');
             const listEl = document.getElementById('preview-experiences-list');
@@ -1957,14 +2072,16 @@
             if (badgeEl) {
                 if (stats.isTheoretical) {
                     badgeEl.className = 'badge bg-success-subtle text-success border border-success px-3 py-1';
-                    badgeEl.innerHTML = '<i class="fa-solid fa-circle-check me-1"></i> ماجستير نظري (مستوفي شرط السنتين)';
+                    badgeEl.innerHTML = '<i class="fa-solid fa-circle-check me-1"></i> ماجستير نظري (مستوفي شرط السنتين ≥ 730 يوماً)';
                 } else {
-                    badgeEl.className = 'badge bg-primary-subtle text-primary border border-primary px-3 py-1';
-                    badgeEl.innerHTML = '<i class="fa-solid fa-chalkboard me-1"></i> ماجستير تطبيقي (هيئة فنية)';
+                    badgeEl.className = 'badge bg-warning-subtle text-dark border border-warning px-3 py-1';
+                    badgeEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i> غير مستوفٍ شرط السنتين بعد';
                 }
             }
             if (totalEl) {
-                totalEl.textContent = `${stats.years} سنة و ${stats.months} شهر و ${stats.days} يوم (إجمالي ${stats.totalDays} يوماً)`;
+                totalEl.textContent = stats.totalDays > 0
+                    ? `${stats.years} سنة و ${stats.months} شهر و ${stats.days} يوم (إجمالي ${stats.totalDays} يوماً)`
+                    : 'لا توجد فترات خبرة تدريسية مسجلة';
             }
             if (listEl) {
                 const tbody = document.getElementById('experiences_tbody');
@@ -1986,16 +2103,7 @@
                 }
             }
         } else {
-            if (expContainer) expContainer.style.display = 'block';
-            const badgeEl = document.getElementById('preview-trackBadge');
-            const totalEl = document.getElementById('preview-totalExpTime');
-            const listEl = document.getElementById('preview-experiences-list');
-            if (badgeEl) {
-                badgeEl.className = 'badge bg-secondary-subtle text-secondary border px-3 py-1';
-                badgeEl.innerHTML = 'ماجستير تطبيقي (بدون فترات خبرة مسجلة)';
-            }
-            if (totalEl) totalEl.textContent = 'لا توجد فترات خبرة تدريسية مسجلة';
-            if (listEl) listEl.innerHTML = '';
+            if (expContainer) expContainer.style.display = 'none';
         }
 
         // Request
@@ -2193,7 +2301,7 @@
         if (form) {
             form.addEventListener('submit', function(e) {
                 const submitter = e.submitter;
-                if (submitter && submitter.value === 'save_draft') {
+                if (IS_ADMIN_EDIT || (submitter && (submitter.value === 'save_draft' || submitter.value === 'admin_save'))) {
                     form.querySelectorAll('input, select, textarea').forEach(el => el.removeAttribute('required'));
                     isSubmitting = true;
                     return true;

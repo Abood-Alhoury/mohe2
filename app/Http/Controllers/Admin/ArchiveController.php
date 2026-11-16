@@ -25,7 +25,7 @@ class ArchiveController extends Controller
                 'latestDecision'
             ])
             ->where(function ($query) {
-                $query->whereIn('status', ['تم الصدور', 8, '8', 'مرفوض', 9, '9', 10, '10'])
+                $query->whereIn('status', ['تم الصدور', 8, '8'])
                       ->orWhereHas('decisions');
             })
             ->latest()
@@ -120,7 +120,7 @@ class ArchiveController extends Controller
                 'latestDecision'
             ])
             ->where(function ($query) {
-                $query->whereIn('status', ['تم الصدور', 8, '8', 'مرفوض', 9, '9', 10, '10'])
+                $query->whereIn('status', ['تم الصدور', 8, '8'])
                       ->orWhereHas('decisions');
             })
             ->latest()

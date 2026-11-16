@@ -545,7 +545,7 @@
 
         <div class="kpi-card" onclick="filterByTrack('phd', this)" style="--card-color: var(--badge-phd);">
             <div class="kpi-data">
-                <span>قرارات الدكتوراه (أهلية + تعادل)</span>
+                <span>قرارات الدكتوراه (قرار موحد: تعادل + أهلية)</span>
                 <strong id="stat-phd">{{ $kpi['phd'] }}</strong>
             </div>
             <div class="kpi-icon"><i class="fa-solid fa-graduation-cap"></i></div>
@@ -553,7 +553,7 @@
 
         <div class="kpi-card" onclick="filterByTrack('master-theo', this)" style="--card-color: var(--badge-master-theo);">
             <div class="kpi-data">
-                <span>الماجستير النظري (أهلية + تعادل)</span>
+                <span>الماجستير النظري (قرار موحد: تعادل + أهلية)</span>
                 <strong id="stat-mtheo">{{ $kpi['master_theo'] }}</strong>
             </div>
             <div class="kpi-icon"><i class="fa-solid fa-book-open"></i></div>
@@ -647,7 +647,7 @@
                         <th>المسار والمعاملة</th>
                         <th>الجامعة الطالبة</th>
                         <th>قرار المعادلة / التعادل</th>
-                        <th>قرار أهلية التدريس</th>
+                        <th>بيانات قرار الأهلية</th>
                         <th>تاريخ الصدور</th>
                         <th style="text-align: center;">الإجراءات السريعة</th>
                     </tr>
@@ -691,33 +691,39 @@
                             </td>
                             <td class="fw-bold">{{ $item['uniName'] }}</td>
                             
-                            {{-- قرار المعادلة / التعادل / كتاب عدم الموافقة --}}
+                            {{-- قرار المعادلة / التعادل الموحد / كتاب عدم الموافقة --}}
                             <td>
                                 @if($item['isRejected'])
-                                    <div style="color: var(--badge-rejected); font-weight: 800;">كتاب: {{ $dec->decision_no ?? '12/غ.م' }}</div>
-                                    <a href="{{ $dec ? route('admin.decisions.view-file', ['id' => $dec->id, 'type' => 'equivalence']) : '#' }}" target="_blank" class="btn-act btn-act-pdf" style="font-size: 0.72rem; padding: 2px 6px; margin-top: 3px; color: #dc2626;">
-                                        <i class="fa-solid fa-file-pdf"></i> كتاب الرفض
-                                    </a>
+                                    <div style="color: var(--badge-rejected); font-weight: 800;">كتاب: {{ $dec->decision_no ?? '—' }}</div>
+                                    @if($dec && $dec->file_path)
+                                        <a href="{{ route('admin.decisions.view-file', ['id' => $dec->id, 'type' => 'equivalence']) }}" target="_blank" class="btn-act btn-act-pdf" style="font-size: 0.72rem; padding: 2px 6px; margin-top: 3px; color: #dc2626;">
+                                            <i class="fa-solid fa-file-pdf"></i> كتاب عدم الموافقة
+                                        </a>
+                                    @else
+                                        <span class="text-muted fs-8">—</span>
+                                    @endif
                                 @else
                                     <div>رقم: <strong>{{ $dec->decision_no ?? '—' }}</strong></div>
-                                    <a href="{{ $dec ? route('admin.decisions.view-file', ['id' => $dec->id, 'type' => 'equivalence']) : '#' }}" target="_blank" class="btn-act btn-act-pdf" style="font-size: 0.72rem; padding: 2px 6px; margin-top: 3px;">
-                                        <i class="fa-solid fa-file-pdf"></i> PDF المعادلة
-                                    </a>
+                                    @if($dec && $dec->file_path)
+                                        <a href="{{ route('admin.decisions.view-file', ['id' => $dec->id, 'type' => 'equivalence']) }}" target="_blank" class="btn-act btn-act-pdf" style="font-size: 0.72rem; padding: 2px 6px; margin-top: 3px;">
+                                            <i class="fa-solid fa-file-pdf"></i> {{ ($track === 'phd' || $track === 'master-theo') ? 'PDF القرار الموحد' : 'PDF القرار' }}
+                                        </a>
+                                    @endif
                                 @endif
                             </td>
 
-                            {{-- قرار أهلية التدريس --}}
+                            {{-- بيانات قرار الأهلية (مُدرجة في القرار الموحد للمسارات النظرية والدكتوراه) --}}
                             <td>
                                 @if($item['isRejected'])
-                                    <span style="color: #ef4444; font-size: 0.8rem; font-weight: bold;">مرفوض باللجنة</span>
+                                    <span style="color: #ef4444; font-size: 0.8rem; font-weight: bold;">— (غير مطلوب / عدم موافقة)</span>
                                 @elseif($track === 'master-app' || $track === 'faculty')
                                     <span style="color: #94a3b8; font-weight: bold;">— (غير مطلوب)</span>
                                 @else
-                                    @if($dec && $dec->eligibility_decision_no)
-                                        <div>رقم: <strong>{{ $dec->eligibility_decision_no }}</strong></div>
-                                        <a href="{{ $dec ? route('admin.decisions.view-file', ['id' => $dec->id, 'type' => 'eligibility']) : '#' }}" target="_blank" class="btn-act btn-act-pdf" style="font-size: 0.72rem; padding: 2px 6px; margin-top: 3px;">
-                                            <i class="fa-solid fa-file-pdf"></i> PDF الأهلية
-                                        </a>
+                                    @if($dec && ($dec->eligibility_decision_no || $dec->eligibility_decision_date))
+                                        <div>رقم الأهلية: <strong>{{ $dec->eligibility_decision_no ?: '—' }}</strong></div>
+                                        <div class="text-muted" style="font-size: 0.78rem; margin-top: 2px;">
+                                            تاريخ الأهلية: <strong>{{ $dec->eligibility_decision_date ? \Carbon\Carbon::parse($dec->eligibility_decision_date)->format('d/m/Y') : '—' }}</strong>
+                                        </div>
                                     @else
                                         <span class="text-muted fs-8">—</span>
                                     @endif
@@ -808,7 +814,7 @@
                         </td>
                         <td style="width: 50%;">
                             أمين مجلس التعليم العالي<br><br>
-                            <strong>الدكتور علي جاسم</strong>
+                            <strong>الدكتور علي الجاسم</strong>
                         </td>
                     </tr>
                 </table>
@@ -1027,6 +1033,17 @@
         link.click();
         document.body.removeChild(link);
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const params = new URLSearchParams(window.location.search);
+        const initialTrack = params.get('track');
+        if (initialTrack) {
+            const targetTab = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick')?.includes(`'${initialTrack}'`));
+            if (targetTab) {
+                filterByTrack(initialTrack, targetTab);
+            }
+        }
+    });
 </script>
 @endpush
 

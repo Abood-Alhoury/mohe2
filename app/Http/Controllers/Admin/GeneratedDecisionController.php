@@ -15,58 +15,142 @@ use Illuminate\Support\Facades\Auth;
 class GeneratedDecisionController extends Controller
 {
     /**
-     * 1. تنسيق نص الاختصاص الكامل للشهادة عند ذكرها في بداية المادة 1:
-     * القاعدة: "في [الاختصاص العام] اختصاص [الاختصاص الدقيق]"
+     * تنظيف النص من السوابق المتكررة والمسافات الزائدة
+     */
+    private static function normalizeSpecToken($value, $prefixPattern = '')
+    {
+        $val = preg_replace('/\s+/u', ' ', trim((string) $value));
+        if ($val !== '' && $prefixPattern !== '') {
+            $val = trim(preg_replace($prefixPattern, '', $val));
+        }
+        return $val;
+    }
+
+    /**
+     * تفكيك حقول الاختصاص بدقة ومنع الخلط بين الكلية، القسم، الاختصاص العام، والاختصاص الدقيق
+     */
+    public static function extractSpecializationParts($edu)
+    {
+        if (!$edu) {
+            return [
+                'faculty' => '',
+                'general' => '',
+                'department' => '',
+                'exact' => '',
+                'department_prefix' => 'قسم',
+                'exact_prefix' => 'اختصاص',
+            ];
+        }
+
+        $rawFaculty = trim((string) ($edu->faculty ?? ''));
+        $rawGeneral = trim((string) ($edu->general_specialization ?? ''));
+        $rawDept    = trim((string) ($edu->department ?? ''));
+        $rawSection = trim((string) ($edu->section_name ?? ''));
+        $rawExact   = trim((string) ($edu->exact_specialization ?? ($edu->specialization ?? '')));
+
+        $cleanFaculty = self::normalizeSpecToken($rawFaculty, '/^(كلية|الكلية)\s+/u');
+        $cleanGeneral = self::normalizeSpecToken($rawGeneral, '/^(كلية|الكلية)\s+/u');
+
+        $deptPrefix = str_starts_with($rawDept, 'شعبة ') ? 'شعبة' : 'قسم';
+        $cleanDept  = self::normalizeSpecToken($rawDept, '/^(قسم|شعبة)\s+/u');
+
+        // معالجة الحالات السابقة التي كان يُنسخ فيها اسم القسم داخل الاختصاص الدقيق خطأً
+        $effectiveRawExact = $rawExact;
+        if ($rawSection !== '' && $rawSection !== $rawDept) {
+            $effectiveRawExact = $rawSection;
+        } elseif ($rawExact !== '' && ($rawExact === $rawDept || preg_match('/^قسم\s+/u', $rawExact))) {
+            $effectiveRawExact = '';
+        }
+
+        $exactPrefix = 'اختصاص';
+        if (preg_match('/^شعبة\s+/u', $effectiveRawExact)) {
+            $exactPrefix = 'شعبة';
+        } elseif (preg_match('/^تخصص\s+/u', $effectiveRawExact)) {
+            $exactPrefix = 'تخصص';
+        }
+
+        $cleanExact = self::normalizeSpecToken($effectiveRawExact, '/^(اختصاص|تخصص|شعبة)\s+/u');
+        // إذا أدخل المستخدم نفس الاسم في القسم وفي الاختصاص الدقيق الحقيقي، نعتمد صفة الاختصاص الدقيق ونحذف التكرار من القسم
+        if ($cleanExact !== '' && $cleanExact === $cleanDept) {
+            $cleanDept = '';
+        }
+
+        return [
+            'faculty'           => $cleanFaculty,
+            'general'           => $cleanGeneral,
+            'department'        => $cleanDept,
+            'exact'             => $cleanExact,
+            'department_prefix' => $deptPrefix,
+            'exact_prefix'      => $exactPrefix,
+        ];
+    }
+
+    /**
+     * 1. تنسيق نص الاختصاص الكامل للشهادة عند ذكرها في المادة 1 وفق القاعدة الوزارية المعتمدة:
+     * - [الاختصاص العام/الكلية] + (قسم [القسم] إن وُجد واختلف) + (اختصاص [الاختصاص الدقيق] إن وُجد واختلف)
      */
     public static function formatDegreeSpecialization($edu, $isBachelor = false)
     {
         if (!$edu) return '';
 
-        $general = trim($edu->general_specialization ?? '');
-        $exact   = trim($edu->exact_specialization ?? ($edu->specialization ?? ''));
-        $faculty = trim($edu->faculty ?? '');
-        $dept    = trim($edu->department ?? ($edu->section_name ?? ''));
+        $p     = self::extractSpecializationParts($edu);
+        $base  = $p['general'] ?: $p['faculty'];
+        $dept  = $p['department'];
+        $exact = $p['exact'];
 
-        // في مرحلة الإجازة (البكالوريوس):
+        $hasDept  = ($dept !== '' && $dept !== $base);
+        $hasExact = ($exact !== '' && $exact !== $base && $exact !== $dept);
+
         if ($isBachelor) {
-            // تنظيف كلمة "كلية" أو "قسم" الزائدة للحصول على اسم الاختصاص الصافي
-            $bachelorSpec = $exact ?: ($general ?: ($dept ?: $faculty));
-            $bachelorSpec = preg_replace('/^(كلية|قسم)\s+/u', '', $bachelorSpec);
-            return $bachelorSpec ?: '---';
-        }
-
-        // في مرحلتي الماجستير والدكتوراه:
-        // تنظيف الاختصاص الدقيق إذا كان يكرر كلمة "قسم" بالخطأ
-        $cleanGeneral = preg_replace('/^(كلية)\s+/u', '', $general ?: $faculty);
-        $cleanExact   = preg_replace('/^(قسم)\s+/u', '', $exact);
-
-        // إذا كان الاختصاص الدقيق موجوداً ومختلفاً عن الاختصاص العام وعن اسم الكلية:
-        if (!empty($cleanExact) && $cleanExact !== $cleanGeneral && $cleanExact !== $faculty) {
-            // إذا كان النص يبدأ بكلمة "شعبة" أو "اختصاص" لا نكرر كلمة "اختصاص"
-            if (str_starts_with($cleanExact, 'شعبة') || str_starts_with($cleanExact, 'اختصاص')) {
-                return "{$cleanGeneral} {$cleanExact}";
+            if ($base !== '') {
+                if ($hasDept && $hasExact) {
+                    return "{$base} {$p['department_prefix']} {$dept} {$p['exact_prefix']} {$exact}";
+                }
+                if ($hasDept) {
+                    return "{$base} {$p['department_prefix']} {$dept}";
+                }
+                if ($hasExact) {
+                    return "{$base} {$p['exact_prefix']} {$exact}";
+                }
+                return $base;
             }
-            return "{$cleanGeneral} اختصاص {$cleanExact}";
+            return $dept ?: ($exact ?: '---');
         }
 
-        return $cleanGeneral ?: ($cleanExact ?: '---');
+        if ($base !== '') {
+            if ($hasDept && $hasExact) {
+                return "{$base} {$p['department_prefix']} {$dept} {$p['exact_prefix']} {$exact}";
+            }
+            if ($hasExact) {
+                return "{$base} {$p['exact_prefix']} {$exact}";
+            }
+            if ($hasDept) {
+                return "{$base} {$p['department_prefix']} {$dept}";
+            }
+            return $base;
+        }
+
+        if ($dept !== '') {
+            return $hasExact ? "{$dept} {$p['exact_prefix']} {$exact}" : $dept;
+        }
+
+        return $exact ?: '---';
     }
 
     /**
      * 2. استخراج اختصاص التعيين والتدريس النهائي (يوضع في آخر جملة من المادة 1):
-     * القاعدة: نأخذ الاختصاص الدقيق للشهادة العليا (ماجستير أو دكتوراه)، وإن لم يوجد نأخذ الاختصاص العام.
+     * القاعدة الهرمية: الاختصاص الدقيق -> القسم -> الاختصاص العام -> الكلية -> البديل
      */
     public static function getTeachingSpecialization($edu, $fallback = '')
     {
         if (!$edu) return $fallback;
-        $exact   = trim(preg_replace('/^(قسم)\s+/u', '', $edu->exact_specialization ?? ($edu->specialization ?? '')));
-        $general = trim(preg_replace('/^(كلية)\s+/u', '', $edu->general_specialization ?? ''));
-        if (!empty($exact)) return $exact;
-        if (!empty($general)) return $general;
-        $dept = trim(preg_replace('/^(قسم)\s+/u', '', $edu->department ?? ($edu->section_name ?? '')));
-        if (!empty($dept)) return $dept;
-        $faculty = trim(preg_replace('/^(كلية)\s+/u', '', $edu->faculty ?? ''));
-        if (!empty($faculty)) return $faculty;
+        $p = self::extractSpecializationParts($edu);
+
+        if ($p['exact'] !== '') return $p['exact'];
+        if ($p['department'] !== '') return $p['department'];
+        if ($p['general'] !== '') return $p['general'];
+        if ($p['faculty'] !== '') return $p['faculty'];
+
         return $fallback;
     }
 
@@ -140,7 +224,9 @@ class GeneratedDecisionController extends Controller
 
         $bachelorEd = $application->educations->where('level.name', 'إجازة جامعية')->first() ?? $application->educations->where('education_level_id', 1)->first();
         $masterEd   = $application->educations->where('level.name', 'ماجستير')->first() ?? $application->educations->where('education_level_id', 2)->first();
-        $phdEd      = $application->educations->where('level.name', 'دكتوراه')->first() ?? $application->educations->where('education_level_id', 3)->first();
+        $phdEd      = $application->educations->first(function($e) {
+            return ($e->level?->name === 'دكتوراه' || $e->education_level_id == 3) && !str_contains($e->thesis_title ?? '', 'هيئة تدريسية');
+        }) ?? $application->educations->where('level.name', 'دكتوراه')->first() ?? $application->educations->where('education_level_id', 3)->first();
 
         $isForeignDoctorate = str_contains($requestType, 'دكتورة خارجية') || 
                               str_contains($requestType, 'دكتوراه خارجية') || 
@@ -154,15 +240,15 @@ class GeneratedDecisionController extends Controller
         $isForeignApplied    = $isForeignMaster && (str_contains($requestType, 'تطبيقي') || ($masterEd && $masterEd->experience_from_year === null && !str_contains($requestType, 'نظري')));
         $isForeignTheoretical= $isForeignMaster && !$isForeignApplied;
         $isApplied           = str_contains($requestType, 'تطبيقي') || $isForeignApplied;
+        $isRejected          = in_array($application->status, ['مرفوض', '9', '10', 9, 10]);
 
-        $docType = $request->query('type', $request->input('doc_type', 'equivalence'));
-        if ($isFacultyPermission || $isApplied || $isResearchCenter) {
-            $docType = 'equivalence';
-        } elseif (!in_array($docType, ['equivalence', 'eligibility'])) {
-            $docType = 'equivalence';
-        }
+        // القرار موحد الآن في ورقة واحدة تشمل التعادل والأهلية معاً، أو كتاب عدم موافقة للطلبات المرفوضة
+        $docType = $isRejected ? 'rejection' : 'equivalence';
 
-        if ($isFacultyPermission) {
+        if ($isRejected) {
+            $decisionType = 'rejected';
+            $decisionTitle = 'كتاب عدم موافقة (رفض مسبّب)';
+        } elseif ($isFacultyPermission) {
             $decisionType = 'faculty_permission';
             $decisionTitle = 'قرار السماح بالتدريس (أعضاء الهيئة التدريسية)';
         } elseif ($isResearchCenter) {
@@ -212,7 +298,7 @@ class GeneratedDecisionController extends Controller
         $genderAttrs = $this->getGenderAttributes($candidate, ($isDoctorate || $isFacultyPermission || $isResearchCenter));
         $titlePrefix = $genderAttrs['titlePrefix'];
         $candidateTitle = $genderAttrs['candidateTitle'];
-        $candidateTitlePrep = $isDoctorate ? $g['for_doctor'] : $g['title_prep'];
+        $candidateTitlePrep = ($isDoctorate || $isFacultyPermission || $isResearchCenter) ? $g['for_doctor'] : $g['title_prep'];
         $candidateTitleWord = $g['title'];
         $qualifiedWord = $isFemale ? 'مؤهلة' : 'مؤهل';
         $qualifierHolderWord = $g['holder'];
@@ -235,16 +321,35 @@ class GeneratedDecisionController extends Controller
         $eligibilityDate = $application->interview_date ? format_sys_date($application->interview_date) : $decisionDate;
         $committeeDate = format_sys_date($application->latestDecision ? $application->latestDecision->decision_date : now());
         $decisionNo = $request->query('decision_no', $request->input('decision_no', ''));
+        $requiresEligibility = !$isRejected && $application->requiresEligibility();
+        $latestDec = $application->latestDecision;
+        $eligibilityDecisionNo = $request->input(
+            'eligibility_decision_no',
+            $latestDec?->eligibility_decision_no ?: ($application->eligibility_decision_no ?? '')
+        );
+        $rawEligDate = $latestDec?->eligibility_decision_date
+            ?: ($application->eligibility_decision_date ?: $application->interview_date);
+        $eligibilityDecisionDate = $request->input(
+            'eligibility_decision_date',
+            $rawEligDate ? format_sys_date($rawEligDate) : ''
+        );
+
+        $isMasterRequest = str_contains($requestType, 'ماجستير') || str_contains($requestType, 'ماستر');
+        $rejectionTargetTitle = ($isForeignDoctorate || $isFacultyPermission || $isResearchCenter || ($isDoctorate && !$isMasterRequest))
+            ? ($isFemale ? 'السيدة الدكتورة' : 'السيد الدكتور')
+            : ($isFemale ? 'السيدة' : 'السيد');
+        $rejectionReasonText = 'نظراً لعدم تحقيق شروط معادلة الشهادات الواردة في قرارات مجلس التعليم العالي .';
+        $recordedRejectionReason = trim((string) ($application->rejection_reason ?? ''));
 
         // بيانات الجامعة الحكومية (لعضو الهيئة التدريسية)
         $govEd = $application->educations->first(function($e) {
-            return $e->thesis_title === 'عضو هيئة تدريسية في جامعة حكومية' || (optional($e->level)->name && str_contains(optional($e->level)->name, 'حكومية'));
+            return str_contains($e->thesis_title ?? '', 'هيئة تدريسية') || (optional($e->level)->name && str_contains(optional($e->level)->name, 'حكومية'));
         }) ?? $application->educations->first();
 
-        $govUniRaw = $govEd->university->name ?? ($govEd->university_other ?? 'جامعة الفرات');
+        $govUniRaw = $govEd?->university?->name ?? ($govEd?->university_other ?? 'جامعة الفرات');
         $govUni = preg_replace('/^(جامعة|جامعه)\s+/u', '', trim($govUniRaw));
-        $govFaculty = $govEd->faculty ?? ($application->work_faculty ?: 'كلية التربية');
-        $govDepartment = $govEd->department ?? ($application->work_department ?: 'أصول التربية');
+        $govFaculty = $govEd?->faculty ?? ($application->work_faculty ?: 'كلية التربية');
+        $govDepartment = $govEd?->department ?? ($application->work_department ?: 'أصول التربية');
 
         // بيانات مركز البحوث
         $rcEd = $application->educations->first(function($e) {
@@ -261,31 +366,32 @@ class GeneratedDecisionController extends Controller
             $phdYear = $phdEd->graduation_year ?? date('Y');
         }
         $phdUniCountry = self::formatUniAndCountry($phdEd);
-        $phdCountry = $phdEd && $phdEd->country ? $phdEd->country->name : ($phdEd->country_other ?? '');
+        $phdCountry = $phdEd?->country?->name ?? ($phdEd?->country_other ?? '');
         $phdGeneral = $phdEd ? ($phdEd->general_specialization ?: ($phdEd->faculty ?: '')) : '';
         $phdExact = $phdEd ? ($phdEd->exact_specialization ?: ($phdEd->specialization ?: ($phdEd->section_name ?: ''))) : '';
         $phdFaculty = $phdEd ? ($phdEd->faculty ?: '') : '';
         $phdDepartment = $phdEd ? ($phdEd->department ?: ($phdEd->faculty ?: '')) : '';
         $phdSpec = $phdFormattedSpec;
-        $phdUniRaw = $phdEd ? ($phdEd->university_name_manual ?: (optional($phdEd->university)->name ?: ($phdEd->university_other ?? ''))) : '';
+        $phdUniRaw = $phdEd ? ($phdEd->university_name_manual ?: ($phdEd->university?->name ?: ($phdEd->university_other ?? ''))) : '';
         $phdUni = preg_replace('/^(جامعة|جامعه)\s+/u', '', trim($phdUniRaw));
 
         // 2. تنسيقات شهادة الماجستير
+        $masterParts = self::extractSpecializationParts($masterEd);
         $masterFormattedSpec = self::formatDegreeSpecialization($masterEd);
         $masterYear = self::getGrantYear($masterEd);
         if (empty($masterYear) && $masterEd) {
             $masterYear = $masterEd->graduation_year ?? ($isDoctorate ? date('Y') - 3 : date('Y'));
         }
         $masterUniCountry = self::formatUniAndCountry($masterEd);
-        $masterFaculty = $masterEd ? ($masterEd->faculty ?: '') : '';
-        $masterCountry = $masterEd && $masterEd->country ? $masterEd->country->name : ($masterEd->country_other ?? (optional($masterEd->country)->name ?: ''));
-        $masterDepartment = $masterEd ? ($masterEd->department ?: ($masterEd->faculty ?: '')) : '';
-        $masterGeneral = $masterEd ? ($masterEd->general_specialization ?: ($masterEd->faculty ?: '')) : '';
-        $masterExact = $masterEd ? ($masterEd->exact_specialization ?: ($masterEd->specialization ?: ($masterEd->section_name ?: ($masterEd->department ?: '')))) : '';
+        $masterFaculty = $masterParts['faculty'];
+        $masterCountry = $masterEd?->country?->name ?? ($masterEd?->country_other ?? '');
+        $masterDepartment = $masterParts['department'];
+        $masterGeneral = $masterParts['general'] ?: $masterParts['faculty'];
+        $masterExact = $masterParts['exact'];
         $masterSpec = $masterFormattedSpec;
-        $masterUniRaw = $masterEd ? ($masterEd->university_name_manual ?: ($masterEd->university_other ?: (optional($masterEd->university)->name ?: ''))) : '';
+        $masterUniRaw = $masterEd ? ($masterEd->university_name_manual ?: ($masterEd->university_other ?: ($masterEd->university?->name ?: ''))) : '';
         $masterUni = preg_replace('/^(جامعة|جامعه)\s+/u', '', trim($masterUniRaw));
-        $masterIsResearch = $masterEd && (str_contains(strtolower($masterEd->study_system ?? ''), 'بحثي') || str_contains($masterEd->thesis_title ?? '', 'بحثي') || str_contains($masterEd->notes ?? '', 'بحثي') || $isForeignTheoretical);
+        $masterIsResearch = $masterEd && (str_contains(strtolower($masterEd->study_system ?? ''), 'بحثي') || str_contains($masterEd->thesis_title ?? '', 'بحثي') || str_contains($masterEd->notes ?? '', 'بحثي'));
 
         // 3. تنسيقات شهادة الإجازة (البكالوريوس)
         $baFormattedSpec = self::formatDegreeSpecialization($bachelorEd, true);
@@ -295,22 +401,22 @@ class GeneratedDecisionController extends Controller
         }
         $baUniCountry = self::formatUniAndCountry($bachelorEd);
         $baFaculty = $bachelorEd ? ($bachelorEd->faculty ?: ($bachelorEd->general_specialization ?: '')) : '';
-        $baCountry = $bachelorEd && $bachelorEd->country ? $bachelorEd->country->name : ($bachelorEd->country_other ?? '');
+        $baCountry = $bachelorEd?->country?->name ?? ($bachelorEd?->country_other ?? '');
         $baGeneral = $bachelorEd ? ($bachelorEd->general_specialization ?: ($bachelorEd->faculty ?: '')) : '';
-        $baUniRaw = $bachelorEd ? ($bachelorEd->university_name_manual ?: (optional($bachelorEd->university)->name ?: ($bachelorEd->university_other ?: ''))) : '';
+        $baUniRaw = $bachelorEd ? ($bachelorEd->university_name_manual ?: ($bachelorEd->university?->name ?: ($bachelorEd->university_other ?: ''))) : '';
         $baUni = preg_replace('/^(جامعة|جامعه)\s+/u', '', trim($baUniRaw));
         $baSection = $baFormattedSpec;
         $baSpec = $baFormattedSpec;
 
         // 4. استخراج اختصاص التعيين والتدريس النهائي (يوضع في آخر جملة من المادة 1)
-        // القاعدة: نأخذ الاختصاص الدقيق للشهادة العليا (ماجستير أو دكتوراه)، وإن لم يوجد نأخذ الاختصاص العام
-        $higherEd = ($isDoctorate || $isForeignDoctorate) ? $phdEd : $masterEd;
-        $appFallback = $application->work_department ?: ($application->work_faculty ?: '');
+        // القاعدة: نأخذ الاختصاص الدقيق للشهادة العليا (دكتوراه أو ماجستير)، وإن لم يوجد نأخذ الاختصاص العام
+        $higherEd = ($isDoctorate || $isForeignDoctorate || $isFacultyPermission || $isResearchCenter) ? $phdEd : $masterEd;
+        $appFallback = $application->work_department ?: ($application->work_faculty ?: ($govDepartment ?: ($govFaculty ?: '')));
         $finalTeachingSpec = self::getTeachingSpecialization($higherEd, $appFallback);
-        if (empty($finalTeachingSpec)) {
-            $finalTeachingSpec = ($isDoctorate || $isForeignDoctorate)
-                ? (self::getTeachingSpecialization($masterEd) ?: ($phdFormattedSpec ?: '---'))
-                : ($masterFormattedSpec ?: '---');
+        if (empty($finalTeachingSpec) || $finalTeachingSpec === '---') {
+            $finalTeachingSpec = ($isDoctorate || $isForeignDoctorate || $isFacultyPermission || $isResearchCenter)
+                ? (self::getTeachingSpecialization($masterEd) ?: ($phdFormattedSpec ?: ($phdExact ?: ($phdGeneral ?: ($govDepartment ?: '---')))))
+                : ($masterFormattedSpec ?: ($masterExact ?: '---'));
         }
         $teachingDept = $finalTeachingSpec;
 
@@ -335,6 +441,10 @@ class GeneratedDecisionController extends Controller
             'isForeignApplied'        => $isForeignApplied,
             'isForeignTheoretical'    => $isForeignTheoretical,
             'isResearchCenter'        => $isResearchCenter,
+            'isRejected'              => $isRejected,
+            'rejectionTargetTitle'    => $rejectionTargetTitle,
+            'rejectionReasonText'     => $rejectionReasonText,
+            'recordedRejectionReason' => $recordedRejectionReason,
             'rcCenterName'            => $rcCenterName,
             'rcDepartment'            => $rcDepartment,
             'rcRank'                  => $rcRank,
@@ -371,6 +481,9 @@ class GeneratedDecisionController extends Controller
             'decisionDate'            => $decisionDate,
             'masterIsResearch'        => $masterIsResearch,
             'canEligibility'          => $canEligibility,
+            'requiresEligibility'     => $requiresEligibility,
+            'eligibilityDecisionNo'   => $eligibilityDecisionNo,
+            'eligibilityDecisionDate' => $eligibilityDecisionDate,
             'genderAttrs'             => $genderAttrs,
             'phdFormattedSpec'        => $phdFormattedSpec,
             'phdUniCountry'           => $phdUniCountry,
@@ -423,9 +536,9 @@ class GeneratedDecisionController extends Controller
 
         $data = $this->prepareDecisionData($application, $request);
 
-        if (in_array($application->status, ['مسودة', 'مرفوض', 'بانتظار الوثائق'])) {
+        if (in_array($application->status, ['مسودة', 'بانتظار الوثائق'])) {
             return redirect()->route('admin.applications.index')
-                ->with('error', '⚠️ توليد القرار غير متاح للطلبات المرفوضة أو المسودات أو التي بانتظار استكمال الوثائق.');
+                ->with('error', '⚠️ توليد القرار غير متاح للطلبات المسودة أو التي بانتظار استكمال الوثائق.');
         }
 
         $isSingleDecisionType = $data['isFacultyPermission'] || $data['isApplied'] || $data['isResearchCenter'];
@@ -452,8 +565,8 @@ class GeneratedDecisionController extends Controller
             'latestDecision',
         ])->findOrFail($id);
 
-        if (!in_array($application->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 'تم الصدور'])) {
-            return redirect()->route('admin.applications.index')->with('error', 'توليد وإصدار القرارات متاح فقط للطلبات التي حالتها (بانتظار إصدار القرار).');
+        if (!in_array($application->status, ['بانتظار إصدار القرار', 'بانتظار صدور القرار', 'تم الصدور', 'مرفوض'])) {
+            return redirect()->route('admin.applications.index')->with('error', 'توليد وإصدار القرارات متاح فقط للطلبات التي حالتها (بانتظار إصدار القرار) أو (مرفوض).');
         }
 
         $data = $this->prepareDecisionData($application, $request);
@@ -474,17 +587,20 @@ class GeneratedDecisionController extends Controller
 
         Storage::disk('public')->put($filePath, $pdfContent);
 
-        // 3. Update application status
-        $application->status = 'تم الصدور';
-        $application->save();
+        // 3. Update application status (keep مرفوض if rejected)
+        if ($application->status !== 'مرفوض') {
+            $application->status = 'تم الصدور';
+            $application->save();
+        }
 
         // 4. Create ApplicationDecision record with file_path
         ApplicationDecision::create([
-            'application_id' => $application->id,
-            'decision_no' => $decisionNo,
-            'decision_date' => now(),
-            'file_path' => $filePath,
-            'notes' => 'تم توليد واعتماد القرار رسمياً عبر النظام الإلكتروني للمجلس',
+            'application_id'          => $application->id,
+            'decision_no'             => $decisionNo,
+            'decision_date'           => now(),
+            'eligibility_decision_no' => $data['requiresEligibility'] ? ($data['eligibilityDecisionNo'] ?: null) : null,
+            'file_path'               => $filePath,
+            'notes'                   => 'تم توليد واعتماد القرار رسمياً عبر النظام الإلكتروني للمجلس',
         ]);
 
         // 5. Send automated notification to university
