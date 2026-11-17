@@ -176,8 +176,9 @@ body {
 
     @php
         $reqType = $application->request_type ?? '';
-        $isForeignMaster = str_contains($reqType, 'ماجستير خارجي') || str_contains($reqType, 'خارجي') || str_contains($reqType, 'غير سوري');
-        $isFacultyPermission = !$isForeignMaster && (str_contains($reqType, 'سماح') || str_contains($reqType, 'هيئة تدريسية'));
+        $isForeignDoctorate = str_contains($reqType, 'دكتورة خارجية') || str_contains($reqType, 'دكتوراه خارجية');
+        $isForeignMaster = !$isForeignDoctorate && (str_contains($reqType, 'ماجستير خارجي') || (str_contains($reqType, 'خارجي') && !str_contains($reqType, 'دكتور')) || str_contains($reqType, 'غير سوري'));
+        $isFacultyPermission = !$isForeignMaster && !$isForeignDoctorate && (str_contains($reqType, 'سماح') || str_contains($reqType, 'هيئة تدريسية'));
         $govEd = $govEd ?? ($application->educations ? $application->educations->first(function($e) {
             return $e->thesis_title === 'عضو هيئة تدريسية في جامعة حكومية' || (optional($e->level)->name && str_contains(optional($e->level)->name, 'حكومية'));
         }) : null);
@@ -266,19 +267,10 @@ body {
         ========================================================================= --}}
         @php
             $residences = optional($masterEd)->residences ?? collect();
-            $totalStayDays = 0;
-            foreach ($residences as $r) {
-                if ($r->entry_date && $r->exit_date) {
-                    $in = \Carbon\Carbon::parse($r->entry_date);
-                    $out = \Carbon\Carbon::parse($r->exit_date);
-                    if ($out->gte($in)) {
-                        $totalStayDays += $in->diffInDays($out);
-                    }
-                }
-            }
-            $stayYears = floor($totalStayDays / 365);
-            $stayMonths = floor(($totalStayDays % 365) / 30);
-            $stayDays = ($totalStayDays % 365) % 30;
+            $staySummary = \App\Models\Application::calculateResidenceSummary($residences);
+            $stayYears = $staySummary['years'];
+            $stayMonths = $staySummary['months'];
+            $stayDays = $staySummary['days'];
 
             $hasExp = $application->has_previous_degree || str_contains($application->request_type, 'نظري') || (optional($masterEd)->experience_from_year);
         @endphp
@@ -400,7 +392,11 @@ body {
         {{-- 5. تفاصيل حركات الإقامة ببلد الدراسة ومدة الإقامة المحسوبة --}}
         <div class="moz-section">تفاصيل حركات الإقامة ببلد الدراسة (من واقع جواز السفر) :</div>
         <div style="font-size: 11px; font-weight: bold; color: #1A2A44; background: #E5EBF5; border: 1px solid #C5C6CE; padding: 5px 8px; margin-bottom: 6px; text-align: center;">
-            إجمالي مدة الإقامة المحسوبة خارج القطر: {{ $stayYears }} سنة و {{ $stayMonths }} شهر و {{ $stayDays }} يوم
+            @if(!empty($application->is_residence_exempt))
+                حالة الإقامة: معفى من شرط الإقامة (تخصص نظري / دراسة عن بعد)
+            @else
+                إجمالي مدة الإقامة المحسوبة خارج القطر: {{ $stayYears }} سنة و {{ $stayMonths }} شهر و {{ $stayDays }} يوم ({{ $staySummary['total_days'] ?? 0 }} يوماً)
+            @endif
         </div>
 
         @if($residences->count() > 0)
@@ -518,7 +514,7 @@ body {
         @if($highSchoolEd)
         <table class="mt">
             <tr><td>{{ $highSchoolEd->section_name ?: ($highSchoolEd->general_specialization ?: ($highSchoolEd->type_or_faculty ?: 'علمي')) }}</td><td class="l">نوع الشهادة :</td><td>{{ optional($highSchoolEd->country)->name ?? 'سوريا' }}</td><td class="l">بلد المنح :</td></tr>
-            <tr><td>{{ $highSchoolEd->decision_no ?? 'لا يوجد' }}</td><td class="l">قرار المعادلة :</td><td>{{ format_sys_date($highSchoolEd->grant_date) }}</td><td class="l">تاريخ المنح :</td></tr>
+            <tr><td>{{ $highSchoolEd->notes ?: ($highSchoolEd->decision_no ?? 'لا يوجد') }}</td><td class="l">قرار المعادلة :</td><td>{{ format_sys_date($highSchoolEd->grant_date) }}</td><td class="l">تاريخ المنح :</td></tr>
         </table>
         @else
         <div class="wblock">لا توجد بيانات مسجلة للشهادة الثانوية.</div>
@@ -540,11 +536,25 @@ body {
         @if($masterEd)
         <div class="moz-section">درجة الماجستير المراد تعادلها :</div>
         <table class="mt">
-            <tr><td>{{ $masterEd->exact_specialization ?: ($masterEd->department ?: ($masterEd->section_name ?: '---')) }} {{ $masterEd->section_name && $masterEd->section_name !== ($masterEd->exact_specialization ?: $masterEd->department) ? '(' . $masterEd->section_name . ')' : '' }}</td><td class="l">القسم والفرع :</td><td>{{ optional($masterEd->university)->name ?? ($masterEd->university_other ?? '---') }} - {{ $masterEd->general_specialization ?: $masterEd->faculty }}</td><td class="l">الجامعة والكلية :</td></tr>
+            <tr>
+                <td>{{ $masterEd->exact_specialization ?: ($masterEd->department ?: ($masterEd->section_name ?: '---')) }} {{ $masterEd->section_name && $masterEd->section_name !== ($masterEd->exact_specialization ?: $masterEd->department) ? '(' . $masterEd->section_name . ')' : '' }}</td>
+                <td class="l">القسم والفرع :</td>
+                <td>{{ optional($masterEd->country)->name ? optional($masterEd->country)->name . ' - ' : '' }}{{ optional($masterEd->university)->name ?? ($masterEd->university_other ?? '---') }} - {{ $masterEd->general_specialization ?: $masterEd->faculty }}</td>
+                <td class="l">الجامعة والاختصاص :</td>
+            </tr>
+            @if($masterEd->registration_date || $masterEd->defense_date)
             <tr><td>{{ format_sys_date($masterEd->defense_date) }}</td><td class="l">تاريخ المناقشة :</td><td>{{ format_sys_date($masterEd->registration_date) }}</td><td class="l">تاريخ التسجيل :</td></tr>
-            <tr><td>{{ $masterEd->rank_or_grade }}</td><td class="l">التقدير :</td><td>{{ format_sys_date($masterEd->grant_date) }}</td><td class="l">تاريخ المنح :</td></tr>
-            <tr><td colspan="3">{{ $masterEd->supervisor_name ?? '---' }}</td><td class="l">الأستاذ المشرف :</td></tr>
-            <tr><td colspan="3" style="font-weight: bold; color: #1A2A44;">{{ $masterEd->thesis_title ?? '---' }}</td><td class="l">عنوان الرسالة :</td></tr>
+            @endif
+            <tr><td>{{ $masterEd->rank_or_grade ?: '---' }}</td><td class="l">التقدير :</td><td>{{ format_sys_date($masterEd->grant_date) }}</td><td class="l">تاريخ المنح :</td></tr>
+            @if($masterEd->supervisor_name)
+            <tr><td colspan="3">{{ $masterEd->supervisor_name }}</td><td class="l">الأستاذ المشرف :</td></tr>
+            @endif
+            @if($masterEd->thesis_title)
+            <tr><td colspan="3" style="font-weight: bold; color: #1A2A44;">{{ $masterEd->thesis_title }}</td><td class="l">عنوان الرسالة :</td></tr>
+            @endif
+            @if($masterEd->notes)
+            <tr><td colspan="3" style="font-weight: bold; color: #8A651E;">{{ $masterEd->notes }}</td><td class="l">قرار معادلة الماجستير :</td></tr>
+            @endif
         </table>
         @endif
 
@@ -552,7 +562,7 @@ body {
         @if($phdEd)
         <div class="moz-section">درجة الدكتوراه المراد تعادلها :</div>
         <table class="mt">
-            <tr><td>{{ $phdEd->exact_specialization ?: ($phdEd->department ?: ($phdEd->section_name ?: '---')) }} {{ $phdEd->section_name && $phdEd->section_name !== ($phdEd->exact_specialization ?: $phdEd->department) ? '(' . $phdEd->section_name . ')' : '' }}</td><td class="l">القسم والفرع :</td><td>{{ optional($phdEd->university)->name ?? ($phdEd->university_other ?? '---') }} - {{ $phdEd->general_specialization ?: $phdEd->faculty }}</td><td class="l">الجامعة والكلية :</td></tr>
+            <tr><td>{{ $phdEd->exact_specialization ?: ($phdEd->department ?: ($phdEd->section_name ?: '---')) }} {{ $phdEd->section_name && $phdEd->section_name !== ($phdEd->exact_specialization ?: $phdEd->department) ? '(' . $phdEd->section_name . ')' : '' }}</td><td class="l">القسم والفرع :</td><td>{{ optional($phdEd->country)->name ? optional($phdEd->country)->name . ' - ' : '' }}{{ optional($phdEd->university)->name ?? ($phdEd->university_other ?? '---') }} - {{ $phdEd->faculty ?: $phdEd->general_specialization }}</td><td class="l">بلد الدراسة والجامعة :</td></tr>
             @if($phdEd->registration_date || $phdEd->defense_date)
             <tr><td>{{ format_sys_date($phdEd->defense_date) }}</td><td class="l">تاريخ المناقشة :</td><td>{{ format_sys_date($phdEd->registration_date) }}</td><td class="l">تاريخ التسجيل :</td></tr>
             @endif
@@ -571,6 +581,65 @@ body {
         <table class="mt">
             <tr><td>{{ $application->work_faculty }} - {{ $application->work_department }}</td><td class="l">الكلية والفرع :</td><td style="font-weight:bold; color: #1A2A44;">{{ optional($application->workUniversity)->name }}</td><td class="l">الجامعة المعنية :</td></tr>
         </table>
+
+        {{-- 6.5 حركات الإقامة ببلد دراسة الدكتوراه (للدكتوراه الخارجية أو عند وجود حركات) --}}
+        @php
+            $phdResidences = optional($phdEd)->residences ? $phdEd->residences->sortBy('entry_date')->values() : collect();
+        @endphp
+        @if($isForeignDoctorate || !empty($application->is_residence_exempt) || $phdResidences->count() > 0)
+            @php
+                $phdStaySummary = \App\Models\Application::calculateResidenceSummary($phdResidences);
+            @endphp
+            <div class="moz-section">تفاصيل حركات الإقامة ببلد دراسة الدكتوراه (من واقع جواز السفر) :</div>
+            <div style="font-size: 11px; font-weight: bold; color: #1A2A44; background: #E5EBF5; border: 1px solid #C5C6CE; padding: 5px 8px; margin-bottom: 6px; text-align: center;">
+                @if(!empty($application->is_residence_exempt))
+                    حالة الإقامة: معفى من شرط الإقامة (تخصص نظري / دراسة عن بعد)
+                @else
+                    إجمالي مدة الإقامة المحسوبة خارج القطر: {{ $phdStaySummary['years'] }} سنة و {{ $phdStaySummary['months'] }} شهر و {{ $phdStaySummary['days'] }} يوم ({{ $phdStaySummary['total_days'] ?? 0 }} يوماً)
+                @endif
+            </div>
+
+            @if($phdResidences->count() > 0)
+            <table class="ct">
+                <thead>
+                    <tr>
+                        <th style="width: 23%;">مدة الإقامة المحسوبة</th>
+                        <th style="width: 12%;">رقم الصفحة</th>
+                        <th style="width: 16%;">منفذ / مطار الخروج</th>
+                        <th style="width: 14%;">تاريخ الخروج</th>
+                        <th style="width: 16%;">منفذ / مطار الدخول</th>
+                        <th style="width: 14%;">تاريخ الدخول</th>
+                        <th style="width: 5%;">#</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($phdResidences as $idx => $res)
+                        @php
+                            $inD = \Carbon\Carbon::parse($res->entry_date);
+                            $outD = \Carbon\Carbon::parse($res->exit_date);
+                            if ($inD && $outD && $outD->gte($inD)) {
+                                $diff = $inD->diff($outD);
+                                $y = $diff->y; $m = $diff->m; $d = $diff->d;
+                            } else {
+                                $y = 0; $m = 0; $d = 0;
+                            }
+                        @endphp
+                        <tr>
+                            <td><strong>{{ $y }} سنة و {{ $m }} شهر و {{ $d }} يوم</strong></td>
+                            <td>{{ $res->page_number ?: '---' }}</td>
+                            <td>{{ $res->exit_airport ?: '---' }}</td>
+                            <td>{{ format_sys_date($res->exit_date) }}</td>
+                            <td>{{ $res->entry_airport ?: '---' }}</td>
+                            <td>{{ format_sys_date($res->entry_date) }}</td>
+                            <td>{{ $idx + 1 }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+            @elseif(empty($application->is_residence_exempt))
+            <div class="wblock">لا توجد حركات إقامة مسجلة لهذه المعاملة.</div>
+            @endif
+        @endif
 
         {{-- 7. بيان فترات الخبرة التدريسية المعتمدة ومسار الماجستير (إن وجدت) --}}
         @if($application->experiences && $application->experiences->count() > 0)

@@ -484,7 +484,11 @@ class DashboardController extends Controller
         }
 
         if ($isForeign) {
-            return redirect()->route('university.apply.foreign_masters', ['draft_id' => $application->id]);
+            $reqType = (string) ($application->request_type ?? '');
+            if (str_contains($reqType, 'نظري') || (!str_contains($reqType, 'تطبيقي') && $application->total_experience_days >= 730)) {
+                return redirect()->route('university.apply.foreign_masters_theoretical', ['draft_id' => $application->id]);
+            }
+            return redirect()->route('university.apply.foreign_masters_applied', ['draft_id' => $application->id]);
         }
 
         if ($isDoctorate) {

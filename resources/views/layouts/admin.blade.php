@@ -10,10 +10,10 @@
     <link rel="icon" type="image/jpeg" href="{{ asset('assets/logo.jpg') }}">
     <link rel="shortcut icon" type="image/jpeg" href="{{ asset('assets/logo.jpg') }}">
     
-    <!-- Google Fonts: IBM Plex Sans Arabic -->
+    <!-- Google Fonts: Traditional Arabic / Amiri / Noto Naskh Arabic Fallback -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
 
     <!-- Bootstrap 5 RTL CSS -->
@@ -266,7 +266,7 @@
                 </a>
 
                 <a href="{{ route('admin.interviews.index') }}" 
-                   class="sidebar-link {{ request()->routeIs('admin.interviews*') ? 'active' : '' }}"
+                   class="sidebar-link {{ request()->routeIs('admin.interviews.index') ? 'active' : '' }}"
                    :title="!isExpanded ? 'بانتظار المقابلات' : ''">
                     <div class="sidebar-icon-tile" style="background: #ecfeff; color: #0891b2; border: 1px solid #cff4fc;">
                         <i class="fa-solid fa-calendar-check"></i>
@@ -283,6 +283,15 @@
                     @if($awaitingInterviewsBadge > 0)
                         <span class="badge rounded-pill ms-auto" style="font-size: 0.72rem; background-color: #0891b2 !important; color: #ffffff !important;">{{ $awaitingInterviewsBadge }}</span>
                     @endif
+                </a>
+
+                <a href="{{ route('admin.interviews.report') }}" 
+                   class="sidebar-link {{ request()->routeIs('admin.interviews.report') ? 'active' : '' }}"
+                   :title="!isExpanded ? 'تقرير المقابلات' : ''">
+                    <div class="sidebar-icon-tile" style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a;">
+                        <i class="fa-solid fa-print"></i>
+                    </div>
+                    <span class="sidebar-text-label">تقرير المقابلات</span>
                 </a>
 
                 <a href="{{ route('admin.messages.index') }}" 

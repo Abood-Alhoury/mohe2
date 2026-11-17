@@ -13,14 +13,11 @@ use Illuminate\Support\Facades\Auth;
 class InterviewsController extends Controller
 {
     /**
-     * Display listing of candidate applications awaiting interviews ('بانتظار المقابلة').
+     * الاستعلام الأساسي للطلبات المؤهلة لمرحلة المقابلات (نظري ودكتوراه).
      */
-    public function index(Request $request)
+    private function awaitingInterviewsQuery()
     {
-        $searchQuery = $request->query('search');
-        $universityFilter = $request->query('university_id');
-
-        $query = Application::with([
+        return Application::with([
             'candidate.nationality',
             'workUniversity',
             'educations.level',
@@ -31,10 +28,21 @@ class InterviewsController extends Controller
           ->where('request_type', 'not like', '%سماح%')
           ->where('request_type', 'not like', '%تدريسية%')
           ->where('request_type', 'not like', '%بحوث%')
-          ->where(function($q) {
+          ->where(function ($q) {
               $q->where('request_type', 'not like', '%تطبيقي%')
                 ->orWhere('request_type', 'like', '%نظري%');
           });
+    }
+
+    /**
+     * Display listing of candidate applications awaiting interviews ('بانتظار المقابلة').
+     */
+    public function index(Request $request)
+    {
+        $searchQuery = $request->query('search');
+        $universityFilter = $request->query('university_id');
+
+        $query = $this->awaitingInterviewsQuery();
 
         // Apply Search Filter
         if ($searchQuery) {
@@ -55,24 +63,9 @@ class InterviewsController extends Controller
 
         $applications = $query->latest()->paginate(20);
         $universities = LookupUniversity::all();
-        $totalAwaitingCount = Application::where('status', 'بانتظار المقابلة')
-            ->where('request_type', 'not like', '%سماح%')
-            ->where('request_type', 'not like', '%تدريسية%')
-            ->where('request_type', 'not like', '%بحوث%')
-            ->where(function($q) {
-                $q->where('request_type', 'not like', '%تطبيقي%')
-                  ->orWhere('request_type', 'like', '%نظري%');
-            })
-            ->count();
-        $scheduledCount = Application::where('status', 'بانتظار المقابلة')
+        $totalAwaitingCount = $this->awaitingInterviewsQuery()->count();
+        $scheduledCount = $this->awaitingInterviewsQuery()
             ->whereNotNull('interview_date')
-            ->where('request_type', 'not like', '%سماح%')
-            ->where('request_type', 'not like', '%تدريسية%')
-            ->where('request_type', 'not like', '%بحوث%')
-            ->where(function($q) {
-                $q->where('request_type', 'not like', '%تطبيقي%')
-                  ->orWhere('request_type', 'like', '%نظري%');
-            })
             ->count();
 
         $passedCount = Application::where('status', 'بانتظار إصدار القرار')->count();
@@ -87,6 +80,110 @@ class InterviewsController extends Controller
             'scheduledCount',
             'passedCount',
             'failedCount'
+        ));
+    }
+
+    /**
+     * صفحة تقرير وجدول المقابلات القابل للطباعة مباشرة بصيغة A4.
+     */
+    public function report(Request $request)
+    {
+        $apps = $this->awaitingInterviewsQuery()
+            ->orderByRaw('CASE WHEN interview_date IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('interview_date', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        $candidatesData = $apps->map(function (Application $app) {
+            $reqType = (string) ($app->request_type ?? '');
+            $isMasterTrack = str_contains($reqType, 'ماجستير') || str_contains($reqType, 'ماستر');
+
+            $phdEd = $app->educations->first(function ($e) {
+                return (int) $e->education_level_id === 3
+                    && !str_contains((string) ($e->thesis_title ?? ''), 'هيئة تدريسية')
+                    && !str_contains((string) ($e->thesis_title ?? ''), 'مركز بحوث');
+            });
+            $maEd = $app->educations->where('education_level_id', 2)->first();
+
+            if ($isMasterTrack) {
+                $targetEd = $maEd ?: $app->educations->last();
+                $degreeLabel = 'ماجستير';
+                $groupKey = 'masters';
+            } elseif (str_contains($reqType, 'دكتور') || $phdEd) {
+                $targetEd = $phdEd ?: $app->educations->last();
+                $degreeLabel = 'دكتوراه';
+                $groupKey = 'doctorate';
+            } else {
+                $targetEd = $maEd ?: $app->educations->last();
+                $degreeLabel = 'ماجستير';
+                $groupKey = 'masters';
+            }
+
+            $spec = GeneratedDecisionController::getTeachingSpecialization(
+                $targetEd,
+                optional($targetEd)->exact_specialization ?: (optional($targetEd)->general_specialization ?: (optional($targetEd)->faculty ?: '---'))
+            );
+
+            return [
+                'id'              => $app->id,
+                'app_no'          => $app->application_no ?? ('App-' . $app->id),
+                'name'            => $app->candidate->full_name ?? '---',
+                'specialization'  => $spec ?: '---',
+                'degree'          => $degreeLabel,
+                'group'           => $groupKey,
+                'university'      => $app->workUniversity->name ?? '---',
+                'interview_date'  => $app->interview_date ? Carbon::parse($app->interview_date)->format('Y-m-d') : '',
+                'interview_time'  => (string) ($app->interview_time ?? ''),
+                'interview_notes' => (string) ($app->interview_notes ?? ''),
+            ];
+        })->values();
+
+        $rawIds = $request->query('ids');
+        $requestedIds = [];
+        if (is_string($rawIds) && trim($rawIds) !== '') {
+            $requestedIds = array_values(array_filter(array_map('intval', explode(',', $rawIds))));
+        } elseif (is_array($rawIds)) {
+            $requestedIds = array_values(array_filter(array_map('intval', $rawIds)));
+        }
+
+        $availableIds = $candidatesData->pluck('id')->all();
+        if (!empty($requestedIds)) {
+            $selectedIds = array_values(array_intersect($requestedIds, $availableIds));
+        } else {
+            $selectedIds = $availableIds;
+        }
+
+        $selectedCandidates = $candidatesData->whereIn('id', $selectedIds)->values();
+        $firstScheduled = $selectedCandidates->first(fn ($c) => $c['interview_date'] !== '') ?? $selectedCandidates->first();
+
+        $initialDate = trim((string) $request->query('date', '')) ?: ($firstScheduled['interview_date'] ?? date('Y-m-d'));
+        $rawTime = trim((string) $request->query('time', '')) ?: ($firstScheduled['interview_time'] ?? '');
+        $rawPlace = trim((string) $request->query('place', '')) ?: ($firstScheduled['interview_notes'] ?? '');
+
+        $initialPeriod = 'صباحاً';
+        if (str_contains($rawTime, 'مساء')) {
+            $initialPeriod = 'مساءً';
+        } elseif (str_contains($rawTime, 'ظهر')) {
+            $initialPeriod = 'ظهراً';
+        }
+
+        $cleanHour = preg_replace('/(الساعة|صباحاً|صباحا|مساءً|مساء|ظهراً|ظهرا)/u', '', $rawTime);
+        $cleanHour = trim(preg_replace('/\s+/u', ' ', (string) $cleanHour));
+        $initialHour = $cleanHour !== '' ? $cleanHour : '12';
+
+        $initialPlace = $rawPlace !== '' ? $rawPlace : 'وزارة التعليم العالي والبحث العلمي ط ٦';
+        $universities = $candidatesData->pluck('university')->filter()->unique()->values();
+        $scheduledDates = $candidatesData->pluck('interview_date')->filter()->unique()->sort()->values();
+
+        return view('admin.interviews.report', compact(
+            'candidatesData',
+            'selectedIds',
+            'universities',
+            'scheduledDates',
+            'initialDate',
+            'initialHour',
+            'initialPeriod',
+            'initialPlace'
         ));
     }
 

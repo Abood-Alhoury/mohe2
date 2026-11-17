@@ -157,6 +157,140 @@
 </div>
 @endif
 
+<style>
+    .mohe-official-panel {
+        background: #ffffff;
+        border: 1px solid #d5dce6;
+        border-top: 3px solid var(--imperial-navy);
+        border-radius: 10px;
+        box-shadow: 0 3px 14px rgba(15, 29, 51, 0.05);
+        overflow: hidden;
+    }
+    .mohe-panel-header {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-bottom: 1px solid #e2e8f0;
+        padding: 14px 20px;
+    }
+    .mohe-emblem-box {
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+        background: var(--imperial-navy);
+        color: var(--heritage-gold-light);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow: 0 2px 6px rgba(26, 42, 68, 0.18);
+    }
+    .mohe-subform-box {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 16px;
+    }
+    .mohe-ledger-wrap {
+        border: 1px solid #d5dce6;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #ffffff;
+    }
+    .mohe-ledger-table thead th {
+        background-color: var(--imperial-navy) !important;
+        color: #ffffff !important;
+        font-weight: 600;
+        font-size: 0.80rem;
+        padding: 11px 10px;
+        border-color: #243b5e !important;
+        border-bottom: 2px solid var(--heritage-gold) !important;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+    .mohe-ledger-table tbody td {
+        padding: 10px 8px;
+        vertical-align: middle;
+        border-color: #e8edf4 !important;
+        font-size: 0.84rem;
+    }
+    .mohe-ledger-table tbody tr:hover {
+        background-color: #f8fafc;
+    }
+    .mohe-duration-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #f3f6fb;
+        color: var(--imperial-navy);
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        padding: 4px 10px;
+        font-weight: 600;
+        font-size: 0.80rem;
+    }
+    .mohe-stat-tile {
+        background: #ffffff;
+        border: 1px solid #cfd8e3;
+        border-top: 2px solid var(--imperial-navy);
+        border-radius: 8px;
+        padding: 12px 10px;
+        text-align: center;
+        box-shadow: 0 2px 6px rgba(15, 29, 51, 0.04);
+    }
+    .mohe-stat-tile.is-gold {
+        background: #fcfaf4;
+        border-color: #dec99c;
+        border-top: 2px solid var(--heritage-gold-dark);
+    }
+    .mohe-stat-value {
+        font-size: 1.65rem;
+        font-weight: 700;
+        color: var(--imperial-navy);
+        line-height: 1.15;
+        font-variant-numeric: tabular-nums;
+    }
+    .mohe-stat-tile.is-gold .mohe-stat-value {
+        color: var(--heritage-gold-dark);
+    }
+    .mohe-stat-label {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #475569;
+        margin-top: 3px;
+    }
+    .mohe-btn-navy {
+        background-color: var(--imperial-navy);
+        border: 1px solid var(--imperial-navy);
+        color: #ffffff;
+        transition: all 0.2s ease;
+    }
+    .mohe-btn-navy:hover {
+        background-color: var(--imperial-navy-dark);
+        border-color: var(--imperial-navy-dark);
+        color: var(--heritage-gold-light);
+    }
+    .mohe-add-icon-btn {
+        width: 44px;
+        height: 44px;
+        padding: 0 !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+    .mohe-action-icon-btn {
+        width: 32px !important;
+        height: 32px !important;
+        padding: 0 !important;
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px !important;
+        line-height: 1 !important;
+    }
+</style>
+
 <!-- WIZARD MAIN CONTAINER -->
 <div class="card border-0 shadow-sm" style="border-radius: 8px; border-top: 3px solid var(--heritage-gold) !important; border: 1px solid var(--outline-variant) !important; background-color: #ffffff;">
     <div class="card-body p-4 p-md-5">
@@ -577,135 +711,162 @@
                         <!-- Multi-Period Teaching Experience Section (Mandatory for Theoretical Track) -->
                         <div class="col-12 mt-4" id="experience-section-container">
                             <input type="hidden" id="input-hasExperience" name="has_experience" value="1">
-                            <div class="card border rounded-3 p-3 shadow-xs" style="background-color: #f8fafc; border-color: #cbd5e1 !important; border-right: 4px solid var(--heritage-gold) !important;">
-                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 border-bottom pb-2">
-                                    <div>
-                                        <h6 class="fw-bold mb-1 d-flex align-items-center gap-2" style="color: var(--primary-container);">
-                                            <i class="fa-solid fa-chalkboard-user" style="color: var(--heritage-gold);"></i> تسجيل فترات الخبرة التدريسية الأكاديمية (إلزامي: لا تقل عن سنتين / 730 يوماً) <span class="text-danger">*</span>
-                                        </h6>
-                                        <p class="text-muted fs-8 mb-0">
-                                            يجب إدخال فترات الخبرة التدريسية لدى جامعة أو عدة جامعات بحيث لا يقل المجموع التراكمي عن <strong>سنتين كاملتين (730 يوماً فأكثر)</strong> لإتمام تقديم مسار <strong>(ماجستير نظري)</strong> وإصدار قرار الأهلية والمقابلة.
-                                        </p>
+                            <div class="mohe-official-panel">
+                                <div class="mohe-panel-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="mohe-emblem-box">
+                                            <i class="fa-solid fa-chalkboard-user"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="fw-bold mb-0" style="color: var(--imperial-navy);">
+                                                سجل فترات الخبرة التدريسية الأكاديمية <span class="text-danger">*</span>
+                                            </h6>
+                                            <p class="text-muted fs-8 mb-0 mt-0.5">
+                                                يجب إدخال فترات الخبرة التدريسية لدى جامعة أو عدة جامعات بحيث لا يقل المجموع التراكمي عن <strong>سنتين كاملتين (730 يوماً فأكثر)</strong> لإتمام تقديم مسار <strong>(ماجستير نظري)</strong> وإصدار قرار الأهلية والمقابلة.
+                                            </p>
+                                        </div>
                                     </div>
-                                    <span class="badge bg-warning-subtle text-dark border border-warning px-3 py-1.5 fw-bold">
-                                        <i class="fa-solid fa-shield-halved me-1 text-warning"></i> شرط إلزامي للمسار النظري
+                                    <span class="badge px-3 py-1.5 fs-8 fw-semibold" style="background-color: #fbf8f1; color: var(--heritage-gold-dark); border: 1px solid #dec99c;">
+                                        <i class="fa-solid fa-shield-halved me-1"></i> الحد الأدنى: 730 يوماً
                                     </span>
                                 </div>
 
-                                <div id="experience-entry-wrapper">
-                                    <!-- Form Inputs Card -->
-                                    <div class="card p-3 mb-3 border rounded-3 bg-white shadow-xs">
-                                        <div class="row g-2 align-items-end">
-                                            <div class="col-md-4">
-                                                <label class="form-label label-sm fw-bold">الجهة / الجامعة والكلية <span class="text-danger">*</span></label>
-                                                <input type="text" id="exp_institution" class="form-control academic-input" placeholder="مثال: جامعة دمشق - كلية العلوم">
+                                <div class="p-3 p-md-4">
+                                    <div id="experience-entry-wrapper">
+                                        <!-- Form Inputs Card -->
+                                        <div class="mohe-subform-box mb-3">
+                                            <div class="d-flex align-items-center gap-2 mb-2 pb-2 border-bottom" style="border-color: #e2e8f0 !important;">
+                                                <i class="fa-solid fa-plus-circle fs-7" style="color: var(--heritage-gold-dark);"></i>
+                                                <span class="fw-bold fs-8" style="color: var(--imperial-navy);">إدراج فترة خبرة تدريسية جديدة</span>
                                             </div>
-                                            <div class="col-md-3">
-                                                <label class="form-label label-sm fw-bold">الصفة التدريسية / المقرر <span class="text-muted fs-8 fw-normal">(اختياري)</span></label>
-                                                <input type="text" id="exp_role" class="form-control academic-input" placeholder="مثال: تدريس مقرر البرمجة">
-                                            </div>
-                                            <div class="col-md-2">
-                                                <label class="form-label label-sm fw-bold">من تاريخ <span class="text-danger">*</span></label>
-                                                <input type="date" id="exp_start_date" class="form-control academic-input" max="{{ date('Y-m-d') }}">
-                                            </div>
-                                            <div class="col-md-2">
-                                                <label class="form-label label-sm fw-bold">إلى تاريخ <span class="text-danger">*</span></label>
-                                                <input type="date" id="exp_end_date" class="form-control academic-input" max="{{ date('Y-m-d') }}">
-                                            </div>
-                                            <div class="col-md-1">
-                                                <button type="button" class="btn btn-primary w-100 fw-bold shadow-sm" onclick="addExperiencePeriod()" style="height: 38px;" title="إضافة الفترة إلى الجدول">
-                                                    <i class="fa-solid fa-plus-circle me-1"></i> إضافة
-                                                </button>
-                                            </div>
-                                            <div class="col-12 mt-2">
-                                                <input type="text" id="exp_notes" class="form-control academic-input form-control-sm" placeholder="ملاحظات إضافية أو رقم كتاب التكليف بالتدريس (اختياري)">
+                                            <div class="row g-2 align-items-end">
+                                                <div class="col-md-4">
+                                                    <label class="form-label label-sm fw-bold text-dark">الجهة / الجامعة والكلية <span class="text-danger">*</span></label>
+                                                    <input type="text" id="exp_institution" class="form-control academic-input bg-white" placeholder="مثال: جامعة دمشق - كلية العلوم">
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label label-sm fw-bold text-dark">الصفة التدريسية / المقرر <span class="text-muted fs-8 fw-normal">(اختياري)</span></label>
+                                                    <input type="text" id="exp_role" class="form-control academic-input bg-white" placeholder="مثال: تدريس مقرر البرمجة">
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label label-sm fw-bold text-dark">من تاريخ <span class="text-danger">*</span></label>
+                                                    <input type="date" id="exp_start_date" class="form-control academic-input bg-white" max="{{ date('Y-m-d') }}">
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label label-sm fw-bold text-dark">إلى تاريخ <span class="text-danger">*</span></label>
+                                                    <input type="date" id="exp_end_date" class="form-control academic-input bg-white" max="{{ date('Y-m-d') }}">
+                                                </div>
+                                                <div class="col-md-1 d-flex justify-content-md-end">
+                                                    <button type="button" class="btn mohe-btn-navy mohe-add-icon-btn shadow-xs" onclick="addExperiencePeriod()" title="إضافة فترة الخبرة إلى الجدول" aria-label="إضافة فترة الخبرة">
+                                                        <i class="fa-solid fa-plus"></i>
+                                                    </button>
+                                                </div>
+                                                <div class="col-12 mt-2">
+                                                    <input type="text" id="exp_notes" class="form-control academic-input form-control-sm bg-white" placeholder="ملاحظات إضافية أو رقم كتاب التكليف بالتدريس (اختياري)">
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <!-- Periods Table -->
-                                    <div class="table-responsive mb-3 shadow-xs rounded border bg-white">
-                                        <table class="table table-bordered table-hover align-middle text-center mb-0" id="experiences_table" style="font-size: 0.85rem;">
-                                            <thead style="background-color: #1e3a5f; color: #ffffff;">
-                                                <tr>
-                                                    <th style="width: 5%; color: #ffffff;">#</th>
-                                                    <th style="width: 25%; color: #ffffff;"><i class="fa-solid fa-building-columns me-1"></i> الجهة / الجامعة والكلية</th>
-                                                    <th style="width: 18%; color: #ffffff;"><i class="fa-solid fa-chalkboard me-1"></i> الصفة / المقرر</th>
-                                                    <th style="width: 12%; color: #ffffff;"><i class="fa-regular fa-calendar-check me-1"></i> من تاريخ</th>
-                                                    <th style="width: 12%; color: #ffffff;"><i class="fa-regular fa-calendar-xmark me-1"></i> إلى تاريخ</th>
-                                                    <th style="width: 18%; color: #ffffff;"><i class="fa-solid fa-clock-rotate-left me-1"></i> المدة المحسوبة</th>
-                                                    <th style="width: 10%; color: #ffffff;">إجراءات</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="experiences_tbody">
-                                                @forelse($draftExperiences as $idx => $exp)
-                                                    @php
-                                                        $sDateStr = !empty($exp->start_date) ? $exp->start_date : null;
-                                                        $eDateStr = !empty($exp->end_date) ? $exp->end_date : null;
-                                                        $calcY = 0; $calcM = 0; $calcD = 0; $tDays = 0;
-                                                        if ($sDateStr && $eDateStr) {
-                                                            try {
-                                                                $sDate = \Carbon\Carbon::parse($sDateStr);
-                                                                $eDate = \Carbon\Carbon::parse($eDateStr);
-                                                                if ($eDate->gte($sDate)) {
-                                                                    $diff = $sDate->diff($eDate);
-                                                                    $calcY = $diff->y; $calcM = $diff->m; $calcD = $diff->d;
-                                                                    $tDays = $sDate->diffInDays($eDate);
+                                        <!-- Periods Table -->
+                                        <div class="mohe-ledger-wrap mb-3">
+                                            <div class="table-responsive">
+                                                <table class="table table-hover align-middle text-center mb-0 mohe-ledger-table" id="experiences_table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th style="width: 5%;">#</th>
+                                                            <th style="width: 26%;"><i class="fa-solid fa-building-columns me-1 text-warning opacity-75"></i> الجهة / الجامعة والكلية</th>
+                                                            <th style="width: 19%;"><i class="fa-solid fa-chalkboard me-1 text-warning opacity-75"></i> الصفة / المقرر</th>
+                                                            <th style="width: 12%;"><i class="fa-regular fa-calendar-check me-1 text-warning opacity-75"></i> من تاريخ</th>
+                                                            <th style="width: 12%;"><i class="fa-regular fa-calendar-xmark me-1 text-warning opacity-75"></i> إلى تاريخ</th>
+                                                            <th style="width: 18%;"><i class="fa-solid fa-clock-rotate-left me-1 text-warning opacity-75"></i> المدة المحسوبة</th>
+                                                            <th style="width: 8%;">إجراء</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="experiences_tbody">
+                                                        @forelse($draftExperiences as $idx => $exp)
+                                                            @php
+                                                                $sDateStr = !empty($exp->start_date) ? $exp->start_date : null;
+                                                                $eDateStr = !empty($exp->end_date) ? $exp->end_date : null;
+                                                                $calcY = 0; $calcM = 0; $calcD = 0; $tDays = 0;
+                                                                if ($sDateStr && $eDateStr) {
+                                                                    try {
+                                                                        $sDate = \Carbon\Carbon::parse($sDateStr);
+                                                                        $eDate = \Carbon\Carbon::parse($eDateStr);
+                                                                        if ($eDate->gte($sDate)) {
+                                                                            $diff = $sDate->diff($eDate);
+                                                                            $calcY = $diff->y; $calcM = $diff->m; $calcD = $diff->d;
+                                                                            $tDays = $sDate->diffInDays($eDate);
+                                                                        }
+                                                                    } catch (\Exception $ex) {}
                                                                 }
-                                                            } catch (\Exception $ex) {}
-                                                        }
-                                                    @endphp
-                                                    <tr data-row-id="{{ $idx + 1 }}">
-                                                        <td>{{ $idx + 1 }}</td>
-                                                        <td class="text-start pe-3"><strong>{{ $exp->institution_name }}</strong></td>
-                                                        <td>{{ $exp->role_or_subject ?: '---' }}</td>
-                                                        <td><strong class="text-dark">{{ $sDateStr ? \Carbon\Carbon::parse($sDateStr)->format('Y-m-d') : '---' }}</strong></td>
-                                                        <td><strong class="text-dark">{{ $eDateStr ? \Carbon\Carbon::parse($eDateStr)->format('Y-m-d') : '---' }}</strong></td>
-                                                        <td>
-                                                            <span class="badge bg-success-subtle text-success border border-success px-2 py-1">
-                                                                {{ $calcY }} سنة و {{ $calcM }} شهر و {{ $calcD }} يوم
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <button type="button" class="btn btn-xs btn-outline-danger" onclick="deleteExperiencePeriod(this)" title="حذف الفترة"><i class="fa-solid fa-trash"></i></button>
-                                                            <input type="hidden" name="experiences[{{ $idx }}][institution_name]" value="{{ $exp->institution_name }}">
-                                                            <input type="hidden" name="experiences[{{ $idx }}][role_or_subject]" value="{{ $exp->role_or_subject }}">
-                                                            <input type="hidden" name="experiences[{{ $idx }}][start_date]" value="{{ $sDateStr ? \Carbon\Carbon::parse($sDateStr)->format('Y-m-d') : '' }}">
-                                                            <input type="hidden" name="experiences[{{ $idx }}][end_date]" value="{{ $eDateStr ? \Carbon\Carbon::parse($eDateStr)->format('Y-m-d') : '' }}">
-                                                            <input type="hidden" name="experiences[{{ $idx }}][duration_days]" value="{{ $tDays }}">
-                                                            <input type="hidden" name="experiences[{{ $idx }}][notes]" value="{{ $exp->notes }}">
-                                                        </td>
-                                                    </tr>
-                                                @empty
-                                                    <tr id="no_experiences_row">
-                                                        <td colspan="7" class="text-muted py-4">لم يتم تسجيل أي فترات خبرة تدريسية بعد. يرجى إضافة فترة واحدة أو أكثر بحيث يبلغ المجموع التراكمي 730 يوماً (سنتين) على الأقل.</td>
-                                                    </tr>
-                                                @endforelse
-                                            </tbody>
-                                        </table>
-                                    </div>
-
-                                    <!-- Live KPI & Track Determination Bar -->
-                                    <div class="card p-3 rounded-3 shadow-sm border" id="experience_kpi_card" style="background-color: #eff6ff; border-color: #bfdbfe !important;">
-                                        <div class="row align-items-center gy-3">
-                                            <div class="col-lg-6">
-                                                <div class="d-flex align-items-center gap-2 mb-1">
-                                                    <i class="fa-solid fa-hourglass-half text-primary fs-5" id="exp_kpi_icon"></i>
-                                                    <span class="fw-bold fs-7 text-dark">مجموع مدة الخبرات التدريسية التراكمية:</span>
-                                                </div>
-                                                <div class="d-flex align-items-center gap-2 fs-6 fw-bold text-dark flex-wrap">
-                                                    <span class="badge bg-primary fs-6 px-2.5 py-1.5"><span id="exp_total_years">0</span> سنة</span>
-                                                    <span>و</span>
-                                                    <span class="badge bg-primary fs-6 px-2.5 py-1.5"><span id="exp_total_months">0</span> شهر</span>
-                                                    <span>و</span>
-                                                    <span class="badge bg-primary fs-6 px-2.5 py-1.5"><span id="exp_total_days">0</span> يوم</span>
-                                                    <span class="badge bg-dark-subtle text-dark border ms-1 fs-7 py-1 px-2">(إجمالي: <span id="exp_total_all_days">0</span> يوماً)</span>
-                                                </div>
+                                                            @endphp
+                                                            <tr data-row-id="{{ $idx + 1 }}">
+                                                                <td class="fw-bold text-muted">{{ $idx + 1 }}</td>
+                                                                <td class="text-start pe-3"><strong style="color: var(--imperial-navy);">{{ $exp->institution_name }}</strong></td>
+                                                                <td class="text-secondary">{{ $exp->role_or_subject ?: '---' }}</td>
+                                                                <td><span class="badge bg-light text-dark border font-monospace px-2 py-1">{{ $sDateStr ? \Carbon\Carbon::parse($sDateStr)->format('Y-m-d') : '---' }}</span></td>
+                                                                <td><span class="badge bg-light text-dark border font-monospace px-2 py-1">{{ $eDateStr ? \Carbon\Carbon::parse($eDateStr)->format('Y-m-d') : '---' }}</span></td>
+                                                                <td>
+                                                                    <span class="mohe-duration-chip">
+                                                                        <i class="fa-regular fa-clock"></i>
+                                                                        {{ $calcY }} سنة و {{ $calcM }} شهر و {{ $calcD }} يوم
+                                                                    </span>
+                                                                </td>
+                                                                <td>
+                                                                    <button type="button" class="btn btn-outline-danger mohe-action-icon-btn" onclick="deleteExperiencePeriod(this)" title="حذف الفترة"><i class="fa-solid fa-trash-can"></i></button>
+                                                                    <input type="hidden" name="experiences[{{ $idx }}][institution_name]" value="{{ $exp->institution_name }}">
+                                                                    <input type="hidden" name="experiences[{{ $idx }}][role_or_subject]" value="{{ $exp->role_or_subject }}">
+                                                                    <input type="hidden" name="experiences[{{ $idx }}][start_date]" value="{{ $sDateStr ? \Carbon\Carbon::parse($sDateStr)->format('Y-m-d') : '' }}">
+                                                                    <input type="hidden" name="experiences[{{ $idx }}][end_date]" value="{{ $eDateStr ? \Carbon\Carbon::parse($eDateStr)->format('Y-m-d') : '' }}">
+                                                                    <input type="hidden" name="experiences[{{ $idx }}][duration_days]" value="{{ $tDays }}">
+                                                                    <input type="hidden" name="experiences[{{ $idx }}][notes]" value="{{ $exp->notes }}">
+                                                                </td>
+                                                            </tr>
+                                                        @empty
+                                                            <tr id="no_experiences_row">
+                                                                <td colspan="7" class="text-muted py-4">لم يتم تسجيل أي فترات خبرة تدريسية بعد. يرجى إضافة فترة واحدة أو أكثر بحيث يبلغ المجموع التراكمي 730 يوماً (سنتين) على الأقل.</td>
+                                                            </tr>
+                                                        @endforelse
+                                                    </tbody>
+                                                </table>
                                             </div>
-                                            <div class="col-lg-6 text-lg-end text-center">
-                                                <div class="fs-8 text-muted mb-1">حالة استيفاء شرط الخبرة للمسار النظري:</div>
-                                                <div id="track_determination_badge">
-                                                    <!-- Dynamic badge rendered by recalcTotalExperience -->
+                                        </div>
+
+                                        <!-- Live Executive Summary Duration Scorecard (بدون مربعات خضراء) -->
+                                        <div class="p-3 p-md-4 rounded-3 border bg-white" id="experience_kpi_card" style="border-color: #d5dce6 !important;">
+                                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <i class="fa-solid fa-hourglass-half fs-6" style="color: var(--imperial-navy);" id="exp_kpi_icon"></i>
+                                                    <span class="fw-bold fs-7" style="color: var(--imperial-navy);">خلاصة مدة الخبرات التدريسية التراكمية:</span>
+                                                </div>
+                                                <span class="fs-8 fw-semibold" style="color: var(--heritage-gold-dark);">
+                                                    <i class="fa-solid fa-calculator me-1"></i> احتساب تراكمي لفترات التدريس الجامعي
+                                                </span>
+                                            </div>
+                                            <div class="row g-3" style="max-width: 760px; margin: 0 auto;">
+                                                <div class="col-6 col-sm-3">
+                                                    <div class="mohe-stat-tile">
+                                                        <div class="mohe-stat-value" id="exp_total_years">0</div>
+                                                        <div class="mohe-stat-label">سنة</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6 col-sm-3">
+                                                    <div class="mohe-stat-tile">
+                                                        <div class="mohe-stat-value" id="exp_total_months">0</div>
+                                                        <div class="mohe-stat-label">شهر</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6 col-sm-3">
+                                                    <div class="mohe-stat-tile">
+                                                        <div class="mohe-stat-value" id="exp_total_days">0</div>
+                                                        <div class="mohe-stat-label">يوم</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6 col-sm-3">
+                                                    <div class="mohe-stat-tile is-gold">
+                                                        <div class="mohe-stat-value" id="exp_total_all_days">0</div>
+                                                        <div class="mohe-stat-label">إجمالي الأيام</div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -1351,18 +1512,19 @@
         const tr = document.createElement('tr');
         tr.setAttribute('data-days', stay.totalDays);
         tr.innerHTML = `
-            <td>${tbody.children.length + 1}</td>
-            <td class="text-start pe-3"><strong>${escapeHtml(institution)}</strong></td>
-            <td>${escapeHtml(role) || '---'}</td>
-            <td><strong class="text-dark">${startDate}</strong></td>
-            <td><strong class="text-dark">${endDate}</strong></td>
+            <td class="fw-bold text-muted">${tbody.children.length + 1}</td>
+            <td class="text-start pe-3"><strong style="color: var(--imperial-navy);">${escapeHtml(institution)}</strong></td>
+            <td class="text-secondary">${escapeHtml(role) || '---'}</td>
+            <td><span class="badge bg-light text-dark border font-monospace px-2 py-1">${startDate}</span></td>
+            <td><span class="badge bg-light text-dark border font-monospace px-2 py-1">${endDate}</span></td>
             <td>
-                <span class="badge bg-success-subtle text-success border border-success px-2 py-1">
+                <span class="mohe-duration-chip">
+                    <i class="fa-regular fa-clock"></i>
                     ${stay.years} سنة و ${stay.months} شهر و ${stay.days} يوم
                 </span>
             </td>
             <td>
-                <button type="button" class="btn btn-xs btn-outline-danger" onclick="deleteExperiencePeriod(this)" title="حذف الفترة"><i class="fa-solid fa-trash"></i></button>
+                <button type="button" class="btn btn-outline-danger mohe-action-icon-btn" onclick="deleteExperiencePeriod(this)" title="حذف الفترة"><i class="fa-solid fa-trash-can"></i></button>
                 <input type="hidden" name="experiences[${experienceCounter}][institution_name]" value="${escapeHtml(institution)}">
                 <input type="hidden" name="experiences[${experienceCounter}][role_or_subject]" value="${escapeHtml(role)}">
                 <input type="hidden" name="experiences[${experienceCounter}][start_date]" value="${startDate}">
@@ -1429,44 +1591,6 @@
         if (allEl) allEl.textContent = totalDays;
 
         const isTheoretical = (totalDays >= 730);
-        const badgeContainer = document.getElementById('track_determination_badge');
-        const kpiCard = document.getElementById('experience_kpi_card');
-        const kpiIcon = document.getElementById('exp_kpi_icon');
-
-        if (badgeContainer) {
-            if (isTheoretical) {
-                badgeContainer.innerHTML = `
-                    <span class="badge px-3 py-2 fs-6 shadow-sm border border-success" style="background-color: #15803d; color: #ffffff;">
-                        <i class="fa-solid fa-circle-check me-1 text-warning"></i>
-                        مستوفٍ لشرط المسار النظري (≥ 730 يوماً)
-                    </span>
-                    <div class="fs-9 text-success fw-bold mt-1"><i class="fa-solid fa-info-circle me-1"></i> مؤهل للتقديم في المسار النظري مع إجراء مقابلة وقرار أهلية تدريس</div>
-                `;
-                if (kpiCard) {
-                    kpiCard.style.backgroundColor = '#f0fdf4';
-                    kpiCard.style.borderColor = '#86efac';
-                }
-                if (kpiIcon) {
-                    kpiIcon.className = 'fa-solid fa-circle-check text-success fs-5';
-                }
-            } else {
-                const remaining = 730 - totalDays;
-                badgeContainer.innerHTML = `
-                    <span class="badge px-3 py-2 fs-6 shadow-sm border border-warning" style="background-color: #b45309; color: #ffffff;">
-                        <i class="fa-solid fa-triangle-exclamation me-1 text-warning"></i>
-                        غير مستوفٍ بعد (المتبقي: ${remaining} يوماً لإتمام سنتين)
-                    </span>
-                    <div class="fs-9 text-danger fw-bold mt-1"><i class="fa-solid fa-info-circle me-1"></i> يشترط المسار النظري إجمالي خبرة 730 يوماً فأكثر (أو قدّم عبر مسار الماجستير التطبيقي)</div>
-                `;
-                if (kpiCard) {
-                    kpiCard.style.backgroundColor = '#fffbeb';
-                    kpiCard.style.borderColor = '#fcd34d';
-                }
-                if (kpiIcon) {
-                    kpiIcon.className = 'fa-solid fa-hourglass-half text-warning fs-5';
-                }
-            }
-        }
 
         return { totalDays, isTheoretical, years, months, days };
     }

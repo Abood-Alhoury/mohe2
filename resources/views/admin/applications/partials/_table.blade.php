@@ -26,15 +26,19 @@
                     $isFacultyPermission = !$isForMaster && (str_contains($reqType, 'سماح') || str_contains($reqType, 'هيئة تدريسية'));
                     $isApplied = str_contains($reqType, 'تطبيقي');
                     $isForeignDoctorate = str_contains($reqType, 'دكتوراه خارجي') || str_contains($reqType, 'دكتورة خارجي') || str_contains($reqType, 'دكتوراه غير سورية');
+                    $isForeignAppliedMaster = $isForMaster && !$isForeignDoctorate && $isApplied;
                     $requiresEligibility = $app->requiresEligibility();
                     $isSingleDecisionType = !$requiresEligibility;
 
-                    if ($isSingleDecisionType) {
+                    if ($isForeignAppliedMaster) {
+                        // الماجستير التطبيقي الخارجي: يتيح الإحالة إلى اللجنة العامة (دون مقابلة أو أهلية)
+                        $rowStatuses = ['تحت التدقيق الأولي', 'بانتظار الوثائق', 'لجنة عامة', 'بانتظار إصدار القرار', 'مرفوض'];
+                    } elseif ($isSingleDecisionType) {
                         $rowStatuses = ['تحت التدقيق الأولي', 'بانتظار الوثائق', 'بانتظار إصدار القرار', 'مرفوض'];
                     } elseif ($isForeignDoctorate) {
                         $rowStatuses = ['تحت التدقيق الأولي', 'بانتظار الوثائق', 'لجنة عامة', 'بانتظار لجنة إنتاج علمي', 'بانتظار المقابلة', 'بانتظار إصدار القرار', 'مرفوض'];
                     } else {
-                        // Standard types: ماجستير سوري، دكتوراه سوري، ماجستير خارجي (NO Scientific Production committee)
+                        // Standard types: ماجستير سوري، دكتوراه سوري، ماجستير خارجي نظري (NO Scientific Production committee)
                         $rowStatuses = ['تحت التدقيق الأولي', 'بانتظار الوثائق', 'لجنة عامة', 'بانتظار المقابلة', 'بانتظار إصدار القرار', 'مرفوض'];
                     }
                 @endphp

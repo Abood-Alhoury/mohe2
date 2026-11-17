@@ -51,16 +51,29 @@
         </a>
     </div>
 
-    <!-- Option 4: Foreign Master's (ACTIVE) -->
+    <!-- Option 4A: Foreign Master's - Applied Track (ACTIVE) -->
     <div class="col-md-4">
-        <a href="{{ route('university.apply.foreign_masters') }}" class="card text-center p-4 h-100 text-decoration-none mohe-card active-option-card position-relative" style="border-radius: 8px; border-top: 3.5px solid var(--heritage-gold) !important;">
+        <a href="{{ route('university.apply.foreign_masters_applied') }}" class="card text-center p-4 h-100 text-decoration-none mohe-card active-option-card position-relative" style="border-radius: 8px; border-top: 3.5px solid var(--heritage-gold) !important;">
             <div class="card-option-badge">متاح للتقديم</div>
             <div class="option-icon-wrapper mx-auto mb-3">
                 <i class="fa-solid fa-earth-americas fs-1" style="color: var(--heritage-gold);"></i>
             </div>
-            <h5 class="fw-bold mb-1" style="color: var(--primary-container);">ماجستير خارجي (غير سوري)</h5>
-            <span class="label-sm text-muted d-block mb-3">Foreign Master's Degree</span>
-            <p class="body-md small text-muted mb-0">لتعادل درجة الماجستير الصادرة عن جامعات عربية أو أجنبية (مسار تطبيقي / مسار نظري مع إثبات الإقامة).</p>
+            <h5 class="fw-bold mb-1" style="color: var(--primary-container);">ماجستير خارجي (مسار تطبيقي)</h5>
+            <span class="label-sm text-muted d-block mb-3">Foreign Master's (Applied Track)</span>
+            <p class="body-md small text-muted mb-0">لتعادل درجة الماجستير غير السورية لتدريس الجوانب التطبيقية (بدون شرط خبرة السنتين، مع حركات الإقامة أو الإعفاء للتخصصات النظرية).</p>
+        </a>
+    </div>
+
+    <!-- Option 4B: Foreign Master's - Theoretical Track (ACTIVE) -->
+    <div class="col-md-4">
+        <a href="{{ route('university.apply.foreign_masters_theoretical') }}" class="card text-center p-4 h-100 text-decoration-none mohe-card active-option-card position-relative" style="border-radius: 8px; border-top: 3.5px solid var(--heritage-gold) !important;">
+            <div class="card-option-badge">متاح للتقديم</div>
+            <div class="option-icon-wrapper mx-auto mb-3">
+                <i class="fa-solid fa-globe fs-1" style="color: var(--heritage-gold);"></i>
+            </div>
+            <h5 class="fw-bold mb-1" style="color: var(--primary-container);">ماجستير خارجي (مسار نظري)</h5>
+            <span class="label-sm text-muted d-block mb-3">Foreign Master's (Theoretical Track)</span>
+            <p class="body-md small text-muted mb-0">لتعادل درجة الماجستير غير السورية لتدريس المقررات النظرية (يتطلب خبرة سنتين فأكثر مع عقود وإيصالات وشهادة خبرة وإثبات الإقامة أو الإعفاء).</p>
         </a>
     </div>
 

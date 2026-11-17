@@ -871,9 +871,12 @@
                 </div>
             </div>
 
-            <div class="mt-4 pt-3 border-top d-flex justify-content-end">
-                <a href="{{ route('university.apply.foreign_masters') }}" class="btn-new-app-glow">
-                    <i class="fa-solid fa-paper-plane"></i> البدء بتقديم طلب تعادل ماجستير خارجي
+            <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2 flex-wrap">
+                <a href="{{ route('university.apply.foreign_masters_applied') }}" class="btn-new-app-glow">
+                    <i class="fa-solid fa-paper-plane"></i> تقديم طلب ماجستير خارجي (تطبيقي)
+                </a>
+                <a href="{{ route('university.apply.foreign_masters_theoretical') }}" class="btn-new-app-glow">
+                    <i class="fa-solid fa-book-open-reader"></i> تقديم طلب ماجستير خارجي (نظري)
                 </a>
             </div>
         </div>
@@ -1031,25 +1034,25 @@
 
             <!-- Split Bento Layout -->
             <div class="foreign-phd-split-grid">
-                <!-- Right Side: 13 Items -->
+                <!-- Right Side: 16 Items -->
                 <div>
                     <h5 class="fw-bold mb-3" style="color: var(--secondary-navy); font-size: 1rem;">
-                        <i class="fa-solid fa-list-ol text-success me-1"></i> أولاً: الوثائق الأكاديمية والشخصية المطلوبة (13 بنداً):
+                        <i class="fa-solid fa-list-ol text-success me-1"></i> أولاً: الوثائق والمستندات الثبوتية للدكتوراه غير السورية (16 بنداً):
                     </h5>
 
                     <div class="checklist-items-wrap">
                         <div class="document-item-card">
                             <div class="doc-left-cluster">
                                 <div class="doc-squircle-num">1</div>
-                                <div class="doc-content-text">كتاب صادر عن الجامعة يتضمن طلب تقويم درجاته العلمية.</div>
+                                <div class="doc-content-text">صورة عن الهوية الشخصية أو جواز السفر.</div>
                             </div>
-                            <div class="doc-right-cluster"><span class="doc-type-badge cert">وثيقة رسمية</span></div>
+                            <div class="doc-right-cluster"><span class="doc-type-badge">ثبوتية شخصية</span></div>
                         </div>
 
                         <div class="document-item-card">
                             <div class="doc-left-cluster">
                                 <div class="doc-squircle-num">2</div>
-                                <div class="doc-content-text">نسخة مصدقة أصولاً عن شهادة الدراسة الثانوية السورية.</div>
+                                <div class="doc-content-text">شهادة البكالوريا (الثانوية العامة).</div>
                             </div>
                             <div class="doc-right-cluster"><span class="doc-type-badge">نسخة مصدقة</span></div>
                         </div>
@@ -1057,15 +1060,15 @@
                         <div class="document-item-card">
                             <div class="doc-left-cluster">
                                 <div class="doc-squircle-num">3</div>
-                                <div class="doc-content-text">نسخة مصدقة أصولاً عن الإجازة الجامعية الأولى.</div>
+                                <div class="doc-content-text">قرار معادلة درجة البكالوريا من وزارة التربية (في حال كانت غير سورية).</div>
                             </div>
-                            <div class="doc-right-cluster"><span class="doc-type-badge">نسخة مصدقة</span></div>
+                            <div class="doc-right-cluster"><span class="doc-type-badge cert">شرطي لغير السورية</span></div>
                         </div>
 
                         <div class="document-item-card">
                             <div class="doc-left-cluster">
                                 <div class="doc-squircle-num">4</div>
-                                <div class="doc-content-text">نسخة مصدقة أصولاً عن شهادة الماجستير.</div>
+                                <div class="doc-content-text">الإجازة الجامعية مصدقة أصولاً (دون اشتراط قرار معادلة).</div>
                             </div>
                             <div class="doc-right-cluster"><span class="doc-type-badge">نسخة مصدقة</span></div>
                         </div>
@@ -1073,7 +1076,7 @@
                         <div class="document-item-card">
                             <div class="doc-left-cluster">
                                 <div class="doc-squircle-num">5</div>
-                                <div class="doc-content-text">نسخة مصدقة أصولاً عن شهادة الدكتوراه.</div>
+                                <div class="doc-content-text">شهادة الماجستير مصدقة أصولاً (+ قرار معادلة الماجستير في حال تمت معادلتها من قبل).</div>
                             </div>
                             <div class="doc-right-cluster"><span class="doc-type-badge">نسخة مصدقة</span></div>
                         </div>
@@ -1081,65 +1084,89 @@
                         <div class="document-item-card">
                             <div class="doc-left-cluster">
                                 <div class="doc-squircle-num">6</div>
-                                <div class="doc-content-text">وثيقة مصدقة أصولاً متضمنة تاريخ التسجيل بالدرجة وتاريخ المناقشة وتاريخ الحصول على الشهادة لكل درجتي الماجستير والدكتوراه.</div>
+                                <div class="doc-content-text">شهادة الدكتوراه مصدقة ومترجمة أصولاً.</div>
+                            </div>
+                            <div class="doc-right-cluster"><span class="doc-type-badge">نسخة مصدقة</span></div>
+                        </div>
+
+                        <div class="document-item-card">
+                            <div class="doc-left-cluster">
+                                <div class="doc-squircle-num">7</div>
+                                <div class="doc-content-text">قرارات التسجيل والمناقشة والمنح لدرجة الدكتوراه.</div>
                             </div>
                             <div class="doc-right-cluster"><span class="doc-type-badge cert">وثيقة رسمية</span></div>
                         </div>
 
                         <div class="document-item-card">
                             <div class="doc-left-cluster">
-                                <div class="doc-squircle-num">7</div>
-                                <div class="doc-content-text">ملخص باللغة العربية عن رسالة الدكتوراه إلكترونياً (PDF).</div>
-                            </div>
-                            <div class="doc-right-cluster"><span class="doc-type-badge electronic">ملف إلكتروني PDF</span></div>
-                        </div>
-
-                        <div class="document-item-card">
-                            <div class="doc-left-cluster">
                                 <div class="doc-squircle-num">8</div>
-                                <div class="doc-content-text">شهادة اللغة الإنكليزية من المعهد العالي للغات + شهادة ICDL معتمدة من الجمعية المعلوماتية.</div>
-                            </div>
-                            <div class="doc-right-cluster"><span class="doc-type-badge cert">شهادة كفاءة</span></div>
-                        </div>
-
-                        <div class="document-item-card">
-                            <div class="doc-left-cluster">
-                                <div class="doc-squircle-num">9</div>
-                                <div class="doc-content-text">صور عن جوازات السفر بالإضافة لجوازات السفر الأصلية للمطابقة.</div>
-                            </div>
-                            <div class="doc-right-cluster"><span class="doc-type-badge">وثائق سفر</span></div>
-                        </div>
-
-                        <div class="document-item-card">
-                            <div class="doc-left-cluster">
-                                <div class="doc-squircle-num">10</div>
-                                <div class="doc-content-text">نموذج إثبات إقامة (تعطى من مكتب التعادل) أو وثيقة حركة الهجرة والجوازات.</div>
-                            </div>
-                            <div class="doc-right-cluster"><span class="doc-type-badge">إثبات إقامة</span></div>
-                        </div>
-
-                        <div class="document-item-card">
-                            <div class="doc-left-cluster">
-                                <div class="doc-squircle-num">11</div>
-                                <div class="doc-content-text">السيرة الذاتية للمرشح متضمنة عنوان إقامته وعنوانه ورقم هاتفه.</div>
+                                <div class="doc-content-text">السيرة الذاتية للمرشح.</div>
                             </div>
                             <div class="doc-right-cluster"><span class="doc-type-badge">سيرة ذاتية</span></div>
                         </div>
 
                         <div class="document-item-card">
                             <div class="doc-left-cluster">
-                                <div class="doc-squircle-num">12</div>
-                                <div class="doc-content-text">إيصال تسديد رسم تعادل 125,000 ل.س من حملة درجة الدكتوراه.</div>
+                                <div class="doc-squircle-num">9</div>
+                                <div class="doc-content-text">إيصال الدفع بقيمة 125,000 ل.س (رسم تعادل الدكتوراه).</div>
                             </div>
                             <div class="doc-right-cluster"><span class="doc-type-badge financial">إيصال مالي</span></div>
                         </div>
 
                         <div class="document-item-card">
                             <div class="doc-left-cluster">
-                                <div class="doc-squircle-num">13</div>
-                                <div class="doc-content-text">الشهادات الأصلية لكافة المراحل للمطابقة الميدانية.</div>
+                                <div class="doc-squircle-num">10</div>
+                                <div class="doc-content-text">إيصال المكتبة الوطنية (اختياري).</div>
                             </div>
-                            <div class="doc-right-cluster"><span class="doc-type-badge original">أصل الشهادات</span></div>
+                            <div class="doc-right-cluster"><span class="doc-type-badge">اختياري</span></div>
+                        </div>
+
+                        <div class="document-item-card">
+                            <div class="doc-left-cluster">
+                                <div class="doc-squircle-num">11</div>
+                                <div class="doc-content-text">كشف علامات الدكتوراه (اختياري).</div>
+                            </div>
+                            <div class="doc-right-cluster"><span class="doc-type-badge">اختياري</span></div>
+                        </div>
+
+                        <div class="document-item-card">
+                            <div class="doc-left-cluster">
+                                <div class="doc-squircle-num">12</div>
+                                <div class="doc-content-text">شهادة ICDL (اختياري).</div>
+                            </div>
+                            <div class="doc-right-cluster"><span class="doc-type-badge">اختياري</span></div>
+                        </div>
+
+                        <div class="document-item-card">
+                            <div class="doc-left-cluster">
+                                <div class="doc-squircle-num">13</div>
+                                <div class="doc-content-text">شهادة اللغة الإنكليزية (اختياري).</div>
+                            </div>
+                            <div class="doc-right-cluster"><span class="doc-type-badge">اختياري</span></div>
+                        </div>
+
+                        <div class="document-item-card">
+                            <div class="doc-left-cluster">
+                                <div class="doc-squircle-num">14</div>
+                                <div class="doc-content-text">جواز السفر مع صفحات الأختام (إلزامي لغير المعفى من الإقامة، واختياري للتخصص النظري المعفى).</div>
+                            </div>
+                            <div class="doc-right-cluster"><span class="doc-type-badge">وثائق سفر</span></div>
+                        </div>
+
+                        <div class="document-item-card">
+                            <div class="doc-left-cluster">
+                                <div class="doc-squircle-num">15</div>
+                                <div class="doc-content-text">حركة الهجرة والجوازات (إلزامي لغير المعفى من الإقامة، واختياري للتخصص النظري المعفى).</div>
+                            </div>
+                            <div class="doc-right-cluster"><span class="doc-type-badge">إثبات إقامة</span></div>
+                        </div>
+
+                        <div class="document-item-card">
+                            <div class="doc-left-cluster">
+                                <div class="doc-squircle-num">16</div>
+                                <div class="doc-content-text">مرفقات أخرى / بحوث أو وثائق داعمة (اختياري).</div>
+                            </div>
+                            <div class="doc-right-cluster"><span class="doc-type-badge">اختياري</span></div>
                         </div>
                     </div>
                 </div>

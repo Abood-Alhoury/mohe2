@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap');
 
 /* ==========================================================================
    ACADEMIC EXCELLENCE PORTAL DESIGN SYSTEM
@@ -115,7 +115,8 @@
    ========================================================================== */
 
 body {
-  font-family: 'IBM Plex Sans Arabic', system-ui, -apple-system, sans-serif;
+  font-family: 'Traditional Arabic', 'Noto Naskh Arabic', 'Amiri', 'Simplified Arabic', serif;
+  font-size: 16.5px;
   background-color: var(--background);
   color: var(--on-surface);
   direction: rtl;
@@ -123,62 +124,62 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  line-height: 1.5;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
 
 /* Typography Classes */
 .display-lg {
-  font-family: 'IBM Plex Sans Arabic', sans-serif;
+  font-family: 'Traditional Arabic', 'Noto Naskh Arabic', 'Amiri', 'Simplified Arabic', serif;
   font-size: 48px;
   font-weight: 700;
   line-height: 60px;
 }
 
 .headline-lg {
-  font-family: 'IBM Plex Sans Arabic', sans-serif;
+  font-family: 'Traditional Arabic', 'Noto Naskh Arabic', 'Amiri', 'Simplified Arabic', serif;
   font-size: 32px;
-  font-weight: 600;
-  line-height: 40px;
+  font-weight: 700;
+  line-height: 42px;
   color: var(--primary-container);
 }
 
 .headline-md {
-  font-family: 'IBM Plex Sans Arabic', sans-serif;
-  font-size: 24px;
-  font-weight: 600;
-  line-height: 32px;
+  font-family: 'Traditional Arabic', 'Noto Naskh Arabic', 'Amiri', 'Simplified Arabic', serif;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 36px;
   color: var(--primary-container);
 }
 
 .body-lg {
-  font-family: 'IBM Plex Sans Arabic', sans-serif;
-  font-size: 18px;
+  font-family: 'Traditional Arabic', 'Noto Naskh Arabic', 'Amiri', 'Simplified Arabic', serif;
+  font-size: 19px;
   font-weight: 400;
-  line-height: 28px;
+  line-height: 30px;
 }
 
 .body-md {
-  font-family: 'IBM Plex Sans Arabic', sans-serif;
-  font-size: 16px;
+  font-family: 'Traditional Arabic', 'Noto Naskh Arabic', 'Amiri', 'Simplified Arabic', serif;
+  font-size: 17px;
   font-weight: 400;
-  line-height: 24px;
+  line-height: 26px;
 }
 
 .label-md {
-  font-family: 'IBM Plex Sans Arabic', sans-serif;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 20px;
-  letter-spacing: 0.02em;
+  font-family: 'Traditional Arabic', 'Noto Naskh Arabic', 'Amiri', 'Simplified Arabic', serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 22px;
+  letter-spacing: 0;
 }
 
 .label-sm {
-  font-family: 'IBM Plex Sans Arabic', sans-serif;
-  font-size: 12px;
+  font-family: 'Traditional Arabic', 'Noto Naskh Arabic', 'Amiri', 'Simplified Arabic', serif;
+  font-size: 14.5px;
   font-weight: 600;
-  line-height: 16px;
-  letter-spacing: 0.05em;
+  line-height: 20px;
+  letter-spacing: 0;
 }
 
 /* Gold Text Shadow for High-Level Titles */
@@ -893,9 +894,9 @@ body {
   border: 1px solid var(--outline-variant) !important;
   border-radius: var(--radius-md) !important; /* 6px */
   min-height: 44px;
-  padding: 0.55rem 0.9rem;
-  font-size: 0.92rem;
-  font-family: 'IBM Plex Sans Arabic', sans-serif;
+  padding: 0.5rem 0.9rem;
+  font-size: 1.03rem;
+  font-family: 'Traditional Arabic', 'Noto Naskh Arabic', 'Amiri', 'Simplified Arabic', serif;
   background-color: var(--surface-container-lowest);
   color: var(--on-surface);
   transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
@@ -1670,7 +1671,7 @@ input[type="date"] {
   resize: none !important;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
   transition: all 0.2s ease !important;
-  font-family: 'IBM Plex Sans Arabic', sans-serif !important;
+  font-family: 'Traditional Arabic', 'Noto Naskh Arabic', 'Amiri', 'Simplified Arabic', serif !important;
 }
 
 .mohe-chat-textarea:focus {

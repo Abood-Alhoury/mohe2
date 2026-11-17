@@ -476,7 +476,10 @@
                 <p>تحديد مواعيد ولجان المقابلات للمرشحين بحالة (بانتظار المقابلة)، ورصد نتائج اجتياز الأهلية التدريسية.</p>
             </div>
         </div>
-        <div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <button type="button" onclick="openInterviewReport(false)" class="btn fw-bold px-3 py-2" style="background: var(--imperial-navy); color: #ffffff; border-radius: 10px; font-size: 0.84rem; display: inline-flex; align-items: center; gap: 7px; border: 1px solid rgba(197,155,39,0.5);">
+                <i class="fa-solid fa-print" style="color: var(--heritage-gold-light);"></i> تقرير المقابلات (للطباعة)
+            </button>
             <span class="badge" style="background: rgba(14,30,56,0.06); color: var(--imperial-navy); border: 1px solid var(--border-subtle); padding: 8px 14px; border-radius: 30px; font-weight: 700; font-size: 0.82rem;">
                 <i class="fa-solid fa-calendar-check text-warning me-1"></i> دورة مقابلات {{ date('Y') }}
             </span>
@@ -553,9 +556,12 @@
                     <label><i class="fa-solid fa-location-dot"></i> مكان / ملاحظات القاعة :</label>
                     <input type="text" name="interview_notes" value="مبنى وزارة التعليم العالي والبحث العلمي - القاعة الرئيسية">
                 </div>
-                <div>
+                <div class="d-flex align-items-center gap-2">
                     <button type="submit" class="btn-confirm-schedule">
                         <i class="fa-solid fa-floppy-disk"></i> تثبيت وحفظ الموعد
+                    </button>
+                    <button type="button" onclick="openInterviewReport(true)" class="btn fw-bold px-3" style="height: 42px; background: rgba(255,255,255,0.12); color: #ffffff; border: 1px solid rgba(197,155,39,0.55); border-radius: 8px; white-space: nowrap; display: inline-flex; align-items: center; gap: 7px;" title="فتح تقرير المقابلات للمرشحين المحددين جاهزاً للطباعة">
+                        <i class="fa-solid fa-print" style="color: var(--heritage-gold-light);"></i> طباعة التقرير للمحددين
                     </button>
                 </div>
             </div>
@@ -849,6 +855,17 @@
             const matchesUni = !uniFilter || text.includes(uniFilter);
             r.style.display = (matchesQuery && matchesUni) ? '' : 'none';
         });
+    }
+
+    function openInterviewReport(requireSelection = false) {
+        const checkedIds = Array.from(document.querySelectorAll('.row-check:checked')).map(el => el.value);
+        if (requireSelection && checkedIds.length === 0) {
+            alert('يرجى تحديد مرشح واحد على الأقل من الجدول أو استخدام زر تقرير المقابلات العام أعلى الصفحة.');
+            return;
+        }
+        const baseUrl = "{{ route('admin.interviews.report') }}";
+        const url = checkedIds.length > 0 ? `${baseUrl}?ids=${checkedIds.join(',')}` : baseUrl;
+        window.location.href = url;
     }
 </script>
 @endsection

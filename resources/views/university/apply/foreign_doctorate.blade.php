@@ -29,23 +29,30 @@
     $hsDecDate = $draftHsEd && $draftHsEd->notes && str_contains($draftHsEd->notes, 'تاريخ القرار:') ? trim(preg_replace('/.*تاريخ القرار:\s*([^\|]+).*/u', '$1', $draftHsEd->notes)) : ($draftHsEd?->equivalence_decision_date ? date('Y-m-d', strtotime($draftHsEd->equivalence_decision_date)) : '');
     $isHsForeign = old('hs_country_id', $hsCountryId) != ($syriaId ?? 1);
 
-    // 2. بيانات الإجازة الجامعية الأولى
+    // 2. بيانات الإجازة الجامعية الأولى (بدون قرار معادلة + اختيار جامعة سورية من القائمة)
     $draftBaEd = optional($draft)->educations ? $draft->educations->where('education_level_id', 1)->first() : null;
-    $baCountryId = $draftBaEd ? $draftBaEd->country_id : ($syriaId ?? 1);
-    $baUniOther = $draftBaEd ? ($draftBaEd->university_other ?: (optional($draftBaEd->university)->name ?: $draftBaEd->university_name_manual)) : '';
+    $baCountryId = old('ba_country_id', $draftBaEd ? $draftBaEd->country_id : ($syriaId ?? 1));
+    $baUniId = old('ba_university_id', $draftBaEd ? $draftBaEd->university_id : null);
+    $baUniOther = old('ba_university_other', $draftBaEd ? ($draftBaEd->university_other ?: (optional($draftBaEd->university)->name ?: $draftBaEd->university_name_manual)) : '');
+    $isBaOtherSelected = ($baUniId === 'other') || ($baCountryId == ($syriaId ?? 1) && empty($baUniId) && !empty($baUniOther));
+    if ($isBaOtherSelected) {
+        $baUniId = 'other';
+    }
     $baFaculty = $draftBaEd ? $draftBaEd->faculty : '';
     $baDept = $draftBaEd ? $draftBaEd->department : '';
     $baGenSpec = $draftBaEd ? ($draftBaEd->general_specialization ?: $draftBaEd->specialization) : '';
     $baRank = $draftBaEd ? ($draftBaEd->rank ?: 'جيد جداً') : 'جيد جداً';
     $baGrantDate = $draftBaEd && $draftBaEd->grant_date ? substr($draftBaEd->grant_date, 0, 10) : '';
-    $baDecNo = $draftBaEd && $draftBaEd->notes && str_contains($draftBaEd->notes, 'رقم قرار') ? trim(preg_replace('/.*رقم قرار.*?:\s*([^\|]+).*/u', '$1', $draftBaEd->notes)) : ($draftBaEd?->equivalence_decision_no ?? '');
-    $baDecDate = $draftBaEd && $draftBaEd->notes && str_contains($draftBaEd->notes, 'تاريخ القرار:') ? trim(preg_replace('/.*تاريخ القرار:\s*([^\|]+).*/u', '$1', $draftBaEd->notes)) : ($draftBaEd?->equivalence_decision_date ? date('Y-m-d', strtotime($draftBaEd->equivalence_decision_date)) : '');
-    $isBaForeign = old('ba_country_id', $baCountryId) != ($syriaId ?? 1);
 
-    // 3. بيانات الماجستير
+    // 3. بيانات الماجستير (تاريخ الحصول على الدرجة فقط + checkbox معادلة اختياري + جامعة سورية من القائمة)
     $draftMaEd = optional($draft)->educations ? $draft->educations->where('education_level_id', 2)->first() : null;
-    $maCountryId = $draftMaEd ? $draftMaEd->country_id : ($syriaId ?? 1);
-    $maUniOther = $draftMaEd ? ($draftMaEd->university_other ?: (optional($draftMaEd->university)->name ?: $draftMaEd->university_name_manual)) : '';
+    $maCountryId = old('ma_country_id', $draftMaEd ? $draftMaEd->country_id : ($syriaId ?? 1));
+    $maUniId = old('ma_university_id', $draftMaEd ? $draftMaEd->university_id : null);
+    $maUniOther = old('ma_university_other', $draftMaEd ? ($draftMaEd->university_other ?: (optional($draftMaEd->university)->name ?: $draftMaEd->university_name_manual)) : '');
+    $isMaOtherSelected = ($maUniId === 'other') || ($maCountryId == ($syriaId ?? 1) && empty($maUniId) && !empty($maUniOther));
+    if ($isMaOtherSelected) {
+        $maUniId = 'other';
+    }
     $maFaculty = $draftMaEd ? $draftMaEd->faculty : '';
     $maDept = $draftMaEd ? $draftMaEd->department : '';
     $maGenSpec = $draftMaEd ? $draftMaEd->general_specialization : '';
@@ -53,10 +60,10 @@
     $maRank = $draftMaEd ? ($draftMaEd->rank ?: 'جيد جداً') : 'جيد جداً';
     $maGrantDate = $draftMaEd && $draftMaEd->grant_date ? substr($draftMaEd->grant_date, 0, 10) : '';
     $maDecNo = $draftMaEd && $draftMaEd->notes && str_contains($draftMaEd->notes, 'رقم قرار') ? trim(preg_replace('/.*رقم قرار.*?:\s*([^\|]+).*/u', '$1', $draftMaEd->notes)) : ($draftMaEd?->equivalence_decision_no ?? '');
-    $maDecDate = $draftMaEd && $draftMaEd->notes && str_contains($draftMaEd->notes, 'تاريخ القرار:') ? trim(preg_replace('/.*تاريخ القرار:\s*([^\|]+).*/u', '$1', $draftMaEd->notes)) : ($draftMaEd?->equivalence_decision_date ? date('Y-m-d', strtotime($draftMaEd->equivalence_decision_date)) : '');
-    $isMaForeign = old('ma_country_id', $maCountryId) != ($syriaId ?? 1);
+    $maDecDate = $draftMaEd && $draftMaEd->notes && str_contains($draftMaEd->notes, 'تاريخ القرار:') ? trim(preg_replace('/.*تاريخ القرار:\s*([0-9\-]+).*/u', '$1', $draftMaEd->notes)) : ($draftMaEd?->equivalence_decision_date ? date('Y-m-d', strtotime($draftMaEd->equivalence_decision_date)) : '');
+    $hasMaEquivalence = (bool) old('has_ma_equivalence', !empty($maDecNo) || !empty($maDecDate) || ($draftMaEd && $draftMaEd->attachments->where('attachment_type_id', 9)->isNotEmpty()));
 
-    // 4. بيانات الدكتوراه الخارجية
+    // 4. بيانات الدكتوراه الخارجية + الإعفاء من شرط الإقامة
     $draftPhdEd = optional($draft)->educations ? $draft->educations->where('education_level_id', 3)->first() : null;
     $phdCountryId = $draftPhdEd ? $draftPhdEd->country_id : null;
     $phdUniOther = $draftPhdEd ? ($draftPhdEd->university_other ?: (optional($draftPhdEd->university)->name ?: $draftPhdEd->university_name_manual)) : '';
@@ -72,8 +79,9 @@
     $phdRegDate = $draftPhdEd && $draftPhdEd->registration_date ? substr($draftPhdEd->registration_date, 0, 10) : '';
     $phdDefDate = $draftPhdEd && $draftPhdEd->defense_date ? substr($draftPhdEd->defense_date, 0, 10) : '';
     $phdGrantDate = $draftPhdEd && $draftPhdEd->grant_date ? substr($draftPhdEd->grant_date, 0, 10) : '';
+    $isResExempt = (bool) old('is_residence_exempt', optional($draft)->is_residence_exempt ?? false);
 
-    // مصفوفة استرجاع المرفقات المحفوظة بالمسودة بدقة تامة
+    // مصفوفة استرجاع المرفقات المحفوظة بالمسودة بدقة تامة (16 بنداً + قرار معادلة الماجستير الشرطي)
     $existingFilesMap = [];
     if ($draft && $draft->educations) {
         foreach ($draft->educations as $ed) {
@@ -82,34 +90,183 @@
                 $note = $att->notes ?? '';
 
                 if ($typeId === 1 || (str_contains($note, 'ثانوية') && !str_contains($note, 'معادلة'))) $existingFilesMap['file_secondary_cert'] = $att;
-                if ($typeId === 2 || str_contains($note, 'معادلة الشهادة الثانوية') || str_contains($note, 'معادلة الثانوية')) $existingFilesMap['file_hs_decision'] = $att;
+                if ($typeId === 2 || str_contains($note, 'معادلة الشهادة الثانوية') || str_contains($note, 'معادلة درجة البكالوريا')) $existingFilesMap['file_hs_decision'] = $att;
                 if ($typeId === 3 || (str_contains($note, 'الإجازة') && !str_contains($note, 'معادلة'))) $existingFilesMap['file_bachelor_cert'] = $att;
-                if ($typeId === 4 || str_contains($note, 'معادلة الإجازة')) $existingFilesMap['file_ba_decision'] = $att;
                 if ($typeId === 6 || (str_contains($note, 'شهادة الماجستير') && !str_contains($note, 'معادلة') && !str_contains($note, 'ملخص'))) $existingFilesMap['file_master_cert'] = $att;
                 if ($typeId === 9 || str_contains($note, 'معادلة شهادة الماجستير') || str_contains($note, 'معادلة الماجستير')) $existingFilesMap['file_ma_decision'] = $att;
-                if ($typeId === 8 || str_contains($note, 'ملخص رسالة الماجستير') || str_contains($note, 'ملخص الماجستير')) $existingFilesMap['file_master_thesis_abstract'] = $att;
                 if ($typeId === 10 || (str_contains($note, 'شهادة الدكتوراه') && !str_contains($note, 'ملخص') && !str_contains($note, 'كاملة'))) $existingFilesMap['file_phd_cert'] = $att;
                 if ($typeId === 11 || str_contains($note, 'مجلس') || str_contains($note, 'تواريخ التسجيل والمناقشة')) $existingFilesMap['file_phd_council_decisions'] = $att;
-                if ($typeId === 12 || (str_contains($note, 'ملخص أطروحة') && !str_contains($note, 'كاملة'))) $existingFilesMap['file_phd_thesis_abstract'] = $att;
-                if ($typeId === 25 || str_contains($note, 'أطروحة الدكتوراه كاملة') || str_contains($note, 'النسخة الكاملة لأطروحة الدكتوراه')) $existingFilesMap['file_phd_full_thesis'] = $att;
-                if (str_contains($note, 'هوية') || str_contains($note, 'شخصية')) {
-                    $existingFilesMap['file_national_id'] = $att;
-                }
-                if ($typeId === 13 || str_contains($note, 'جواز السفر') || str_contains($note, 'جواز')) {
-                    $existingFilesMap['file_passport'] = $att;
-                    if (empty($existingFilesMap['file_national_id']) && !str_contains($note, 'جواز')) {
+                if ($typeId === 14 || str_contains($note, 'السيرة')) $existingFilesMap['file_cv'] = $att;
+                if ($typeId === 17 || str_contains($note, '125,000') || str_contains($note, '125 ألف') || str_contains($note, 'رسم تعادل الدكتوراه')) $existingFilesMap['file_fees_receipt'] = $att;
+                if ($typeId === 22 || str_contains($note, 'المكتبة الوطنية')) $existingFilesMap['file_library_receipt'] = $att;
+                if ($typeId === 5 && (str_contains($note, 'الدكتوراه') || str_contains($note, 'كشف علامات الدكتوراه'))) $existingFilesMap['file_phd_transcript'] = $att;
+                if ($typeId === 19 || str_contains($note, 'ICDL')) $existingFilesMap['file_icdl_cert'] = $att;
+                if ($typeId === 18 || str_contains($note, 'الإنكليزية') || str_contains($note, 'إنكليزية')) $existingFilesMap['file_english_cert'] = $att;
+                if ($typeId === 13) {
+                    if (str_contains($note, 'صفحات الأختام') || str_contains($note, 'جواز السفر مع')) {
+                        $existingFilesMap['file_passport'] = $att;
+                    } else {
                         $existingFilesMap['file_national_id'] = $att;
                     }
+                } elseif (str_contains($note, 'هوية') || str_contains($note, 'إثبات الشخصية')) {
+                    $existingFilesMap['file_national_id'] = $att;
+                } elseif (str_contains($note, 'صفحات الأختام')) {
+                    $existingFilesMap['file_passport'] = $att;
                 }
                 if ($typeId === 24 || str_contains($note, 'حركة الهجرة والجوازات') || str_contains($note, 'الهجرة والجوازات')) $existingFilesMap['file_immigration_movement'] = $att;
-                if ($typeId === 17 || str_contains($note, '125,000') || str_contains($note, 'رسم تعادل الدكتوراه')) $existingFilesMap['file_fees_receipt'] = $att;
-                if ($typeId === 15 || str_contains($note, 'طلب الجامعة للتعادل') || str_contains($note, 'كتاب طلب التقويم') || str_contains($note, 'طلب التقويم')) $existingFilesMap['file_uni_request'] = $att;
-                if ($typeId === 22 || str_contains($note, 'المكتبة الوطنية') || str_contains($note, 'مكتبة الأسد')) $existingFilesMap['file_library_receipt'] = $att;
-                if ($typeId === 23 || str_contains($note, 'مرفقات ووثائق أخرى') || str_contains($note, 'مرفقات أخرى') || str_contains($note, 'بحوث')) $existingFilesMap['file_other_attachments'] = $att;
+                if ($typeId === 23 || str_contains($note, 'مرفقات ووثائق أخرى') || str_contains($note, 'مرفقات أخرى')) $existingFilesMap['file_other_attachments'] = $att;
             }
         }
     }
 @endphp
+
+<style>
+    .mohe-official-panel {
+        background: #ffffff;
+        border: 1px solid #d5dce6;
+        border-top: 3px solid var(--imperial-navy);
+        border-radius: 10px;
+        box-shadow: 0 3px 14px rgba(15, 29, 51, 0.05);
+        overflow: hidden;
+    }
+    .mohe-panel-header {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-bottom: 1px solid #e2e8f0;
+        padding: 14px 20px;
+    }
+    .mohe-emblem-box {
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+        background: var(--imperial-navy);
+        color: var(--heritage-gold-light);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow: 0 2px 6px rgba(26, 42, 68, 0.18);
+    }
+    .mohe-exempt-card {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-right: 4px solid var(--heritage-gold);
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(15, 29, 51, 0.04);
+    }
+    .mohe-exempt-switch-box {
+        background: #f8fafc;
+        border: 1px solid #dce3ec;
+        border-radius: 8px;
+        padding: 10px 16px;
+        min-width: 265px;
+    }
+    .mohe-ledger-wrap {
+        border: 1px solid #d5dce6;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #ffffff;
+    }
+    .mohe-ledger-table thead th {
+        background-color: var(--imperial-navy) !important;
+        color: #ffffff !important;
+        font-weight: 600;
+        font-size: 0.80rem;
+        padding: 11px 10px;
+        border-color: #243b5e !important;
+        border-bottom: 2px solid var(--heritage-gold) !important;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+    .mohe-ledger-table tbody td {
+        padding: 10px 8px;
+        vertical-align: middle;
+        border-color: #e8edf4 !important;
+        font-size: 0.84rem;
+    }
+    .mohe-ledger-table tbody tr:hover {
+        background-color: #f8fafc;
+    }
+    .mohe-duration-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #f3f6fb;
+        color: var(--imperial-navy);
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        padding: 4px 10px;
+        font-weight: 600;
+        font-size: 0.80rem;
+    }
+    .mohe-stat-tile {
+        background: #ffffff;
+        border: 1px solid #cfd8e3;
+        border-top: 2px solid var(--imperial-navy);
+        border-radius: 8px;
+        padding: 12px 10px;
+        text-align: center;
+        box-shadow: 0 2px 6px rgba(15, 29, 51, 0.04);
+    }
+    .mohe-stat-tile.is-gold {
+        background: #fcfaf4;
+        border-color: #dec99c;
+        border-top: 2px solid var(--heritage-gold-dark);
+    }
+    .mohe-stat-value {
+        font-size: 1.65rem;
+        font-weight: 700;
+        color: var(--imperial-navy);
+        line-height: 1.15;
+        font-variant-numeric: tabular-nums;
+    }
+    .mohe-stat-tile.is-gold .mohe-stat-value {
+        color: var(--heritage-gold-dark);
+    }
+    .mohe-stat-label {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #475569;
+        margin-top: 3px;
+    }
+    .mohe-btn-navy {
+        background-color: var(--imperial-navy);
+        border: 1px solid var(--imperial-navy);
+        color: #ffffff;
+        transition: all 0.2s ease;
+    }
+    .mohe-btn-navy:hover {
+        background-color: var(--imperial-navy-dark);
+        border-color: var(--imperial-navy-dark);
+        color: var(--heritage-gold-light);
+    }
+    .mohe-add-icon-btn {
+        width: 44px;
+        height: 44px;
+        padding: 0 !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+    .mohe-action-icon-btn {
+        width: 32px !important;
+        height: 32px !important;
+        padding: 0 !important;
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px !important;
+        line-height: 1 !important;
+    }
+    .mohe-context-bar {
+        background: linear-gradient(135deg, #f8fafc 0%, #f3f6fb 100%);
+        border: 1px solid #d5dce6;
+        border-right: 4px solid var(--imperial-navy);
+        border-radius: 8px;
+    }
+</style>
 
 @if(!empty($isAdminEdit))
     @include('university.apply.partials._admin_edit_banner', ['wizardTitle' => 'الدكتوراه غير السورية (الخارجية)'])
@@ -389,29 +546,59 @@
                     <i class="fa-solid fa-graduation-cap fs-5" style="color: var(--heritage-gold);"></i> الخطوة 3: درجة الإجازة الجامعية الأولى (البكالوريوس)
                 </h5>
 
-                {{-- الصف الأول: 4 أعمدة (البلد - الجامعة - الكلية - التقدير) --}}
+                {{-- الصف الأول: البلد + الجامعة (قائمة سورية عند سوريا / نصي عند غير سوريا أو أخرى) --}}
                 <div class="row g-3">
-                    <div class="col-md-3">
+                    <div class="col-md-6" id="ba_country_col">
                         <label class="form-label label-sm fw-bold">1. بلد الحصول على الإجازة <span class="text-danger">*</span></label>
-                        <select name="ba_country_id" id="ba_country_id" class="form-select academic-input" onchange="toggleBaCountryFields(this.value)" required>
+                        <select name="ba_country_id" id="ba_country_id" class="form-select academic-input" onchange="syncBaUniversityFields()" required>
                             @foreach($countries as $c)
-                                <option value="{{ $c->id }}" {{ old('ba_country_id', $baCountryId) == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
+                                <option value="{{ $c->id }}" {{ $baCountryId == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
                             @endforeach
                         </select>
                     </div>
 
-                    <div class="col-md-3">
-                        <label class="form-label label-sm fw-bold">2. الجامعة المانحة للإجازة <span class="text-danger">*</span></label>
-                        <input type="text" name="ba_university_other" id="ba_university_other" class="form-control academic-input" placeholder="مثال: جامعة دمشق / جامعة القاهرة" value="{{ old('ba_university_other', $baUniOther) }}" required>
+                    <div class="col-md-6" id="ba_uni_select_col" style="display: {{ $baCountryId == ($syriaId ?? 1) ? 'block' : 'none' }};">
+                        <label class="form-label label-sm fw-bold">2. الجامعة المانحة للإجازة (سوريا) <span class="text-danger">*</span></label>
+                        <select name="ba_university_id" id="ba_university_id" class="form-select academic-input" onchange="syncBaUniversityFields()">
+                            @include('university.apply.partials._syrian_university_optgroups', [
+                                'selectedId' => $baUniId,
+                                'isOther' => $isBaOtherSelected,
+                                'publicUnis' => $syrianPublicUnis,
+                                'privateUnis' => $syrianPrivateUnis,
+                                'institutes' => $syrianInstitutes,
+                                'fallbackUni' => optional($draftBaEd)->university,
+                            ])
+                        </select>
                     </div>
 
-                    <div class="col-md-3">
+                    <div class="col-md-6" id="ba_uni_other_col" style="display: {{ ($baCountryId != ($syriaId ?? 1) || $isBaOtherSelected) ? 'block' : 'none' }};">
+                        <label class="form-label label-sm fw-bold">2. اسم الجامعة المانحة للإجازة <span class="text-danger">*</span></label>
+                        <input type="text" name="ba_university_other" id="ba_university_other" class="form-control academic-input" placeholder="مثال: جامعة القاهرة / الجامعة الأردنية" value="{{ $baUniOther }}">
+                    </div>
+                </div>
+
+                {{-- الصف الثاني: الكلية - القسم - التخصص العام --}}
+                <div class="row g-3 mt-1">
+                    <div class="col-md-4">
                         <label class="form-label label-sm fw-bold">3. الكلية المانحة <span class="text-danger">*</span></label>
-                        <input type="text" name="ba_faculty" id="input-baFaculty" class="form-control academic-input" placeholder="مثال: كلية الشريعة" value="{{ old('ba_faculty', $baFaculty) }}" required>
+                        <input type="text" name="ba_faculty" id="input-baFaculty" class="form-control academic-input" placeholder="مثال: كلية الهندسة المعلوماتية" value="{{ old('ba_faculty', $baFaculty) }}" required>
                     </div>
 
-                    <div class="col-md-3">
-                        <label class="form-label label-sm fw-bold">4. التقدير / المعدل العام <span class="text-danger">*</span></label>
+                    <div class="col-md-4">
+                        <label class="form-label label-sm fw-bold">4. القسم لدرجة الإجازة <span class="text-danger">*</span></label>
+                        <input type="text" name="ba_department" id="input-baDept" class="form-control academic-input" placeholder="مثال: قسم هندسة البرمجيات" value="{{ old('ba_department', $baDept) }}" required>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label label-sm fw-bold">5. التخصص العام لدرجة الإجازة <span class="text-danger">*</span></label>
+                        <input type="text" name="ba_general_specialization" id="input-baGenSpec" class="form-control academic-input" placeholder="مثال: الهندسة المعلوماتية" value="{{ old('ba_general_specialization', $baGenSpec) }}" required>
+                    </div>
+                </div>
+
+                {{-- الصف الثالث: التقدير - تاريخ المنح --}}
+                <div class="row g-3 mt-1">
+                    <div class="col-md-6">
+                        <label class="form-label label-sm fw-bold">6. التقدير / المعدل العام <span class="text-danger">*</span></label>
                         <select name="ba_rank" id="input-baRank" class="form-select academic-input" required>
                             <option value="ممتاز" {{ (old('ba_rank', $baRank) == 'ممتاز' || old('ba_rank', $baRank) == 'امتياز') ? 'selected' : '' }}>ممتاز</option>
                             <option value="جيد جداً" {{ old('ba_rank', $baRank) == 'جيد جداً' ? 'selected' : '' }}>جيد جداً</option>
@@ -419,71 +606,80 @@
                             <option value="مقبول" {{ old('ba_rank', $baRank) == 'مقبول' ? 'selected' : '' }}>مقبول</option>
                         </select>
                     </div>
-                </div>
 
-                {{-- الصف الثاني: 3 أعمدة (القسم - التخصص العام - تاريخ المنح) --}}
-                <div class="row g-3 mt-1">
-                    <div class="col-md-4">
-                        <label class="form-label label-sm fw-bold">5. القسم لدرجة الإجازة <span class="text-danger">*</span></label>
-                        <input type="text" name="ba_department" id="input-baDept" class="form-control academic-input" placeholder="مثال: قسم الفقه وأصوله" value="{{ old('ba_department', $baDept) }}" required>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label label-sm fw-bold">6. التخصص العام لدرجة الإجازة <span class="text-danger">*</span></label>
-                        <input type="text" name="ba_general_specialization" id="input-baGenSpec" class="form-control academic-input" placeholder="مثال: الشريعة والدراسات الإسلامية" value="{{ old('ba_general_specialization', $baGenSpec) }}" required>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label label-sm fw-bold">7. سنة/تاريخ منح درجة الإجازة <span class="text-danger">*</span></label>
+                    <div class="col-md-6">
+                        <label class="form-label label-sm fw-bold">7. تاريخ الحصول على الإجازة الجامعية <span class="text-danger">*</span></label>
                         <input type="date" name="ba_grant_date" id="input-baGrantDate" class="form-control academic-input" max="{{ $todayDate }}" value="{{ old('ba_grant_date', $baGrantDate) }}" required>
-                    </div>
-
-                    <div class="col-12" id="ba_decision_box" style="display: {{ $isBaForeign ? 'block' : 'none' }};">
-                        <div class="row g-3 p-3 bg-light rounded border border-warning">
-                            <div class="col-md-6">
-                                <label class="form-label label-sm fw-bold ">رقم قرار معادلة الإجازة الجامعية غير السورية <span class="text-danger">*</span></label>
-                                <input type="text" name="ba_decision_no" id="ba_decision_no" class="form-control academic-input" placeholder="رقم قرار المعادلة الصادر عن لجنة تعادل الشهادات" value="{{ old('ba_decision_no', $baDecNo) }}" {{ $isBaForeign ? 'required' : '' }}>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label label-sm fw-bold ">تاريخ صدور قرار معادلة الإجازة الجامعية <span class="text-danger">*</span></label>
-                                <input type="date" name="ba_decision_date" id="ba_decision_date" class="form-control academic-input" max="{{ $todayDate }}" value="{{ old('ba_decision_date', $baDecDate) }}" {{ $isBaForeign ? 'required' : '' }}>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
 
             {{-- =========================================================================
-                 STEP 4: MASTER DEGREE (درجة الماجستير)
+                 STEP 4: MASTER DEGREE (درجة الماجستير — داخل أو خارج سوريا + تاريخ المنح فقط + معادلة اختيارية)
             ========================================================================= --}}
             <div class="form-section" id="step-4" style="display: none;">
                 <h5 class="fw-bold border-bottom pb-2 mb-4 d-flex align-items-center gap-2" style="color: var(--primary-container); border-bottom-color: var(--outline-variant) !important;">
                     <i class="fa-solid fa-building-columns fs-5" style="color: var(--heritage-gold);"></i> الخطوة 4: درجة الماجستير السابقة
                 </h5>
 
-                {{-- الصف الأول: 4 أعمدة (البلد - الجامعة - الكلية - التقدير) --}}
+                {{-- الصف الأول: البلد + الجامعة (قائمة سورية عند سوريا / نصي عند غير سوريا أو أخرى) --}}
                 <div class="row g-3">
-                    <div class="col-md-3">
+                    <div class="col-md-6" id="ma_country_col">
                         <label class="form-label label-sm fw-bold">1. بلد الحصول على الماجستير <span class="text-danger">*</span></label>
-                        <select name="ma_country_id" id="ma_country_id" class="form-select academic-input" onchange="toggleMaCountryFields(this.value)" required>
+                        <select name="ma_country_id" id="ma_country_id" class="form-select academic-input" onchange="syncMaUniversityFields()" required>
                             @foreach($countries as $c)
-                                <option value="{{ $c->id }}" {{ old('ma_country_id', $maCountryId) == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
+                                <option value="{{ $c->id }}" {{ $maCountryId == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
                             @endforeach
                         </select>
                     </div>
 
-                    <div class="col-md-3">
-                        <label class="form-label label-sm fw-bold">2. الجامعة المانحة للماجستير <span class="text-danger">*</span></label>
-                        <input type="text" name="ma_university_other" id="ma_university_other" class="form-control academic-input" placeholder="مثال: جامعة أم درمان الإسلامية" value="{{ old('ma_university_other', $maUniOther) }}" required>
+                    <div class="col-md-6" id="ma_uni_select_col" style="display: {{ $maCountryId == ($syriaId ?? 1) ? 'block' : 'none' }};">
+                        <label class="form-label label-sm fw-bold">2. الجامعة المانحة للماجستير (سوريا) <span class="text-danger">*</span></label>
+                        <select name="ma_university_id" id="ma_university_id" class="form-select academic-input" onchange="syncMaUniversityFields()">
+                            @include('university.apply.partials._syrian_university_optgroups', [
+                                'selectedId' => $maUniId,
+                                'isOther' => $isMaOtherSelected,
+                                'publicUnis' => $syrianPublicUnis,
+                                'privateUnis' => $syrianPrivateUnis,
+                                'institutes' => $syrianInstitutes,
+                                'fallbackUni' => optional($draftMaEd)->university,
+                            ])
+                        </select>
                     </div>
 
-                    <div class="col-md-3">
+                    <div class="col-md-6" id="ma_uni_other_col" style="display: {{ ($maCountryId != ($syriaId ?? 1) || $isMaOtherSelected) ? 'block' : 'none' }};">
+                        <label class="form-label label-sm fw-bold">2. اسم الجامعة المانحة للماجستير <span class="text-danger">*</span></label>
+                        <input type="text" name="ma_university_other" id="ma_university_other" class="form-control academic-input" placeholder="مثال: جامعة القاهرة / الجامعة الأردنية" value="{{ $maUniOther }}">
+                    </div>
+                </div>
+
+                {{-- الصف الثاني: الكلية - القسم - التخصص العام --}}
+                <div class="row g-3 mt-1">
+                    <div class="col-md-4">
                         <label class="form-label label-sm fw-bold">3. الكلية المانحة لدرجة الماجستير <span class="text-danger">*</span></label>
-                        <input type="text" name="ma_faculty" id="input-maFaculty" class="form-control academic-input" placeholder="مثال: كلية الشريعة والقانون" value="{{ old('ma_faculty', $maFaculty) }}" required>
+                        <input type="text" name="ma_faculty" id="input-maFaculty" class="form-control academic-input" placeholder="مثال: كلية الهندسة المعلوماتية" value="{{ old('ma_faculty', $maFaculty) }}" required>
                     </div>
 
-                    <div class="col-md-3">
-                        <label class="form-label label-sm fw-bold">4. التقدير <span class="text-danger">*</span></label>
+                    <div class="col-md-4">
+                        <label class="form-label label-sm fw-bold">4. القسم لشهادة الماجستير <span class="text-danger">*</span></label>
+                        <input type="text" name="ma_department" id="input-maDept" class="form-control academic-input" placeholder="مثال: قسم هندسة البرمجيات" value="{{ old('ma_department', $maDept) }}" required>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label label-sm fw-bold">5. التخصص العام لشهادة الماجستير <span class="text-danger">*</span></label>
+                        <input type="text" name="ma_general_specialization" id="input-maGenSpec" class="form-control academic-input" placeholder="مثال: الهندسة المعلوماتية" value="{{ old('ma_general_specialization', $maGenSpec ?: $maFaculty) }}" required>
+                    </div>
+                </div>
+
+                {{-- الصف الثالث: التخصص الدقيق - التقدير - تاريخ الحصول على الدرجة فقط --}}
+                <div class="row g-3 mt-1">
+                    <div class="col-md-4">
+                        <label class="form-label label-sm fw-bold">6. التخصص الدقيق لدرجة الماجستير <span class="text-muted fs-8 fw-normal">(اختياري)</span></label>
+                        <input type="text" name="ma_specialization" id="input-maSpec" class="form-control academic-input" placeholder="مثال: الذكاء الصنعي وأمن المعلومات" value="{{ old('ma_specialization', $maSpec) }}">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label label-sm fw-bold">7. التقدير <span class="text-danger">*</span></label>
                         <select name="ma_rank" id="input-maRank" class="form-select academic-input" required>
                             <option value="ممتاز" {{ (old('ma_rank', $maRank) == 'ممتاز' || old('ma_rank', $maRank) == 'امتياز') ? 'selected' : '' }}>ممتاز</option>
                             <option value="جيد جداً" {{ old('ma_rank', $maRank) == 'جيد جداً' ? 'selected' : '' }}>جيد جداً</option>
@@ -491,39 +687,44 @@
                             <option value="مقبول" {{ old('ma_rank', $maRank) == 'مقبول' ? 'selected' : '' }}>مقبول</option>
                         </select>
                     </div>
-                </div>
 
-                {{-- الصف الثاني: 4 أعمدة (القسم - التخصص العام - التخصص الدقيق اختياري - تاريخ المنح) --}}
-                <div class="row g-3 mt-1">
-                    <div class="col-md-3">
-                        <label class="form-label label-sm fw-bold">5. القسم لشهادة الماجستير <span class="text-danger">*</span></label>
-                        <input type="text" name="ma_department" id="input-maDept" class="form-control academic-input" placeholder="مثال: قسم الفقه المقارن" value="{{ old('ma_department', $maDept) }}" required>
-                    </div>
-
-                    <div class="col-md-3">
-                        <label class="form-label label-sm fw-bold">6. التخصص العام لشهادة الماجستير <span class="text-danger">*</span></label>
-                        <input type="text" name="ma_general_specialization" id="input-maGenSpec" class="form-control academic-input" placeholder="مثال: الشريعة والقانون" value="{{ old('ma_general_specialization', $maGenSpec ?: $maFaculty) }}" required>
-                    </div>
-
-                    <div class="col-md-3">
-                        <label class="form-label label-sm fw-bold">7. التخصص الدقيق لدرجة الماجستير <span class="text-muted fs-8 fw-normal">(اختياري)</span></label>
-                        <input type="text" name="ma_specialization" id="input-maSpec" class="form-control academic-input" placeholder="مثال: اختصاص الفقه المقارن" value="{{ old('ma_specialization', $maSpec) }}">
-                    </div>
-
-                    <div class="col-md-3">
-                        <label class="form-label label-sm fw-bold">8. سنة/تاريخ منح درجة الماجستير <span class="text-danger">*</span></label>
+                    <div class="col-md-4">
+                        <label class="form-label label-sm fw-bold">8. تاريخ الحصول على الدرجة <span class="text-danger">*</span></label>
                         <input type="date" name="ma_grant_date" id="input-maGrantDate" class="form-control academic-input" max="{{ $todayDate }}" value="{{ old('ma_grant_date', $maGrantDate) }}" required>
                     </div>
+                </div>
 
-                    <div class="col-12" id="ma_decision_box" style="display: {{ $isMaForeign ? 'block' : 'none' }};">
-                        <div class="row g-3 p-3 bg-light rounded border border-warning">
+                {{-- Checkbox: هل تمت معادلة درجة الماجستير من قبل؟ --}}
+                <div class="mohe-exempt-card p-3 p-md-4 mt-4">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="mohe-emblem-box">
+                                <i class="fa-solid fa-stamp"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-0" style="color: var(--imperial-navy);">هل تمت معادلة درجة الماجستير من قبل؟</h6>
+                                <p class="text-muted fs-8 mb-0 mt-1">عند تفعيل هذا الخيار، يُطلب إدخال رقم وتاريخ قرار معادلة الماجستير، ويصبح مرفق <strong>قرار معادلة شهادة الماجستير</strong> مطلوباً في خطوة المرفقات.</p>
+                            </div>
+                        </div>
+                        <div class="mohe-exempt-switch-box py-2 px-3" style="min-width: auto;">
+                            <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
+                                <input class="form-check-input m-0" type="checkbox" id="check-hasMaEquivalence" name="has_ma_equivalence" value="1" {{ $hasMaEquivalence ? 'checked' : '' }} onchange="toggleMaEquivalenceSection(this.checked)" style="width: 2.75em; height: 1.4em; cursor: pointer;">
+                                <label class="form-check-label fw-bold text-dark fs-8 mb-0" for="check-hasMaEquivalence" style="cursor: pointer;">
+                                    تمت معادلة الماجستير مسبقاً
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="ma-equivalence-section" class="mt-3 pt-3 border-top" style="display: {{ $hasMaEquivalence ? 'block' : 'none' }}; border-color: #e2e8f0 !important;">
+                        <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label label-sm fw-bold ">رقم قرار معادلة الماجستير غير السوري <span class="text-danger">*</span></label>
-                                <input type="text" name="ma_decision_no" id="ma_decision_no" class="form-control academic-input" placeholder="رقم قرار التعادل الصادر عن مجلس التعليم العالي" value="{{ old('ma_decision_no', $maDecNo) }}" {{ $isMaForeign ? 'required' : '' }}>
+                                <label class="form-label label-sm fw-bold">رقم قرار معادلة شهادة الماجستير <span class="text-danger">*</span></label>
+                                <input type="text" name="ma_decision_no" id="ma_decision_no" class="form-control academic-input" placeholder="رقم قرار التعادل الصادر عن مجلس التعليم العالي" value="{{ old('ma_decision_no', $maDecNo) }}" {{ $hasMaEquivalence ? 'required' : '' }}>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label label-sm fw-bold ">تاريخ قرار معادلة الماجستير <span class="text-danger">*</span></label>
-                                <input type="date" name="ma_decision_date" id="ma_decision_date" class="form-control academic-input" max="{{ $todayDate }}" value="{{ old('ma_decision_date', $maDecDate) }}" {{ $isMaForeign ? 'required' : '' }}>
+                                <label class="form-label label-sm fw-bold">تاريخ قرار معادلة شهادة الماجستير <span class="text-danger">*</span></label>
+                                <input type="date" name="ma_decision_date" id="ma_decision_date" class="form-control academic-input" max="{{ $todayDate }}" value="{{ old('ma_decision_date', $maDecDate) }}" {{ $hasMaEquivalence ? 'required' : '' }}>
                             </div>
                         </div>
                     </div>
@@ -542,7 +743,7 @@
                 <div class="row g-3">
                     <div class="col-md-3">
                         <label class="form-label label-sm fw-bold">1. بلد الحصول على الدكتوراه <span class="text-danger">*</span></label>
-                        <select name="phd_country_id" id="phd_country_id" class="form-select academic-input" required>
+                        <select name="phd_country_id" id="phd_country_id" class="form-select academic-input" onchange="syncBoundDoctorateContext()" required>
                             <option value="">-- اختر بلد دراسة الدكتوراه --</option>
                             @foreach($countries as $c)
                                 @if($c->id != ($syriaId ?? 1) && $c->name !== 'سوريا')
@@ -554,7 +755,7 @@
 
                     <div class="col-md-3">
                         <label class="form-label label-sm fw-bold">2. الجامعة المانحة للدكتوراه <span class="text-danger">*</span></label>
-                        <input type="text" name="phd_university_other" id="input-phdUni" class="form-control academic-input" placeholder="مثال: كلية الدعوة الجامعية في لبنان" value="{{ old('phd_university_other', $phdUniOther) }}" required>
+                        <input type="text" name="phd_university_other" id="input-phdUni" class="form-control academic-input" placeholder="مثال: جامعة القاهرة / كلية الدعوة الجامعية" value="{{ old('phd_university_other', $phdUniOther) }}" oninput="syncBoundDoctorateContext()" required>
                     </div>
 
                     <div class="col-md-3">
@@ -577,21 +778,21 @@
                 <div class="row g-3 mt-1">
                     <div class="col-md-4">
                         <label class="form-label label-sm fw-bold">5. القسم لدرجة الدكتوراه <span class="text-danger">*</span></label>
-                        <input type="text" name="phd_department" id="input-phdDept" class="form-control academic-input" placeholder="مثال: قسم الدراسات الإسلامية" value="{{ old('phd_department', $phdDept) }}" required>
+                        <input type="text" name="phd_department" id="input-phdDept" class="form-control academic-input" placeholder="مثال: قسم الهندسة الطبية" value="{{ old('phd_department', $phdDept) }}" required>
                     </div>
 
                     <div class="col-md-4">
                         <label class="form-label label-sm fw-bold">6. الاختصاص العام <span class="text-danger">*</span></label>
-                        <input type="text" name="phd_general_specialization" id="input-phdGenSpec" class="form-control academic-input" placeholder="مثال: الدراسات الإسلامية" value="{{ old('phd_general_specialization', $phdGenSpec ?: $phdDept) }}" required>
+                        <input type="text" name="phd_general_specialization" id="input-phdGenSpec" class="form-control academic-input" placeholder="مثال: الهندسة المعلوماتية" value="{{ old('phd_general_specialization', $phdGenSpec ?: $phdDept) }}" required>
                     </div>
 
                     <div class="col-md-4">
                         <label class="form-label label-sm fw-bold">7. الاختصاص الدقيق <span class="text-muted fs-8 fw-normal">(اختياري)</span></label>
-                        <input type="text" name="phd_specialization" id="input-phdSpec" class="form-control academic-input" placeholder="مثال: شعبة التفسير وعلوم القرآن" value="{{ old('phd_specialization', $phdSpec) }}">
+                        <input type="text" name="phd_specialization" id="input-phdSpec" class="form-control academic-input" placeholder="مثال: معالجة الإشارات الحيوية" value="{{ old('phd_specialization', $phdSpec) }}">
                     </div>
                 </div>
 
-                {{-- الصف الثالث: 3 أعمدة (عنوان الأطروحة - اسم المشرف - نظام الدراسة) --}}
+                {{-- الصف الثالث: عنوان الأطروحة - اسم المشرف - نظام الدراسة --}}
                 <div class="row g-3 mt-1">
                     <div class="col-md-6">
                         <label class="form-label label-sm fw-bold">8. عنوان أطروحة الدكتوراه بالتفصيل <span class="text-danger">*</span></label>
@@ -613,7 +814,7 @@
                     </div>
                 </div>
 
-                {{-- الصف الرابع: 4 أعمدة (تاريخ التسجيل - تاريخ المناقشة - تاريخ المنح - لغة الدراسة) --}}
+                {{-- الصف الرابع: تاريخ التسجيل - تاريخ المناقشة - تاريخ المنح - لغة الدراسة --}}
                 <div class="row g-3 mt-1">
                     <div class="col-md-3">
                         <label class="form-label label-sm fw-bold">11. تاريخ التسجيل بالدرجة <span class="text-danger">*</span></label>
@@ -626,7 +827,7 @@
                     </div>
 
                     <div class="col-md-3">
-                        <label class="form-label label-sm fw-bold">13. تاريخ منح الدرجة رسمياً <span class="text-danger">*</span></label>
+                        <label class="form-label label-sm fw-bold">13. تاريخ الحصول على الدرجة <span class="text-danger">*</span></label>
                         <input type="date" name="phd_grant_date" id="input-phdGrantDate" class="form-control academic-input" max="{{ $todayDate }}" value="{{ old('phd_grant_date', $phdGrantDate) }}" required>
                     </div>
 
@@ -643,96 +844,167 @@
                         </select>
                     </div>
                 </div>
+
+                {{-- بطاقة شرط الإقامة والإعفاء (متزامنة مع الخطوة السادسة) --}}
+                <div class="mohe-exempt-card p-3 p-md-4 mt-4">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                        <div class="d-flex align-items-start gap-3" style="max-width: 700px;">
+                            <div class="mohe-emblem-box mt-0.5">
+                                <i class="fa-solid fa-scale-balanced"></i>
+                            </div>
+                            <div>
+                                <div class="d-flex align-items-center flex-wrap gap-2 mb-1">
+                                    <h6 class="fw-bold mb-0" style="color: var(--imperial-navy);">
+                                        هل شهادة الدكتوراه مأخوذة في تخصص نظري ومعفاة من شرط الإقامة؟
+                                    </h6>
+                                    <span class="badge rounded-pill px-2.5 py-1 fs-9 fw-semibold" style="background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">
+                                        تخصص نظري / إشراف مشترك
+                                    </span>
+                                </div>
+                                <p class="text-muted fs-8 mb-2 lh-base">
+                                    يُفعّل هذا الخيار حصراً للتخصصات النظرية المعفاة من الإقامة الفعلية (مثل اللغة العربية أو الفلسفة أو الحقوق أو التخصصات النظرية عن بُعد).
+                                </p>
+                                <div class="d-flex flex-wrap gap-2 fs-9">
+                                    <span class="px-2.5 py-1 rounded" style="background: #f0f9f4; color: #14532d; border: 1px solid #bbf7d0;">
+                                        <i class="fa-solid fa-check me-1"></i> عند التفعيل: حركات الإقامة وجواز السفر وبيان الحركة اختيارية
+                                    </span>
+                                    <span class="px-2.5 py-1 rounded" style="background: #f8fafc; color: #475569; border: 1px solid #dce3ec;">
+                                        <i class="fa-solid fa-building-columns me-1"></i> التخصصات التطبيقية والهندسية والطبية: ملزمة بالإقامة الفعلية
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mohe-exempt-switch-box d-flex flex-column align-items-start gap-2">
+                            <span class="fs-9 fw-semibold text-uppercase" style="color: #64748b; letter-spacing: 0.3px;">الوضع المعتمد لشرط الإقامة</span>
+                            <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
+                                <input class="form-check-input m-0" type="checkbox" id="input-isResidenceExempt" name="is_residence_exempt" value="1" {{ $isResExempt ? 'checked' : '' }} onchange="syncResidenceExempt(this.checked)" style="width: 2.75em; height: 1.4em; cursor: pointer;">
+                                <label class="form-check-label fw-bold fs-8 mb-0 {{ $isResExempt ? 'text-success' : 'text-dark' }}" for="input-isResidenceExempt" id="lbl-residenceExemptStep5" style="cursor: pointer;">
+                                    {{ $isResExempt ? 'معفى من شرط الإقامة (تخصص نظري)' : 'يتطلب حضوراً وإقامة فعلية' }}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {{-- =========================================================================
-                 STEP 6: RESIDENCE & TRAVEL MOVEMENTS (حركات الإقامة وحساب المدة)
+                 STEP 6: RESIDENCE & TRAVEL MOVEMENTS (الواجهة المؤسسية لحركات الإقامة وحساب المدة)
             ========================================================================= --}}
             <div class="form-section" id="step-6" style="display: none;">
+                <input type="hidden" name="residences_submitted_flag" value="1">
                 <h5 class="fw-bold border-bottom pb-2 mb-4 d-flex align-items-center gap-2" style="color: var(--primary-container); border-bottom-color: var(--outline-variant) !important;">
-                    <i class="fa-solid fa-passport fs-5" style="color: var(--heritage-gold);"></i> الخطوة 6: بيانات الإقامة وحركات الدخول والخروج من بلد دراسة الدكتوراه
+                    <i class="fa-solid fa-passport fs-5" style="color: var(--heritage-gold);"></i> الخطوة 6: إقامة المرشح — حركات الدخول والخروج من بلد دراسة الدكتوراه
                 </h5>
 
-                <!-- سويتش تحديد هل تطلبت الدراسة سفراً وإقامة -->
-                <div class="card p-3 mb-4 rounded-3 border border-primary-subtle shadow-xs" style="background-color: #f0f7ff;">
-                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-                        <div>
-                            <h6 class="fw-bold mb-1 ">
-                                <i class="fa-solid fa-plane-departure me-1"></i> هل تطلبت دراسة الدكتوراه سفراً وإقامة فعلية في بلد الدراسة؟
-                            </h6>
-                            <!-- <div class="text-muted fs-8">
-                                اختر (لا) في حال كانت الدكتوراه بنظام بحثي / نظري أو إشراف مشترك لا يفرض إقامة متصلة خارج القطر.
-                            </div> -->
+                <!-- شريط الربط التلقائي لبلد الدراسة والجامعة + حالة الإعفاء -->
+                <div class="mohe-context-bar p-3 mb-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
+                    <div class="d-flex flex-wrap align-items-center gap-4">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="mohe-emblem-box" style="width: 34px; height: 34px;">
+                                <i class="fa-solid fa-earth-americas fs-7"></i>
+                            </div>
+                            <div>
+                                <div class="text-muted fs-9 fw-semibold">الدولة (بلد دراسة الدكتوراه)</div>
+                                <div id="step6-bound-country" class="fw-bold fs-7" style="color: var(--imperial-navy);">---</div>
+                            </div>
                         </div>
-                        <div class="form-check form-switch m-0">
-                            <input class="form-check-input" type="checkbox" name="requires_residence" id="requires_residence_switch" value="1" 
-                                   {{ old('requires_residence', optional($draftPhdEd)->residences?->count() > 0 ? '1' : ($draft ? '0' : '1')) == '1' ? 'checked' : '' }} 
-                                   onchange="toggleResidenceRequirement(this.checked)" style="width: 2.5em; height: 1.3em; cursor: pointer;">
-                            <label class="form-check-label fw-bold me-2 fs-7" for="requires_residence_switch" id="residence_switch_label">
-                                تطلبت سفراً وإقامة فعلية
+                        <div class="vr opacity-25 d-none d-sm-block" style="height: 28px;"></div>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="mohe-emblem-box" style="width: 34px; height: 34px;">
+                                <i class="fa-solid fa-building-columns fs-7"></i>
+                            </div>
+                            <div>
+                                <div class="text-muted fs-9 fw-semibold">الجامعة المانحة</div>
+                                <div id="step6-bound-university" class="fw-bold fs-7" style="color: var(--imperial-navy);">---</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mohe-exempt-switch-box py-2 px-3" style="min-width: auto;">
+                        <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
+                            <input class="form-check-input m-0" type="checkbox" id="step6-residence-exempt-switch" {{ $isResExempt ? 'checked' : '' }} onchange="syncResidenceExempt(this.checked)" style="cursor: pointer;">
+                            <label class="form-check-label fw-bold fs-8 text-dark mb-0" for="step6-residence-exempt-switch" style="cursor: pointer;">
+                                الدكتوراه معفاة من شرط الإقامة (تخصص نظري)
                             </label>
                         </div>
                     </div>
                 </div>
 
-                <!-- تنبيه عند اختيار دراسة نظرية بدون إقامة -->
-                <div id="no_residence_notice" class="alert alert-warning py-2.5 px-3 fs-7 mb-4 border-0 rounded shadow-xs" style="display: none; background-color: #fffbeb; color: #b45309;">
-                    <i class="fa-solid fa-triangle-exclamation me-1"></i>
-                    <strong>تنويه:</strong> تم تحديد نظام الدراسة كـ (بحث نظري غير مشترط للإقامة). تم إعفاء الطلب من حركات الدخول والخروج، وتصبح وثائق حركة الهجرة وجواز السفر <strong>اختيارية</strong> في خطوة المرفقات.
+                <div id="residency-exempt-banner" class="py-3 px-4 fs-8 mb-4 rounded-3 border" style="display: {{ $isResExempt ? 'block' : 'none' }}; background-color: #fbf8f1; border-color: #dec99c !important; border-right: 4px solid var(--heritage-gold-dark) !important; color: var(--imperial-navy);">
+                    <i class="fa-solid fa-circle-check me-1.5" style="color: var(--heritage-gold-dark);"></i>
+                    <strong>التخصص معفى من شرط الإقامة:</strong> لا يُشترط إدخال حركات الدخول والخروج من بلد الدراسة ويمكنك الانتقال مباشرة إلى خطوة المرفقات، كما يصبح مرفقا جواز السفر وبيان حركة الهجرة اختياريين. (يمكنك إضافة حركات اختيارياً إن رغبت في توثيقها).
                 </div>
 
-                <div id="residence_movement_wrapper">
-                    <div class="card p-4 mb-4 border rounded-3 shadow-xs" style="background-color: #f8fafc; border-color: #e2e8f0 !important;">
-                        <h6 class="fw-bold mb-3 d-flex align-items-center gap-2" style="color: var(--primary-container);">
-                            <i class="fa-solid fa-passport" style="color: var(--heritage-gold);"></i> تسجيل حركة قدوم ومغادرة جديدة
-                        </h6>
-                        <div class="row g-3">
+                <div id="residency-required-banner" class="py-3 px-4 fs-8 mb-4 rounded-3 border" style="display: {{ $isResExempt ? 'none' : 'block' }}; background-color: #f8fafc; border-color: #cbd5e1 !important; border-right: 4px solid var(--heritage-gold) !important; color: var(--imperial-navy);">
+                    <i class="fa-solid fa-circle-info me-1.5" style="color: var(--heritage-gold-dark);"></i>
+                    <strong>إقامة المرشح:</strong> الرجاء إدخال حركات الدخول والخروج من بلد الدراسة من واقع أختام جواز السفر (يمكن إضافة عدة مدد متفرقة في حال غادر المرشح في إجازات ثم عاد)، وسيتم احتساب إجمالي مدة الإقامة بدقة بالسنوات والأشهر والأيام.
+                </div>
+
+                <!-- MOVEMENT INPUT PANEL -->
+                <div class="mohe-official-panel mb-4">
+                    <div class="mohe-panel-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="fa-solid fa-plane-arrival" style="color: var(--heritage-gold-dark);"></i>
+                            <h6 class="fw-bold mb-0 fs-7" style="color: var(--imperial-navy);">تسجيل حركة دخول وخروج من بلد الدراسة</h6>
+                        </div>
+                        <span id="mov_edit_mode_badge" class="badge bg-warning-subtle text-dark border border-warning px-2.5 py-1" style="display: none;">
+                            <i class="fa-solid fa-pen-to-square me-1"></i> وضع تعديل الحركة المحددة
+                        </span>
+                    </div>
+                    <div class="p-3 p-md-4">
+                        <div class="row g-3 align-items-end">
                             <div class="col-md-3">
-                                <label class="form-label label-sm fw-bold">تاريخ الدخول لبلد الدراسة <span class="text-danger">*</span></label>
+                                <label class="form-label label-sm fw-bold text-dark"><i class="fa-regular fa-calendar-check me-1 text-muted"></i> تاريخ الدخول لبلد الدراسة <span class="text-danger res-req-star">*</span></label>
                                 <input type="date" id="mov_entry_date" class="form-control academic-input" max="{{ $todayDate }}">
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label label-sm fw-bold">منفذ / مطار الدخول <span class="text-muted fs-8 fw-normal">(اختياري)</span></label>
+                                <label class="form-label label-sm fw-bold text-dark"><i class="fa-solid fa-plane-arrival me-1 text-muted"></i> مطار / منفذ الدخول <span class="text-danger res-req-star">*</span></label>
                                 <input type="text" id="mov_entry_airport" class="form-control academic-input" placeholder="مثال: مطار بيروت الدولي">
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label label-sm fw-bold">تاريخ الخروج من بلد الدراسة <span class="text-danger">*</span></label>
+                                <label class="form-label label-sm fw-bold text-dark"><i class="fa-regular fa-calendar-xmark me-1 text-muted"></i> تاريخ الخروج من بلد الدراسة <span class="text-danger res-req-star">*</span></label>
                                 <input type="date" id="mov_exit_date" class="form-control academic-input" max="{{ $todayDate }}">
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label label-sm fw-bold">منفذ / مطار الخروج <span class="text-muted fs-8 fw-normal">(اختياري)</span></label>
-                                <input type="text" id="mov_exit_airport" class="form-control academic-input" placeholder="مثال: معبر جديدة يابوس">
+                                <label class="form-label label-sm fw-bold text-dark"><i class="fa-solid fa-plane-departure me-1 text-muted"></i> مطار / بلد الخروج <span class="text-danger res-req-star">*</span></label>
+                                <input type="text" id="mov_exit_airport" class="form-control academic-input" placeholder="مثال: معبر المصنع / مطار القاهرة">
                             </div>
 
                             <div class="col-md-4">
-                                <label class="form-label label-sm fw-bold">رقم صفحة الجواز <span class="text-muted fs-8 fw-normal">(اختياري)</span></label>
-                                <input type="text" id="mov_page_number" class="form-control academic-input" placeholder="مثال: ص 14 أو 14-15">
+                                <label class="form-label label-sm fw-bold text-dark"><i class="fa-solid fa-book-open me-1 text-muted"></i> رقم صفحة الختم بالجواز <span class="text-danger res-req-star">*</span></label>
+                                <input type="text" id="mov_page_number" class="form-control academic-input" placeholder="مثال: 14 أو 14-15">
                             </div>
-                            <div class="col-md-4 d-flex align-items-end">
-                                <button type="button" class="btn btn-primary px-4 fw-bold w-100 shadow-sm" onclick="addResidencyMovement()" style="height: 38px;">
-                                    <i class="fa-solid fa-plus-circle me-1"></i> إضافة حركة الإقامة إلى الجدول
+                            <div class="col-md-8 d-flex align-items-end justify-content-start gap-2">
+                                <button type="button" id="btn-add-residency" class="btn mohe-btn-navy mohe-add-icon-btn shadow-xs" onclick="addResidencyMovement()" title="إضافة حركة الإقامة إلى الجدول" aria-label="إضافة حركة إقامة">
+                                    <i class="fa-solid fa-plus" id="btn-add-residency-icon"></i>
+                                </button>
+                                <button type="button" id="btn-cancel-edit-residency" class="btn btn-outline-secondary mohe-add-icon-btn" onclick="cancelEditResidencyMovement()" style="display: none;" title="إلغاء التعديل" aria-label="إلغاء التعديل">
+                                    <i class="fa-solid fa-xmark"></i>
                                 </button>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <div class="table-responsive mb-4 shadow-xs rounded border">
-                        <table class="table table-bordered table-hover align-middle text-center mb-0" id="movements_table" style="font-size: 0.85rem;">
-                            <thead style="background-color: #1e3a5f; color: #ffffff;" class="align-middle text-center">
+                <!-- MOVEMENTS TABLE -->
+                <div class="mohe-ledger-wrap mb-4 shadow-xs">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle text-center mb-0 mohe-ledger-table" id="movements_table">
+                            <thead>
                                 <tr>
-                                    <th style="width: 5%; color: #ffffff;">#</th>
-                                    <th style="width: 14%; color: #ffffff;"><i class="fa-regular fa-calendar-check me-1"></i> تاريخ الدخول</th>
-                                    <th style="width: 16%; color: #ffffff;"><i class="fa-solid fa-plane-arrival me-1"></i> منفذ / مطار الدخول</th>
-                                    <th style="width: 14%; color: #ffffff;"><i class="fa-regular fa-calendar-xmark me-1"></i> تاريخ الخروج</th>
-                                    <th style="width: 16%; color: #ffffff;"><i class="fa-solid fa-plane-departure me-1"></i> منفذ / مطار الخروج</th>
-                                    <th style="width: 12%; color: #ffffff;"><i class="fa-solid fa-file-lines me-1"></i> رقم صفحة الجواز</th>
-                                    <th style="width: 15%; color: #ffffff;"><i class="fa-solid fa-clock-rotate-left me-1"></i> مدة الإقامة المحسوبة</th>
-                                    <th style="width: 8%; color: #ffffff;">إجراءات</th>
+                                    <th style="width: 5%;">#</th>
+                                    <th style="width: 13%;"><i class="fa-regular fa-calendar-check me-1 text-warning opacity-75"></i> تاريخ الدخول</th>
+                                    <th style="width: 15%;"><i class="fa-solid fa-plane-arrival me-1 text-warning opacity-75"></i> مطار الدخول</th>
+                                    <th style="width: 13%;"><i class="fa-regular fa-calendar-xmark me-1 text-warning opacity-75"></i> تاريخ الخروج</th>
+                                    <th style="width: 15%;"><i class="fa-solid fa-plane-departure me-1 text-warning opacity-75"></i> مطار / بلد الخروج</th>
+                                    <th style="width: 9%;"><i class="fa-solid fa-file-lines me-1 text-warning opacity-75"></i> الصفحة</th>
+                                    <th style="width: 19%;"><i class="fa-solid fa-clock-rotate-left me-1 text-warning opacity-75"></i> مدة الإقامة</th>
+                                    <th style="width: 11%;">إجراءات</th>
                                 </tr>
                             </thead>
                             <tbody id="movements_tbody">
                                 @php
-                                    $draftResidences = optional($draftPhdEd)->residences ?? collect();
+                                    $draftResidences = optional($draftPhdEd)->residences ? $draftPhdEd->residences->sortBy('entry_date')->values() : collect();
                                 @endphp
                                 @forelse($draftResidences as $idx => $res)
                                     @php
@@ -740,21 +1012,34 @@
                                         $outDate = \Carbon\Carbon::parse($res->exit_date);
                                         if ($inDate && $outDate && $outDate->gte($inDate)) {
                                             $diff = $inDate->diff($outDate);
-                                            $calcY = $diff->y; $calcM = $diff->m; $calcD = $diff->d;
+                                            $calcY = $diff->y;
+                                            $calcM = $diff->m;
+                                            $calcD = $diff->d;
+                                            $calcDays = (int) $inDate->diffInDays($outDate);
                                         } else {
-                                            $calcY = 0; $calcM = 0; $calcD = 0;
+                                            $calcY = 0; $calcM = 0; $calcD = 0; $calcDays = 0;
                                         }
                                     @endphp
-                                    <tr data-row-id="{{ $idx + 1 }}">
-                                        <td>{{ $idx + 1 }}</td>
-                                        <td><strong class="text-dark">{{ $res->entry_date }}</strong></td>
-                                        <td>{{ $res->entry_airport ?: '---' }}</td>
-                                        <td><strong class="text-dark">{{ $res->exit_date }}</strong></td>
-                                        <td>{{ $res->exit_airport ?: '---' }}</td>
-                                        <td><span class="badge bg-secondary-subtle text-secondary border">{{ $res->page_number ?: '---' }}</span></td>
-                                        <td><span class="badge bg-success-subtle text-success border border-success px-2 py-1">{{ $calcY }} سنة و {{ $calcM }} شهر و {{ $calcD }} يوم</span></td>
+                                    <tr data-row-id="{{ $idx + 1 }}" data-entry="{{ $res->entry_date }}" data-exit="{{ $res->exit_date }}">
+                                        <td class="fw-bold text-muted">{{ $idx + 1 }}</td>
+                                        <td><span class="badge bg-light text-dark border font-monospace px-2 py-1">{{ $res->entry_date }}</span></td>
+                                        <td class="text-dark fw-medium">{{ $res->entry_airport ?: '---' }}</td>
+                                        <td><span class="badge bg-light text-dark border font-monospace px-2 py-1">{{ $res->exit_date }}</span></td>
+                                        <td class="text-dark fw-medium">{{ $res->exit_airport ?: '---' }}</td>
+                                        <td><span class="badge px-2 py-1" style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">ص {{ $res->page_number ?: '---' }}</span></td>
                                         <td>
-                                            <button type="button" class="btn btn-xs btn-outline-danger" onclick="deleteResidencyMovement(this)" title="حذف الحركة"><i class="fa-solid fa-trash"></i></button>
+                                            <span class="mohe-duration-chip">{{ $calcY }} سنة و {{ $calcM }} شهر و {{ $calcD }} يوم</span>
+                                            <div class="text-muted mt-1" style="font-size: 0.72rem;">({{ $calcDays }} يوماً)</div>
+                                        </td>
+                                        <td>
+                                            <div class="d-inline-flex align-items-center justify-content-center gap-1.5">
+                                                <button type="button" class="btn btn-outline-primary mohe-action-icon-btn" onclick="editResidencyMovement(this)" title="تعديل الحركة">
+                                                    <i class="fa-solid fa-pen"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-outline-danger mohe-action-icon-btn" onclick="deleteResidencyMovement(this)" title="حذف الحركة">
+                                                    <i class="fa-solid fa-trash-can"></i>
+                                                </button>
+                                            </div>
                                             <input type="hidden" name="residences[{{ $idx }}][entry_date]" value="{{ $res->entry_date }}">
                                             <input type="hidden" name="residences[{{ $idx }}][entry_airport]" value="{{ $res->entry_airport }}">
                                             <input type="hidden" name="residences[{{ $idx }}][exit_date]" value="{{ $res->exit_date }}">
@@ -764,37 +1049,74 @@
                                     </tr>
                                 @empty
                                     <tr id="no_movements_row">
-                                        <td colspan="8" class="text-muted py-4">لم يتم تسجيل أي حركة دخول أو خروج بعد. يرجى ملء الحقول أعلاه والضغط على (إضافة حركة الإقامة إلى الجدول).</td>
+                                        <td colspan="8" class="text-muted py-4">لم يتم تسجيل أي حركة دخول أو خروج بعد. يرجى ملء الحقول أعلاه والضغط على زر (+).</td>
                                     </tr>
                                 @endforelse
                             </tbody>
                         </table>
                     </div>
+                </div>
 
-                    <div class="card p-3 text-center rounded-3 shadow-sm border" style="background-color: #f0fdf4; border-color: #86efac !important;">
-                        <h6 class="fw-bold mb-2" style="color: #166534 !important;"><i class="fa-solid fa-clock-rotate-left me-1"></i> إجمالي مدة الإقامة المحسوبة خارج القطر :</h6>
-                        <div class="d-flex justify-content-center align-items-center gap-3 fs-5 fw-bold text-dark">
-                            <div class="d-flex align-items-center gap-1"><span id="total_stay_years" class="badge bg-success fs-6 px-3 py-2">0</span> سنة</div>
-                            <div class="d-flex align-items-center gap-1"><span id="total_stay_months" class="badge bg-success fs-6 px-3 py-2">0</span> شهر</div>
-                            <div class="d-flex align-items-center gap-1"><span id="total_stay_days" class="badge bg-success fs-6 px-3 py-2">0</span> يوم</div>
+                <!-- TOTAL STAY DURATION SUMMARY SCORECARD -->
+                <div class="mohe-official-panel">
+                    <div class="mohe-panel-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="mohe-emblem-box" style="width: 34px; height: 34px;">
+                                <i class="fa-solid fa-clock-rotate-left fs-7"></i>
+                            </div>
+                            <h6 class="fw-bold mb-0 fs-7" style="color: var(--imperial-navy);">مدة الإقامة الإجمالية المحسوبة ببلد الدراسة</h6>
+                        </div>
+                        <span class="fs-9 fw-semibold" style="color: var(--heritage-gold-dark);">
+                            <i class="fa-solid fa-calculator me-1"></i> احتساب تقويمي تراكمي مطابق لأختام جواز السفر
+                        </span>
+                    </div>
+                    <div class="p-3 p-md-4 bg-white">
+                        <div class="row g-3" style="max-width: 760px; margin: 0 auto;">
+                            <div class="col-6 col-sm-3">
+                                <div class="mohe-stat-tile py-3">
+                                    <div class="mohe-stat-value" id="total_stay_years">0</div>
+                                    <div class="mohe-stat-label">سنة</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-sm-3">
+                                <div class="mohe-stat-tile py-3">
+                                    <div class="mohe-stat-value" id="total_stay_months">0</div>
+                                    <div class="mohe-stat-label">شهر</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-sm-3">
+                                <div class="mohe-stat-tile py-3">
+                                    <div class="mohe-stat-value" id="total_stay_days">0</div>
+                                    <div class="mohe-stat-label">يوم</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-sm-3">
+                                <div class="mohe-stat-tile is-gold py-3">
+                                    <div class="mohe-stat-value" id="total_stay_all_days">0</div>
+                                    <div class="mohe-stat-label">إجمالي الأيام</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center text-muted fs-8 mt-3">
+                            يتم احتساب المجموع التراكمي بدقة لجميع مدد الإقامة المتفرقة المسجلة بالجدول أعلاه تلقائياً.
                         </div>
                     </div>
                 </div>
             </div>
 
             {{-- =========================================================================
-                 STEP 7: REQUIRED ATTACHMENTS (المرفقات والوثائق المطلوبة بدقة)
+                 STEP 7: REQUIRED ATTACHMENTS (المرفقات والوثائق الـ 16 المعتمدة)
             ========================================================================= --}}
             <div class="form-section" id="step-7" style="display: none;">
                 <h5 class="fw-bold border-bottom pb-2 mb-4 d-flex align-items-center gap-2" style="color: var(--primary-container); border-bottom-color: var(--outline-variant) !important;">
-                    <i class="fa-solid fa-paperclip fs-5" style="color: var(--heritage-gold);"></i> الخطوة 7: المرفقات والمستندات الثبوتية المطلوبة (PDF فقط - حد أقصى 5 ميغابايت للأطروحة والملخصات و2 ميغابايت لباقي الثبوتيات)
+                    <i class="fa-solid fa-paperclip fs-5" style="color: var(--heritage-gold);"></i> الخطوة 7: المرفقات والمستندات الثبوتية المطلوبة (PDF فقط - حد أقصى 2 ميغابايت لكل ملف)
                 </h5>
 
                 <div class="row g-3">
-                    <!-- صورة الهوية الشخصية / إثبات الشخصية (ID 13) -->
+                    <!-- 1. صورة عن الهوية الشخصية أو جواز السفر (ID 13) -->
                     <div class="col-md-6">
                         <div class="border rounded p-3 bg-light h-100">
-                            <label class="form-label label-sm fw-bold">صورة الهوية الشخصية / إثبات الشخصية (إلزامي) <span class="text-danger">*</span></label>
+                            <label class="form-label label-sm fw-bold">1. صورة عن الهوية الشخصية أو جواز السفر <span class="text-danger">*</span></label>
                             <input type="file" name="file_national_id" id="input_file_national_id" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_national_id']) ? 'required' : '' }}>
                             @if(!empty($existingFilesMap['file_national_id']))
                                 <div class="mt-1 d-flex align-items-center gap-2">
@@ -805,10 +1127,10 @@
                         </div>
                     </div>
 
-                    <!-- 1. الشهادة الثانوية (ID 1) -->
+                    <!-- 2. شهادة البكالوريا (ID 1) -->
                     <div class="col-md-6">
                         <div class="border rounded p-3 bg-light h-100">
-                            <label class="form-label label-sm fw-bold">1. نسخة مصدقة عن شهادة الثانوية العامة <span class="text-danger">*</span></label>
+                            <label class="form-label label-sm fw-bold">2. شهادة البكالوريا <span class="text-danger">*</span></label>
                             <input type="file" name="file_secondary_cert" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_secondary_cert']) ? 'required' : '' }}>
                             @if(!empty($existingFilesMap['file_secondary_cert']))
                                 <div class="mt-1 d-flex align-items-center gap-2">
@@ -819,11 +1141,11 @@
                         </div>
                     </div>
 
-                    <!-- قرار معادلة الثانوية غير السورية (ID 2) -->
+                    <!-- 3. قرار معادلة درجة البكالوريا من وزارة التربية (ID 2 - شرطي إذا البكالوريا غير سورية) -->
                     <div class="col-md-6" id="hs_decision_att_box" style="display: {{ $isHsForeign ? 'block' : 'none' }};">
                         <div class="border rounded p-3 bg-light h-100 border-warning">
-                            <label class="form-label label-sm fw-bold">قرار معادلة الشهادة الثانوية غير السورية <span class="text-danger">*</span></label>
-                            <input type="file" name="file_hs_decision" id="file_hs_decision" class="form-control academic-input" accept=".pdf" {{ $isHsForeign && empty($existingFilesMap['file_hs_decision']) ? 'required' : '' }}>
+                            <label class="form-label label-sm fw-bold">3. قرار معادلة درجة البكالوريا من وزارة التربية <span class="text-danger">*</span></label>
+                            <input type="file" name="file_hs_decision" id="file_hs_decision" class="form-control academic-input" accept=".pdf" {{ ($isHsForeign && empty($existingFilesMap['file_hs_decision'])) ? 'required' : '' }}>
                             @if(!empty($existingFilesMap['file_hs_decision']))
                                 <div class="mt-1 d-flex align-items-center gap-2">
                                     <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
@@ -833,10 +1155,10 @@
                         </div>
                     </div>
 
-                    <!-- 2. مصدقة الإجازة الجامعية الأولى (ID 3) -->
+                    <!-- 4. الإجازة الجامعية مصدقة أصولاً (ID 3) -->
                     <div class="col-md-6">
                         <div class="border rounded p-3 bg-light h-100">
-                            <label class="form-label label-sm fw-bold">2. نسخة مصدقة عن شهادة الإجازة الجامعية الأولى <span class="text-danger">*</span></label>
+                            <label class="form-label label-sm fw-bold">4. الإجازة الجامعية مصدقة أصولاً <span class="text-danger">*</span></label>
                             <input type="file" name="file_bachelor_cert" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_bachelor_cert']) ? 'required' : '' }}>
                             @if(!empty($existingFilesMap['file_bachelor_cert']))
                                 <div class="mt-1 d-flex align-items-center gap-2">
@@ -847,24 +1169,10 @@
                         </div>
                     </div>
 
-                    <!-- قرار معادلة الإجازة الجامعية غير السورية (ID 4) -->
-                    <div class="col-md-6" id="ba_decision_att_box" style="display: {{ $isBaForeign ? 'block' : 'none' }};">
-                        <div class="border rounded p-3 bg-light h-100 border-warning">
-                            <label class="form-label label-sm fw-bold">قرار معادلة الإجازة الجامعية الأولى غير السورية <span class="text-danger">*</span></label>
-                            <input type="file" name="file_ba_decision" id="file_ba_decision" class="form-control academic-input" accept=".pdf" {{ $isBaForeign && empty($existingFilesMap['file_ba_decision']) ? 'required' : '' }}>
-                            @if(!empty($existingFilesMap['file_ba_decision']))
-                                <div class="mt-1 d-flex align-items-center gap-2">
-                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
-                                    <a href="{{ asset('storage/' . $existingFilesMap['file_ba_decision']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold"><i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي</a>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-
-                    <!-- 3. مصدقة شهادة الماجستير (ID 6) -->
+                    <!-- 5. شهادة الماجستير مصدقة أصولاً (ID 6) -->
                     <div class="col-md-6">
                         <div class="border rounded p-3 bg-light h-100">
-                            <label class="form-label label-sm fw-bold">3. نسخة مصدقة عن شهادة الماجستير <span class="text-danger">*</span></label>
+                            <label class="form-label label-sm fw-bold">5. شهادة الماجستير مصدقة أصولاً <span class="text-danger">*</span></label>
                             <input type="file" name="file_master_cert" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_master_cert']) ? 'required' : '' }}>
                             @if(!empty($existingFilesMap['file_master_cert']))
                                 <div class="mt-1 d-flex align-items-center gap-2">
@@ -875,11 +1183,11 @@
                         </div>
                     </div>
 
-                    <!-- 4. قرار معادلة شهادة الماجستير غير السورية (ID 9) -->
-                    <div class="col-md-6" id="ma_decision_att_box" style="display: {{ $isMaForeign ? 'block' : 'none' }};">
+                    <!-- شرطي: قرار معادلة شهادة الماجستير (ID 9 - يظهر عند تفعيل checkbox المعادلة) -->
+                    <div class="col-md-6" id="ma_decision_att_box" style="display: {{ $hasMaEquivalence ? 'block' : 'none' }};">
                         <div class="border rounded p-3 bg-light h-100 border-warning">
-                            <label class="form-label label-sm fw-bold">4. قرار معادلة شهادة الماجستير غير السورية <span class="text-danger">*</span></label>
-                            <input type="file" name="file_ma_decision" id="file_ma_decision" class="form-control academic-input" accept=".pdf" {{ $isMaForeign && empty($existingFilesMap['file_ma_decision']) ? 'required' : '' }}>
+                            <label class="form-label label-sm fw-bold">قرار معادلة شهادة الماجستير <span class="text-danger">*</span></label>
+                            <input type="file" name="file_ma_decision" id="file_ma_decision" class="form-control academic-input" accept=".pdf" {{ ($hasMaEquivalence && empty($existingFilesMap['file_ma_decision'])) ? 'required' : '' }}>
                             @if(!empty($existingFilesMap['file_ma_decision']))
                                 <div class="mt-1 d-flex align-items-center gap-2">
                                     <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
@@ -889,24 +1197,10 @@
                         </div>
                     </div>
 
-                    <!-- 5. ملخص عن رسالة الماجستير باللغة العربية (ID 8) -->
+                    <!-- 6. شهادة الدكتوراه مصدقة ومترجمة أصولاً (ID 10) -->
                     <div class="col-md-6">
                         <div class="border rounded p-3 bg-light h-100">
-                            <label class="form-label label-sm fw-bold">5. ملخص عن رسالة الماجستير باللغة العربية <span class="badge bg-light text-primary border ms-1 fs-9">حتى 5MB</span> <span class="text-danger">*</span></label>
-                            <input type="file" name="file_master_thesis_abstract" data-max-mb="5" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_master_thesis_abstract']) ? 'required' : '' }}>
-                            @if(!empty($existingFilesMap['file_master_thesis_abstract']))
-                                <div class="mt-1 d-flex align-items-center gap-2">
-                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
-                                    <a href="{{ asset('storage/' . $existingFilesMap['file_master_thesis_abstract']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold"><i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي</a>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-
-                    <!-- 6. صورة مصدقة عن شهادة الدكتوراه الخارجية (ID 10) -->
-                    <div class="col-md-6">
-                        <div class="border rounded p-3 bg-light h-100">
-                            <label class="form-label label-sm fw-bold">6. صورة مصدقة أصولاً عن شهادة الدكتوراه الخارجية <span class="text-danger">*</span></label>
+                            <label class="form-label label-sm fw-bold">6. شهادة الدكتوراه مصدقة ومترجمة أصولاً <span class="text-danger">*</span></label>
                             <input type="file" name="file_phd_cert" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_phd_cert']) ? 'required' : '' }}>
                             @if(!empty($existingFilesMap['file_phd_cert']))
                                 <div class="mt-1 d-flex align-items-center gap-2">
@@ -917,10 +1211,10 @@
                         </div>
                     </div>
 
-                    <!-- 7. وثيقة تواريخ وقرارات المجلس للدكتوراه (ID 11) -->
+                    <!-- 7. قرارات التسجيل والمناقشة والمنح لدرجة الدكتوراه (ID 11) -->
                     <div class="col-md-6">
                         <div class="border rounded p-3 bg-light h-100">
-                            <label class="form-label label-sm fw-bold">7. وثيقة تثبت تواريخ وقرارات التسجيل والمباشرة والمناقشة والمنح للدكتوراه <span class="text-danger">*</span></label>
+                            <label class="form-label label-sm fw-bold">7. قرارات التسجيل والمناقشة والمنح لدرجة الدكتوراه <span class="text-danger">*</span></label>
                             <input type="file" name="file_phd_council_decisions" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_phd_council_decisions']) ? 'required' : '' }}>
                             @if(!empty($existingFilesMap['file_phd_council_decisions']))
                                 <div class="mt-1 d-flex align-items-center gap-2">
@@ -931,74 +1225,24 @@
                         </div>
                     </div>
 
-                    <!-- 8. ملخص أطروحة الدكتوراه باللغة العربية (ID 12) -->
+                    <!-- 8. السيرة الذاتية (ID 14) -->
                     <div class="col-md-6">
                         <div class="border rounded p-3 bg-light h-100">
-                            <label class="form-label label-sm fw-bold">8. ملخص عن أطروحة الدكتوراه باللغة العربية <span class="badge bg-light text-primary border ms-1 fs-9">حتى 5MB</span> <span class="text-danger">*</span></label>
-                            <input type="file" name="file_phd_thesis_abstract" data-max-mb="5" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_phd_thesis_abstract']) ? 'required' : '' }}>
-                            @if(!empty($existingFilesMap['file_phd_thesis_abstract']))
+                            <label class="form-label label-sm fw-bold">8. السيرة الذاتية <span class="text-danger">*</span></label>
+                            <input type="file" name="file_cv" id="input_file_cv" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_cv']) ? 'required' : '' }}>
+                            @if(!empty($existingFilesMap['file_cv']))
                                 <div class="mt-1 d-flex align-items-center gap-2">
                                     <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
-                                    <a href="{{ asset('storage/' . $existingFilesMap['file_phd_thesis_abstract']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold"><i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي</a>
+                                    <a href="{{ asset('storage/' . $existingFilesMap['file_cv']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold"><i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي</a>
                                 </div>
                             @endif
                         </div>
                     </div>
 
-                    <!-- 9. أطروحة الدكتوراه كاملة باللغة العربية (ID 25) -->
-                    <div class="col-md-6">
-                        <div class="border rounded p-3 bg-light h-100 border-primary">
-                            <label class="form-label label-sm fw-bold ">9. النسخة الكاملة لأطروحة الدكتوراه باللغة العربية (PDF) <span class="badge bg-light text-primary border ms-1 fs-9">حتى 5MB</span> <span class="text-danger">*</span></label>
-                            <input type="file" name="file_phd_full_thesis" data-max-mb="5" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_phd_full_thesis']) ? 'required' : '' }}>
-                            @if(!empty($existingFilesMap['file_phd_full_thesis']))
-                                <div class="mt-1 d-flex align-items-center gap-2">
-                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
-                                    <a href="{{ asset('storage/' . $existingFilesMap['file_phd_full_thesis']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold"><i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي</a>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-
-                    <!-- 10. صورة جواز السفر (ID 13) -->
+                    <!-- 9. إيصال الدفع 125 ألف (ID 17) -->
                     <div class="col-md-6">
                         <div class="border rounded p-3 bg-light h-100">
-                            <label class="form-label label-sm fw-bold">
-                                10. صورة عن جواز السفر وصفحات الأختام والإقامة 
-                                <span class="text-danger res-required-star">*</span>
-                                <span class="text-muted fs-8 fw-normal res-optional-badge" style="display: none;">(اختياري للدراسة النظرية)</span>
-                            </label>
-                            <input type="file" name="file_passport" id="input_file_passport" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_passport']) ? 'required' : '' }}>
-                            @if(!empty($existingFilesMap['file_passport']))
-                                <div class="mt-1 d-flex align-items-center gap-2">
-                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
-                                    <a href="{{ asset('storage/' . $existingFilesMap['file_passport']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold"><i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي</a>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-
-                    <!-- 11. وثيقة حركة الهجرة والجوازات (ID 24) -->
-                    <div class="col-md-6">
-                        <div class="border rounded p-3 bg-light h-100">
-                            <label class="form-label label-sm fw-bold">
-                                11. وثيقة حركة الهجرة والجوازات الصادرة رسمياً 
-                                <span class="text-danger res-required-star">*</span>
-                                <span class="text-muted fs-8 fw-normal res-optional-badge" style="display: none;">(اختياري للدراسة النظرية)</span>
-                            </label>
-                            <input type="file" name="file_immigration_movement" id="input_file_immigration" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_immigration_movement']) ? 'required' : '' }}>
-                            @if(!empty($existingFilesMap['file_immigration_movement']))
-                                <div class="mt-1 d-flex align-items-center gap-2">
-                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
-                                    <a href="{{ asset('storage/' . $existingFilesMap['file_immigration_movement']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold"><i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي</a>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-
-                    <!-- 12. وصل تسديد الرسوم 125 ألف (ID 17) -->
-                    <div class="col-md-6">
-                        <div class="border rounded p-3 bg-light h-100">
-                            <label class="form-label label-sm fw-bold">12. إيصال تسديد رسم تعادل الدكتوراه غير السورية (125,000 ل.س) <span class="text-danger">*</span></label>
+                            <label class="form-label label-sm fw-bold">9. إيصال الدفع 125 ألف <span class="text-danger">*</span></label>
                             <input type="file" name="file_fees_receipt" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_fees_receipt']) ? 'required' : '' }}>
                             @if(!empty($existingFilesMap['file_fees_receipt']))
                                 <div class="mt-1 d-flex align-items-center gap-2">
@@ -1009,24 +1253,10 @@
                         </div>
                     </div>
 
-                    <!-- 13. طلب الجامعة للتعادل (ID 15) -->
+                    <!-- 10. إيصال المكتبة الوطنية (ID 22 - اختياري) -->
                     <div class="col-md-6">
                         <div class="border rounded p-3 bg-light h-100">
-                            <label class="form-label label-sm fw-bold">13. طلب الجامعة للتعادل (كتاب طلب التقويم الصادر عن الجامعة) <span class="text-danger">*</span></label>
-                            <input type="file" name="file_uni_request" id="input_file_uni_request" class="form-control academic-input" accept=".pdf" {{ empty($existingFilesMap['file_uni_request']) ? 'required' : '' }}>
-                            @if(!empty($existingFilesMap['file_uni_request']))
-                                <div class="mt-1 d-flex align-items-center gap-2">
-                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
-                                    <a href="{{ asset('storage/' . $existingFilesMap['file_uni_request']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold"><i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي</a>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-
-                    <!-- 14. إيصال المكتبة الوطنية (ID 22) -->
-                    <div class="col-md-6">
-                        <div class="border rounded p-3 bg-light h-100">
-                            <label class="form-label label-sm fw-bold">14. إيصال إيداع الأطروحة لدى المكتبة الوطنية <span class="text-muted fs-8 fw-normal">(اختياري)</span></label>
+                            <label class="form-label label-sm fw-bold">10. إيصال المكتبة الوطنية <span class="text-muted fs-8 fw-normal">(اختياري)</span></label>
                             <input type="file" name="file_library_receipt" class="form-control academic-input" accept=".pdf">
                             @if(!empty($existingFilesMap['file_library_receipt']))
                                 <div class="mt-1 d-flex align-items-center gap-2">
@@ -1037,10 +1267,88 @@
                         </div>
                     </div>
 
-                    <!-- 15. مرفقات أخرى / أبحاث ووثائق داعمة (ID 23) -->
+                    <!-- 11. كشف علامات الدكتوراه (ID 5 - اختياري) -->
                     <div class="col-md-6">
                         <div class="border rounded p-3 bg-light h-100">
-                            <label class="form-label label-sm fw-bold">15. مرفقات أخرى (وثائق داعمة / بحوث علمية منشورة) <span class="text-muted fs-8 fw-normal">(اختياري)</span></label>
+                            <label class="form-label label-sm fw-bold">11. كشف علامات الدكتوراه <span class="text-muted fs-8 fw-normal">(اختياري)</span></label>
+                            <input type="file" name="file_phd_transcript" class="form-control academic-input" accept=".pdf">
+                            @if(!empty($existingFilesMap['file_phd_transcript']))
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                    <a href="{{ asset('storage/' . $existingFilesMap['file_phd_transcript']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold"><i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي</a>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- 12. شهادة ICDL (ID 19 - اختياري) -->
+                    <div class="col-md-6">
+                        <div class="border rounded p-3 bg-light h-100">
+                            <label class="form-label label-sm fw-bold">12. شهادة ICDL <span class="text-muted fs-8 fw-normal">(اختياري)</span></label>
+                            <input type="file" name="file_icdl_cert" class="form-control academic-input" accept=".pdf">
+                            @if(!empty($existingFilesMap['file_icdl_cert']))
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                    <a href="{{ asset('storage/' . $existingFilesMap['file_icdl_cert']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold"><i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي</a>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- 13. شهادة اللغة الإنكليزية (ID 18 - اختياري) -->
+                    <div class="col-md-6">
+                        <div class="border rounded p-3 bg-light h-100">
+                            <label class="form-label label-sm fw-bold">13. شهادة اللغة الإنكليزية <span class="text-muted fs-8 fw-normal">(اختياري)</span></label>
+                            <input type="file" name="file_english_cert" class="form-control academic-input" accept=".pdf">
+                            @if(!empty($existingFilesMap['file_english_cert']))
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                    <a href="{{ asset('storage/' . $existingFilesMap['file_english_cert']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold"><i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي</a>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- 14. جواز السفر مع صفحات الأختام (ID 13 - شرطي حسب الإعفاء من الإقامة) -->
+                    <div class="col-md-6">
+                        <div class="border rounded p-3 bg-light h-100 {{ $isResExempt ? '' : 'border-info' }}" id="card_passport_att">
+                            <label class="form-label label-sm fw-bold">
+                                14. جواز السفر مع صفحات الأختام
+                                <span class="badge bg-secondary-subtle text-muted ms-1 fs-9 res-att-opt-badge" style="display: {{ $isResExempt ? 'inline' : 'none' }};">(اختياري - معفى من الإقامة)</span>
+                                <span class="text-danger res-req-star" style="display: {{ $isResExempt ? 'none' : 'inline' }};">*</span>
+                            </label>
+                            <input type="file" name="file_passport" id="input_file_passport" class="form-control academic-input" accept=".pdf" {{ (!$isResExempt && empty($existingFilesMap['file_passport'])) ? 'required' : '' }}>
+                            @if(!empty($existingFilesMap['file_passport']))
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                    <a href="{{ asset('storage/' . $existingFilesMap['file_passport']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold"><i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي</a>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- 15. حركة الهجرة والجوازات (ID 24 - شرطي حسب الإعفاء من الإقامة) -->
+                    <div class="col-md-6">
+                        <div class="border rounded p-3 bg-light h-100 {{ $isResExempt ? '' : 'border-info' }}" id="card_immigration_att">
+                            <label class="form-label label-sm fw-bold">
+                                15. حركة الهجرة والجوازات
+                                <span class="badge bg-secondary-subtle text-muted ms-1 fs-9 res-att-opt-badge" style="display: {{ $isResExempt ? 'inline' : 'none' }};">(اختياري - معفى من الإقامة)</span>
+                                <span class="text-danger res-req-star" style="display: {{ $isResExempt ? 'none' : 'inline' }};">*</span>
+                            </label>
+                            <input type="file" name="file_immigration_movement" id="input_file_immigration" class="form-control academic-input" accept=".pdf" {{ (!$isResExempt && empty($existingFilesMap['file_immigration_movement'])) ? 'required' : '' }}>
+                            @if(!empty($existingFilesMap['file_immigration_movement']))
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> مرفوع سابقاً</span>
+                                    <a href="{{ asset('storage/' . $existingFilesMap['file_immigration_movement']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2 fs-7 fw-bold"><i class="fa-solid fa-file-pdf me-1"></i> استعراض الـ PDF الحالي</a>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- 16. مرفقات أخرى (ID 23 - اختياري) -->
+                    <div class="col-md-6">
+                        <div class="border rounded p-3 bg-light h-100">
+                            <label class="form-label label-sm fw-bold">16. مرفقات أخرى <span class="text-muted fs-8 fw-normal">(اختياري)</span></label>
                             <input type="file" name="file_other_attachments" class="form-control academic-input" accept=".pdf">
                             @if(!empty($existingFilesMap['file_other_attachments']))
                                 <div class="mt-1 d-flex align-items-center gap-2">
@@ -1132,7 +1440,6 @@
                                 <div class="col-md-4"><strong>التخصص العام:</strong> <span id="preview-baGenSpec">---</span></div>
                                 <div class="col-md-6"><strong>التقدير:</strong> <span id="preview-baRank">---</span></div>
                                 <div class="col-md-6"><strong>تاريخ المنح:</strong> <span id="preview-baGrantDate">---</span></div>
-                                <div class="col-md-12" id="preview-baDecisionContainer"><strong>قرار المعادلة السوري:</strong> <span id="preview-baDecisionNo">---</span></div>
                             </div>
                         </div>
 
@@ -1150,8 +1457,8 @@
                                 <div class="col-md-4"><strong>التخصص العام:</strong> <span id="preview-maGenSpec">---</span></div>
                                 <div class="col-md-6"><strong>التخصص الدقيق:</strong> <span id="preview-maSpec">---</span></div>
                                 <div class="col-md-6"><strong>التقدير:</strong> <span id="preview-maRank">---</span></div>
-                                <div class="col-md-6"><strong>تاريخ المنح:</strong> <span id="preview-maGrantDate">---</span></div>
-                                <div class="col-md-12" id="preview-maDecisionContainer"><strong>قرار المعادلة السوري:</strong> <span id="preview-maDecisionNo">---</span></div>
+                                <div class="col-md-6"><strong>تاريخ الحصول على الدرجة:</strong> <span id="preview-maGrantDate">---</span></div>
+                                <div class="col-md-12" id="preview-maDecisionContainer" style="display: none;"><strong>قرار معادلة شهادة الماجستير:</strong> <span id="preview-maDecisionNo">---</span></div>
                             </div>
                         </div>
 
@@ -1200,7 +1507,7 @@
                                 <h6 class="fw-bold mb-0" style="color: var(--primary-container);"><i class="fa-solid fa-folder-open me-1" style="color: var(--heritage-gold);"></i> 8. الوثائق والمستندات المرفقة:</h6>
                                 <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2.5 fs-8 fw-bold" onclick="goToStep(7)"><i class="fa-solid fa-pen-to-square me-1"></i> تعديل المرفقات</button>
                             </div>
-                            <p class="text-muted fs-8 mb-0"><i class="fa-solid fa-circle-check text-success me-1"></i> تم إرفاق كافة الوثائق الرسمية، مصدقة الدكتوراه، ملخص الماجستير وملخص الدكتوراه بشكل منفصل، الأطروحة الكاملة بالعربية، ورسم التعادل (125,000 ل.س) بصيغة PDF.</p>
+                            <p class="text-muted fs-8 mb-0"><i class="fa-solid fa-circle-check text-success me-1"></i> تم إرفاق كافة الوثائق الرسمية المعتمدة، الهوية الشخصية/جواز السفر، الشهادات الدراسية المصدقة، قرارات التسجيل والمناقشة والمنح للدكتوراه، السيرة الذاتية، وإيصال الدفع (125,000 ل.س) بصيغة PDF.</p>
                         </div>
                     </div>
                 </div>
@@ -1264,6 +1571,76 @@
     let hasVisitedReview = {{ optional($draft)->id ? 'true' : 'false' }};
     const syriaCountryId = '{{ $syriaId ?? 1 }}';
 
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    function syncBoundDoctorateContext() {
+        const cEl = document.getElementById('phd_country_id');
+        const uEl = document.getElementById('input-phdUni');
+        const outC = document.getElementById('step6-bound-country');
+        const outU = document.getElementById('step6-bound-university');
+        if (outC && cEl) {
+            outC.textContent = (cEl.value && cEl.options[cEl.selectedIndex]) ? cEl.options[cEl.selectedIndex].text.trim() : '---';
+        }
+        if (outU && uEl) {
+            outU.textContent = uEl.value.trim() || '---';
+        }
+    }
+
+    function isResidenceExemptChecked() {
+        const chk = document.getElementById('input-isResidenceExempt');
+        return !!(chk && chk.checked);
+    }
+
+    function syncResidenceExempt(isExempt) {
+        const exempt = !!isExempt;
+        const step5Chk = document.getElementById('input-isResidenceExempt');
+        const step6Chk = document.getElementById('step6-residence-exempt-switch');
+        if (step5Chk) step5Chk.checked = exempt;
+        if (step6Chk) step6Chk.checked = exempt;
+
+        const lbl5 = document.getElementById('lbl-residenceExemptStep5');
+        if (lbl5) {
+            lbl5.textContent = exempt ? 'معفى من شرط الإقامة (تخصص نظري)' : 'يتطلب حضوراً وإقامة فعلية';
+            lbl5.className = 'form-check-label fw-bold fs-8 mb-0 ' + (exempt ? 'text-success' : 'text-dark');
+        }
+
+        const exemptBanner = document.getElementById('residency-exempt-banner');
+        const reqBanner = document.getElementById('residency-required-banner');
+        if (exemptBanner) exemptBanner.style.display = exempt ? 'block' : 'none';
+        if (reqBanner) reqBanner.style.display = exempt ? 'none' : 'block';
+
+        document.querySelectorAll('.res-req-star').forEach(el => {
+            el.style.display = exempt ? 'none' : 'inline';
+        });
+        document.querySelectorAll('.res-att-opt-badge').forEach(el => {
+            el.style.display = exempt ? 'inline' : 'none';
+        });
+
+        ['input_file_passport', 'input_file_immigration'].forEach(fid => {
+            const inp = document.getElementById(fid);
+            if (!inp) return;
+            const hasSaved = !!inp.closest('.border.rounded')?.querySelector('.badge.bg-success-subtle');
+            if (exempt || hasSaved) {
+                inp.removeAttribute('required');
+                inp.classList.remove('is-invalid');
+            } else {
+                inp.setAttribute('required', 'required');
+            }
+        });
+
+        [document.getElementById('card_passport_att'), document.getElementById('card_immigration_att')].forEach(c => {
+            if (c) {
+                if (exempt) c.classList.remove('border-info');
+                else c.classList.add('border-info');
+            }
+        });
+
+        recalculateTotalStay();
+    }
+
     function showStep(step) {
         currentStep = step;
 
@@ -1303,6 +1680,10 @@
         } else {
             btnPrev.style.display = 'inline-block';
             spacerPrev.style.display = 'none';
+        }
+
+        if (step === 6) {
+            syncBoundDoctorateContext();
         }
 
         if (step === totalSteps) {
@@ -1400,9 +1781,33 @@
                     firstInvalid.reportValidity();
                 }
             }
+            return false;
         }
 
-        return isValid;
+        // التحقق من حركات الإقامة في الخطوة السادسة عند عدم الإعفاء
+        if (step === 6 && !isResidenceExemptChecked()) {
+            const tbody = document.getElementById('movements_tbody');
+            let hasRows = tbody && tbody.querySelectorAll('tr:not(#no_movements_row)').length > 0;
+            if (!hasRows) {
+                const eDate = document.getElementById('mov_entry_date')?.value;
+                const eAir = document.getElementById('mov_entry_airport')?.value.trim();
+                const xDate = document.getElementById('mov_exit_date')?.value;
+                const xAir = document.getElementById('mov_exit_airport')?.value.trim();
+                const pg = document.getElementById('mov_page_number')?.value.trim();
+                if (eDate && eAir && xDate && xAir && pg) {
+                    addResidencyMovement();
+                    hasRows = tbody && tbody.querySelectorAll('tr:not(#no_movements_row)').length > 0;
+                }
+            }
+
+            if (!hasRows) {
+                alert('يرجى إدخال حركة دخول وخروج واحدة على الأقل إلى بلد دراسة الدكتوراه والضغط على (+)، أو تفعيل خيار (معفى من شرط الإقامة) إذا كان التخصص نظرياً.');
+                document.getElementById('mov_entry_date')?.focus();
+                return false;
+            }
+        }
+
+        return true;
     }
 
     function toggleHsDecisionFields(countryId) {
@@ -1429,107 +1834,95 @@
         }
     }
 
-    function toggleBaCountryFields(countryId) {
-        const box = document.getElementById('ba_decision_box');
-        const noInput = document.getElementById('ba_decision_no');
-        const dateInput = document.getElementById('ba_decision_date');
-        const attBox = document.getElementById('ba_decision_att_box');
-        const attInput = document.getElementById('file_ba_decision');
+    function syncDegreeUniversityFields(prefix) {
+        const countryEl = document.getElementById(prefix + '_country_id');
+        const countryCol = document.getElementById(prefix + '_country_col');
+        const selectCol = document.getElementById(prefix + '_uni_select_col');
+        const otherCol = document.getElementById(prefix + '_uni_other_col');
+        const selectEl = document.getElementById(prefix + '_university_id');
+        const otherEl = document.getElementById(prefix + '_university_other');
 
-        if (countryId != syriaCountryId) {
-            if (box) box.style.display = 'block';
-            if (noInput) noInput.setAttribute('required', 'required');
-            if (dateInput) dateInput.setAttribute('required', 'required');
-            if (attBox) attBox.style.display = 'block';
-            if (attInput && !attInput.closest('.border.rounded')?.querySelector('.badge.bg-success-subtle')) {
-                attInput.setAttribute('required', 'required');
-            }
-        } else {
-            if (box) box.style.display = 'none';
-            if (noInput) { noInput.removeAttribute('required'); noInput.classList.remove('is-invalid'); }
-            if (dateInput) { dateInput.removeAttribute('required'); dateInput.classList.remove('is-invalid'); }
-            if (attBox) attBox.style.display = 'none';
-            if (attInput) { attInput.removeAttribute('required'); attInput.classList.remove('is-invalid'); }
+        const isSyria = countryEl ? (countryEl.value == syriaCountryId) : false;
+        const isOther = !isSyria || (selectEl && selectEl.value === 'other');
+
+        if (selectCol) selectCol.style.display = isSyria ? 'block' : 'none';
+        if (otherCol) otherCol.style.display = isOther ? 'block' : 'none';
+
+        if (selectEl) {
+            if (isSyria) selectEl.setAttribute('required', 'required');
+            else { selectEl.removeAttribute('required'); selectEl.classList.remove('is-invalid'); }
         }
+        if (otherEl) {
+            if (isOther) otherEl.setAttribute('required', 'required');
+            else { otherEl.removeAttribute('required'); otherEl.classList.remove('is-invalid'); }
+        }
+
+        const colCls = (isSyria && isOther) ? 'col-md-4' : 'col-md-6';
+        [countryCol, selectCol, otherCol].forEach(c => {
+            if (c) {
+                c.classList.remove('col-md-4', 'col-md-6');
+                c.classList.add(colCls);
+            }
+        });
     }
 
-    function toggleMaCountryFields(countryId) {
-        const box = document.getElementById('ma_decision_box');
+    function syncBaUniversityFields() {
+        syncDegreeUniversityFields('ba');
+    }
+
+    function syncMaUniversityFields() {
+        syncDegreeUniversityFields('ma');
+    }
+
+    function toggleMaEquivalenceSection(isChecked) {
+        const checked = !!isChecked;
+        const sec = document.getElementById('ma-equivalence-section');
         const noInput = document.getElementById('ma_decision_no');
         const dateInput = document.getElementById('ma_decision_date');
         const attBox = document.getElementById('ma_decision_att_box');
         const attInput = document.getElementById('file_ma_decision');
 
-        if (countryId != syriaCountryId) {
-            if (box) box.style.display = 'block';
+        if (sec) sec.style.display = checked ? 'block' : 'none';
+        if (attBox) attBox.style.display = checked ? 'block' : 'none';
+
+        if (checked) {
             if (noInput) noInput.setAttribute('required', 'required');
             if (dateInput) dateInput.setAttribute('required', 'required');
-            if (attBox) attBox.style.display = 'block';
             if (attInput && !attInput.closest('.border.rounded')?.querySelector('.badge.bg-success-subtle')) {
                 attInput.setAttribute('required', 'required');
             }
         } else {
-            if (box) box.style.display = 'none';
             if (noInput) { noInput.removeAttribute('required'); noInput.classList.remove('is-invalid'); }
             if (dateInput) { dateInput.removeAttribute('required'); dateInput.classList.remove('is-invalid'); }
-            if (attBox) attBox.style.display = 'none';
             if (attInput) { attInput.removeAttribute('required'); attInput.classList.remove('is-invalid'); }
         }
     }
 
-    function toggleResidenceRequirement(isRequired) {
-        const wrapper = document.getElementById('residence_movement_wrapper');
-        const notice = document.getElementById('no_residence_notice');
-        const label = document.getElementById('residence_switch_label');
-        const passInput = document.getElementById('input_file_passport');
-        const immInput = document.getElementById('input_file_immigration');
-        
-        const requiredStars = document.querySelectorAll('.res-required-star');
-        const optionalBadges = document.querySelectorAll('.res-optional-badge');
+    // ==========================================
+    // RESIDENCY MOVEMENTS LOGIC (حركات الإقامة واحتسابها التقويمي الدقيق)
+    // ==========================================
+    let movementCounter = {{ $draftResidences->count() ?? 0 }};
+    let editingResidencyRow = null;
 
-        if (isRequired) {
-            if (wrapper) wrapper.style.display = 'block';
-            if (notice) notice.style.display = 'none';
-            if (label) label.textContent = 'تطلبت سفراً وإقامة فعلية';
-            
-            requiredStars.forEach(el => el.style.display = 'inline');
-            optionalBadges.forEach(el => el.style.display = 'none');
-
-            if (passInput && !passInput.closest('.border.rounded')?.querySelector('.badge.bg-success-subtle')) {
-                passInput.setAttribute('required', 'required');
-            }
-            if (immInput && !immInput.closest('.border.rounded')?.querySelector('.badge.bg-success-subtle')) {
-                immInput.setAttribute('required', 'required');
-            }
-        } else {
-            if (wrapper) wrapper.style.display = 'none';
-            if (notice) notice.style.display = 'block';
-            if (label) label.textContent = 'دراسة نظرية (معفى من شرط الإقامة)';
-            
-            requiredStars.forEach(el => el.style.display = 'none');
-            optionalBadges.forEach(el => el.style.display = 'inline');
-
-            if (passInput) { passInput.removeAttribute('required'); passInput.classList.remove('is-invalid'); }
-            if (immInput) { immInput.removeAttribute('required'); immInput.classList.remove('is-invalid'); }
-
-            const totalStay = document.getElementById('preview-totalStay');
-            if (totalStay) {
-                totalStay.textContent = 'دراسة بحثية/نظرية (معفى من شرط الإقامة)';
-                totalStay.className = 'badge bg-info fs-7';
-            }
-        }
+    function parseYmdDate(dateStr) {
+        if (!dateStr) return null;
+        const m = String(dateStr).trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (!m) return null;
+        const y = Number(m[1]), mo = Number(m[2]), d = Number(m[3]);
+        const dt = new Date(y, mo - 1, d);
+        if (dt.getFullYear() !== y || dt.getMonth() !== (mo - 1) || dt.getDate() !== d) return null;
+        return { date: dt, utc: Date.UTC(y, mo - 1, d) };
     }
 
-    let movementCounter = {{ $draftResidences->count() ?? 0 }};
-
     function getDetailedStay(entryDateStr, exitDateStr) {
-        const inD = new Date(entryDateStr);
-        const outD = new Date(exitDateStr);
-        if (isNaN(inD.getTime()) || isNaN(outD.getTime()) || outD < inD) {
+        const pIn = parseYmdDate(entryDateStr);
+        const pOut = parseYmdDate(exitDateStr);
+        if (!pIn || !pOut || pOut.utc < pIn.utc) {
             return { years: 0, months: 0, days: 0, totalDays: 0 };
         }
-        const diffTime = Math.abs(outD - inD);
-        const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const totalDays = Math.round((pOut.utc - pIn.utc) / (1000 * 60 * 60 * 24));
+        const inD = pIn.date;
+        const outD = pOut.date;
 
         let y = outD.getFullYear() - inD.getFullYear();
         let m = outD.getMonth() - inD.getMonth();
@@ -1548,6 +1941,61 @@
         return { years: y, months: m, days: d, totalDays: totalDays };
     }
 
+    function sortResidencyRows() {
+        const tbody = document.getElementById('movements_tbody');
+        if (!tbody) return;
+        const rows = Array.from(tbody.querySelectorAll('tr:not(#no_movements_row)'));
+        rows.sort((a, b) => {
+            const da = a.querySelector('input[name*="[entry_date]"]')?.value || '';
+            const db = b.querySelector('input[name*="[entry_date]"]')?.value || '';
+            return da.localeCompare(db);
+        });
+        rows.forEach((r, idx) => {
+            if (r.children[0]) r.children[0].textContent = idx + 1;
+            tbody.appendChild(r);
+        });
+    }
+
+    function editResidencyMovement(btn) {
+        const row = btn.closest('tr');
+        if (!row) return;
+        editingResidencyRow = row;
+
+        document.getElementById('mov_entry_date').value = row.querySelector('input[name*="[entry_date]"]')?.value || '';
+        document.getElementById('mov_entry_airport').value = row.querySelector('input[name*="[entry_airport]"]')?.value || '';
+        document.getElementById('mov_exit_date').value = row.querySelector('input[name*="[exit_date]"]')?.value || '';
+        document.getElementById('mov_exit_airport').value = row.querySelector('input[name*="[exit_airport]"]')?.value || '';
+        document.getElementById('mov_page_number').value = row.querySelector('input[name*="[page_number]"]')?.value || '';
+
+        const iconEl = document.getElementById('btn-add-residency-icon');
+        if (iconEl) iconEl.className = 'fa-solid fa-check';
+        const btnAdd = document.getElementById('btn-add-residency');
+        if (btnAdd) btnAdd.title = 'حفظ تعديل الحركة';
+        const cancelBtn = document.getElementById('btn-cancel-edit-residency');
+        if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+        const editBadge = document.getElementById('mov_edit_mode_badge');
+        if (editBadge) editBadge.style.display = 'inline-block';
+        document.getElementById('mov_entry_date')?.focus();
+    }
+
+    function cancelEditResidencyMovement() {
+        editingResidencyRow = null;
+        document.getElementById('mov_entry_date').value = '';
+        document.getElementById('mov_entry_airport').value = '';
+        document.getElementById('mov_exit_date').value = '';
+        document.getElementById('mov_exit_airport').value = '';
+        document.getElementById('mov_page_number').value = '';
+
+        const iconEl = document.getElementById('btn-add-residency-icon');
+        if (iconEl) iconEl.className = 'fa-solid fa-plus';
+        const btnAdd = document.getElementById('btn-add-residency');
+        if (btnAdd) btnAdd.title = 'إضافة حركة الإقامة إلى الجدول';
+        const cancelBtn = document.getElementById('btn-cancel-edit-residency');
+        if (cancelBtn) cancelBtn.style.display = 'none';
+        const editBadge = document.getElementById('mov_edit_mode_badge');
+        if (editBadge) editBadge.style.display = 'none';
+    }
+
     function addResidencyMovement() {
         const entryDate = document.getElementById('mov_entry_date')?.value;
         const entryAirport = document.getElementById('mov_entry_airport')?.value.trim() || '';
@@ -1556,65 +2004,106 @@
         const pageNumber = document.getElementById('mov_page_number')?.value.trim() || '';
 
         if (!entryDate || !exitDate) {
-            alert('يرجى إدخال تاريخ الدخول وتاريخ الخروج لحركة الإقامة.');
+            alert('يرجى إدخال تاريخ الدخول وتاريخ الخروج لبلد الدراسة.');
+            return;
+        }
+        if (!entryAirport || !exitAirport) {
+            alert('يرجى إدخال مطار/منفذ الدخول ومطار/بلد الخروج.');
+            return;
+        }
+        if (!pageNumber) {
+            alert('يرجى إدخال رقم صفحة الختم في جواز السفر.');
             return;
         }
 
-        const inD = new Date(entryDate);
-        const outD = new Date(exitDate);
-
-        if (outD < inD) {
+        const pIn = parseYmdDate(entryDate);
+        const pOut = parseYmdDate(exitDate);
+        if (!pIn || !pOut || pOut.utc < pIn.utc) {
             alert('تاريخ الخروج يجب أن يكون مساوياً أو بعد تاريخ الدخول.');
             return;
         }
 
-        const stay = getDetailedStay(entryDate, exitDate);
-
-        movementCounter++;
         const tbody = document.getElementById('movements_tbody');
+        let hasOverlap = false;
+        if (tbody) {
+            tbody.querySelectorAll('tr:not(#no_movements_row)').forEach(tr => {
+                if (editingResidencyRow && tr === editingResidencyRow) return;
+                const rowIn = parseYmdDate(tr.querySelector('input[name*="[entry_date]"]')?.value);
+                const rowOut = parseYmdDate(tr.querySelector('input[name*="[exit_date]"]')?.value);
+                if (rowIn && rowOut && pIn.utc < rowOut.utc && pOut.utc > rowIn.utc) {
+                    hasOverlap = true;
+                }
+            });
+        }
+        if (hasOverlap) {
+            alert('تتداخل تواريخ هذه الحركة مع حركة دخول وخروج مسجلة مسبقاً في الجدول. يرجى التحقق من التواريخ لمنع احتساب المدة مرتين.');
+            return;
+        }
+
+        const stay = getDetailedStay(entryDate, exitDate);
         const noRow = document.getElementById('no_movements_row');
         if (noRow) noRow.remove();
 
-        const tr = document.createElement('tr');
-        tr.setAttribute('data-days', stay.totalDays);
-        tr.innerHTML = `
-            <td>${tbody.children.length + 1}</td>
-            <td><strong class="text-dark">${entryDate}</strong></td>
-            <td>${entryAirport || '---'}</td>
-            <td><strong class="text-dark">${exitDate}</strong></td>
-            <td>${exitAirport || '---'}</td>
-            <td><span class="badge bg-secondary-subtle text-secondary border">${pageNumber || '---'}</span></td>
-            <td><span class="badge bg-success-subtle text-success border border-success px-2 py-1">${stay.years} سنة و ${stay.months} شهر و ${stay.days} يوم</span></td>
+        let targetRow = editingResidencyRow;
+        let idxKey;
+        if (targetRow) {
+            const existingInput = targetRow.querySelector('input[name*="[entry_date]"]');
+            const mIdx = existingInput ? existingInput.name.match(/residences\[(\d+)\]/) : null;
+            idxKey = mIdx ? Number(mIdx[1]) : (++movementCounter);
+        } else {
+            movementCounter++;
+            idxKey = movementCounter;
+            targetRow = document.createElement('tr');
+            tbody.appendChild(targetRow);
+        }
+
+        targetRow.setAttribute('data-days', stay.totalDays);
+        targetRow.setAttribute('data-entry', entryDate);
+        targetRow.setAttribute('data-exit', exitDate);
+        targetRow.innerHTML = `
+            <td class="fw-bold text-muted">#</td>
+            <td><span class="badge bg-light text-dark border font-monospace px-2 py-1">${escapeHtml(entryDate)}</span></td>
+            <td class="text-dark fw-medium">${escapeHtml(entryAirport) || '---'}</td>
+            <td><span class="badge bg-light text-dark border font-monospace px-2 py-1">${escapeHtml(exitDate)}</span></td>
+            <td class="text-dark fw-medium">${escapeHtml(exitAirport) || '---'}</td>
+            <td><span class="badge px-2 py-1" style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">ص ${escapeHtml(pageNumber) || '---'}</span></td>
             <td>
-                <button type="button" class="btn btn-xs btn-outline-danger" onclick="deleteResidencyMovement(this)" title="حذف الحركة"><i class="fa-solid fa-trash"></i></button>
-                <input type="hidden" name="residences[${movementCounter}][entry_date]" value="${entryDate}">
-                <input type="hidden" name="residences[${movementCounter}][entry_airport]" value="${entryAirport}">
-                <input type="hidden" name="residences[${movementCounter}][exit_date]" value="${exitDate}">
-                <input type="hidden" name="residences[${movementCounter}][exit_airport]" value="${exitAirport}">
-                <input type="hidden" name="residences[${movementCounter}][page_number]" value="${pageNumber}">
+                <span class="mohe-duration-chip">${stay.years} سنة و ${stay.months} شهر و ${stay.days} يوم</span>
+                <div class="text-muted mt-1" style="font-size: 0.72rem;">(${stay.totalDays} يوماً)</div>
+            </td>
+            <td>
+                <div class="d-inline-flex align-items-center justify-content-center gap-1.5">
+                    <button type="button" class="btn btn-outline-primary mohe-action-icon-btn" onclick="editResidencyMovement(this)" title="تعديل الحركة">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-danger mohe-action-icon-btn" onclick="deleteResidencyMovement(this)" title="حذف الحركة">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+                <input type="hidden" name="residences[${idxKey}][entry_date]" value="${escapeHtml(entryDate)}">
+                <input type="hidden" name="residences[${idxKey}][entry_airport]" value="${escapeHtml(entryAirport)}">
+                <input type="hidden" name="residences[${idxKey}][exit_date]" value="${escapeHtml(exitDate)}">
+                <input type="hidden" name="residences[${idxKey}][exit_airport]" value="${escapeHtml(exitAirport)}">
+                <input type="hidden" name="residences[${idxKey}][page_number]" value="${escapeHtml(pageNumber)}">
             </td>
         `;
-        tbody.appendChild(tr);
 
-        document.getElementById('mov_entry_date').value = '';
-        document.getElementById('mov_entry_airport').value = '';
-        document.getElementById('mov_exit_date').value = '';
-        document.getElementById('mov_exit_airport').value = '';
-        document.getElementById('mov_page_number').value = '';
-
+        sortResidencyRows();
+        cancelEditResidencyMovement();
         recalculateTotalStay();
     }
 
     function deleteResidencyMovement(btn) {
         const row = btn.closest('tr');
+        if (editingResidencyRow && row === editingResidencyRow) {
+            cancelEditResidencyMovement();
+        }
         row.remove();
         const tbody = document.getElementById('movements_tbody');
         if (tbody.children.length === 0) {
-            tbody.innerHTML = '<tr id="no_movements_row"><td colspan="8" class="text-muted py-4">لم يتم تسجيل أي حركة دخول أو خروج بعد. يرجى ملء الحقول أعلاه والضغط على (إضافة حركة الإقامة إلى الجدول).</td></tr>';
+            tbody.innerHTML = '<tr id="no_movements_row"><td colspan="8" class="text-muted py-4">لم يتم تسجيل أي حركة دخول أو خروج بعد. يرجى ملء الحقول أعلاه والضغط على زر (+).</td></tr>';
         } else {
-            Array.from(tbody.children).forEach((r, idx) => {
-                if (r.children[0]) r.children[0].textContent = idx + 1;
-            });
+            sortResidencyRows();
         }
         recalculateTotalStay();
     }
@@ -1622,33 +2111,52 @@
     function recalculateTotalStay() {
         const tbody = document.getElementById('movements_tbody');
         let totalDays = 0;
+        let sumY = 0, sumM = 0, sumD = 0;
 
-        tbody.querySelectorAll('tr').forEach(tr => {
-            const inDateInput = tr.querySelector('input[name*="[entry_date]"]');
-            const outDateInput = tr.querySelector('input[name*="[exit_date]"]');
-            if (inDateInput && outDateInput && inDateInput.value && outDateInput.value) {
-                const stay = getDetailedStay(inDateInput.value, outDateInput.value);
-                totalDays += stay.totalDays;
-            }
-        });
+        if (tbody) {
+            tbody.querySelectorAll('tr:not(#no_movements_row)').forEach(tr => {
+                const inDateInput = tr.querySelector('input[name*="[entry_date]"]');
+                const outDateInput = tr.querySelector('input[name*="[exit_date]"]');
+                if (inDateInput && outDateInput && inDateInput.value && outDateInput.value) {
+                    const stay = getDetailedStay(inDateInput.value, outDateInput.value);
+                    totalDays += stay.totalDays;
+                    sumY += stay.years;
+                    sumM += stay.months;
+                    sumD += stay.days;
+                }
+            });
+        }
 
-        const years = Math.floor(totalDays / 365);
-        const months = Math.floor((totalDays % 365) / 30);
-        const days = (totalDays % 365) % 30;
+        if (sumD >= 30) {
+            sumM += Math.floor(sumD / 30);
+            sumD = sumD % 30;
+        }
+        if (sumM >= 12) {
+            sumY += Math.floor(sumM / 12);
+            sumM = sumM % 12;
+        }
 
         const yEl = document.getElementById('total_stay_years');
         const mEl = document.getElementById('total_stay_months');
         const dEl = document.getElementById('total_stay_days');
-        if (yEl) yEl.textContent = years;
-        if (mEl) mEl.textContent = months;
-        if (dEl) dEl.textContent = days;
+        const allEl = document.getElementById('total_stay_all_days');
+        if (yEl) yEl.textContent = sumY;
+        if (mEl) mEl.textContent = sumM;
+        if (dEl) dEl.textContent = sumD;
+        if (allEl) allEl.textContent = totalDays;
 
         const previewStay = document.getElementById('preview-totalStay');
-        if (previewStay && document.getElementById('requires_residence_switch')?.checked) {
-            previewStay.textContent = `${years} سنة و ${months} شهر و ${days} يوم`;
+        if (previewStay) {
+            if (isResidenceExemptChecked() && totalDays === 0) {
+                previewStay.textContent = 'معفى من شرط الإقامة (تخصص نظري)';
+                previewStay.className = 'badge bg-info text-dark fs-7';
+            } else {
+                previewStay.textContent = `${sumY} سنة و ${sumM} شهر و ${sumD} يوم (${totalDays} يوماً)`;
+                previewStay.className = 'badge bg-primary fs-7';
+            }
         }
         const previewResCount = document.getElementById('preview-resCount');
-        if (previewResCount) {
+        if (previewResCount && tbody) {
             const validRows = tbody.querySelectorAll('tr:not(#no_movements_row)').length;
             previewResCount.textContent = validRows;
         }
@@ -1661,6 +2169,16 @@
             return `${match[3]}/${match[2]}/${match[1]}`;
         }
         return val;
+    }
+
+    function resolvePreviewUniName(prefix, form) {
+        const cEl = document.getElementById(prefix + '_country_id');
+        const sEl = document.getElementById(prefix + '_university_id');
+        const oEl = document.getElementById(prefix + '_university_other');
+        if (cEl && cEl.value == syriaCountryId && sEl && sEl.value && sEl.value !== 'other') {
+            return sEl.options[sEl.selectedIndex]?.text?.trim() || '---';
+        }
+        return oEl && oEl.value.trim() ? oEl.value.trim() : '---';
     }
 
     function populateReview() {
@@ -1704,31 +2222,20 @@
             }
         }
 
-        // 4. الإجازة الجامعية الأولى
+        // 4. الإجازة الجامعية الأولى (بدون قرار معادلة)
         const baCountrySelect = form.ba_country_id;
         document.getElementById('preview-baCountry').textContent = baCountrySelect ? (baCountrySelect.options[baCountrySelect.selectedIndex]?.text || '---') : '---';
-        document.getElementById('preview-baUni').textContent = form.ba_university_other.value || '---';
+        document.getElementById('preview-baUni').textContent = resolvePreviewUniName('ba', form);
         document.getElementById('preview-baFaculty').textContent = form.ba_faculty.value || '---';
         document.getElementById('preview-baDept').textContent = form.ba_department.value || '---';
         document.getElementById('preview-baGenSpec').textContent = form.ba_general_specialization.value || '---';
         document.getElementById('preview-baRank').textContent = form.ba_rank.value || '---';
         document.getElementById('preview-baGrantDate').textContent = formatDateDisplay(form.ba_grant_date ? form.ba_grant_date.value : '');
 
-        const isBaForeign = baCountrySelect && baCountrySelect.value != syriaCountryId;
-        const baDecBox = document.getElementById('preview-baDecisionContainer');
-        if (baDecBox) {
-            if (isBaForeign && form.ba_decision_no && form.ba_decision_no.value.trim()) {
-                baDecBox.style.display = 'block';
-                document.getElementById('preview-baDecisionNo').textContent = form.ba_decision_no.value + (form.ba_decision_date && form.ba_decision_date.value ? ' (تاريخ: ' + formatDateDisplay(form.ba_decision_date.value) + ')' : '');
-            } else {
-                baDecBox.style.display = 'none';
-            }
-        }
-
         // 5. الماجستير
         const maCountrySelect = form.ma_country_id;
         document.getElementById('preview-maCountry').textContent = maCountrySelect ? (maCountrySelect.options[maCountrySelect.selectedIndex]?.text || '---') : '---';
-        document.getElementById('preview-maUni').textContent = form.ma_university_other.value || '---';
+        document.getElementById('preview-maUni').textContent = resolvePreviewUniName('ma', form);
         document.getElementById('preview-maFaculty').textContent = form.ma_faculty.value || '---';
         document.getElementById('preview-maDept').textContent = form.ma_department.value || '---';
         document.getElementById('preview-maGenSpec').textContent = form.ma_general_specialization.value || '---';
@@ -1736,10 +2243,10 @@
         document.getElementById('preview-maRank').textContent = form.ma_rank.value || '---';
         document.getElementById('preview-maGrantDate').textContent = formatDateDisplay(form.ma_grant_date ? form.ma_grant_date.value : '');
 
-        const isMaForeign = maCountrySelect && maCountrySelect.value != syriaCountryId;
+        const hasMaEq = document.getElementById('check-hasMaEquivalence')?.checked;
         const maDecBox = document.getElementById('preview-maDecisionContainer');
         if (maDecBox) {
-            if (isMaForeign && form.ma_decision_no && form.ma_decision_no.value.trim()) {
+            if (hasMaEq && form.ma_decision_no && form.ma_decision_no.value.trim()) {
                 maDecBox.style.display = 'block';
                 document.getElementById('preview-maDecisionNo').textContent = form.ma_decision_no.value + (form.ma_decision_date && form.ma_decision_date.value ? ' (تاريخ: ' + formatDateDisplay(form.ma_decision_date.value) + ')' : '');
             } else {
@@ -1770,7 +2277,6 @@
         const form = document.getElementById('wizard-form');
         if (!form) return;
 
-        // إزالة القيود فورياً لمنع اعتراض المتصفح بأي رسالة مثل Please fill out this field
         form.querySelectorAll('input, select, textarea').forEach(function(el) {
             el.removeAttribute('required');
             el.setCustomValidity('');
@@ -1788,17 +2294,22 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         showStep(1);
+        syncBaUniversityFields();
+        syncMaUniversityFields();
+        toggleMaEquivalenceSection(document.getElementById('check-hasMaEquivalence')?.checked);
+        syncBoundDoctorateContext();
+        syncResidenceExempt(isResidenceExemptChecked());
         recalculateTotalStay();
 
         // 1. الربط الزمني المنطقي لتواريخ المراحل العلمية
         const hsYearInput = document.getElementById('input-hsYear');
         const baGrantDateInput = document.getElementById('input-baGrantDate');
         const maGrantDateInput = document.getElementById('input-maGrantDate');
+        const maDecDateInput = document.getElementById('ma_decision_date');
         const regDateInput = document.getElementById('input-phdRegDate');
         const defDateInput = document.getElementById('input-phdDefDate');
         const grantDateInput = document.getElementById('input-phdGrantDate');
 
-        // أ. سنة الثانوية تحدد الحد الأدنى لتاريخ منح الإجازة
         if (hsYearInput && baGrantDateInput) {
             hsYearInput.addEventListener('change', function() {
                 if (this.value) {
@@ -1807,7 +2318,6 @@
             });
         }
 
-        // ب. تاريخ منح الإجازة يحدد الحد الأدنى لمنح الماجستير
         if (baGrantDateInput && maGrantDateInput) {
             baGrantDateInput.addEventListener('change', function() {
                 if (this.value) {
@@ -1819,7 +2329,6 @@
             });
         }
 
-        // ج. تاريخ منح الماجستير يحدد الحد الأدنى لتسجيل الدكتوراه
         if (maGrantDateInput && regDateInput) {
             maGrantDateInput.addEventListener('change', function() {
                 if (this.value) {
@@ -1827,11 +2336,13 @@
                     if (regDateInput.value && regDateInput.value < this.value) {
                         regDateInput.value = '';
                     }
+                    if (maDecDateInput) {
+                        maDecDateInput.setAttribute('min', this.value);
+                    }
                 }
             });
         }
 
-        // د. تاريخ تسجيل الدكتوراه يحدد الحد الأدنى للمناقشة
         if (regDateInput && defDateInput) {
             regDateInput.addEventListener('change', function() {
                 if (this.value) {
@@ -1843,7 +2354,6 @@
             });
         }
 
-        // هـ. تاريخ المناقشة يحدد الحد الأدنى لمنح الدرجة
         if (defDateInput && grantDateInput) {
             defDateInput.addEventListener('change', function() {
                 if (this.value) {
@@ -1855,7 +2365,6 @@
             });
         }
 
-        // و. ربط حركات الإقامة: تاريخ الخروج بعد تاريخ الدخول
         const movEntry = document.getElementById('mov_entry_date');
         const movExit = document.getElementById('mov_exit_date');
         if (movEntry && movExit) {
@@ -1864,12 +2373,6 @@
                     movExit.setAttribute('min', this.value);
                 }
             });
-        }
-
-        // تشغيل فحص سويتش الإقامة الأولي
-        const switchEl = document.getElementById('requires_residence_switch');
-        if (switchEl) {
-            toggleResidenceRequirement(switchEl.checked);
         }
 
         // إزالة الإلزامية عن المرفقات المرفوعة مسبقاً

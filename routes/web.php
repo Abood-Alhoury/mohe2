@@ -142,6 +142,7 @@ Route::get('/admin/attachments/{id}/view/{filename?}', [\App\Http\Controllers\Ad
 
     // Interviews Management & Scheduling ('بانتظار المقابلة')
     Route::get('/interviews', [InterviewsController::class, 'index'])->name('admin.interviews.index');
+    Route::get('/interviews/report', [InterviewsController::class, 'report'])->name('admin.interviews.report');
     Route::match(['post', 'patch'], '/interviews/batch-schedule', [InterviewsController::class, 'batchSchedule'])->name('admin.interviews.batch_schedule');
     Route::match(['post', 'patch'], '/interviews/{id}/outcome', [InterviewsController::class, 'decideOutcome'])->name('admin.interviews.decide_outcome');
 
@@ -183,7 +184,15 @@ Route::prefix('university')->middleware(['auth', 'role:university'])->group(func
     Route::get('/apply/syrian-doctorate', [ApplicationWizardController::class, 'showSyrianDoctorateWizard'])->name('university.apply.syrian_doctorate');
     Route::post('/apply/syrian-doctorate', [ApplicationWizardController::class, 'submitSyrianDoctorateWizard'])->name('university.apply.syrian_doctorate.submit');
     
-    // Wizard: Foreign Master's step-by-step (معاملة الماجستير الخارجي - غير السوري)
+    // Wizard: Foreign Master's - Applied Track (ماجستير خارجي - تطبيقي)
+    Route::get('/apply/foreign-masters-applied', [ApplicationWizardController::class, 'showForeignMastersAppliedWizard'])->name('university.apply.foreign_masters_applied');
+    Route::post('/apply/foreign-masters-applied', [ApplicationWizardController::class, 'submitForeignMastersAppliedWizard'])->name('university.apply.foreign_masters_applied.submit');
+
+    // Wizard: Foreign Master's - Theoretical Track (ماجستير خارجي - نظري)
+    Route::get('/apply/foreign-masters-theoretical', [ApplicationWizardController::class, 'showForeignMastersTheoreticalWizard'])->name('university.apply.foreign_masters_theoretical');
+    Route::post('/apply/foreign-masters-theoretical', [ApplicationWizardController::class, 'submitForeignMastersTheoreticalWizard'])->name('university.apply.foreign_masters_theoretical.submit');
+
+    // Wizard: Foreign Master's step-by-step (Legacy / Compatibility Route)
     Route::get('/apply/foreign-masters', [ApplicationWizardController::class, 'showForeignMastersWizard'])->name('university.apply.foreign_masters');
     Route::post('/apply/foreign-masters', [ApplicationWizardController::class, 'submitForeignMastersWizard'])->name('university.apply.foreign_masters.submit');
 

@@ -778,7 +778,7 @@
                     </div>
                     <div class="degree-meta-list">
                         <div><span>بلد المنح:</span> <strong>{{ $highSchoolEd?->country?->name ?? 'الجمهورية العربية السورية' }}</strong></div>
-                        <div><span>سنة الحصول:</span> <strong>{{ $highSchoolEd?->graduation_date ? \Carbon\Carbon::parse($highSchoolEd->graduation_date)->format('Y') : ($highSchoolEd?->graduation_year ?? '—') }}</strong></div>
+                        <div><span>سنة الحصول:</span> <strong>{{ $highSchoolEd?->graduation_date ? \Carbon\Carbon::parse($highSchoolEd->graduation_date)->format('Y') : ($highSchoolEd?->grant_date ? (strlen($highSchoolEd->grant_date) <= 4 ? $highSchoolEd->grant_date : \Carbon\Carbon::parse($highSchoolEd->grant_date)->format('Y')) : ($highSchoolEd?->graduation_year ?? '—')) }}</strong></div>
                     </div>
                 </div>
                 @endif

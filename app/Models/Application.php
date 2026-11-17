@@ -23,6 +23,7 @@ class Application extends Model
         'is_first_time',
         'study_system',
         'has_previous_degree',
+        'is_residence_exempt',
         'status',
         'interview_date',
         'interview_time',
@@ -37,6 +38,10 @@ class Application extends Model
         'scientific_production_decision_no',
         'scientific_production_notes',
         'rejection_reason',
+    ];
+
+    protected $casts = [
+        'is_residence_exempt' => 'boolean',
     ];
 
     public function newEloquentBuilder($query)
@@ -296,6 +301,52 @@ class Application extends Model
     public function getGenderDictionary()
     {
         return \App\Http\Controllers\Admin\GeneratedDecisionController::getGenderDictionary($this);
+    }
+
+    /**
+     * حساب مجموع فترات الإقامة المتفرقة بالأعوام والأشهر والأيام التقويمية بدقة
+     */
+    public static function calculateResidenceSummary($residences): array
+    {
+        $totalDays = 0;
+        $sumY = 0;
+        $sumM = 0;
+        $sumD = 0;
+        $count = 0;
+
+        if ($residences) {
+            foreach ($residences as $r) {
+                if (!empty($r->entry_date) && !empty($r->exit_date)) {
+                    $in = \Carbon\Carbon::parse($r->entry_date)->startOfDay();
+                    $out = \Carbon\Carbon::parse($r->exit_date)->startOfDay();
+                    if ($out->gte($in)) {
+                        $diff = $in->diff($out);
+                        $sumY += $diff->y;
+                        $sumM += $diff->m;
+                        $sumD += $diff->d;
+                        $totalDays += (int) $in->diffInDays($out);
+                        $count++;
+                    }
+                }
+            }
+        }
+
+        if ($sumD >= 30) {
+            $sumM += intdiv($sumD, 30);
+            $sumD = $sumD % 30;
+        }
+        if ($sumM >= 12) {
+            $sumY += intdiv($sumM, 12);
+            $sumM = $sumM % 12;
+        }
+
+        return [
+            'years'           => $sumY,
+            'months'          => $sumM,
+            'days'            => $sumD,
+            'total_days'      => $totalDays,
+            'movements_count' => $count,
+        ];
     }
 }
 

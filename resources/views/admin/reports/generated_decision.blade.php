@@ -94,6 +94,16 @@
                 <button type="button" class="btn btn-xs btn-outline-primary py-0 px-1.5" style="font-size: 0.72rem;" onclick="toggleAllSigners(true)" title="إظهار جميع التواقيع">الكل</button>
             </div>
 
+            <!-- خيار تنسيق الأرقام (هندية / إنجليزية) -->
+            <div class="d-flex align-items-center flex-wrap gap-2 bg-light px-2.5 py-1.5 rounded border" style="font-size: 0.78rem;">
+                <span class="fw-bold text-dark"><i class="fa-solid fa-hashtag text-primary me-1"></i> الأرقام:</span>
+                <label class="form-check form-check-inline mb-0 d-inline-flex align-items-center gap-1" style="cursor: pointer;" title="التبديل بين الأرقام الهندية (١، ٢، ٣) والأرقام الإنجليزية (1، 2، 3)">
+                    <input class="form-check-input m-0" type="checkbox" id="chk-hindi-digits" onchange="toggleNumeralFormat()">
+                    <span class="fw-bold text-dark">أرقام هندية (١، ٢، ٣)</span>
+                </label>
+                <span id="badge-numeral-mode" class="badge bg-white text-dark border px-2 py-0.5" style="font-size: 0.72rem;">إنجليزية (123)</span>
+            </div>
+
             <!-- أزرار الطباعة/PDF وتحميل Word مع الحفاظ على التعديلات الحية -->
             <div class="d-flex align-items-center gap-2 flex-wrap">
                 <button type="button" onclick="downloadAsWord()" class="btn btn-outline-primary fw-bold px-3 py-1.5 btn-sm shadow-xs" title="تحميل المسودة كملف Word قابل للتعديل الكامل مع الحفاظ على بياناتك وتعديلاتك">
@@ -131,6 +141,108 @@
 </div>
 
 <script>
+const HINDI_DIGITS_MAP = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+const NUMERAL_STORAGE_KEY = 'mohe_decision_hindi_digits';
+
+function isHindiDigitsEnabled() {
+    const chk = document.getElementById('chk-hindi-digits');
+    return !!(chk && chk.checked);
+}
+
+function convertDigitsInString(text, useHindi) {
+    if (!text) return '';
+    if (useHindi) {
+        return String(text).replace(/[0-9]/g, d => HINDI_DIGITS_MAP[Number(d)]);
+    }
+    return String(text).replace(/[٠-٩]/g, d => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)));
+}
+
+function applyNumeralModeToElement(rootEl, useHindi) {
+    if (!rootEl) return;
+    const walker = document.createTreeWalker(
+        rootEl,
+        NodeFilter.SHOW_TEXT,
+        {
+            acceptNode: function(node) {
+                if (!node.nodeValue || !/[0-9٠-٩]/.test(node.nodeValue)) {
+                    return NodeFilter.FILTER_SKIP;
+                }
+                const parent = node.parentElement;
+                if (!parent) return NodeFilter.FILTER_REJECT;
+                const tag = parent.tagName;
+                if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'TEXTAREA' || tag === 'INPUT') {
+                    return NodeFilter.FILTER_REJECT;
+                }
+                if (parent.closest('[dir="ltr"]')) {
+                    return NodeFilter.FILTER_REJECT;
+                }
+                return NodeFilter.FILTER_ACCEPT;
+            }
+        }
+    );
+
+    const nodes = [];
+    while (walker.nextNode()) {
+        nodes.push(walker.currentNode);
+    }
+    nodes.forEach(node => {
+        const converted = convertDigitsInString(node.nodeValue, useHindi);
+        if (converted !== node.nodeValue) {
+            node.nodeValue = converted;
+        }
+    });
+}
+
+function updateNumeralModeBadge(useHindi) {
+    const badge = document.getElementById('badge-numeral-mode');
+    if (!badge) return;
+    if (useHindi) {
+        badge.textContent = 'هندية (١٢٣)';
+        badge.className = 'badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-0.5 fw-bold';
+    } else {
+        badge.textContent = 'إنجليزية (123)';
+        badge.className = 'badge bg-white text-dark border px-2 py-0.5';
+    }
+}
+
+function toggleNumeralFormat() {
+    const useHindi = isHindiDigitsEnabled();
+    try {
+        localStorage.setItem(NUMERAL_STORAGE_KEY, useHindi ? '1' : '0');
+    } catch (e) {}
+
+    updateNumeralModeBadge(useHindi);
+    const paper = document.querySelector('.decision-paper-wrapper');
+    if (paper) {
+        applyNumeralModeToElement(paper, useHindi);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const chk = document.getElementById('chk-hindi-digits');
+    if (chk) {
+        let useHindi = false;
+        try {
+            useHindi = localStorage.getItem(NUMERAL_STORAGE_KEY) === '1';
+        } catch (e) {}
+        chk.checked = useHindi;
+        updateNumeralModeBadge(useHindi);
+        if (useHindi) {
+            const paper = document.querySelector('.decision-paper-wrapper');
+            applyNumeralModeToElement(paper, true);
+        }
+    }
+
+    const paper = document.querySelector('.decision-paper-wrapper');
+    if (paper) {
+        paper.addEventListener('focusout', function(e) {
+            if (e.target && e.target.closest && e.target.closest('[contenteditable="true"]')) {
+                applyNumeralModeToElement(paper, isHindiDigitsEnabled());
+            }
+        });
+    }
+});
+
 function toggleSignerVisibility() {
     const checkboxes = document.querySelectorAll('.sig-toggle-chk');
     const state = {};
@@ -182,6 +294,9 @@ function printOrSavePdf() {
         window.print();
         return;
     }
+
+    // تطبيق نمط الأرقام المختار (هندية / إنجليزية) قبل التقاط محتوى الورقة للطباعة
+    applyNumeralModeToElement(paper, isHindiDigitsEnabled());
 
     // 2. التقاط كود الـ HTML الحي للورقة بكافة التعديلات اليدوية (رقم القرار، النصوص، التواقيع)
     const paperContent = paper.innerHTML;
@@ -303,7 +418,11 @@ function downloadAsWord() {
     const paper = document.querySelector('.decision-paper-wrapper');
     if (!paper) return;
 
+    const useHindi = isHindiDigitsEnabled();
+    applyNumeralModeToElement(paper, useHindi);
+
     const clone = paper.cloneNode(true);
+    applyNumeralModeToElement(clone, useHindi);
     const wordFontFamily = '"Traditional Arabic", "Simplified Arabic", serif';
 
     const applyArabicTypography = (el, sizePt, lineHeight, extra = {}) => {
@@ -765,6 +884,7 @@ function setRejectionReasonText(mode) {
     } else {
         target.textContent = 'نظراً لعدم تحقيق شروط معادلة الشهادات الواردة في قرارات مجلس التعليم العالي .';
     }
+    applyNumeralModeToElement(target, isHindiDigitsEnabled());
 }
 </script>
 @endsection
